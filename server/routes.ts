@@ -200,18 +200,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const { updateEmployeeRate, ...laborData } = req.body;
-      const validatedData = insertLaborEntrySchema.partial().parse(laborData);
-      
+      const validatedData = insertLaborEntrySchema.partial().parse(req.body);
       const laborEntry = await storage.updateLaborEntry(req.params.id, validatedData);
-      
-      // If updateEmployeeRate is true, also update the employee's default rate
-      if (updateEmployeeRate && validatedData.hourlyRate && laborEntry) {
-        await storage.updateEmployee(laborEntry.staffId, { 
-          defaultHourlyRate: validatedData.hourlyRate 
-        });
-      }
-      
       res.json(laborEntry);
     } catch (error) {
       if (error instanceof z.ZodError) {

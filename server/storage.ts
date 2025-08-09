@@ -116,13 +116,13 @@ export class DatabaseStorage implements IStorage {
   async createEmployee(employee: InsertEmployee): Promise<Employee> {
     const [createdEmployee] = await db.insert(employees).values(employee).returning();
     
-    // Add this employee to all existing jobs with their default hourly rate
+    // Add this employee to all existing jobs with each job's default hourly rate
     const jobs = await this.getJobs();
     for (const job of jobs) {
       await this.createLaborEntry({
         jobId: job.id,
         staffId: createdEmployee.id,
-        hourlyRate: createdEmployee.defaultHourlyRate,
+        hourlyRate: job.defaultHourlyRate, // Use job's default rate, not employee's rate
         hoursLogged: "0",
       });
     }
@@ -156,13 +156,13 @@ export class DatabaseStorage implements IStorage {
   async createJob(job: InsertJob): Promise<Job> {
     const [createdJob] = await db.insert(jobs).values(job).returning();
     
-    // Automatically add all employees to the job with their default hourly rates
+    // Automatically add all employees to the job with the job's default hourly rate
     const employees = await this.getEmployees();
     for (const employee of employees) {
       await this.createLaborEntry({
         jobId: createdJob.id,
         staffId: employee.id,
-        hourlyRate: employee.defaultHourlyRate,
+        hourlyRate: job.defaultHourlyRate || "50", // Use job's default rate, not employee's rate
         hoursLogged: "0",
       });
     }
@@ -389,12 +389,16 @@ export class DatabaseStorage implements IStorage {
     const existingLaborEntries = await this.getLaborEntriesForJob(jobId);
     const existingStaffIds = new Set(existingLaborEntries.map(entry => entry.staffId));
     
+    // Get job's default rate for new employees
+    const job = await this.getJob(jobId);
+    const jobDefaultRate = job?.defaultHourlyRate || "50";
+    
     for (const employee of employees) {
       if (!existingStaffIds.has(employee.id)) {
         await this.createLaborEntry({
           jobId,
           staffId: employee.id,
-          hourlyRate: employee.defaultHourlyRate,
+          hourlyRate: jobDefaultRate, // Use job's default rate, not employee's rate
           hoursLogged: "0",
         });
       }
