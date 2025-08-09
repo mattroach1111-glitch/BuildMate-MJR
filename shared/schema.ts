@@ -40,7 +40,7 @@ export const users = pgTable("users", {
 export const employees = pgTable("employees", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull(),
-  defaultHourlyRate: decimal("default_hourly_rate", { precision: 10, scale: 2 }).notNull(),
+  defaultHourlyRate: decimal("default_hourly_rate", { precision: 10, scale: 2 }).notNull().default("50"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -178,8 +178,7 @@ export const insertJobSchema = createInsertSchema(jobs).omit({
 export const insertEmployeeSchema = createInsertSchema(employees).omit({
   id: true,
   createdAt: true,
-}).extend({
-  defaultHourlyRate: z.string().or(z.number()).transform(val => String(val)),
+  defaultHourlyRate: true,
 });
 
 export const insertOtherCostSchema = createInsertSchema(otherCosts).omit({

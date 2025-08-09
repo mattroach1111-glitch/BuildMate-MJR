@@ -30,9 +30,7 @@ const jobFormSchema = insertJobSchema.extend({
     .refine((val) => !isNaN(Number(val)) && Number(val) > 0, "Default hourly rate must be a positive number"),
 });
 
-const employeeFormSchema = insertEmployeeSchema.extend({
-  name: z.string().min(1, "Employee name is required"),
-});
+const employeeFormSchema = insertEmployeeSchema;
 
 export default function AdminDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
