@@ -76,6 +76,9 @@ export interface IStorage {
   createTimesheetEntry(entry: InsertTimesheetEntry): Promise<TimesheetEntry>;
   deleteTimesheetEntry(id: string): Promise<void>;
   getJobsForStaff(): Promise<Job[]>;
+  
+  // Sync operations
+  syncEmployeesToJob(jobId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -112,6 +115,18 @@ export class DatabaseStorage implements IStorage {
 
   async createEmployee(employee: InsertEmployee): Promise<Employee> {
     const [createdEmployee] = await db.insert(employees).values(employee).returning();
+    
+    // Add this employee to all existing jobs with their default hourly rate
+    const jobs = await this.getJobs();
+    for (const job of jobs) {
+      await this.createLaborEntry({
+        jobId: job.id,
+        staffId: createdEmployee.name,
+        hourlyRate: createdEmployee.defaultHourlyRate,
+        hoursLogged: "0",
+      });
+    }
+    
     return createdEmployee;
   }
 
@@ -140,6 +155,18 @@ export class DatabaseStorage implements IStorage {
 
   async createJob(job: InsertJob): Promise<Job> {
     const [createdJob] = await db.insert(jobs).values(job).returning();
+    
+    // Automatically add all employees to the job with their default hourly rates
+    const employees = await this.getEmployees();
+    for (const employee of employees) {
+      await this.createLaborEntry({
+        jobId: createdJob.id,
+        staffId: employee.name,
+        hourlyRate: employee.defaultHourlyRate,
+        hoursLogged: "0",
+      });
+    }
+    
     return createdJob;
   }
 
@@ -340,6 +367,24 @@ export class DatabaseStorage implements IStorage {
       .from(jobs)
       .where(eq(jobs.status, "job_in_progress"))
       .orderBy(jobs.jobAddress);
+  }
+
+  // Sync all employees to a specific job
+  async syncEmployeesToJob(jobId: string): Promise<void> {
+    const employees = await this.getEmployees();
+    const existingLaborEntries = await this.getLaborEntriesForJob(jobId);
+    const existingStaffIds = new Set(existingLaborEntries.map(entry => entry.staffId));
+    
+    for (const employee of employees) {
+      if (!existingStaffIds.has(employee.name)) {
+        await this.createLaborEntry({
+          jobId,
+          staffId: employee.name,
+          hourlyRate: employee.defaultHourlyRate,
+          hoursLogged: "0",
+        });
+      }
+    }
   }
 }
 

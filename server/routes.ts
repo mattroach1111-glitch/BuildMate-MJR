@@ -48,27 +48,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/employees", isAuthenticated, async (req: any, res) => {
     try {
-      console.log("Creating employee, user:", req.user?.claims?.sub);
-      console.log("Request body:", req.body);
-      
       const user = await storage.getUser(req.user.claims.sub);
-      console.log("User found:", user);
-      
       if (user?.role !== "admin") {
-        console.log("Access denied, user role:", user?.role);
         return res.status(403).json({ message: "Admin access required" });
       }
 
       const validatedData = insertEmployeeSchema.parse(req.body);
-      console.log("Validated data:", validatedData);
-      
       const employee = await storage.createEmployee(validatedData);
-      console.log("Employee created:", employee);
-      
       res.status(201).json(employee);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error("Validation error:", error.errors);
         return res.status(400).json({ message: fromZodError(error).toString() });
       }
       console.error("Error creating employee:", error);
@@ -118,6 +107,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!job) {
         return res.status(404).json({ message: "Job not found" });
       }
+
+      // Sync employees to this job to ensure all current staff are included
+      await storage.syncEmployeesToJob(job.id);
 
       // Get related data
       const [laborEntries, materials, subTrades, otherCosts] = await Promise.all([
@@ -182,6 +174,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Labor entry routes
+  app.patch("/api/labor-entries/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const validatedData = insertLaborEntrySchema.partial().parse(req.body);
+      const laborEntry = await storage.updateLaborEntry(req.params.id, validatedData);
+      res.json(laborEntry);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: fromZodError(error).toString() });
+      }
+      console.error("Error updating labor entry:", error);
+      res.status(500).json({ message: "Failed to update labor entry" });
+    }
+  });
+
   app.post("/api/jobs/:jobId/labor", isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);

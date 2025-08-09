@@ -103,6 +103,16 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     },
   });
 
+  const updateLaborMutation = useMutation({
+    mutationFn: async ({ id, hourlyRate }: { id: string; hourlyRate: string }) => {
+      const response = await apiRequest("PATCH", `/api/labor-entries/${id}`, { hourlyRate });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
+    },
+  });
+
   const addMaterialMutation = useMutation({
     mutationFn: async (data: { description: string; supplier: string; amount: string; invoiceDate: string }) => {
       const response = await apiRequest("POST", `/api/jobs/${jobId}/materials`, {
@@ -318,18 +328,11 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    onClick={() => {
-                      // For demo purposes, we'll use a simple prompt
-                      // In production, this would be a proper form modal
-                      const staffId = prompt("Enter staff member name:");
-                      const hourlyRate = prompt("Enter hourly rate:");
-                      if (staffId && hourlyRate) {
-                        addLaborMutation.mutate({ staffId, hourlyRate });
-                      }
-                    }}
-                    data-testid="button-add-labor"
+                    onClick={() => window.location.reload()}
+                    data-testid="button-refresh-labor"
+                    title="Sync all staff to this job"
                   >
-                    <i className="fas fa-plus"></i>
+                    <i className="fas fa-sync"></i>
                   </Button>
                 </div>
               </CardHeader>
@@ -346,20 +349,47 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     </thead>
                     <tbody className="space-y-2">
                       {jobDetails.laborEntries.map((entry) => (
-                        <tr key={entry.id}>
-                          <td className="py-2">
-                            <span data-testid={`text-labor-staff-${entry.id}`}>{entry.staffId}</span>
+                        <tr key={entry.id} className="border-b border-gray-100">
+                          <td className="py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
+                                <span className="text-xs font-medium text-primary">
+                                  {entry.staffId.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <span className="font-medium" data-testid={`text-labor-staff-${entry.id}`}>
+                                {entry.staffId}
+                              </span>
+                            </div>
                           </td>
-                          <td className="py-2">
-                            <span data-testid={`text-labor-rate-${entry.id}`}>${entry.hourlyRate}</span>
+                          <td className="py-3">
+                            <div className="flex items-center gap-1">
+                              <span className="text-sm text-gray-500">$</span>
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={entry.hourlyRate}
+                                onChange={(e) => {
+                                  // Update hourly rate inline
+                                  updateLaborMutation.mutate({
+                                    id: entry.id,
+                                    hourlyRate: e.target.value,
+                                  });
+                                }}
+                                className="w-16 text-sm border-0 bg-transparent focus:bg-white focus:border focus:border-primary rounded px-1"
+                                data-testid={`input-labor-rate-${entry.id}`}
+                              />
+                              <span className="text-sm text-gray-500">/hr</span>
+                            </div>
                           </td>
-                          <td className="py-2">
-                            <span className="text-sm text-gray-600" data-testid={`text-labor-hours-${entry.id}`}>
+                          <td className="py-3">
+                            <span className="text-sm text-gray-600 font-medium" data-testid={`text-labor-hours-${entry.id}`}>
                               {entry.hoursLogged} hrs
                             </span>
                           </td>
-                          <td className="py-2">
-                            <span className="font-semibold" data-testid={`text-labor-total-${entry.id}`}>
+                          <td className="py-3">
+                            <span className="font-semibold text-primary" data-testid={`text-labor-total-${entry.id}`}>
                               ${(parseFloat(entry.hourlyRate) * parseFloat(entry.hoursLogged)).toFixed(2)}
                             </span>
                           </td>
