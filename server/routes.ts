@@ -48,16 +48,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/employees", isAuthenticated, async (req: any, res) => {
     try {
+      console.log("Creating employee, user:", req.user?.claims?.sub);
+      console.log("Request body:", req.body);
+      
       const user = await storage.getUser(req.user.claims.sub);
+      console.log("User found:", user);
+      
       if (user?.role !== "admin") {
+        console.log("Access denied, user role:", user?.role);
         return res.status(403).json({ message: "Admin access required" });
       }
 
       const validatedData = insertEmployeeSchema.parse(req.body);
+      console.log("Validated data:", validatedData);
+      
       const employee = await storage.createEmployee(validatedData);
+      console.log("Employee created:", employee);
+      
       res.status(201).json(employee);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Validation error:", error.errors);
         return res.status(400).json({ message: fromZodError(error).toString() });
       }
       console.error("Error creating employee:", error);

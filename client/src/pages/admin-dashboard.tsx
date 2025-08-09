@@ -101,6 +101,7 @@ export default function AdminDashboard() {
 
   const createEmployeeMutation = useMutation({
     mutationFn: async (data: z.infer<typeof employeeFormSchema>) => {
+      console.log("Making API request with data:", data);
       const response = await apiRequest("POST", "/api/employees", data);
       return response.json();
     },
@@ -188,6 +189,7 @@ export default function AdminDashboard() {
   };
 
   const onEmployeeSubmit = (data: z.infer<typeof employeeFormSchema>) => {
+    console.log("Submitting employee data:", data);
     createEmployeeMutation.mutate(data);
   };
 
