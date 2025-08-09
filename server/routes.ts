@@ -181,6 +181,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
+      console.log("Received material data:", JSON.stringify(req.body, null, 2));
+
       const validatedData = insertMaterialSchema.parse({
         ...req.body,
         jobId: req.params.jobId,
@@ -189,6 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(material);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Material validation error:", error.errors);
         return res.status(400).json({ message: fromZodError(error).toString() });
       }
       console.error("Error creating material:", error);

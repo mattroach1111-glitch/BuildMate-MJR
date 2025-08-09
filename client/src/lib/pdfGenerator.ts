@@ -1,7 +1,32 @@
 import jsPDF from 'jspdf';
-import type { Job } from "@shared/schema";
 
-export async function generateJobPDF(job: Job) {
+type JobWithRelations = {
+  id: string;
+  jobAddress: string;
+  clientName: string;
+  projectName: string;
+  status: string;
+  builderMargin: string;
+  tipFees: string;
+  permits: string;
+  equipment: string;
+  miscellaneous: string;
+  laborEntries: Array<{
+    id: string;
+    hourlyRate: string;
+    hoursLogged: string;
+  }>;
+  materials: Array<{
+    id: string;
+    amount: string;
+  }>;
+  subTrades: Array<{
+    id: string;
+    amount: string;
+  }>;
+};
+
+export async function generateJobPDF(job: JobWithRelations) {
   const doc = new jsPDF();
   
   // Header
@@ -20,31 +45,76 @@ export async function generateJobPDF(job: Job) {
   // Date
   doc.text(`Generated: ${new Date().toLocaleDateString()}`, 150, 50);
   
-  // Costs section
+  // Calculate totals
+  const laborTotal = job.laborEntries.reduce((sum, entry) => {
+    return sum + (parseFloat(entry.hourlyRate) * parseFloat(entry.hoursLogged));
+  }, 0);
+
+  const materialsTotal = job.materials.reduce((sum, material) => {
+    return sum + parseFloat(material.amount);
+  }, 0);
+
+  const subTradesTotal = job.subTrades.reduce((sum, subTrade) => {
+    return sum + parseFloat(subTrade.amount);
+  }, 0);
+
+  const otherCostsTotal = 
+    parseFloat(job.tipFees) +
+    parseFloat(job.permits) +
+    parseFloat(job.equipment) +
+    parseFloat(job.miscellaneous);
+
+  const subtotal = laborTotal + materialsTotal + subTradesTotal + otherCostsTotal;
+  const marginPercent = parseFloat(job.builderMargin) / 100;
+  const marginAmount = subtotal * marginPercent;
+  const subtotalWithMargin = subtotal + marginAmount;
+  
+  // Australian GST is 10%
+  const gstAmount = subtotalWithMargin * 0.10;
+  const total = subtotalWithMargin + gstAmount;
+  
+  // Totals section
   let yPos = 100;
   doc.setFontSize(14);
-  doc.text('Project Costs', 20, yPos);
-  yPos += 10;
+  doc.text('Project Summary', 20, yPos);
+  yPos += 15;
   
   doc.setFontSize(10);
-  doc.text('Tip Fees:', 20, yPos);
-  doc.text(`$${parseFloat(job.tipFees).toFixed(2)}`, 100, yPos);
+  doc.text('Labour Total:', 20, yPos);
+  doc.text(`$${laborTotal.toFixed(2)}`, 100, yPos);
   yPos += 10;
   
-  doc.text('Permits & Fees:', 20, yPos);
-  doc.text(`$${parseFloat(job.permits).toFixed(2)}`, 100, yPos);
+  doc.text('Materials Total:', 20, yPos);
+  doc.text(`$${materialsTotal.toFixed(2)}`, 100, yPos);
   yPos += 10;
   
-  doc.text('Equipment Rental:', 20, yPos);
-  doc.text(`$${parseFloat(job.equipment).toFixed(2)}`, 100, yPos);
+  doc.text('Sub Trades Total:', 20, yPos);
+  doc.text(`$${subTradesTotal.toFixed(2)}`, 100, yPos);
   yPos += 10;
   
-  doc.text('Miscellaneous:', 20, yPos);
-  doc.text(`$${parseFloat(job.miscellaneous).toFixed(2)}`, 100, yPos);
-  yPos += 20;
+  doc.text('Other Costs Total:', 20, yPos);
+  doc.text(`$${otherCostsTotal.toFixed(2)}`, 100, yPos);
+  yPos += 15;
   
-  // Builder margin
-  doc.text(`Builder Margin: ${job.builderMargin}%`, 20, yPos);
+  doc.text('Subtotal:', 20, yPos);
+  doc.text(`$${subtotal.toFixed(2)}`, 100, yPos);
+  yPos += 10;
+  
+  doc.text(`Builder Margin (${job.builderMargin}%):`, 20, yPos);
+  doc.text(`$${marginAmount.toFixed(2)}`, 100, yPos);
+  yPos += 10;
+  
+  doc.text('Subtotal + Margin:', 20, yPos);
+  doc.text(`$${subtotalWithMargin.toFixed(2)}`, 100, yPos);
+  yPos += 10;
+  
+  doc.text('GST (10%):', 20, yPos);
+  doc.text(`$${gstAmount.toFixed(2)}`, 100, yPos);
+  yPos += 15;
+  
+  doc.setFontSize(12);
+  doc.text('Total (inc. GST):', 20, yPos);
+  doc.text(`$${total.toFixed(2)}`, 100, yPos);
   
   // Save the PDF
   doc.save(`${job.jobAddress.replace(/[^a-zA-Z0-9]/g, '-')}-job-sheet.pdf`);

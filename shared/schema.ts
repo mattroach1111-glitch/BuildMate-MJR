@@ -158,16 +158,23 @@ export const insertLaborEntrySchema = createInsertSchema(laborEntries).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  hourlyRate: z.string().or(z.number()).transform(val => String(val)),
+  hoursLogged: z.string().or(z.number()).transform(val => String(val)),
 });
 
 export const insertMaterialSchema = createInsertSchema(materials).omit({
   id: true,
   createdAt: true,
+}).extend({
+  amount: z.string().or(z.number()).transform(val => String(val)),
 });
 
 export const insertSubTradeSchema = createInsertSchema(subTrades).omit({
   id: true,
   createdAt: true,
+}).extend({
+  amount: z.string().or(z.number()).transform(val => String(val)),
 });
 
 export const insertTimesheetEntrySchema = createInsertSchema(timesheetEntries).omit({

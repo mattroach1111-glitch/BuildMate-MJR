@@ -26,6 +26,7 @@ interface JobDetails extends Job {
 export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalProps) {
   const { toast } = useToast();
   const [builderMargin, setBuilderMargin] = useState("25");
+  const [tipFees, setTipFees] = useState("0");
 
   const { data: jobDetails, isLoading } = useQuery<JobDetails>({
     queryKey: ["/api/jobs", jobId],
@@ -178,11 +179,12 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   useEffect(() => {
     if (jobDetails) {
       setBuilderMargin(jobDetails.builderMargin);
+      setTipFees(jobDetails.tipFees);
     }
   }, [jobDetails]);
 
   const calculateTotals = () => {
-    if (!jobDetails) return { laborTotal: 0, materialsTotal: 0, subTradesTotal: 0, otherCostsTotal: 0, subtotal: 0, marginAmount: 0, total: 0 };
+    if (!jobDetails) return { laborTotal: 0, materialsTotal: 0, subTradesTotal: 0, otherCostsTotal: 0, subtotal: 0, marginAmount: 0, subtotalWithMargin: 0, gstAmount: 0, total: 0 };
 
     const laborTotal = jobDetails.laborEntries.reduce((sum, entry) => {
       return sum + (parseFloat(entry.hourlyRate) * parseFloat(entry.hoursLogged));
@@ -197,7 +199,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     }, 0);
 
     const otherCostsTotal = 
-      parseFloat(jobDetails.tipFees) +
+      parseFloat(tipFees) +
       parseFloat(jobDetails.permits) +
       parseFloat(jobDetails.equipment) +
       parseFloat(jobDetails.miscellaneous);
@@ -205,7 +207,11 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     const subtotal = laborTotal + materialsTotal + subTradesTotal + otherCostsTotal;
     const marginPercent = parseFloat(builderMargin) / 100;
     const marginAmount = subtotal * marginPercent;
-    const total = subtotal + marginAmount;
+    const subtotalWithMargin = subtotal + marginAmount;
+    
+    // Australian GST is 10%
+    const gstAmount = subtotalWithMargin * 0.10;
+    const total = subtotalWithMargin + gstAmount;
 
     return {
       laborTotal,
@@ -214,6 +220,8 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       otherCostsTotal,
       subtotal,
       marginAmount,
+      subtotalWithMargin,
+      gstAmount,
       total,
     };
   };
@@ -221,6 +229,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const handleSave = () => {
     updateJobMutation.mutate({
       builderMargin: builderMargin,
+      tipFees: tipFees,
     });
   };
 
@@ -396,7 +405,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                             {material.supplier}
                           </td>
                           <td className="py-2" data-testid={`text-material-date-${material.id}`}>
-                            {new Date(material.invoiceDate).toLocaleDateString()}
+                            {new Date(material.invoiceDate).toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit' })}
                           </td>
                           <td className="py-2" data-testid={`text-material-amount-${material.id}`}>
                             ${parseFloat(material.amount).toFixed(2)}
@@ -458,7 +467,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                             {subTrade.contractor}
                           </td>
                           <td className="py-2" data-testid={`text-subtrade-date-${subTrade.id}`}>
-                            {new Date(subTrade.invoiceDate).toLocaleDateString()}
+                            {new Date(subTrade.invoiceDate).toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit' })}
                           </td>
                           <td className="py-2" data-testid={`text-subtrade-amount-${subTrade.id}`}>
                             ${parseFloat(subTrade.amount).toFixed(2)}
@@ -490,7 +499,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       type="number" 
                       value={jobDetails.tipFees}
                       readOnly
-                      data-testid="input-tip-fees"
+                      data-testid="input-tip-fees-readonly"
                     />
                   </div>
                   <div>
@@ -575,6 +584,17 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                   </div>
                   <div className="space-y-4">
                     <div>
+                      <Label htmlFor="tipFees">Tip Fees ($)</Label>
+                      <Input
+                        id="tipFees"
+                        type="number"
+                        value={tipFees}
+                        onChange={(e) => setTipFees(e.target.value)}
+                        className="text-lg"
+                        data-testid="input-tip-fees"
+                      />
+                    </div>
+                    <div>
                       <Label htmlFor="builderMargin">Builder's Margin (%)</Label>
                       <Input
                         id="builderMargin"
@@ -591,8 +611,20 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                         ${totals.marginAmount.toFixed(2)}
                       </span>
                     </div>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span className="text-gray-700">Subtotal + Margin:</span>
+                      <span className="font-semibold" data-testid="text-subtotal-with-margin">
+                        ${totals.subtotalWithMargin.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span className="text-gray-700">GST (10%):</span>
+                      <span className="font-semibold" data-testid="text-gst-amount">
+                        ${totals.gstAmount.toFixed(2)}
+                      </span>
+                    </div>
                     <div className="flex justify-between items-center py-4 bg-primary text-white px-4 rounded-lg">
-                      <span className="font-bold text-lg">Total Amount:</span>
+                      <span className="font-bold text-lg">Total Amount (inc. GST):</span>
                       <span className="font-bold text-2xl" data-testid="text-total-amount">
                         ${totals.total.toFixed(2)}
                       </span>
