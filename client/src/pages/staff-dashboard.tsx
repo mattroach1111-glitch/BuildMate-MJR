@@ -259,9 +259,9 @@ export default function StaffDashboard() {
                           </FormControl>
                           <SelectContent>
                             {jobsLoading ? (
-                              <SelectItem value="" disabled>Loading jobs...</SelectItem>
+                              <SelectItem value="loading" disabled>Loading jobs...</SelectItem>
                             ) : !jobs || (jobs as Job[]).length === 0 ? (
-                              <SelectItem value="" disabled>No jobs available</SelectItem>
+                              <SelectItem value="no-jobs" disabled>No jobs available</SelectItem>
                             ) : (
                               (jobs as Job[]).map((job: Job) => (
                                 <SelectItem key={job.id} value={job.id}>
