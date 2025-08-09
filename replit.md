@@ -1,6 +1,14 @@
 # Overview
 
-BuildFlow Pro is a construction management system designed to streamline job costing, billing, and workforce management. The application provides role-based access for administrators and staff members, with admins managing job details and financials while staff handle timesheet entries. The system tracks labor costs, materials, sub-trades, and project expenses to provide comprehensive construction project oversight.
+BuildFlow Pro is a mobile-first construction management system designed to streamline job costing, billing, and workforce management. The application provides role-based access for administrators and staff members, with admins managing job details and financials while staff handle timesheet entries. The system tracks labor costs, materials, sub-trades, and project expenses to provide comprehensive construction project oversight. 
+
+## Recent Changes (January 2025)
+- ✅ **Mobile-First Redesign**: Complete UI overhaul for mobile responsiveness with touch-friendly controls
+- ✅ **Employee Management**: Added staff management system with add/remove functionality  
+- ✅ **Database Schema Updates**: Migrated from "other costs" fields to flexible other_costs table with addable line items
+- ✅ **Enhanced Job Creation**: Added default hourly rate setting during job creation
+- ✅ **Australian GST**: Integrated 10% GST calculation on all job totals
+- ✅ **Improved Accessibility**: Added proper ARIA labels and mobile-optimized dialogs
 
 # User Preferences
 

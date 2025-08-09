@@ -256,28 +256,44 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-screen overflow-y-auto sm:max-w-6xl w-full max-w-[95vw] sm:w-auto">
+      <DialogContent 
+        className="max-w-6xl max-h-screen overflow-y-auto sm:max-w-6xl w-full max-w-[95vw] sm:w-auto" 
+        aria-describedby="job-sheet-description"
+      >
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle data-testid="text-job-sheet-title">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-1">
+              <DialogTitle data-testid="text-job-sheet-title" className="text-lg sm:text-xl">
                 {jobDetails ? `${jobDetails.projectName} - ${jobDetails.clientName}` : "Loading..."}
               </DialogTitle>
-              <p className="text-gray-600" data-testid="text-job-address">
+              <p className="text-gray-600 text-sm" data-testid="text-job-address">
                 {jobDetails?.jobAddress}
               </p>
+              <p id="job-sheet-description" className="text-xs text-muted-foreground mt-1">
+                Manage job details, costs, and generate PDF reports
+              </p>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
               <Button 
                 onClick={handleDownloadPDF}
-                className="bg-secondary hover:bg-green-700"
+                className="bg-secondary hover:bg-green-700 w-full sm:w-auto"
+                size="sm"
                 disabled={!jobDetails}
                 data-testid="button-download-pdf"
               >
                 <i className="fas fa-download mr-2"></i>
                 Download PDF
               </Button>
-              <Button variant="ghost" onClick={onClose} data-testid="button-close-modal">
+              <Button 
+                onClick={handleSave}
+                disabled={updateJobMutation.isPending}
+                className="w-full sm:w-auto"
+                size="sm"
+                data-testid="button-save-job"
+              >
+                {updateJobMutation.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+              <Button variant="ghost" onClick={onClose} className="w-full sm:w-auto" size="sm" data-testid="button-close-modal">
                 <i className="fas fa-times text-xl"></i>
               </Button>
             </div>

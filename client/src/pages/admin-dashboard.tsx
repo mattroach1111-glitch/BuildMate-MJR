@@ -276,9 +276,12 @@ export default function AdminDashboard() {
                   New Job
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md mx-4 sm:max-w-lg">
+              <DialogContent className="max-w-md mx-4 sm:max-w-lg" aria-describedby="create-job-description">
                 <DialogHeader>
                   <DialogTitle>Create New Job</DialogTitle>
+                  <p id="create-job-description" className="text-sm text-muted-foreground">
+                    Add a new construction job with client details and project information.
+                  </p>
                 </DialogHeader>
                 <Form {...jobForm}>
                   <form onSubmit={jobForm.handleSubmit(onJobSubmit)} className="space-y-4">
@@ -466,9 +469,12 @@ export default function AdminDashboard() {
                   Add Staff
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md mx-4">
+              <DialogContent className="max-w-md mx-4" aria-describedby="add-employee-description">
                 <DialogHeader>
                   <DialogTitle>Add New Staff Member</DialogTitle>
+                  <p id="add-employee-description" className="text-sm text-muted-foreground">
+                    Add a new employee to your staff list for timesheet management.
+                  </p>
                 </DialogHeader>
                 <Form {...employeeForm}>
                   <form onSubmit={employeeForm.handleSubmit(onEmployeeSubmit)} className="space-y-4">
