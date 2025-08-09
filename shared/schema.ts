@@ -111,7 +111,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 }));
 
 export const employeesRelations = relations(employees, ({ many }) => ({
-  // No relations for now
+  laborEntries: many(laborEntries),
 }));
 
 export const jobsRelations = relations(jobs, ({ many }) => ({

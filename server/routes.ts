@@ -65,6 +65,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/employees/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const validatedData = insertEmployeeSchema.partial().parse(req.body);
+      const employee = await storage.updateEmployee(req.params.id, validatedData);
+      res.json(employee);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: fromZodError(error).toString() });
+      }
+      console.error("Error updating employee:", error);
+      res.status(500).json({ message: "Failed to update employee" });
+    }
+  });
+
   app.delete("/api/employees/:id", isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);
@@ -181,8 +200,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const validatedData = insertLaborEntrySchema.partial().parse(req.body);
+      const { updateEmployeeRate, ...laborData } = req.body;
+      const validatedData = insertLaborEntrySchema.partial().parse(laborData);
+      
       const laborEntry = await storage.updateLaborEntry(req.params.id, validatedData);
+      
+      // If updateEmployeeRate is true, also update the employee's default rate
+      if (updateEmployeeRate && validatedData.hourlyRate && laborEntry) {
+        await storage.updateEmployee(laborEntry.staffId, { 
+          defaultHourlyRate: validatedData.hourlyRate 
+        });
+      }
+      
       res.json(laborEntry);
     } catch (error) {
       if (error instanceof z.ZodError) {

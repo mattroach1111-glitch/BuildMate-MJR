@@ -184,7 +184,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Labor entry operations
-  async getLaborEntriesForJob(jobId: string): Promise<LaborEntry[]> {
+  async getLaborEntriesForJob(jobId: string): Promise<any[]> {
     return await db
       .select({
         id: laborEntries.id,

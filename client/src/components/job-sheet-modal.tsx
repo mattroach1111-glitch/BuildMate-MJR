@@ -104,12 +104,16 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   });
 
   const updateLaborMutation = useMutation({
-    mutationFn: async ({ id, hourlyRate }: { id: string; hourlyRate: string }) => {
-      const response = await apiRequest("PATCH", `/api/labor-entries/${id}`, { hourlyRate });
+    mutationFn: async ({ id, hourlyRate, updateEmployeeRate }: { id: string; hourlyRate: string; updateEmployeeRate?: boolean }) => {
+      const response = await apiRequest("PATCH", `/api/labor-entries/${id}`, { 
+        hourlyRate,
+        updateEmployeeRate 
+      });
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
     },
   });
 
@@ -371,10 +375,11 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                                 min="0"
                                 value={entry.hourlyRate}
                                 onChange={(e) => {
-                                  // Update hourly rate inline
+                                  // Update hourly rate inline and also update employee's default rate
                                   updateLaborMutation.mutate({
                                     id: entry.id,
                                     hourlyRate: e.target.value,
+                                    updateEmployeeRate: true,
                                   });
                                 }}
                                 className="w-16 text-sm border-0 bg-transparent focus:bg-white focus:border focus:border-primary rounded px-1"

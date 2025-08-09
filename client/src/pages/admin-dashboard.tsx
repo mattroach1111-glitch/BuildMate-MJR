@@ -132,6 +132,40 @@ export default function AdminDashboard() {
     },
   });
 
+  const updateEmployeeMutation = useMutation({
+    mutationFn: async ({ id, defaultHourlyRate }: { id: string; defaultHourlyRate: string }) => {
+      const response = await apiRequest("PATCH", `/api/employees/${id}`, { 
+        defaultHourlyRate: parseFloat(defaultHourlyRate)
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
+      toast({
+        title: "Success",
+        description: "Employee rate updated successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update employee rate",
+        variant: "destructive",
+      });
+    },
+  });
+
   const deleteEmployeeMutation = useMutation({
     mutationFn: async (employeeId: string) => {
       await apiRequest("DELETE", `/api/employees/${employeeId}`);
@@ -536,7 +570,27 @@ export default function AdminDashboard() {
                         <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                           <Users className="h-4 w-4 text-primary" />
                         </div>
-                        <span className="font-medium">{employee.name}</span>
+                        <div>
+                          <div className="font-medium">{employee.name}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-sm text-gray-500">$</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={parseFloat(employee.defaultHourlyRate).toFixed(2)}
+                              onChange={(e) => {
+                                updateEmployeeMutation.mutate({
+                                  id: employee.id,
+                                  defaultHourlyRate: e.target.value,
+                                });
+                              }}
+                              className="w-20 text-sm border border-gray-300 rounded px-2 py-1 focus:border-primary focus:outline-none"
+                              data-testid={`input-employee-rate-${employee.id}`}
+                            />
+                            <span className="text-sm text-gray-500">/hour</span>
+                          </div>
+                        </div>
                       </div>
                       <Button
                         size="sm"
