@@ -22,7 +22,9 @@ import { generateJobPDF } from "@/lib/pdfGenerator";
 import type { Job } from "@shared/schema";
 
 const jobFormSchema = insertJobSchema.extend({
-  builderMargin: z.string().min(1, "Builder margin is required"),
+  builderMargin: z.string()
+    .min(1, "Builder margin is required")
+    .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Builder margin must be a valid number"),
 });
 
 export default function AdminDashboard() {
@@ -92,7 +94,7 @@ export default function AdminDashboard() {
       jobAddress: "",
       clientName: "",
       projectName: "",
-      status: "planning",
+      status: "new_job",
       builderMargin: "25",
       tipFees: "0",
       permits: "0",
@@ -102,7 +104,11 @@ export default function AdminDashboard() {
   });
 
   const onSubmit = (data: z.infer<typeof jobFormSchema>) => {
-    createJobMutation.mutate(data);
+    const submitData = {
+      ...data,
+      builderMargin: parseFloat(data.builderMargin).toString(),
+    };
+    createJobMutation.mutate(submitData);
   };
 
   const handleLogout = () => {
@@ -111,14 +117,20 @@ export default function AdminDashboard() {
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      planning: "outline",
-      in_progress: "default",
-      completed: "secondary",
-      billed: "destructive",
+      new_job: "outline",
+      job_in_progress: "default",
+      job_complete: "secondary",
+      ready_for_billing: "destructive",
+    };
+    const displayText: Record<string, string> = {
+      new_job: "New Job",
+      job_in_progress: "Job in Progress",
+      job_complete: "Job Complete",
+      ready_for_billing: "Ready for Billing",
     };
     return (
       <Badge variant={variants[status] || "default"}>
-        {status.replace("_", " ").toUpperCase()}
+        {displayText[status] || status.replace("_", " ").toUpperCase()}
       </Badge>
     );
   };
@@ -294,10 +306,10 @@ export default function AdminDashboard() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="planning">Planning</SelectItem>
-                                <SelectItem value="in_progress">In Progress</SelectItem>
-                                <SelectItem value="completed">Completed</SelectItem>
-                                <SelectItem value="billed">Billed</SelectItem>
+                                <SelectItem value="new_job">New Job</SelectItem>
+                                <SelectItem value="job_in_progress">Job in Progress</SelectItem>
+                                <SelectItem value="job_complete">Job Complete</SelectItem>
+                                <SelectItem value="ready_for_billing">Ready for Billing</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />

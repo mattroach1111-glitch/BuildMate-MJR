@@ -262,7 +262,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(jobs)
-      .where(eq(jobs.status, "in_progress"))
+      .where(eq(jobs.status, "job_in_progress"))
       .orderBy(jobs.jobAddress);
   }
 }
