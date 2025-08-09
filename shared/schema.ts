@@ -1,0 +1,184 @@
+import { sql, relations } from 'drizzle-orm';
+import {
+  index,
+  jsonb,
+  pgTable,
+  timestamp,
+  varchar,
+  text,
+  decimal,
+  integer,
+  boolean,
+  date,
+} from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+// Session storage table (required for Replit Auth)
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User storage table (required for Replit Auth)
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  role: varchar("role", { enum: ["admin", "staff"] }).notNull().default("staff"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const jobs = pgTable("jobs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobNumber: varchar("job_number").notNull().unique(),
+  clientName: varchar("client_name").notNull(),
+  projectName: varchar("project_name").notNull(),
+  status: varchar("status", { enum: ["planning", "in_progress", "completed", "billed"] }).notNull().default("planning"),
+  builderMargin: decimal("builder_margin", { precision: 5, scale: 2 }).notNull().default("0"),
+  tipFees: decimal("tip_fees", { precision: 10, scale: 2 }).notNull().default("0"),
+  permits: decimal("permits", { precision: 10, scale: 2 }).notNull().default("0"),
+  equipment: decimal("equipment", { precision: 10, scale: 2 }).notNull().default("0"),
+  miscellaneous: decimal("miscellaneous", { precision: 10, scale: 2 }).notNull().default("0"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const laborEntries = pgTable("labor_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobId: varchar("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
+  staffId: varchar("staff_id").notNull().references(() => users.id),
+  hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }).notNull(),
+  hoursLogged: decimal("hours_logged", { precision: 10, scale: 2 }).notNull().default("0"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const materials = pgTable("materials", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobId: varchar("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
+  description: text("description").notNull(),
+  supplier: varchar("supplier").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  invoiceDate: date("invoice_date").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const subTrades = pgTable("sub_trades", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobId: varchar("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
+  trade: varchar("trade").notNull(),
+  contractor: varchar("contractor").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  invoiceDate: date("invoice_date").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const timesheetEntries = pgTable("timesheet_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  staffId: varchar("staff_id").notNull().references(() => users.id),
+  jobId: varchar("job_id").notNull().references(() => jobs.id),
+  date: date("date").notNull(),
+  hours: decimal("hours", { precision: 5, scale: 2 }).notNull(),
+  approved: boolean("approved").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  laborEntries: many(laborEntries),
+  timesheetEntries: many(timesheetEntries),
+}));
+
+export const jobsRelations = relations(jobs, ({ many }) => ({
+  laborEntries: many(laborEntries),
+  materials: many(materials),
+  subTrades: many(subTrades),
+  timesheetEntries: many(timesheetEntries),
+}));
+
+export const laborEntriesRelations = relations(laborEntries, ({ one }) => ({
+  job: one(jobs, {
+    fields: [laborEntries.jobId],
+    references: [jobs.id],
+  }),
+  staff: one(users, {
+    fields: [laborEntries.staffId],
+    references: [users.id],
+  }),
+}));
+
+export const materialsRelations = relations(materials, ({ one }) => ({
+  job: one(jobs, {
+    fields: [materials.jobId],
+    references: [jobs.id],
+  }),
+}));
+
+export const subTradesRelations = relations(subTrades, ({ one }) => ({
+  job: one(jobs, {
+    fields: [subTrades.jobId],
+    references: [jobs.id],
+  }),
+}));
+
+export const timesheetEntriesRelations = relations(timesheetEntries, ({ one }) => ({
+  staff: one(users, {
+    fields: [timesheetEntries.staffId],
+    references: [users.id],
+  }),
+  job: one(jobs, {
+    fields: [timesheetEntries.jobId],
+    references: [jobs.id],
+  }),
+}));
+
+// Insert schemas
+export const insertJobSchema = createInsertSchema(jobs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertLaborEntrySchema = createInsertSchema(laborEntries).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMaterialSchema = createInsertSchema(materials).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSubTradeSchema = createInsertSchema(subTrades).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTimesheetEntrySchema = createInsertSchema(timesheetEntries).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types
+export type UpsertUser = typeof users.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type Job = typeof jobs.$inferSelect;
+export type InsertJob = z.infer<typeof insertJobSchema>;
+export type LaborEntry = typeof laborEntries.$inferSelect;
+export type InsertLaborEntry = z.infer<typeof insertLaborEntrySchema>;
+export type Material = typeof materials.$inferSelect;
+export type InsertMaterial = z.infer<typeof insertMaterialSchema>;
+export type SubTrade = typeof subTrades.$inferSelect;
+export type InsertSubTrade = z.infer<typeof insertSubTradeSchema>;
+export type TimesheetEntry = typeof timesheetEntries.$inferSelect;
+export type InsertTimesheetEntry = z.infer<typeof insertTimesheetEntrySchema>;

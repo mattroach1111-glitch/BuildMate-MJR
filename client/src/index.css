@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: hsl(208.3, 76.2%, 42.2%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(154.3, 59.3%, 33.7%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --accent: hsl(37.6, 100%, 50%);
+  --accent-foreground: hsl(0, 0%, 0%);
+  --error: hsl(356.3, 75.5%, 54.3%);
+  --error-foreground: hsl(0, 0%, 100%);
+  --success: hsl(143.8, 61.2%, 42.4%);
+  --success-foreground: hsl(0, 0%, 100%);
+  --warning: hsl(35.5, 91.7%, 55.1%);
+  --warning-foreground: hsl(0, 0%, 0%);
+  --background: hsl(210, 20%, 98%);
+  --foreground: hsl(222.2, 84%, 4.9%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(222.2, 84%, 4.9%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(222.2, 84%, 4.9%);
+  --muted: hsl(210, 40%, 96%);
+  --muted-foreground: hsl(215.4, 16.3%, 46.9%);
+  --border: hsl(214.3, 31.8%, 91.4%);
+  --input: hsl(214.3, 31.8%, 91.4%);
+  --ring: hsl(208.3, 76.2%, 42.2%);
+  --chart-1: hsl(208.3, 76.2%, 42.2%);
+  --chart-2: hsl(154.3, 59.3%, 33.7%);
+  --chart-3: hsl(37.6, 100%, 50%);
+  --chart-4: hsl(143.8, 61.2%, 42.4%);
+  --chart-5: hsl(356.3, 75.5%, 54.3%);
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: hsl(222.2, 84%, 4.9%);
+  --foreground: hsl(210, 40%, 98%);
+  --card: hsl(222.2, 84%, 4.9%);
+  --card-foreground: hsl(210, 40%, 98%);
+  --popover: hsl(222.2, 84%, 4.9%);
+  --popover-foreground: hsl(210, 40%, 98%);
+  --primary: hsl(208.3, 76.2%, 42.2%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(217.2, 32.6%, 17.5%);
+  --secondary-foreground: hsl(210, 40%, 98%);
+  --muted: hsl(217.2, 32.6%, 17.5%);
+  --muted-foreground: hsl(215, 20.2%, 65.1%);
+  --accent: hsl(217.2, 32.6%, 17.5%);
+  --accent-foreground: hsl(210, 40%, 98%);
+  --border: hsl(217.2, 32.6%, 17.5%);
+  --input: hsl(217.2, 32.6%, 17.5%);
+  --ring: hsl(208.3, 76.2%, 42.2%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Custom classes for construction theme */
+.construction-gradient {
+  background: linear-gradient(135deg, var(--primary), #1976D2);
+}
+
+.error {
+  color: var(--error);
+}
+
+.success {
+  color: var(--success);
+}
+
+.warning {
+  color: var(--warning);
+}
+
+/* Ensure proper contrast for buttons */
+.btn-primary {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.btn-primary:hover {
+  background-color: hsl(208.3, 76.2%, 38%);
+}
+
+.btn-secondary {
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+.btn-secondary:hover {
+  background-color: hsl(154.3, 59.3%, 30%);
+}
