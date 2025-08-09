@@ -384,7 +384,7 @@ export default function StaffDashboard() {
               )}
 
               {/* Summary by Job */}
-              {timesheetEntries && (timesheetEntries as TimesheetEntry[]).length > 0 && (
+              {timesheetEntries && (timesheetEntries as TimesheetEntry[]).length > 0 ? (
                 <div className="mt-6 p-6 bg-gray-50 rounded-lg">
                   <h4 className="font-semibold text-gray-800 mb-3" data-testid="text-job-summary-title">
                     Hours by Job
@@ -402,7 +402,7 @@ export default function StaffDashboard() {
                     ))}
                   </div>
                 </div>
-              )}
+              ) : null}
             </CardContent>
           </Card>
         </div>

@@ -12,7 +12,7 @@ export async function generateJobPDF(job: Job) {
   
   // Job Info
   doc.setFontSize(12);
-  doc.text(`Job Number: ${job.jobNumber}`, 20, 50);
+  doc.text(`Job Address: ${job.jobAddress}`, 20, 50);
   doc.text(`Client: ${job.clientName}`, 20, 60);
   doc.text(`Project: ${job.projectName}`, 20, 70);
   doc.text(`Status: ${job.status}`, 20, 80);
@@ -47,5 +47,5 @@ export async function generateJobPDF(job: Job) {
   doc.text(`Builder Margin: ${job.builderMargin}%`, 20, yPos);
   
   // Save the PDF
-  doc.save(`${job.jobNumber}-job-sheet.pdf`);
+  doc.save(`${job.jobAddress.replace(/[^a-zA-Z0-9]/g, '-')}-job-sheet.pdf`);
 }

@@ -255,8 +255,8 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
               <DialogTitle data-testid="text-job-sheet-title">
                 {jobDetails ? `${jobDetails.projectName} - ${jobDetails.clientName}` : "Loading..."}
               </DialogTitle>
-              <p className="text-gray-600" data-testid="text-job-number">
-                Job #{jobDetails?.jobNumber}
+              <p className="text-gray-600" data-testid="text-job-address">
+                {jobDetails?.jobAddress}
               </p>
             </div>
             <div className="flex items-center space-x-3">

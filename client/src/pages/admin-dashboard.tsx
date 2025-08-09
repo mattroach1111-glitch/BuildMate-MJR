@@ -89,7 +89,7 @@ export default function AdminDashboard() {
   const form = useForm<z.infer<typeof jobFormSchema>>({
     resolver: zodResolver(jobFormSchema),
     defaultValues: {
-      jobNumber: "",
+      jobAddress: "",
       clientName: "",
       projectName: "",
       status: "planning",
@@ -229,15 +229,15 @@ export default function AdminDashboard() {
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                       <FormField
                         control={form.control}
-                        name="jobNumber"
+                        name="jobAddress"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Job Number</FormLabel>
+                            <FormLabel>Job Address</FormLabel>
                             <FormControl>
                               <Input 
-                                placeholder="JOB-2024-001" 
+                                placeholder="123 Main Street, City" 
                                 {...field} 
-                                data-testid="input-job-number"
+                                data-testid="input-job-address"
                               />
                             </FormControl>
                             <FormMessage />
@@ -365,7 +365,7 @@ export default function AdminDashboard() {
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
-                            Job #
+                            Job Address
                           </th>
                           <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
                             Client
@@ -384,8 +384,8 @@ export default function AdminDashboard() {
                       <tbody className="divide-y divide-gray-200">
                         {(jobs as Job[]).map((job: Job) => (
                           <tr key={job.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 text-sm font-medium text-gray-800" data-testid={`text-job-number-${job.id}`}>
-                              {job.jobNumber}
+                            <td className="px-6 py-4 text-sm font-medium text-gray-800" data-testid={`text-job-address-${job.id}`}>
+                              {job.jobAddress}
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-600" data-testid={`text-client-${job.id}`}>
                               {job.clientName}

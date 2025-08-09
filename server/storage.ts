@@ -263,7 +263,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(jobs)
       .where(eq(jobs.status, "in_progress"))
-      .orderBy(jobs.jobNumber);
+      .orderBy(jobs.jobAddress);
   }
 }
 

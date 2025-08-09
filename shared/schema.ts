@@ -39,7 +39,7 @@ export const users = pgTable("users", {
 
 export const jobs = pgTable("jobs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  jobNumber: varchar("job_number").notNull().unique(),
+  jobAddress: varchar("job_address").notNull(),
   clientName: varchar("client_name").notNull(),
   projectName: varchar("project_name").notNull(),
   status: varchar("status", { enum: ["planning", "in_progress", "completed", "billed"] }).notNull().default("planning"),
