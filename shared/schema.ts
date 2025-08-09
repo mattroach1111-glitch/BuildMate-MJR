@@ -146,6 +146,12 @@ export const insertJobSchema = createInsertSchema(jobs).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  builderMargin: z.string().or(z.number()).transform(val => String(val)),
+  tipFees: z.string().or(z.number()).transform(val => String(val)),
+  permits: z.string().or(z.number()).transform(val => String(val)),
+  equipment: z.string().or(z.number()).transform(val => String(val)),
+  miscellaneous: z.string().or(z.number()).transform(val => String(val)),
 });
 
 export const insertLaborEntrySchema = createInsertSchema(laborEntries).omit({

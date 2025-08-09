@@ -82,11 +82,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
+      console.log("Received job data:", JSON.stringify(req.body, null, 2));
+
       const validatedData = insertJobSchema.parse(req.body);
       const job = await storage.createJob(validatedData);
       res.status(201).json(job);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Validation error:", error.errors);
         return res.status(400).json({ message: fromZodError(error).toString() });
       }
       console.error("Error creating job:", error);
