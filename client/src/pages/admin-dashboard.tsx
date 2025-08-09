@@ -102,10 +102,24 @@ export default function AdminDashboard() {
   const createEmployeeMutation = useMutation({
     mutationFn: async (data: z.infer<typeof employeeFormSchema>) => {
       console.log("Making API request with data:", data);
-      const response = await apiRequest("POST", "/api/employees", data);
-      return response.json();
+      try {
+        const response = await apiRequest("POST", "/api/employees", data);
+        console.log("Response status:", response.status);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Error response:", errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        const result = await response.json();
+        console.log("Success response:", result);
+        return result;
+      } catch (error) {
+        console.error("API request failed:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
+      console.log("Employee creation successful");
       queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
       setIsCreateEmployeeOpen(false);
       toast({
@@ -115,6 +129,7 @@ export default function AdminDashboard() {
       employeeForm.reset();
     },
     onError: (error) => {
+      console.error("Employee creation failed:", error);
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -128,7 +143,7 @@ export default function AdminDashboard() {
       }
       toast({
         title: "Error",
-        description: "Failed to add employee",
+        description: error.message || "Failed to add employee",
         variant: "destructive",
       });
     },
