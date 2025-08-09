@@ -1,12 +1,16 @@
 import {
   users,
   jobs,
+  employees,
   laborEntries,
   materials,
   subTrades,
+  otherCosts,
   timesheetEntries,
   type User,
   type UpsertUser,
+  type Employee,
+  type InsertEmployee,
   type Job,
   type InsertJob,
   type LaborEntry,
@@ -15,6 +19,8 @@ import {
   type InsertMaterial,
   type SubTrade,
   type InsertSubTrade,
+  type OtherCost,
+  type InsertOtherCost,
   type TimesheetEntry,
   type InsertTimesheetEntry,
 } from "@shared/schema";
@@ -25,6 +31,13 @@ export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  
+  // Employee operations
+  getEmployees(): Promise<Employee[]>;
+  getEmployee(id: string): Promise<Employee | undefined>;
+  createEmployee(employee: InsertEmployee): Promise<Employee>;
+  updateEmployee(id: string, employee: Partial<InsertEmployee>): Promise<Employee>;
+  deleteEmployee(id: string): Promise<void>;
   
   // Job operations
   getJobs(): Promise<Job[]>;
@@ -51,6 +64,12 @@ export interface IStorage {
   createSubTrade(subTrade: InsertSubTrade): Promise<SubTrade>;
   updateSubTrade(id: string, subTrade: Partial<InsertSubTrade>): Promise<SubTrade>;
   deleteSubTrade(id: string): Promise<void>;
+  
+  // Other costs operations
+  getOtherCostsForJob(jobId: string): Promise<OtherCost[]>;
+  createOtherCost(otherCost: InsertOtherCost): Promise<OtherCost>;
+  updateOtherCost(id: string, otherCost: Partial<InsertOtherCost>): Promise<OtherCost>;
+  deleteOtherCost(id: string): Promise<void>;
   
   // Timesheet operations
   getTimesheetEntries(staffId: string): Promise<TimesheetEntry[]>;
@@ -79,6 +98,34 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  // Employee operations
+  async getEmployees(): Promise<Employee[]> {
+    return await db.select().from(employees).orderBy(desc(employees.createdAt));
+  }
+
+  async getEmployee(id: string): Promise<Employee | undefined> {
+    const [employee] = await db.select().from(employees).where(eq(employees.id, id));
+    return employee;
+  }
+
+  async createEmployee(employee: InsertEmployee): Promise<Employee> {
+    const [createdEmployee] = await db.insert(employees).values(employee).returning();
+    return createdEmployee;
+  }
+
+  async updateEmployee(id: string, employee: Partial<InsertEmployee>): Promise<Employee> {
+    const [updatedEmployee] = await db
+      .update(employees)
+      .set(employee)
+      .where(eq(employees.id, id))
+      .returning();
+    return updatedEmployee;
+  }
+
+  async deleteEmployee(id: string): Promise<void> {
+    await db.delete(employees).where(eq(employees.id, id));
   }
 
   // Job operations
@@ -220,6 +267,35 @@ export class DatabaseStorage implements IStorage {
 
   async deleteSubTrade(id: string): Promise<void> {
     await db.delete(subTrades).where(eq(subTrades.id, id));
+  }
+
+  // Other costs operations
+  async getOtherCostsForJob(jobId: string): Promise<OtherCost[]> {
+    return await db
+      .select()
+      .from(otherCosts)
+      .where(eq(otherCosts.jobId, jobId));
+  }
+
+  async createOtherCost(otherCost: InsertOtherCost): Promise<OtherCost> {
+    const [createdOtherCost] = await db
+      .insert(otherCosts)
+      .values(otherCost)
+      .returning();
+    return createdOtherCost;
+  }
+
+  async updateOtherCost(id: string, otherCost: Partial<InsertOtherCost>): Promise<OtherCost> {
+    const [updatedOtherCost] = await db
+      .update(otherCosts)
+      .set(otherCost)
+      .where(eq(otherCosts.id, id))
+      .returning();
+    return updatedOtherCost;
+  }
+
+  async deleteOtherCost(id: string): Promise<void> {
+    await db.delete(otherCosts).where(eq(otherCosts.id, id));
   }
 
   // Timesheet operations

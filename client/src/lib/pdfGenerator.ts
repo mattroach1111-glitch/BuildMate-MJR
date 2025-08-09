@@ -7,10 +7,7 @@ type JobWithRelations = {
   projectName: string;
   status: string;
   builderMargin: string;
-  tipFees: string;
-  permits: string;
-  equipment: string;
-  miscellaneous: string;
+  defaultHourlyRate: string;
   laborEntries: Array<{
     id: string;
     hourlyRate: string;
@@ -22,6 +19,11 @@ type JobWithRelations = {
   }>;
   subTrades: Array<{
     id: string;
+    amount: string;
+  }>;
+  otherCosts: Array<{
+    id: string;
+    description: string;
     amount: string;
   }>;
 };
@@ -58,11 +60,9 @@ export async function generateJobPDF(job: JobWithRelations) {
     return sum + parseFloat(subTrade.amount);
   }, 0);
 
-  const otherCostsTotal = 
-    parseFloat(job.tipFees) +
-    parseFloat(job.permits) +
-    parseFloat(job.equipment) +
-    parseFloat(job.miscellaneous);
+  const otherCostsTotal = job.otherCosts.reduce((sum, cost) => {
+    return sum + parseFloat(cost.amount);
+  }, 0);
 
   const subtotal = laborTotal + materialsTotal + subTradesTotal + otherCostsTotal;
   const marginPercent = parseFloat(job.builderMargin) / 100;

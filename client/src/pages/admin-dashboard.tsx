@@ -15,16 +15,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { insertJobSchema } from "@shared/schema";
+import { insertJobSchema, insertEmployeeSchema } from "@shared/schema";
 import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
-import { generateJobPDF } from "@/lib/pdfGenerator";
-import type { Job } from "@shared/schema";
+import { Plus, Users, Briefcase, Trash2 } from "lucide-react";
+import type { Job, Employee } from "@shared/schema";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
     .min(1, "Builder margin is required")
     .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Builder margin must be a valid number"),
+  defaultHourlyRate: z.string()
+    .min(1, "Default hourly rate is required")
+    .refine((val) => !isNaN(Number(val)) && Number(val) > 0, "Default hourly rate must be a positive number"),
+});
+
+const employeeFormSchema = insertEmployeeSchema.extend({
+  name: z.string().min(1, "Employee name is required"),
 });
 
 export default function AdminDashboard() {
@@ -32,6 +39,7 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
   const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
+  const [isCreateEmployeeOpen, setIsCreateEmployeeOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -47,17 +55,19 @@ export default function AdminDashboard() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: jobs, isLoading: jobsLoading } = useQuery({
+  const { data: jobs, isLoading: jobsLoading } = useQuery<Job[]>({
     queryKey: ["/api/jobs"],
+    retry: false,
+  });
+
+  const { data: employees, isLoading: employeesLoading } = useQuery<Employee[]>({
+    queryKey: ["/api/employees"],
     retry: false,
   });
 
   const createJobMutation = useMutation({
     mutationFn: async (data: z.infer<typeof jobFormSchema>) => {
-      const response = await apiRequest("POST", "/api/jobs", {
-        ...data,
-        builderMargin: parseFloat(data.builderMargin),
-      });
+      const response = await apiRequest("POST", "/api/jobs", data);
       return response.json();
     },
     onSuccess: () => {
@@ -66,6 +76,72 @@ export default function AdminDashboard() {
       toast({
         title: "Success",
         description: "Job created successfully",
+      });
+      jobForm.reset();
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to create job",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createEmployeeMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof employeeFormSchema>) => {
+      const response = await apiRequest("POST", "/api/employees", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
+      setIsCreateEmployeeOpen(false);
+      toast({
+        title: "Success",
+        description: "Employee added successfully",
+      });
+      employeeForm.reset();
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to add employee",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteEmployeeMutation = useMutation({
+    mutationFn: async (employeeId: string) => {
+      await apiRequest("DELETE", `/api/employees/${employeeId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
+      toast({
+        title: "Success",
+        description: "Employee removed successfully",
       });
     },
     onError: (error) => {
@@ -82,13 +158,13 @@ export default function AdminDashboard() {
       }
       toast({
         title: "Error",
-        description: error.message || "Failed to create job",
+        description: "Failed to remove employee",
         variant: "destructive",
       });
     },
   });
 
-  const form = useForm<z.infer<typeof jobFormSchema>>({
+  const jobForm = useForm<z.infer<typeof jobFormSchema>>({
     resolver: zodResolver(jobFormSchema),
     defaultValues: {
       jobAddress: "",
@@ -96,347 +172,396 @@ export default function AdminDashboard() {
       projectName: "",
       status: "new_job",
       builderMargin: "25",
-      tipFees: "0",
-      permits: "0",
-      equipment: "0",
-      miscellaneous: "0",
+      defaultHourlyRate: "50",
     },
   });
 
-  const onSubmit = (data: z.infer<typeof jobFormSchema>) => {
-    const submitData = {
-      ...data,
-      builderMargin: parseFloat(data.builderMargin).toString(),
-    };
-    createJobMutation.mutate(submitData);
+  const employeeForm = useForm<z.infer<typeof employeeFormSchema>>({
+    resolver: zodResolver(employeeFormSchema),
+    defaultValues: {
+      name: "",
+    },
+  });
+
+  const onJobSubmit = (data: z.infer<typeof jobFormSchema>) => {
+    createJobMutation.mutate(data);
   };
 
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
+  const onEmployeeSubmit = (data: z.infer<typeof employeeFormSchema>) => {
+    createEmployeeMutation.mutate(data);
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      new_job: "outline",
-      job_in_progress: "default",
-      job_complete: "secondary",
-      ready_for_billing: "destructive",
-    };
-    const displayText: Record<string, string> = {
-      new_job: "New Job",
-      job_in_progress: "Job in Progress",
-      job_complete: "Job Complete",
-      ready_for_billing: "Ready for Billing",
-    };
-    return (
-      <Badge variant={variants[status] || "default"}>
-        {displayText[status] || status.replace("_", " ").toUpperCase()}
-      </Badge>
-    );
-  };
-
-  const calculateJobTotal = (job: Job) => {
-    // This is a simplified calculation - the actual calculation would be done in the JobSheetModal
-    return 0;
-  };
-
-  const handleDownloadPDF = async (job: Job) => {
-    try {
-      await generateJobPDF(job);
-      toast({
-        title: "Success",
-        description: "PDF downloaded successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to generate PDF",
-        variant: "destructive",
-      });
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "new_job":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
+      case "job_in_progress":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+      case "job_complete":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      case "ready_for_billing":
+        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
     }
+  };
+
+  const formatStatus = (status: string) => {
+    return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
   }
 
+  if (!isAuthenticated || (user as any)?.role !== "admin") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <h1 className="text-2xl font-bold text-destructive mb-4">Access Denied</h1>
+        <p className="text-muted-foreground mb-4">You need admin access to view this page.</p>
+        <Button onClick={() => window.location.href = "/api/logout"} data-testid="button-logout">
+          Logout
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="container mx-auto p-4 max-w-7xl">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center space-x-4">
-            <div className="bg-primary text-white rounded-lg w-10 h-10 flex items-center justify-center">
-              <i className="fas fa-hard-hat"></i>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-800" data-testid="text-app-name">
-                BuildFlow Pro
-              </h1>
-              <p className="text-sm text-gray-600" data-testid="text-dashboard-type">
-                Admin Dashboard
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600" data-testid="text-user-info">
-              {(user as any)?.firstName || (user as any)?.email} (Admin)
-            </span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleLogout}
-              data-testid="button-logout"
-            >
-              <i className="fas fa-sign-out-alt"></i>
-            </Button>
-          </div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground" data-testid="text-dashboard-title">
+            BuildFlow Pro - Admin Dashboard
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Welcome back, {(user as any)?.firstName || 'Admin'}
+          </p>
         </div>
-      </header>
+        <Button 
+          onClick={() => window.location.href = "/api/logout"}
+          className="w-full sm:w-auto"
+          variant="outline"
+          data-testid="button-logout"
+        >
+          Logout
+        </Button>
+      </div>
 
-      <div className="flex">
-        {/* Sidebar */}
-        <nav className="w-64 bg-white shadow-sm h-screen sticky top-0">
-          <div className="p-6">
-            <Tabs defaultValue="jobs" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-1">
-                <TabsTrigger value="jobs" data-testid="tab-job-sheets">
-                  <i className="fas fa-file-spreadsheet mr-2"></i>
-                  Job Sheets
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-        </nav>
+      {/* Mobile-First Tabs */}
+      <Tabs defaultValue="jobs" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="jobs" className="flex items-center gap-2">
+            <Briefcase className="h-4 w-4" />
+            <span className="hidden sm:inline">Jobs</span>
+          </TabsTrigger>
+          <TabsTrigger value="employees" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Staff</span>
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Main Content */}
-        <main className="flex-1 p-6">
-          <div className="space-y-6">
-            {/* Header with Actions */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800" data-testid="text-page-title">
-                  Job Sheets
-                </h2>
-                <p className="text-gray-600" data-testid="text-page-description">
-                  Manage project costs and billing
-                </p>
-              </div>
-              <Dialog open={isCreateJobOpen} onOpenChange={setIsCreateJobOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-primary hover:bg-blue-700" data-testid="button-new-job">
-                    <i className="fas fa-plus mr-2"></i>
-                    New Job Sheet
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle data-testid="text-create-job-title">Create New Job</DialogTitle>
-                  </DialogHeader>
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="jobAddress"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Job Address</FormLabel>
+        {/* Jobs Tab */}
+        <TabsContent value="jobs" className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h2 className="text-xl font-semibold">Job Management</h2>
+            <Dialog open={isCreateJobOpen} onOpenChange={setIsCreateJobOpen}>
+              <DialogTrigger asChild>
+                <Button className="w-full sm:w-auto" data-testid="button-create-job">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Job
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md mx-4 sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Create New Job</DialogTitle>
+                </DialogHeader>
+                <Form {...jobForm}>
+                  <form onSubmit={jobForm.handleSubmit(onJobSubmit)} className="space-y-4">
+                    <FormField
+                      control={jobForm.control}
+                      name="jobAddress"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Job Address</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter job address" {...field} data-testid="input-job-address" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={jobForm.control}
+                      name="clientName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Client Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter client name" {...field} data-testid="input-client-name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={jobForm.control}
+                      name="projectName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Project Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter project name" {...field} data-testid="input-project-name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={jobForm.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Status</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <Input 
-                                placeholder="123 Main Street, City" 
-                                {...field} 
-                                data-testid="input-job-address"
-                              />
+                              <SelectTrigger data-testid="select-job-status">
+                                <SelectValue placeholder="Select status" />
+                              </SelectTrigger>
                             </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                            <SelectContent>
+                              <SelectItem value="new_job">New Job</SelectItem>
+                              <SelectItem value="job_in_progress">Job In Progress</SelectItem>
+                              <SelectItem value="job_complete">Job Complete</SelectItem>
+                              <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="grid grid-cols-2 gap-4">
                       <FormField
-                        control={form.control}
-                        name="clientName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Client Name</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="Smith Residence" 
-                                {...field} 
-                                data-testid="input-client-name"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="projectName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Project Name</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="Kitchen Renovation" 
-                                {...field} 
-                                data-testid="input-project-name"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="status"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Status</FormLabel>
-                            <Select 
-                              onValueChange={field.onChange} 
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger data-testid="select-status">
-                                  <SelectValue placeholder="Select status" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="new_job">New Job</SelectItem>
-                                <SelectItem value="job_in_progress">Job in Progress</SelectItem>
-                                <SelectItem value="job_complete">Job Complete</SelectItem>
-                                <SelectItem value="ready_for_billing">Ready for Billing</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
+                        control={jobForm.control}
                         name="builderMargin"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Builder Margin (%)</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="number" 
-                                placeholder="25" 
-                                {...field} 
-                                data-testid="input-builder-margin"
-                              />
+                              <Input type="number" placeholder="25" {...field} data-testid="input-builder-margin" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      <div className="flex justify-end space-x-2">
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={() => setIsCreateJobOpen(false)}
-                          data-testid="button-cancel-job"
-                        >
-                          Cancel
-                        </Button>
-                        <Button 
-                          type="submit" 
-                          disabled={createJobMutation.isPending}
-                          data-testid="button-create-job"
-                        >
-                          {createJobMutation.isPending ? "Creating..." : "Create Job"}
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            {/* Jobs List */}
-            <Card>
-              <CardHeader>
-                <CardTitle data-testid="text-jobs-list-title">Active Jobs</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {jobsLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                  </div>
-                ) : !jobs || (jobs as any[]).length === 0 ? (
-                  <div className="text-center py-8 text-gray-500" data-testid="text-no-jobs">
-                    No jobs found. Create your first job to get started.
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
-                            Job Address
-                          </th>
-                          <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
-                            Client
-                          </th>
-                          <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
-                            Project
-                          </th>
-                          <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
-                            Status
-                          </th>
-                          <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
-                            Actions
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {(jobs as Job[]).map((job: Job) => (
-                          <tr key={job.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 text-sm font-medium text-gray-800" data-testid={`text-job-address-${job.id}`}>
-                              {job.jobAddress}
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600" data-testid={`text-client-${job.id}`}>
-                              {job.clientName}
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600" data-testid={`text-project-${job.id}`}>
-                              {job.projectName}
-                            </td>
-                            <td className="px-6 py-4" data-testid={`badge-status-${job.id}`}>
-                              {getStatusBadge(job.status)}
-                            </td>
-                            <td className="px-6 py-4 space-x-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setSelectedJob(job.id)}
-                                data-testid={`button-edit-job-${job.id}`}
-                              >
-                                <i className="fas fa-edit text-primary"></i>
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDownloadPDF(job)}
-                                data-testid={`button-download-pdf-${job.id}`}
-                              >
-                                <i className="fas fa-download text-secondary"></i>
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      <FormField
+                        control={jobForm.control}
+                        name="defaultHourlyRate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Default Rate ($)</FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="50" {...field} data-testid="input-default-rate" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsCreateJobOpen(false)}
+                        className="flex-1"
+                        data-testid="button-cancel-job"
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        disabled={createJobMutation.isPending}
+                        className="flex-1"
+                        data-testid="button-submit-job"
+                      >
+                        {createJobMutation.isPending ? "Creating..." : "Create Job"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
           </div>
-        </main>
-      </div>
+
+          {/* Jobs Grid */}
+          {jobsLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardHeader>
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {jobs?.map((job) => (
+                <Card 
+                  key={job.id} 
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => setSelectedJob(job.id)}
+                  data-testid={`card-job-${job.id}`}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-lg leading-tight">{job.projectName}</CardTitle>
+                      <Badge className={`${getStatusColor(job.status)} text-xs shrink-0 ml-2`}>
+                        {formatStatus(job.status)}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-sm text-muted-foreground mb-2">{job.jobAddress}</p>
+                    <div className="text-xs text-muted-foreground">
+                      Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {jobs && jobs.length === 0 && !jobsLoading && (
+            <Card className="p-8 text-center">
+              <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">No jobs yet</h3>
+              <p className="text-muted-foreground mb-4">Create your first job to get started</p>
+              <Button onClick={() => setIsCreateJobOpen(true)} data-testid="button-create-first-job">
+                <Plus className="h-4 w-4 mr-2" />
+                Create First Job
+              </Button>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Employees Tab */}
+        <TabsContent value="employees" className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h2 className="text-xl font-semibold">Staff Management</h2>
+            <Dialog open={isCreateEmployeeOpen} onOpenChange={setIsCreateEmployeeOpen}>
+              <DialogTrigger asChild>
+                <Button className="w-full sm:w-auto" data-testid="button-add-employee">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Staff
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md mx-4">
+                <DialogHeader>
+                  <DialogTitle>Add New Staff Member</DialogTitle>
+                </DialogHeader>
+                <Form {...employeeForm}>
+                  <form onSubmit={employeeForm.handleSubmit(onEmployeeSubmit)} className="space-y-4">
+                    <FormField
+                      control={employeeForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter employee name" {...field} data-testid="input-employee-name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex gap-2 pt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsCreateEmployeeOpen(false)}
+                        className="flex-1"
+                        data-testid="button-cancel-employee"
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        disabled={createEmployeeMutation.isPending}
+                        className="flex-1"
+                        data-testid="button-submit-employee"
+                      >
+                        {createEmployeeMutation.isPending ? "Adding..." : "Add Staff"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Employees List */}
+          {employeesLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardContent className="p-4">
+                    <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {employees?.map((employee) => (
+                <Card key={employee.id} data-testid={`card-employee-${employee.id}`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Users className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="font-medium">{employee.name}</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteEmployeeMutation.mutate(employee.id)}
+                        disabled={deleteEmployeeMutation.isPending}
+                        data-testid={`button-delete-employee-${employee.id}`}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {employees && employees.length === 0 && !employeesLoading && (
+            <Card className="p-8 text-center">
+              <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">No staff members yet</h3>
+              <p className="text-muted-foreground mb-4">Add your first staff member to get started</p>
+              <Button onClick={() => setIsCreateEmployeeOpen(true)} data-testid="button-add-first-employee">
+                <Plus className="h-4 w-4 mr-2" />
+                Add First Staff Member
+              </Button>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Job Sheet Modal */}
       {selectedJob && (

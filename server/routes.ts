@@ -4,9 +4,11 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import {
   insertJobSchema,
+  insertEmployeeSchema,
   insertLaborEntrySchema,
   insertMaterialSchema,
   insertSubTradeSchema,
+  insertOtherCostSchema,
   insertTimesheetEntrySchema,
 } from "@shared/schema";
 import { z } from "zod";
@@ -25,6 +27,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Employee routes
+  app.get("/api/employees", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const employees = await storage.getEmployees();
+      res.json(employees);
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+      res.status(500).json({ message: "Failed to fetch employees" });
+    }
+  });
+
+  app.post("/api/employees", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const validatedData = insertEmployeeSchema.parse(req.body);
+      const employee = await storage.createEmployee(validatedData);
+      res.status(201).json(employee);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: fromZodError(error).toString() });
+      }
+      console.error("Error creating employee:", error);
+      res.status(500).json({ message: "Failed to create employee" });
+    }
+  });
+
+  app.delete("/api/employees/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      await storage.deleteEmployee(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting employee:", error);
+      res.status(500).json({ message: "Failed to delete employee" });
     }
   });
 
@@ -57,10 +109,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get related data
-      const [laborEntries, materials, subTrades] = await Promise.all([
+      const [laborEntries, materials, subTrades, otherCosts] = await Promise.all([
         storage.getLaborEntriesForJob(job.id),
         storage.getMaterialsForJob(job.id),
         storage.getSubTradesForJob(job.id),
+        storage.getOtherCostsForJob(job.id),
       ]);
 
       res.json({
@@ -68,6 +121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         laborEntries,
         materials,
         subTrades,
+        otherCosts,
       });
     } catch (error) {
       console.error("Error fetching job:", error);
@@ -287,6 +341,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting sub trade:", error);
       res.status(500).json({ message: "Failed to delete sub trade" });
+    }
+  });
+
+  // Other costs routes
+  app.post("/api/jobs/:jobId/othercosts", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const validatedData = insertOtherCostSchema.parse({
+        ...req.body,
+        jobId: req.params.jobId,
+      });
+      const otherCost = await storage.createOtherCost(validatedData);
+      res.status(201).json(otherCost);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: fromZodError(error).toString() });
+      }
+      console.error("Error creating other cost:", error);
+      res.status(500).json({ message: "Failed to create other cost" });
+    }
+  });
+
+  app.delete("/api/othercosts/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      await storage.deleteOtherCost(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting other cost:", error);
+      res.status(500).json({ message: "Failed to delete other cost" });
     }
   });
 

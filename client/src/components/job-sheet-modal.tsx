@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { generateJobPDF } from "@/lib/pdfGenerator";
-import type { Job, LaborEntry, Material, SubTrade } from "@shared/schema";
+import type { Job, LaborEntry, Material, SubTrade, OtherCost } from "@shared/schema";
 
 interface JobSheetModalProps {
   jobId: string;
@@ -21,12 +21,13 @@ interface JobDetails extends Job {
   laborEntries: LaborEntry[];
   materials: Material[];
   subTrades: SubTrade[];
+  otherCosts: OtherCost[];
 }
 
 export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalProps) {
   const { toast } = useToast();
   const [builderMargin, setBuilderMargin] = useState("25");
-  const [tipFees, setTipFees] = useState("0");
+  const [defaultHourlyRate, setDefaultHourlyRate] = useState("50");
 
   const { data: jobDetails, isLoading } = useQuery<JobDetails>({
     queryKey: ["/api/jobs", jobId],
@@ -179,7 +180,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   useEffect(() => {
     if (jobDetails) {
       setBuilderMargin(jobDetails.builderMargin);
-      setTipFees(jobDetails.tipFees);
+      setDefaultHourlyRate(jobDetails.defaultHourlyRate);
     }
   }, [jobDetails]);
 
@@ -198,11 +199,9 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return sum + parseFloat(subTrade.amount);
     }, 0);
 
-    const otherCostsTotal = 
-      parseFloat(tipFees) +
-      parseFloat(jobDetails.permits) +
-      parseFloat(jobDetails.equipment) +
-      parseFloat(jobDetails.miscellaneous);
+    const otherCostsTotal = jobDetails.otherCosts.reduce((sum, cost) => {
+      return sum + parseFloat(cost.amount);
+    }, 0);
 
     const subtotal = laborTotal + materialsTotal + subTradesTotal + otherCostsTotal;
     const marginPercent = parseFloat(builderMargin) / 100;
@@ -229,7 +228,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const handleSave = () => {
     updateJobMutation.mutate({
       builderMargin: builderMargin,
-      tipFees: tipFees,
+      defaultHourlyRate: defaultHourlyRate,
     });
   };
 
@@ -257,7 +256,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-screen overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-screen overflow-y-auto sm:max-w-6xl w-full max-w-[95vw] sm:w-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -490,49 +489,16 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
               <CardHeader>
                 <CardTitle data-testid="text-other-costs-title">Other Costs</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="tipFees">Tip Fees</Label>
-                    <Input 
-                      id="tipFees"
-                      type="number" 
-                      value={jobDetails.tipFees}
-                      readOnly
-                      data-testid="input-tip-fees-readonly"
-                    />
+              <CardContent className="space-y-4">
+                {jobDetails?.otherCosts?.map((cost) => (
+                  <div key={cost.id} className="flex justify-between items-center p-2 border rounded">
+                    <span>{cost.description}</span>
+                    <span>${parseFloat(cost.amount).toFixed(2)}</span>
                   </div>
-                  <div>
-                    <Label htmlFor="permits">Permits & Fees</Label>
-                    <Input 
-                      id="permits"
-                      type="number" 
-                      value={jobDetails.permits}
-                      readOnly
-                      data-testid="input-permits"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="equipment">Equipment Rental</Label>
-                    <Input 
-                      id="equipment"
-                      type="number" 
-                      value={jobDetails.equipment}
-                      readOnly
-                      data-testid="input-equipment"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="miscellaneous">Miscellaneous</Label>
-                    <Input 
-                      id="miscellaneous"
-                      type="number" 
-                      value={jobDetails.miscellaneous}
-                      readOnly
-                      data-testid="input-miscellaneous"
-                    />
-                  </div>
-                </div>
+                ))}
+                {(!jobDetails?.otherCosts || jobDetails.otherCosts.length === 0) && (
+                  <p className="text-gray-500 text-center py-4">No other costs added yet</p>
+                )}
                 <div className="text-right mt-4">
                   <span className="text-lg font-semibold" data-testid="text-other-costs-total">
                     Other Costs Total: ${totals.otherCostsTotal.toFixed(2)}
@@ -584,14 +550,14 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                   </div>
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="tipFees">Tip Fees ($)</Label>
+                      <Label htmlFor="defaultHourlyRate">Default Hourly Rate ($)</Label>
                       <Input
-                        id="tipFees"
+                        id="defaultHourlyRate"
                         type="number"
-                        value={tipFees}
-                        onChange={(e) => setTipFees(e.target.value)}
+                        value={defaultHourlyRate}
+                        onChange={(e) => setDefaultHourlyRate(e.target.value)}
                         className="text-lg"
-                        data-testid="input-tip-fees"
+                        data-testid="input-default-hourly-rate"
                       />
                     </div>
                     <div>

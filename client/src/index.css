@@ -64,6 +64,32 @@
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
+
+  /* Mobile-first optimizations */
+  @media (max-width: 768px) {
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
+    .modal-content {
+      margin: 0;
+      max-height: 100vh;
+      border-radius: 0;
+    }
+    
+    /* Touch-friendly buttons */
+    button {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Larger form inputs for mobile */
+    input, select, textarea {
+      font-size: 16px; /* Prevents zoom on iOS */
+      min-height: 44px;
+    }
+  }
 }
 
 /* Custom classes for construction theme */
