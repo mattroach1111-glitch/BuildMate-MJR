@@ -121,7 +121,7 @@ export class DatabaseStorage implements IStorage {
     for (const job of jobs) {
       await this.createLaborEntry({
         jobId: job.id,
-        staffId: createdEmployee.name,
+        staffId: createdEmployee.id,
         hourlyRate: createdEmployee.defaultHourlyRate,
         hoursLogged: "0",
       });
@@ -161,7 +161,7 @@ export class DatabaseStorage implements IStorage {
     for (const employee of employees) {
       await this.createLaborEntry({
         jobId: createdJob.id,
-        staffId: employee.name,
+        staffId: employee.id,
         hourlyRate: employee.defaultHourlyRate,
         hoursLogged: "0",
       });
@@ -186,8 +186,22 @@ export class DatabaseStorage implements IStorage {
   // Labor entry operations
   async getLaborEntriesForJob(jobId: string): Promise<LaborEntry[]> {
     return await db
-      .select()
+      .select({
+        id: laborEntries.id,
+        jobId: laborEntries.jobId,
+        staffId: laborEntries.staffId,
+        hourlyRate: laborEntries.hourlyRate,
+        hoursLogged: laborEntries.hoursLogged,
+        createdAt: laborEntries.createdAt,
+        updatedAt: laborEntries.updatedAt,
+        staff: {
+          id: employees.id,
+          name: employees.name,
+          defaultHourlyRate: employees.defaultHourlyRate,
+        },
+      })
       .from(laborEntries)
+      .leftJoin(employees, eq(laborEntries.staffId, employees.id))
       .where(eq(laborEntries.jobId, jobId));
   }
 
@@ -376,10 +390,10 @@ export class DatabaseStorage implements IStorage {
     const existingStaffIds = new Set(existingLaborEntries.map(entry => entry.staffId));
     
     for (const employee of employees) {
-      if (!existingStaffIds.has(employee.name)) {
+      if (!existingStaffIds.has(employee.id)) {
         await this.createLaborEntry({
           jobId,
-          staffId: employee.name,
+          staffId: employee.id,
           hourlyRate: employee.defaultHourlyRate,
           hoursLogged: "0",
         });

@@ -354,11 +354,11 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                             <div className="flex items-center gap-2">
                               <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
                                 <span className="text-xs font-medium text-primary">
-                                  {entry.staffId.charAt(0).toUpperCase()}
+                                  {(entry.staff?.name || entry.staffId).charAt(0).toUpperCase()}
                                 </span>
                               </div>
                               <span className="font-medium" data-testid={`text-labor-staff-${entry.id}`}>
-                                {entry.staffId}
+                                {entry.staff?.name || entry.staffId}
                               </span>
                             </div>
                           </td>

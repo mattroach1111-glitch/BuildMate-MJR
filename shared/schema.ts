@@ -67,7 +67,7 @@ export const otherCosts = pgTable("other_costs", {
 export const laborEntries = pgTable("labor_entries", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   jobId: varchar("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
-  staffId: varchar("staff_id").notNull().references(() => users.id),
+  staffId: varchar("staff_id").notNull().references(() => employees.id),
   hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }).notNull(),
   hoursLogged: decimal("hours_logged", { precision: 10, scale: 2 }).notNull().default("0"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -127,9 +127,9 @@ export const laborEntriesRelations = relations(laborEntries, ({ one }) => ({
     fields: [laborEntries.jobId],
     references: [jobs.id],
   }),
-  staff: one(users, {
+  staff: one(employees, {
     fields: [laborEntries.staffId],
-    references: [users.id],
+    references: [employees.id],
   }),
 }));
 
