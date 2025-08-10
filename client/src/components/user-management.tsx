@@ -149,7 +149,7 @@ export function UserManagement() {
               console.log("Users length:", users?.length);
               return Array.isArray(users) && users.length > 0;
             })() ? (
-              users.map((user) => (
+              users?.map((user) => (
                 <div
                   key={user.id}
                   className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
