@@ -21,7 +21,9 @@ export function UserManagement() {
     queryFn: async () => {
       try {
         const response = await apiRequest("GET", "/api/users");
-        return response as User[];
+        // Ensure response is an array
+        const userData = Array.isArray(response) ? response : [];
+        return userData as User[];
       } catch (err: any) {
         if (err.message?.includes("Unauthorized") || err.status === 401) {
           throw new Error("Admin access required to manage users");
@@ -131,38 +133,44 @@ export function UserManagement() {
             Current Users
           </h4>
           <div className="space-y-2 max-h-60 overflow-y-auto">
-            {users?.map((user) => (
-              <div
-                key={user.id}
-                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                data-testid={`user-item-${user.id}`}
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">
-                      {user.firstName} {user.lastName}
-                    </span>
-                    <Badge 
-                      variant={user.role === 'admin' ? 'default' : 'secondary'}
-                      className={user.role === 'admin' ? 'bg-amber-500 hover:bg-amber-600' : ''}
-                    >
-                      {user.role === 'admin' ? (
-                        <>
-                          <Crown className="h-3 w-3 mr-1" />
-                          Admin
-                        </>
-                      ) : (
-                        <>
-                          <Shield className="h-3 w-3 mr-1" />
-                          Staff
-                        </>
-                      )}
-                    </Badge>
+            {Array.isArray(users) && users.length > 0 ? (
+              users.map((user) => (
+                <div
+                  key={user.id}
+                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                  data-testid={`user-item-${user.id}`}
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">
+                        {user.firstName} {user.lastName}
+                      </span>
+                      <Badge 
+                        variant={user.role === 'admin' ? 'default' : 'secondary'}
+                        className={user.role === 'admin' ? 'bg-amber-500 hover:bg-amber-600' : ''}
+                      >
+                        {user.role === 'admin' ? (
+                          <>
+                            <Crown className="h-3 w-3 mr-1" />
+                            Admin
+                          </>
+                        ) : (
+                          <>
+                            <Shield className="h-3 w-3 mr-1" />
+                            Staff
+                          </>
+                        )}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{user.email}</p>
                   </div>
-                  <p className="text-sm text-muted-foreground">{user.email}</p>
                 </div>
+              ))
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-sm text-muted-foreground">No users found</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -177,19 +185,23 @@ export function UserManagement() {
                   <SelectValue placeholder="Choose a user to modify" />
                 </SelectTrigger>
                 <SelectContent>
-                  {users?.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      <div className="flex items-center gap-2">
-                        <span>{user.firstName} {user.lastName}</span>
-                        <Badge 
-                          variant={user.role === 'admin' ? 'default' : 'secondary'}
-                          className="text-xs"
-                        >
-                          {user.role}
-                        </Badge>
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {Array.isArray(users) && users.length > 0 ? (
+                    users.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        <div className="flex items-center gap-2">
+                          <span>{user.firstName} {user.lastName}</span>
+                          <Badge 
+                            variant={user.role === 'admin' ? 'default' : 'secondary'}
+                            className="text-xs"
+                          >
+                            {user.role}
+                          </Badge>
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="" disabled>No users available</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
