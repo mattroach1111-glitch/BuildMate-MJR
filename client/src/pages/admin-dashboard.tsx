@@ -1616,7 +1616,7 @@ export default function AdminDashboard() {
             </Card>
           )}
 
-          {/* Deleted Jobs Folder - Pinned to Bottom */}
+          {/* Previous Completed Job Sheets Folder - Pinned to Bottom */}
           {deletedJobs && deletedJobs.length > 0 && (
             <div className="mt-8 pt-6 border-t">
               <div 
@@ -1628,7 +1628,7 @@ export default function AdminDashboard() {
                   <div 
                     className="flex items-center gap-2 flex-1 cursor-pointer"
                     onClick={() => setIsDeletedFolderExpanded(!isDeletedFolderExpanded)}
-                    data-testid="folder-deleted-jobs"
+                    data-testid="folder-previous-completed"
                   >
                     {isDeletedFolderExpanded ? (
                       <ChevronDown className="h-4 w-4" />
@@ -1640,7 +1640,7 @@ export default function AdminDashboard() {
                     ) : (
                       <Folder className="h-5 w-5 text-red-600" />
                     )}
-                    <span className="font-medium text-red-800">🗑️ Deleted Jobs</span>
+                    <span className="font-medium text-red-800">📋 Previous completed job sheets</span>
                     <Badge 
                       variant="secondary" 
                       className="ml-2 bg-red-200 text-red-800 border-red-300"
@@ -1664,7 +1664,7 @@ export default function AdminDashboard() {
                             <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
                             <div className="flex items-center gap-2 shrink-0">
                               <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">
-                                Deleted
+                                Archived
                               </Badge>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -1702,7 +1702,7 @@ export default function AdminDashboard() {
                             Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
                           </div>
                           <div className="text-xs text-red-600 mt-1">
-                            Deleted: {job.deletedAt ? new Date(job.deletedAt).toLocaleDateString() : 'Unknown'}
+                            Archived: {job.deletedAt ? new Date(job.deletedAt).toLocaleDateString() : 'Unknown'}
                           </div>
                         </CardContent>
                       </Card>
