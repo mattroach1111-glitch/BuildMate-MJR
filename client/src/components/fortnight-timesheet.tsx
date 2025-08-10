@@ -187,7 +187,20 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   };
 
   const getTotalHours = () => {
-    return currentFortnightEntries.reduce((total: number, entry: any) => total + (entry.hours || 0), 0);
+    // Sum hours from saved timesheet entries 
+    const savedHours = currentFortnightEntries.reduce((total: number, entry: any) => total + (entry.hours || 0), 0);
+    
+    // Sum hours from unsaved form data
+    const formHours = Object.values(timesheetData).reduce((total: number, dayEntries: any) => {
+      if (Array.isArray(dayEntries)) {
+        return total + dayEntries.reduce((dayTotal: number, entry: any) => {
+          return dayTotal + (entry.hours ? parseFloat(entry.hours) : 0);
+        }, 0);
+      }
+      return total;
+    }, 0);
+    
+    return savedHours + formHours;
   };
 
   const addJobEntry = (date: Date) => {
@@ -548,7 +561,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     <div>
                       <p className="font-medium">Total Hours: {getTotalHours()}h</p>
                       <p className="text-sm text-muted-foreground">
-                        {currentFortnightEntries.length} entries recorded
+                        {currentFortnightEntries.length + Object.values(timesheetData).reduce((total: number, dayEntries: any) => {
+                          return total + (Array.isArray(dayEntries) ? dayEntries.filter((e: any) => e.hours && parseFloat(e.hours) > 0).length : 0);
+                        }, 0)} entries recorded
                       </p>
                     </div>
                     <div className="text-right">
