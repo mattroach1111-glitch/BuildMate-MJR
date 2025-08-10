@@ -608,6 +608,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/admin/timesheet/clear-fortnight", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { staffId, fortnightStart, fortnightEnd } = req.body;
+      
+      if (!staffId || !fortnightStart || !fortnightEnd) {
+        return res.status(400).json({ message: "staffId, fortnightStart, and fortnightEnd are required" });
+      }
+
+      await storage.clearFortnightTimesheet(staffId, fortnightStart, fortnightEnd);
+      
+      res.status(200).json({ 
+        message: "Fortnight timesheet cleared successfully",
+        staffId,
+        fortnightStart,
+        fortnightEnd
+      });
+    } catch (error) {
+      console.error("Error clearing fortnight timesheet:", error);
+      res.status(500).json({ message: "Failed to clear fortnight timesheet" });
+    }
+  });
+
   app.post("/api/admin/timesheet", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

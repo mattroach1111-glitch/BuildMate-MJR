@@ -79,8 +79,24 @@ export interface IStorage {
   deleteTimesheetEntry(id: string): Promise<void>;
   getJobsForStaff(): Promise<Job[]>;
   
+  // Admin timesheet operations
+  getAllTimesheetEntries(): Promise<any[]>;
+  updateTimesheetApproval(id: string, approved: boolean): Promise<void>;
+  updateFortnightApproval(staffId: string, fortnightStart: string, fortnightEnd: string, approved: boolean): Promise<void>;
+  clearFortnightTimesheet(staffId: string, fortnightStart: string, fortnightEnd: string): Promise<void>;
+  getStaffUsers(): Promise<User[]>;
+  getStaffForTimesheets(): Promise<Array<{ id: string; name: string; type: 'user' | 'employee' }>>;
+  getTimesheetEntriesByPeriod(staffId: string, startDate: string, endDate: string): Promise<any[]>;
+  createAdminTimesheetEntry(data: any): Promise<any>;
+  updateTimesheetEntry(id: string, data: any): Promise<void>;
+  
   // Sync operations
   syncEmployeesToJob(jobId: string): Promise<void>;
+  
+  // Soft delete operations  
+  getDeletedJobs(): Promise<Job[]>;
+  softDeleteJob(id: string): Promise<void>;
+  restoreJob(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -545,6 +561,41 @@ export class DatabaseStorage implements IStorage {
           lte(timesheetEntries.date, fortnightEnd)
         )
       );
+  }
+
+  async clearFortnightTimesheet(staffId: string, fortnightStart: string, fortnightEnd: string): Promise<void> {
+    // Get all entries to update affected jobs
+    const entriesToDelete = await db
+      .select()
+      .from(timesheetEntries)
+      .where(
+        and(
+          eq(timesheetEntries.staffId, staffId),
+          gte(timesheetEntries.date, fortnightStart),
+          lte(timesheetEntries.date, fortnightEnd),
+          eq(timesheetEntries.approved, false) // Only delete unapproved entries
+        )
+      );
+
+    // Delete the timesheet entries for this fortnight (only unapproved ones)
+    await db
+      .delete(timesheetEntries)
+      .where(
+        and(
+          eq(timesheetEntries.staffId, staffId),
+          gte(timesheetEntries.date, fortnightStart),
+          lte(timesheetEntries.date, fortnightEnd),
+          eq(timesheetEntries.approved, false) // Only delete unapproved entries
+        )
+      );
+
+    // Update labor hours for affected jobs
+    const uniqueJobIds = [...new Set(entriesToDelete.map(entry => entry.jobId).filter(Boolean))];
+    for (const jobId of uniqueJobIds) {
+      if (jobId) {
+        await this.updateLaborHoursFromTimesheet(staffId, jobId);
+      }
+    }
   }
 
   async getStaffUsers(): Promise<User[]> {

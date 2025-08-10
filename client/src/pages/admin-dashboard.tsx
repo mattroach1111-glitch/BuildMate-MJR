@@ -508,6 +508,45 @@ export default function AdminDashboard() {
     },
   });
 
+  const clearTimesheetMutation = useMutation({
+    mutationFn: async ({ staffId, fortnightStart, fortnightEnd }: { 
+      staffId: string; 
+      fortnightStart: string; 
+      fortnightEnd: string; 
+    }) => {
+      await apiRequest("DELETE", `/api/admin/timesheet/clear-fortnight`, { 
+        staffId, 
+        fortnightStart, 
+        fortnightEnd
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/timesheets"] });
+      toast({
+        title: "Success",
+        description: "Timesheet cleared successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to clear timesheet",
+        variant: "destructive",
+      });
+    },
+  });
+
   const createTimesheetMutation = useMutation({
     mutationFn: async (data: z.infer<typeof adminTimesheetFormSchema>) => {
       const response = await apiRequest("POST", "/api/admin/timesheet", {
@@ -2416,6 +2455,25 @@ export default function AdminDashboard() {
                             ) : (
                               <ChevronDown className="h-4 w-4" />
                             )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to clear all timesheet entries for ${fortnight.staffName || 'this staff member'} for this fortnight? This action cannot be undone.`)) {
+                                clearTimesheetMutation.mutate({
+                                  staffId: fortnight.staffId,
+                                  fortnightStart: fortnight.fortnightStart.toISOString().split('T')[0],
+                                  fortnightEnd: fortnight.fortnightEnd.toISOString().split('T')[0]
+                                });
+                              }
+                            }}
+                            disabled={clearTimesheetMutation.isPending}
+                            data-testid={`button-clear-timesheet-${fortnight.staffId}-${fortnight.fortnightStart.toISOString().split('T')[0]}`}
+                            className="min-w-28"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Clear
                           </Button>
                           <Button
                             size="default"
