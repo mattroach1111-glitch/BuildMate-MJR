@@ -34,6 +34,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const [currentFortnightIndex, setCurrentFortnightIndex] = useState(getCurrentFortnightIndex());
   const [timesheetData, setTimesheetData] = useState<any>({});
   const autoSaveTimeouts = useRef<{ [key: string]: NodeJS.Timeout }>({});
+  const savedEntries = useRef<Set<string>>(new Set()); // Track which entries have been saved
 
   // Calculate fortnight boundaries based on August 11, 2025 start date
   const getFortnightDates = (fortnightIndex: number) => {
@@ -162,17 +163,17 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       if (field === 'hours' || field === 'jobId') {
         const entry = updatedEntries[entryIndex];
         if (entry.hours && parseFloat(entry.hours) > 0 && entry.jobId && entry.jobId !== 'no-job') {
-          // Clear any existing timeout for this entry
-          const entryKey = `${format(date, 'yyyy-MM-dd')}-${entryIndex}`;
+          // Clear any existing timeout for this specific entry
+          const entryKey = `${format(date, 'yyyy-MM-dd')}-${entryIndex}-${entry.jobId}-${entry.hours}`;
           if (autoSaveTimeouts.current[entryKey]) {
             clearTimeout(autoSaveTimeouts.current[entryKey]);
           }
           
-          // Set new timeout
+          // Set new timeout with unique key to prevent cross-interference
           autoSaveTimeouts.current[entryKey] = setTimeout(() => {
             autoSaveEntry(date, entryIndex, entry);
             delete autoSaveTimeouts.current[entryKey];
-          }, 1500); // Debounce auto-save by 1.5 seconds
+          }, 2000); // Increased debounce time to 2 seconds
         }
       }
       
@@ -185,14 +186,30 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   const autoSaveEntry = (date: Date, entryIndex: number, data: any) => {
     if (data && data.hours && parseFloat(data.hours) > 0) {
-      // Always save - the backend should handle proper updates/creates
-      // This ensures we capture all timesheet entries the user intends to make
       const dateStr = format(date, 'yyyy-MM-dd');
+      
+      // Create a unique key for this specific entry
+      const entryKey = `${dateStr}-${data.jobId || 'no-job'}-${data.hours}-${entryIndex}`;
+      
+      // Check if this exact entry has already been saved
+      if (savedEntries.current.has(entryKey)) {
+        console.log('Entry already saved, skipping:', entryKey);
+        return;
+      }
+      
+      // Mark this entry as being saved
+      savedEntries.current.add(entryKey);
+      
       updateTimesheetMutation.mutate({
         date: dateStr,
         hours: parseFloat(data.hours),
         materials: data.materials || '',
         jobId: data.jobId === 'no-job' ? null : data.jobId || null,
+      }, {
+        onError: () => {
+          // Remove from saved entries if the save failed
+          savedEntries.current.delete(entryKey);
+        }
       });
     }
   };
@@ -328,6 +345,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         clearTimeout(timeout);
       });
       autoSaveTimeouts.current = {};
+      
+      // Clear saved entries tracking
+      savedEntries.current.clear();
       
       // Show success message
       toast({

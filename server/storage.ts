@@ -413,7 +413,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertTimesheetEntry(entry: InsertTimesheetEntry): Promise<TimesheetEntry> {
-    // Check if entry exists for the same staff, date, and job
+    // For multiple entries per day, we need to identify unique combinations more precisely
+    // Check if entry exists with same staff, date, job, and hours (to avoid exact duplicates)
     const existingEntry = await db
       .select()
       .from(timesheetEntries)
@@ -421,6 +422,7 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(timesheetEntries.staffId, entry.staffId),
           eq(timesheetEntries.date, entry.date),
+          eq(timesheetEntries.hours, entry.hours),
           entry.jobId ? eq(timesheetEntries.jobId, entry.jobId) : isNull(timesheetEntries.jobId)
         )
       )
@@ -429,11 +431,10 @@ export class DatabaseStorage implements IStorage {
     let result: TimesheetEntry;
 
     if (existingEntry.length > 0) {
-      // Update existing entry
+      // Update existing entry (only materials since we matched on hours)
       const [updatedEntry] = await db
         .update(timesheetEntries)
         .set({
-          hours: entry.hours,
           materials: entry.materials
         })
         .where(eq(timesheetEntries.id, existingEntry[0].id))
