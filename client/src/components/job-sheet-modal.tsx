@@ -30,6 +30,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const [builderMargin, setBuilderMargin] = useState("25");
   const [defaultHourlyRate, setDefaultHourlyRate] = useState("50");
   const [localLaborRates, setLocalLaborRates] = useState<Record<string, string>>({});
+  const [hasUnsavedRates, setHasUnsavedRates] = useState(false);
 
   const { data: jobDetails, isLoading } = useQuery<JobDetails>({
     queryKey: ["/api/jobs", jobId],
@@ -115,15 +116,40 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     },
   });
 
-  // Create debounced version of the mutation calls
-  const debouncedUpdateLaborRate = useCallback(
-    debounce((id: string, hourlyRate: string) => {
-      if (hourlyRate && hourlyRate.trim() !== '' && !isNaN(parseFloat(hourlyRate))) {
-        updateLaborMutation.mutate({ id, hourlyRate });
-      }
-    }, 2000), // Wait 2 seconds after user stops typing for smoother experience
-    [updateLaborMutation]
-  );
+  // Save all changed labor rates at once
+  const saveAllLaborRates = useCallback(async () => {
+    if (!hasUnsavedRates || !jobDetails) return;
+    
+    const ratesToUpdate = Object.entries(localLaborRates).filter(([id, rate]) => {
+      const originalEntry = jobDetails.laborEntries.find(entry => entry.id === id);
+      return originalEntry && originalEntry.hourlyRate !== rate && rate && !isNaN(parseFloat(rate));
+    });
+
+    if (ratesToUpdate.length === 0) {
+      setHasUnsavedRates(false);
+      return;
+    }
+
+    try {
+      // Update all rates in parallel
+      await Promise.all(
+        ratesToUpdate.map(([id, hourlyRate]) => 
+          updateLaborMutation.mutateAsync({ id, hourlyRate })
+        )
+      );
+      setHasUnsavedRates(false);
+      toast({
+        title: "Success",
+        description: "Labor rates updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update some labor rates",
+        variant: "destructive",
+      });
+    }
+  }, [localLaborRates, hasUnsavedRates, jobDetails, updateLaborMutation, toast]);
 
   const debouncedUpdateJobSettings = useCallback(
     debounce((data: Partial<Job>) => {
@@ -251,6 +277,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
         rates[entry.id] = entry.hourlyRate;
       });
       setLocalLaborRates(rates);
+      setHasUnsavedRates(false);
     }
   }, [jobDetails]);
 
@@ -386,15 +413,27 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle data-testid="text-labor-section-title">Labour</CardTitle>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => window.location.reload()}
-                    data-testid="button-refresh-labor"
-                    title="Sync all staff to this job"
-                  >
-                    <i className="fas fa-sync"></i>
-                  </Button>
+                  <div className="flex gap-2">
+                    {hasUnsavedRates && (
+                      <Button 
+                        onClick={saveAllLaborRates}
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700"
+                        data-testid="button-save-rates"
+                      >
+                        Save Changes
+                      </Button>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => window.location.reload()}
+                      data-testid="button-refresh-labor"
+                      title="Sync all staff to this job"
+                    >
+                      <i className="fas fa-sync"></i>
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -438,10 +477,8 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                                     ...prev,
                                     [entry.id]: newValue
                                   }));
-                                  // Only save if it's a valid number
-                                  if (newValue && !isNaN(parseFloat(newValue))) {
-                                    debouncedUpdateLaborRate(entry.id, newValue);
-                                  }
+                                  // Mark as having unsaved changes
+                                  setHasUnsavedRates(true);
                                 }}
                                 className="w-20 text-sm border-0 bg-transparent focus:bg-white focus:border focus:border-primary rounded px-2 py-1"
                                 data-testid={`input-labor-rate-${entry.id}`}
