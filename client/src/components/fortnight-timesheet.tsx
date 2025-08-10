@@ -53,9 +53,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   });
 
   const { data: timesheetEntries } = useQuery({
-    queryKey: isAdminView && selectedEmployee ? ["/api/admin/timesheets", selectedEmployee] : ["/api/timesheet"],
+    queryKey: isAdminView ? ["/api/admin/timesheets"] : ["/api/timesheet"],
     retry: false,
-    enabled: !isAdminView || !!selectedEmployee, // Only fetch when employee is selected in admin view
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
 
   // Update selected employee when prop changes
@@ -71,6 +72,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     const isInFortnight = entryDate >= currentFortnight.start && entryDate <= currentFortnight.end;
     
     if (isAdminView && selectedEmployee) {
+      // In admin view, filter by the selected employee's ID
       return isInFortnight && entry.staffId === selectedEmployee;
     }
     
@@ -351,8 +353,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   <div className="mt-2 p-2 bg-gray-100 text-xs">
                     <p>Debug: Selected Employee ID: {selectedEmployee || 'None'}</p>
                     <p>Debug: Staff Members Count: {Array.isArray(staffMembers) ? staffMembers.length : 'Not loaded'}</p>
+                    <p>Debug: Timesheet Entries Count: {Array.isArray(timesheetEntries) ? timesheetEntries.length : 'Not loaded'}</p>
+                    <p>Debug: Current Fortnight Entries: {currentFortnightEntries.length}</p>
+                    <p>Debug: Fortnight Start: {format(currentFortnight.start, 'yyyy-MM-dd')}</p>
+                    <p>Debug: Fortnight End: {format(currentFortnight.end, 'yyyy-MM-dd')}</p>
                     {Array.isArray(staffMembers) && staffMembers.length > 0 && (
                       <p>Debug: First Staff Member: {JSON.stringify(staffMembers[0])}</p>
+                    )}
+                    {Array.isArray(timesheetEntries) && timesheetEntries.length > 0 && (
+                      <p>Debug: First Timesheet Entry: {JSON.stringify(timesheetEntries[0])}</p>
                     )}
                   </div>
                 )}
