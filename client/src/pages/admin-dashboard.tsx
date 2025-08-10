@@ -822,15 +822,15 @@ export default function AdminDashboard() {
       badge: 'bg-orange-200 text-orange-800 border-orange-300',
       preview: 'bg-orange-500'
     },
-    // Pinks
+    // Pinks (Dark Pink for Will's jobs)
     {
-      name: 'Pink',
-      bg: 'bg-pink-50 border-pink-200',
-      folderBg: 'bg-pink-100 hover:bg-pink-150',
-      folderIcon: 'text-pink-600',
-      folderText: 'text-pink-800',
-      badge: 'bg-pink-200 text-pink-800 border-pink-300',
-      preview: 'bg-pink-500'
+      name: 'Dark Pink',
+      bg: 'bg-pink-100 border-pink-400',
+      folderBg: 'bg-pink-200 hover:bg-pink-250',
+      folderIcon: 'text-pink-700',
+      folderText: 'text-pink-900',
+      badge: 'bg-pink-300 text-pink-900 border-pink-400',
+      preview: 'bg-pink-700'
     },
     // Cyans
     {
