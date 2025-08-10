@@ -53,6 +53,8 @@ export default function AdminDashboard() {
   const [dateRangeFilter, setDateRangeFilter] = useState<string>("all");
   const [isAddingNewProjectManager, setIsAddingNewProjectManager] = useState(false);
   const [newProjectManagerName, setNewProjectManagerName] = useState("");
+  const [isAddingNewClient, setIsAddingNewClient] = useState(false);
+  const [newClientName, setNewClientName] = useState("");
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -126,6 +128,8 @@ export default function AdminDashboard() {
       jobForm.reset();
       setIsAddingNewProjectManager(false);
       setNewProjectManagerName("");
+      setIsAddingNewClient(false);
+      setNewClientName("");
       toast({
         title: "Success",
         description: "Job created successfully",
@@ -496,14 +500,23 @@ export default function AdminDashboard() {
     }
   }, [groupBy]);
 
-  // Get unique project managers from existing jobs
+  // Get unique project managers and clients from existing jobs
   const projectManagers = jobs ? [...new Set(jobs.map(job => job.projectName).filter(Boolean))] : [];
+  const clientNames = jobs ? [...new Set(jobs.map(job => job.clientName).filter(Boolean))] : [];
 
   const handleAddProjectManager = () => {
     if (newProjectManagerName.trim()) {
       jobForm.setValue('projectName', newProjectManagerName.trim());
       setNewProjectManagerName("");
       setIsAddingNewProjectManager(false);
+    }
+  };
+
+  const handleAddClient = () => {
+    if (newClientName.trim()) {
+      jobForm.setValue('clientName', newClientName.trim());
+      setNewClientName("");
+      setIsAddingNewClient(false);
     }
   };
 
@@ -535,6 +548,16 @@ export default function AdminDashboard() {
       setNewProjectManagerName("");
     } else {
       jobForm.setValue('projectName', value);
+    }
+  };
+
+  // Handle client selection change
+  const handleClientChange = (value: string) => {
+    if (value === "__add_new__") {
+      setIsAddingNewClient(true);
+      setNewClientName("");
+    } else {
+      jobForm.setValue('clientName', value);
     }
   };
 
@@ -663,9 +686,70 @@ export default function AdminDashboard() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Client Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter client name" {...field} data-testid="input-client-name" />
-                          </FormControl>
+                          <div className="space-y-2">
+                            {!isAddingNewClient ? (
+                              <div className="flex gap-2">
+                                <FormControl className="flex-1">
+                                  <Select onValueChange={handleClientChange} value={field.value}>
+                                    <SelectTrigger data-testid="select-client-name">
+                                      <SelectValue placeholder="Select or add client" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {clientNames.map((client) => (
+                                        <SelectItem key={client} value={client}>
+                                          {client}
+                                        </SelectItem>
+                                      ))}
+                                      <SelectItem value="__add_new__" className="text-primary font-medium">
+                                        + Add New Client
+                                      </SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </FormControl>
+                              </div>
+                            ) : (
+                              <div className="flex gap-2">
+                                <Input
+                                  placeholder="Enter new client name"
+                                  value={newClientName}
+                                  onChange={(e) => setNewClientName(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleAddClient();
+                                    } else if (e.key === 'Escape') {
+                                      setIsAddingNewClient(false);
+                                      setNewClientName("");
+                                    }
+                                  }}
+                                  className="flex-1"
+                                  data-testid="input-new-client-name"
+                                  autoFocus
+                                />
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  onClick={handleAddClient}
+                                  disabled={!newClientName.trim()}
+                                  data-testid="button-add-client"
+                                >
+                                  Add
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setIsAddingNewClient(false);
+                                    setNewClientName("");
+                                  }}
+                                  data-testid="button-cancel-client"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            )}
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
