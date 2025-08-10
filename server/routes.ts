@@ -523,7 +523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const entry = await storage.createTimesheetEntry(validatedData);
+      const entry = await storage.createAdminTimesheetEntry(validatedData);
       res.status(201).json(entry);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -587,6 +587,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching jobs for staff:", error);
       res.status(500).json({ message: "Failed to fetch jobs" });
+    }
+  });
+
+  // Get timesheet entries for a specific period and staff member
+  app.get("/api/timesheet-entries/:staffId/:startDate/:endDate", isAuthenticated, async (req: any, res) => {
+    try {
+      const { staffId, startDate, endDate } = req.params;
+      const entries = await storage.getTimesheetEntriesByPeriod(staffId, startDate, endDate);
+      res.json(entries);
+    } catch (error) {
+      console.error("Error fetching timesheet entries:", error);
+      res.status(500).json({ message: "Failed to fetch timesheet entries" });
+    }
+  });
+
+  // Create timesheet entry
+  app.post("/api/timesheet-entries", isAuthenticated, async (req: any, res) => {
+    try {
+      const entry = await storage.createTimesheetEntry(req.body);
+      res.status(201).json(entry);
+    } catch (error) {
+      console.error("Error creating timesheet entry:", error);
+      res.status(500).json({ message: "Failed to create timesheet entry" });
+    }
+  });
+
+  // Update timesheet entry
+  app.patch("/api/timesheet-entries/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.updateTimesheetEntry(id, req.body);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating timesheet entry:", error);
+      res.status(500).json({ message: "Failed to update timesheet entry" });
     }
   });
 

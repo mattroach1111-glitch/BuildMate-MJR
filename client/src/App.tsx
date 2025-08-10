@@ -8,6 +8,7 @@ import Landing from "@/pages/landing";
 import AdminDashboard from "@/pages/admin-dashboard";
 import StaffDashboard from "@/pages/staff-dashboard";
 import NotFound from "@/pages/not-found";
+import FortnightTimesheetView from "@/pages/fortnight-timesheet-view";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -28,11 +29,13 @@ function Router() {
         <>
           <Route path="/" component={AdminDashboard} />
           <Route path="/admin" component={AdminDashboard} />
+          <Route path="/timesheet" component={FortnightTimesheetView} />
         </>
       ) : (
         <>
           <Route path="/" component={StaffDashboard} />
           <Route path="/staff" component={StaffDashboard} />
+          <Route path="/timesheet" component={FortnightTimesheetView} />
         </>
       )}
       <Route component={NotFound} />

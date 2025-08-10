@@ -25,7 +25,7 @@ import {
   type InsertTimesheetEntry,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sum, ne } from "drizzle-orm";
+import { eq, and, desc, sum, ne, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -494,6 +494,78 @@ export class DatabaseStorage implements IStorage {
         });
       }
     }
+  }
+
+  // Get timesheet entries for a specific period
+  async getTimesheetEntriesByPeriod(staffId: string, startDate: string, endDate: string): Promise<any[]> {
+    return await db
+      .select()
+      .from(timesheetEntries)
+      .where(
+        and(
+          eq(timesheetEntries.staffId, staffId),
+          gte(timesheetEntries.date, startDate),
+          lte(timesheetEntries.date, endDate)
+        )
+      )
+      .orderBy(timesheetEntries.date);
+  }
+
+  // Create/update timesheet entry
+  async createTimesheetEntry(data: any): Promise<any> {
+    // Check if entry already exists for this date and staff
+    const existing = await db
+      .select()
+      .from(timesheetEntries)
+      .where(
+        and(
+          eq(timesheetEntries.staffId, data.staffId),
+          eq(timesheetEntries.date, data.date)
+        )
+      );
+
+    if (existing.length > 0) {
+      // Update existing entry
+      const [updated] = await db
+        .update(timesheetEntries)
+        .set({
+          hours: data.hours,
+          description: data.description,
+          materials: data.materials,
+          approved: data.approved || false,
+        })
+        .where(eq(timesheetEntries.id, existing[0].id))
+        .returning();
+      return updated;
+    } else {
+      // Create new entry
+      const [entry] = await db
+        .insert(timesheetEntries)
+        .values({
+          staffId: data.staffId,
+          jobId: data.jobId || null,
+          date: data.date,
+          hours: data.hours,
+          description: data.description,
+          materials: data.materials,
+          approved: data.approved || false,
+        })
+        .returning();
+      return entry;
+    }
+  }
+
+  // Update timesheet entry
+  async updateTimesheetEntry(id: string, data: any): Promise<void> {
+    await db
+      .update(timesheetEntries)
+      .set({
+        hours: data.hours,
+        description: data.description,
+        materials: data.materials,
+        approved: data.approved,
+      })
+      .where(eq(timesheetEntries.id, id));
   }
 }
 

@@ -97,9 +97,11 @@ export const subTrades = pgTable("sub_trades", {
 export const timesheetEntries = pgTable("timesheet_entries", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   staffId: varchar("staff_id").notNull().references(() => users.id),
-  jobId: varchar("job_id").notNull().references(() => jobs.id),
+  jobId: varchar("job_id").references(() => jobs.id),
   date: date("date").notNull(),
   hours: decimal("hours", { precision: 5, scale: 2 }).notNull(),
+  description: text("description"),
+  materials: text("materials"),
   approved: boolean("approved").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });

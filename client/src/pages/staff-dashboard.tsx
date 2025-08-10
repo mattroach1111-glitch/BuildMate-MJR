@@ -43,6 +43,10 @@ export default function StaffDashboard() {
   
   const currentFortnight = getFortnightBoundaries(currentDate);
 
+  const handleViewFortnightTimesheet = () => {
+    window.location.href = '/timesheet';
+  };
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
@@ -256,16 +260,27 @@ export default function StaffDashboard() {
             <span className="text-xs sm:text-sm text-gray-600 hidden sm:block" data-testid="text-user-info">
               {(user as any)?.firstName || (user as any)?.email}
             </span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleLogout}
-              data-testid="button-logout"
-              className="p-2"
-            >
-              <span className="sr-only">Logout</span>
-              ←
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleViewFortnightTimesheet}
+                data-testid="button-fortnight-timesheet"
+                className="px-3 py-1 text-xs"
+              >
+                Fortnight View
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleLogout}
+                data-testid="button-logout"
+                className="p-2"
+              >
+                <span className="sr-only">Logout</span>
+                ←
+              </Button>
+            </div>
           </div>
         </div>
       </header>
