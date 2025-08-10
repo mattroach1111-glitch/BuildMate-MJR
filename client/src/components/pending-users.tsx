@@ -232,18 +232,20 @@ export function PendingUsers() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Confirm User Assignment</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to assign{" "}
-                        <strong>
-                          {unassignedUsers?.find(u => u.id === selectedUserId)?.firstName ||
-                           unassignedUsers?.find(u => u.id === selectedUserId)?.email}
-                        </strong>{" "}
-                        to employee{" "}
-                        <strong>
-                          {employees?.find(e => e.id === selectedEmployeeId)?.name}
-                        </strong>?
-                        
-                        <br /><br />
-                        This will allow the user to access timesheets and be linked to the employee record.
+                        <span className="block">
+                          Are you sure you want to assign{" "}
+                          <strong>
+                            {unassignedUsers?.find(u => u.id === selectedUserId)?.firstName ||
+                             unassignedUsers?.find(u => u.id === selectedUserId)?.email}
+                          </strong>{" "}
+                          to employee{" "}
+                          <strong>
+                            {employees?.find(e => e.id === selectedEmployeeId)?.name}
+                          </strong>?
+                        </span>
+                        <span className="block mt-4">
+                          This will allow the user to access timesheets and be linked to the employee record.
+                        </span>
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

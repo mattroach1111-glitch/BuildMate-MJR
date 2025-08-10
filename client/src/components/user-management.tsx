@@ -276,14 +276,16 @@ export function UserManagement() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Confirm Role Change</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to change {getSelectedUser()?.firstName} {getSelectedUser()?.lastName}'s role 
-                    from <strong>{getSelectedUser()?.role}</strong> to <strong>{selectedRole}</strong>?
+                    <span>
+                      Are you sure you want to change {getSelectedUser()?.firstName} {getSelectedUser()?.lastName}'s role 
+                      from <strong>{getSelectedUser()?.role}</strong> to <strong>{selectedRole}</strong>?
+                    </span>
                     {selectedRole === 'admin' && (
                       <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-950/20 rounded border-l-4 border-amber-400">
-                        <p className="text-amber-800 dark:text-amber-200 text-sm">
+                        <span className="text-amber-800 dark:text-amber-200 text-sm block">
                           <strong>Note:</strong> Admin users will have full access to all system features including user management, 
                           job creation, timesheet approvals, and settings.
-                        </p>
+                        </span>
                       </div>
                     )}
                   </AlertDialogDescription>
