@@ -19,7 +19,7 @@ import { insertJobSchema, insertEmployeeSchema, insertTimesheetEntrySchema } fro
 import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
@@ -67,6 +67,7 @@ export default function AdminDashboard() {
   const [newClientName, setNewClientName] = useState("");
   const [folderColors, setFolderColors] = useState<Record<string, number>>({});
   const [colorPickerOpen, setColorPickerOpen] = useState<string | null>(null);
+  const [isDeletedFolderExpanded, setIsDeletedFolderExpanded] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -84,6 +85,11 @@ export default function AdminDashboard() {
 
   const { data: jobs, isLoading: jobsLoading } = useQuery<Job[]>({
     queryKey: ["/api/jobs"],
+    retry: false,
+  });
+
+  const { data: deletedJobs, isLoading: deletedJobsLoading } = useQuery<Job[]>({
+    queryKey: ["/api/deleted-jobs"],
     retry: false,
   });
 
@@ -366,9 +372,10 @@ export default function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/deleted-jobs"] });
       toast({
         title: "Success",
-        description: "Job deleted successfully",
+        description: "Job moved to deleted folder",
       });
     },
     onError: (error) => {
@@ -386,6 +393,39 @@ export default function AdminDashboard() {
       toast({
         title: "Error",
         description: "Failed to delete job",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const restoreJobMutation = useMutation({
+    mutationFn: async (jobId: string) => {
+      const response = await apiRequest("PATCH", `/api/jobs/${jobId}/restore`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/deleted-jobs"] });
+      toast({
+        title: "Success",
+        description: "Job restored successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to restore job",
         variant: "destructive",
       });
     },
@@ -1574,6 +1614,103 @@ export default function AdminDashboard() {
                 Create First Job
               </Button>
             </Card>
+          )}
+
+          {/* Deleted Jobs Folder - Pinned to Bottom */}
+          {deletedJobs && deletedJobs.length > 0 && (
+            <div className="mt-8 pt-6 border-t">
+              <div 
+                className="border rounded-lg p-4 transition-colors bg-red-50 border-red-200"
+              >
+                <div 
+                  className="flex items-center gap-2 p-2 rounded transition-colors bg-red-100 hover:bg-red-150"
+                >
+                  <div 
+                    className="flex items-center gap-2 flex-1 cursor-pointer"
+                    onClick={() => setIsDeletedFolderExpanded(!isDeletedFolderExpanded)}
+                    data-testid="folder-deleted-jobs"
+                  >
+                    {isDeletedFolderExpanded ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                    {isDeletedFolderExpanded ? (
+                      <FolderOpen className="h-5 w-5 text-red-600" />
+                    ) : (
+                      <Folder className="h-5 w-5 text-red-600" />
+                    )}
+                    <span className="font-medium text-red-800">🗑️ Deleted Jobs</span>
+                    <Badge 
+                      variant="secondary" 
+                      className="ml-2 bg-red-200 text-red-800 border-red-300"
+                    >
+                      {deletedJobs.length} job{deletedJobs.length !== 1 ? 's' : ''}
+                    </Badge>
+                  </div>
+                </div>
+                
+                {isDeletedFolderExpanded && (
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {deletedJobs.map((job) => (
+                      <Card 
+                        key={job.id} 
+                        className="cursor-pointer hover:shadow-md transition-shadow bg-white relative opacity-75"
+                        onClick={() => setSelectedJob(job.id)}
+                        data-testid={`card-deleted-job-${job.id}`}
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">
+                                Deleted
+                              </Badge>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-7 w-7 p-0"
+                                    onClick={(e) => e.stopPropagation()}
+                                    data-testid={`menu-deleted-${job.id}`}
+                                  >
+                                    <MoreVertical className="h-3 w-3" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      restoreJobMutation.mutate(job.id);
+                                    }}
+                                    className="text-green-600 focus:text-green-600"
+                                    data-testid={`restore-job-${job.id}`}
+                                  >
+                                    <RotateCcw className="h-4 w-4 mr-2" />
+                                    Restore Job
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+                          <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <p className="text-sm text-muted-foreground mb-2">PM: {job.projectName}</p>
+                          <div className="text-xs text-muted-foreground">
+                            Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
+                          </div>
+                          <div className="text-xs text-red-600 mt-1">
+                            Deleted: {job.deletedAt ? new Date(job.deletedAt).toLocaleDateString() : 'Unknown'}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </TabsContent>
 

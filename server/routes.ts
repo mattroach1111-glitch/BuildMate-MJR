@@ -206,11 +206,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      await storage.deleteJob(req.params.id);
-      res.json({ message: "Job deleted successfully" });
+      await storage.softDeleteJob(req.params.id);
+      res.json({ message: "Job moved to deleted folder" });
     } catch (error) {
       console.error("Error deleting job:", error);
       res.status(500).json({ message: "Failed to delete job" });
+    }
+  });
+
+  // Add route to get deleted jobs - must come before generic job routes
+  app.get("/api/deleted-jobs", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const deletedJobs = await storage.getDeletedJobs();
+      res.json(deletedJobs);
+    } catch (error) {
+      console.error("Error fetching deleted jobs:", error);
+      res.status(500).json({ message: "Failed to fetch deleted jobs" });
+    }
+  });
+
+  // Add route to restore deleted job
+  app.patch("/api/jobs/:id/restore", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      await storage.restoreJob(req.params.id);
+      res.json({ message: "Job restored successfully" });
+    } catch (error) {
+      console.error("Error restoring job:", error);
+      res.status(500).json({ message: "Failed to restore job" });
     }
   });
 

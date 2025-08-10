@@ -29,6 +29,8 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 - ✅ **Timesheet Analytics**: Enhanced admin view with employee-specific summaries and filtering by week/month/quarter periods
 - ✅ **Enhanced Folder Colors**: Added distinctive color themes for folder organization - emerald for Ready for Billing, blue for Client folders, purple for Project Manager folders
 - ✅ **Vibrant Multi-Color Folders (August 2025)**: Expanded folder color system with 6 different vibrant colors each for client folders (blue, orange, pink, cyan, teal, indigo) and project manager folders (purple, red, yellow, lime, rose, violet), using hash-based consistent color assignment for fun, visually appealing interface
+- ✅ **Individual Folder Color Customization (August 2025)**: Added color picker functionality to each folder header with palette icon and dropdown color selection grid, allowing users to personalize folder colors with automatic localStorage persistence
+- ✅ **Soft Delete System (August 2025)**: Implemented comprehensive soft delete functionality with dedicated "Deleted Jobs" folder pinned to dashboard bottom, preserving job data for recovery while keeping main workspace clean
 - ✅ **Job Edit Dropdowns**: Added project manager and client name dropdown menus to job editing with add new functionality matching the job creation interface
 - ✅ **Admin Staff View Access**: Added dedicated "Staff View" tab in admin dashboard allowing admins to preview the staff experience without switching accounts
 - ✅ **Enhanced Staff Timesheet Dropdown**: Improved staff selection with individual statistics showing total hours, entry counts, and approval ratios for quick assessment

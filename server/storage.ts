@@ -25,7 +25,7 @@ import {
   type InsertTimesheetEntry,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sum, ne, gte, lte, sql, isNull } from "drizzle-orm";
+import { eq, and, desc, sum, ne, gte, lte, sql, isNull, or } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -147,7 +147,9 @@ export class DatabaseStorage implements IStorage {
 
   // Job operations
   async getJobs(): Promise<Job[]> {
-    return await db.select().from(jobs).orderBy(desc(jobs.createdAt));
+    return await db.select().from(jobs)
+      .where(or(eq(jobs.isDeleted, false), isNull(jobs.isDeleted)))
+      .orderBy(desc(jobs.createdAt));
   }
 
   async getJob(id: string): Promise<Job | undefined> {
@@ -200,6 +202,34 @@ export class DatabaseStorage implements IStorage {
     
     // Delete the job itself
     await db.delete(jobs).where(eq(jobs.id, id));
+  }
+
+  async softDeleteJob(id: string): Promise<void> {
+    await db
+      .update(jobs)
+      .set({ 
+        isDeleted: true, 
+        deletedAt: new Date(),
+        updatedAt: new Date() 
+      })
+      .where(eq(jobs.id, id));
+  }
+
+  async getDeletedJobs(): Promise<Job[]> {
+    return await db.select().from(jobs)
+      .where(eq(jobs.isDeleted, true))
+      .orderBy(desc(jobs.deletedAt));
+  }
+
+  async restoreJob(id: string): Promise<void> {
+    await db
+      .update(jobs)
+      .set({ 
+        isDeleted: false, 
+        deletedAt: null,
+        updatedAt: new Date() 
+      })
+      .where(eq(jobs.id, id));
   }
 
 
