@@ -624,9 +624,10 @@ export default function AdminDashboard() {
   // Check if a group is the special "Ready for Billing" group
   const isReadyForBillingGroup = (groupName: string) => groupName === '🧾 Ready for Billing';
 
-  // Get folder color scheme based on group type and name
+  // Get folder color scheme based on group type and name - Fun colorful themes!
   const getFolderColors = (groupName: string, groupType: string) => {
     if (isReadyForBillingGroup(groupName)) {
+      // Keep green for Ready for Billing
       return {
         bg: 'bg-emerald-50 border-emerald-200',
         folderBg: 'bg-emerald-100 hover:bg-emerald-150',
@@ -637,32 +638,127 @@ export default function AdminDashboard() {
     }
     
     if (groupType === 'client') {
-      // Client folders use blue theme
-      return {
-        bg: 'bg-blue-50 border-blue-200',
-        folderBg: 'bg-blue-100 hover:bg-blue-150',
-        folderIcon: 'text-blue-600',
-        folderText: 'text-blue-800',
-        badge: 'bg-blue-200 text-blue-800 border-blue-300'
-      };
+      // Client folders - Use different vibrant colors based on client name
+      const clientColors = [
+        // Vibrant Blue
+        {
+          bg: 'bg-blue-50 border-blue-200',
+          folderBg: 'bg-blue-100 hover:bg-blue-150',
+          folderIcon: 'text-blue-600',
+          folderText: 'text-blue-800',
+          badge: 'bg-blue-200 text-blue-800 border-blue-300'
+        },
+        // Vibrant Orange
+        {
+          bg: 'bg-orange-50 border-orange-200',
+          folderBg: 'bg-orange-100 hover:bg-orange-150',
+          folderIcon: 'text-orange-600',
+          folderText: 'text-orange-800',
+          badge: 'bg-orange-200 text-orange-800 border-orange-300'
+        },
+        // Vibrant Pink
+        {
+          bg: 'bg-pink-50 border-pink-200',
+          folderBg: 'bg-pink-100 hover:bg-pink-150',
+          folderIcon: 'text-pink-600',
+          folderText: 'text-pink-800',
+          badge: 'bg-pink-200 text-pink-800 border-pink-300'
+        },
+        // Vibrant Cyan
+        {
+          bg: 'bg-cyan-50 border-cyan-200',
+          folderBg: 'bg-cyan-100 hover:bg-cyan-150',
+          folderIcon: 'text-cyan-600',
+          folderText: 'text-cyan-800',
+          badge: 'bg-cyan-200 text-cyan-800 border-cyan-300'
+        },
+        // Vibrant Teal
+        {
+          bg: 'bg-teal-50 border-teal-200',
+          folderBg: 'bg-teal-100 hover:bg-teal-150',
+          folderIcon: 'text-teal-600',
+          folderText: 'text-teal-800',
+          badge: 'bg-teal-200 text-teal-800 border-teal-300'
+        },
+        // Vibrant Indigo
+        {
+          bg: 'bg-indigo-50 border-indigo-200',
+          folderBg: 'bg-indigo-100 hover:bg-indigo-150',
+          folderIcon: 'text-indigo-600',
+          folderText: 'text-indigo-800',
+          badge: 'bg-indigo-200 text-indigo-800 border-indigo-300'
+        }
+      ];
+      
+      // Use groupName hash to consistently assign colors
+      const hash = groupName.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+      return clientColors[hash % clientColors.length];
+      
     } else if (groupType === 'manager') {
-      // Project manager folders use purple theme
-      return {
-        bg: 'bg-purple-50 border-purple-200',
-        folderBg: 'bg-purple-100 hover:bg-purple-150',
-        folderIcon: 'text-purple-600',
-        folderText: 'text-purple-800',
-        badge: 'bg-purple-200 text-purple-800 border-purple-300'
-      };
+      // Project manager folders - Use different warm colors
+      const managerColors = [
+        // Vibrant Purple
+        {
+          bg: 'bg-purple-50 border-purple-200',
+          folderBg: 'bg-purple-100 hover:bg-purple-150',
+          folderIcon: 'text-purple-600',
+          folderText: 'text-purple-800',
+          badge: 'bg-purple-200 text-purple-800 border-purple-300'
+        },
+        // Vibrant Red
+        {
+          bg: 'bg-red-50 border-red-200',
+          folderBg: 'bg-red-100 hover:bg-red-150',
+          folderIcon: 'text-red-600',
+          folderText: 'text-red-800',
+          badge: 'bg-red-200 text-red-800 border-red-300'
+        },
+        // Vibrant Yellow
+        {
+          bg: 'bg-yellow-50 border-yellow-200',
+          folderBg: 'bg-yellow-100 hover:bg-yellow-150',
+          folderIcon: 'text-yellow-600',
+          folderText: 'text-yellow-800',
+          badge: 'bg-yellow-200 text-yellow-800 border-yellow-300'
+        },
+        // Vibrant Lime
+        {
+          bg: 'bg-lime-50 border-lime-200',
+          folderBg: 'bg-lime-100 hover:bg-lime-150',
+          folderIcon: 'text-lime-600',
+          folderText: 'text-lime-800',
+          badge: 'bg-lime-200 text-lime-800 border-lime-300'
+        },
+        // Vibrant Rose
+        {
+          bg: 'bg-rose-50 border-rose-200',
+          folderBg: 'bg-rose-100 hover:bg-rose-150',
+          folderIcon: 'text-rose-600',
+          folderText: 'text-rose-800',
+          badge: 'bg-rose-200 text-rose-800 border-rose-300'
+        },
+        // Vibrant Violet
+        {
+          bg: 'bg-violet-50 border-violet-200',
+          folderBg: 'bg-violet-100 hover:bg-violet-150',
+          folderIcon: 'text-violet-600',
+          folderText: 'text-violet-800',
+          badge: 'bg-violet-200 text-violet-800 border-violet-300'
+        }
+      ];
+      
+      // Use groupName hash to consistently assign colors
+      const hash = groupName.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+      return managerColors[hash % managerColors.length];
     }
     
-    // Default gray theme
+    // Default neutral theme for edge cases
     return {
-      bg: 'bg-gray-50 border-gray-200',
-      folderBg: 'bg-gray-100 hover:bg-gray-150',
-      folderIcon: 'text-gray-600',
-      folderText: 'text-gray-800',
-      badge: 'bg-gray-200 text-gray-800 border-gray-300'
+      bg: 'bg-slate-50 border-slate-200',
+      folderBg: 'bg-slate-100 hover:bg-slate-150',
+      folderIcon: 'text-slate-600',
+      folderText: 'text-slate-800',
+      badge: 'bg-slate-200 text-slate-800 border-slate-300'
     };
   };
 
