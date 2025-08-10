@@ -779,7 +779,6 @@ export class DatabaseStorage implements IStorage {
       staffId: entry.employeeId,
       hoursLogged: entry.hours.toString(),
       hourlyRate: entry.hourlyRate.toString(),
-      date: entry.date,
     });
   }
 
