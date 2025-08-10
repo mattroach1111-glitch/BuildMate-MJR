@@ -506,6 +506,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get specific employee's timesheet entries for admin
+  app.get("/api/admin/timesheets/:employeeId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const employeeId = req.params.employeeId;
+      const entries = await storage.getTimesheetEntries(employeeId);
+      res.json(entries);
+    } catch (error) {
+      console.error("Error fetching employee timesheet entries:", error);
+      res.status(500).json({ message: "Failed to fetch employee timesheet entries" });
+    }
+  });
+
   // Approve individual timesheet entry (legacy - kept for backwards compatibility)
   app.patch("/api/admin/timesheet/:id/approve", isAuthenticated, async (req: any, res) => {
     try {

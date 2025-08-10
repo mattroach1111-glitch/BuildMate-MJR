@@ -109,6 +109,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const updateTimesheetMutation = useMutation({
     mutationFn: async (data: any) => {
       const endpoint = isAdminView ? "/api/admin/timesheet" : "/api/timesheet";
+      
+      // For admin view, ensure the staffId is set to the selected employee, not the admin
+      if (isAdminView && selectedEmployee) {
+        data.staffId = selectedEmployee;
+      }
+      
       return await apiRequest("POST", endpoint, data);
     },
     onSuccess: () => {
@@ -193,12 +199,19 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       if (Array.isArray(dayEntries)) {
         dayEntries.forEach((entry, index) => {
           if (entry.hours && parseFloat(entry.hours) > 0 && entry.jobId && entry.jobId !== 'no-job') {
-            entriesToSave.push({
+            const entryData: any = {
               date: dateKey,
               hours: parseFloat(entry.hours),
               materials: entry.materials || '',
               jobId: entry.jobId === 'no-job' ? null : entry.jobId || null,
-            });
+            };
+            
+            // For admin view, add the selected employee's staffId
+            if (isAdminView && selectedEmployee) {
+              entryData.staffId = selectedEmployee;
+            }
+            
+            entriesToSave.push(entryData);
           }
         });
       }
