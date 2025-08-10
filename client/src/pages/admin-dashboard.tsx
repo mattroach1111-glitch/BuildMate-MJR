@@ -19,7 +19,7 @@ import { insertJobSchema, insertEmployeeSchema, insertTimesheetEntrySchema } fro
 import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw, Grid3X3, List, Settings, UserPlus } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw, Grid3X3, List, Settings, UserPlus, Download } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
@@ -29,6 +29,7 @@ import { OnboardingTour, WelcomeAnimation } from "@/components/onboarding-tour";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { UserManagement } from "@/components/user-management";
 import { PendingUsers } from "@/components/pending-users";
+import { generateJobListPDF } from "@/lib/pdfGenerator";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -963,8 +964,16 @@ export default function AdminDashboard() {
       return allColorThemes[clientColors[hash % clientColors.length]];
       
     } else if (groupType === 'manager') {
+      // Special color coding for specific project managers
+      const managerName = groupName.toLowerCase();
+      if (managerName.includes('will')) {
+        return allColorThemes[2]; // Pink for Will's jobs
+      } else if (managerName.includes('mark')) {
+        return allColorThemes[6]; // Purple for Mark's jobs
+      }
+      
       // Project manager folders - Use different warm colors
-      const managerColors = [6, 7, 8, 9, 10, 11]; // Purple, Red, Yellow, Lime, Rose, Violet
+      const managerColors = [7, 8, 9, 10, 11, 1]; // Red, Yellow, Lime, Rose, Violet, Orange
       const hash = groupName.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
       return allColorThemes[managerColors[hash % managerColors.length]];
     }
@@ -1704,6 +1713,35 @@ export default function AdminDashboard() {
                           {groupJobs.length} job{groupJobs.length !== 1 ? 's' : ''}
                         </Badge>
                       </div>
+                      
+                      {/* PDF Download Button for Project Managers */}
+                      {groupBy === 'manager' && !isReadyForBillingGroup(groupName) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 hover:bg-white/20"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              await generateJobListPDF(groupJobs, groupName);
+                              toast({
+                                title: "PDF Downloaded",
+                                description: `Job list for ${groupName} has been downloaded.`,
+                              });
+                            } catch (error) {
+                              toast({
+                                title: "Download Failed",
+                                description: "Failed to generate PDF. Please try again.",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                          title={`Download PDF job list for ${groupName}`}
+                          data-testid={`download-pdf-${groupName}`}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      )}
                       
                       {/* Color Picker Button */}
                       <DropdownMenu 

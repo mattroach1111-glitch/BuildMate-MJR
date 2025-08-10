@@ -424,7 +424,7 @@ export class DatabaseStorage implements IStorage {
     // Update labor entry hours
     await db
       .update(laborEntries)
-      .set({ hoursLogged: totalHours, updatedAt: new Date() })
+      .set({ hoursLogged: totalHours.toString(), updatedAt: new Date() })
       .where(
         and(
           eq(laborEntries.staffId, staffId),
