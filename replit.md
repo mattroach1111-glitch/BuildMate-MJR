@@ -50,6 +50,8 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 - ✅ **Simplified Timesheet Interface**: Removed job description column and permanently added sick leave, personal leave, and annual leave directly to job selection dropdown for streamlined data entry.
 - ✅ **Grid/List View Toggle (August 2025)**: Added view mode toggle to admin dashboard allowing users to switch between grid view (card layout) and list view (compact horizontal rows) for both individual jobs and jobs within folders, providing flexible display options for different user preferences and screen sizes.
 - ✅ **Smart Job Sorting (August 2025)**: Implemented comprehensive sorting functionality with dropdown selector offering Address (numerical), Client, Manager, and Status sorting options. Address sorting intelligently extracts numbers for proper numerical ordering (e.g., "2 Main St" before "10 Main St"), working seamlessly with search, grouping, and view mode features.
+- ✅ **Individual Timesheet Entry Clearing (August 2025)**: Added ability to clear individual daily timesheet entries with dedicated Clear buttons for each unapproved entry, including frontend mutations, backend API endpoints, and database methods with proper job hour updates.
+- ✅ **Timesheet Duplication Fix (August 2025)**: Resolved timesheet entry duplication issues by improving backend duplicate detection logic to only prevent true exact duplicates (same staff, date, job, hours, and materials) while allowing multiple different entries per day. Optimized frontend saving to use parallel requests instead of sequential saves.
 
 # User Preferences
 

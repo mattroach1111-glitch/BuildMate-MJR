@@ -460,8 +460,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertTimesheetEntry(entry: InsertTimesheetEntry): Promise<TimesheetEntry> {
-    // For multiple entries per day, we need to identify unique combinations more precisely
-    // Check if entry exists with same staff, date, job, and hours (to avoid exact duplicates)
+    // Check for exact duplicates only - same staff, date, job, hours, AND materials
+    // This allows multiple different entries per day while preventing true duplicates
     const existingEntry = await db
       .select()
       .from(timesheetEntries)
@@ -470,7 +470,8 @@ export class DatabaseStorage implements IStorage {
           eq(timesheetEntries.staffId, entry.staffId),
           eq(timesheetEntries.date, entry.date),
           eq(timesheetEntries.hours, entry.hours),
-          entry.jobId ? eq(timesheetEntries.jobId, entry.jobId) : isNull(timesheetEntries.jobId)
+          entry.jobId ? eq(timesheetEntries.jobId, entry.jobId) : isNull(timesheetEntries.jobId),
+          eq(timesheetEntries.materials, entry.materials || '')
         )
       )
       .limit(1);
@@ -478,17 +479,12 @@ export class DatabaseStorage implements IStorage {
     let result: TimesheetEntry;
 
     if (existingEntry.length > 0) {
-      // Update existing entry (only materials since we matched on hours)
-      const [updatedEntry] = await db
-        .update(timesheetEntries)
-        .set({
-          materials: entry.materials
-        })
-        .where(eq(timesheetEntries.id, existingEntry[0].id))
-        .returning();
-      result = updatedEntry;
+      // This is a true duplicate - just return the existing entry without changes
+      console.log('Found exact duplicate, returning existing entry:', existingEntry[0].id);
+      result = existingEntry[0];
     } else {
-      // Create new entry
+      // Create new entry - this allows multiple different entries per day
+      console.log('Creating new timesheet entry for staff:', entry.staffId, 'date:', entry.date);
       const [newEntry] = await db
         .insert(timesheetEntries)
         .values(entry)

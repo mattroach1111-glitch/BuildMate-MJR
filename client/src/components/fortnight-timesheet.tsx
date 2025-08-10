@@ -228,34 +228,26 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       return;
     }
 
-    // Save entries one by one with delay to prevent conflicts
-    for (let i = 0; i < entriesToSave.length; i++) {
-      try {
-        await new Promise((resolve, reject) => {
-          updateTimesheetMutation.mutate(entriesToSave[i], {
-            onSuccess: async () => {
-              // Force refresh of timesheet data
-              await refetchTimesheetEntries();
-              resolve(undefined);
-            },
+    // Save all entries in parallel since backend now handles duplicates properly
+    try {
+      const savePromises = entriesToSave.map(entry => 
+        new Promise((resolve, reject) => {
+          updateTimesheetMutation.mutate(entry, {
+            onSuccess: resolve,
             onError: reject
           });
-        });
-        
-        // Small delay between saves
-        if (i < entriesToSave.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      } catch (error) {
-        console.error('Error saving entry:', error);
-        console.error('Failed entry data:', entriesToSave[i]);
-        toast({
-          title: "Save Error",
-          description: `Failed to save entry ${i + 1}. Check console for details.`,
-          variant: "destructive",
-        });
-        return;
-      }
+        })
+      );
+
+      await Promise.all(savePromises);
+    } catch (error) {
+      console.error('Error saving entries:', error);
+      toast({
+        title: "Save Error",
+        description: "Failed to save one or more entries. Check console for details.",
+        variant: "destructive",
+      });
+      return;
     }
 
     // Final refresh to ensure all data is up to date
