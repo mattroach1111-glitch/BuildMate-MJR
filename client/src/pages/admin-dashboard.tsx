@@ -49,6 +49,8 @@ export default function AdminDashboard() {
   const [expandedManagers, setExpandedManagers] = useState<Set<string>>(new Set());
   const [groupBy, setGroupBy] = useState<'client' | 'manager' | 'none'>('client');
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>("all");
+  const [dateRangeFilter, setDateRangeFilter] = useState<string>("all");
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -83,6 +85,32 @@ export default function AdminDashboard() {
   const { data: staffForTimesheets, isLoading: staffUsersLoading } = useQuery<any[]>({
     queryKey: ["/api/staff-users"],
     retry: false,
+  });
+
+  // Filter timesheets based on selected employee and date range
+  const filteredTimesheets = allTimesheets?.filter((entry: any) => {
+    const employeeMatch = selectedEmployeeFilter === "all" || entry.staffId === selectedEmployeeFilter;
+    
+    if (!employeeMatch) return false;
+    
+    if (dateRangeFilter === "all") return true;
+    
+    const entryDate = new Date(entry.date);
+    const today = new Date();
+    
+    switch (dateRangeFilter) {
+      case "week":
+        const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return entryDate >= weekAgo;
+      case "month":
+        const monthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+        return entryDate >= monthAgo;
+      case "quarter":
+        const quarterAgo = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate());
+        return entryDate >= quarterAgo;
+      default:
+        return true;
+    }
   });
 
   const createJobMutation = useMutation({
@@ -1271,6 +1299,57 @@ export default function AdminDashboard() {
             </Dialog>
           </div>
 
+          {/* Employee and Date Range Filters */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="employee-filter">Filter by Employee</Label>
+                  <Select value={selectedEmployeeFilter} onValueChange={setSelectedEmployeeFilter}>
+                    <SelectTrigger data-testid="select-employee-filter">
+                      <SelectValue placeholder="All employees" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All employees</SelectItem>
+                      {staffForTimesheets?.map((staff) => (
+                        <SelectItem key={`filter-${staff.id}`} value={staff.id}>
+                          {staff.name} ({staff.type === 'employee' ? 'Employee' : 'User'})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="date-range-filter">Filter by Date Range</Label>
+                  <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
+                    <SelectTrigger data-testid="select-date-range-filter">
+                      <SelectValue placeholder="All time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All time</SelectItem>
+                      <SelectItem value="week">Last 7 days</SelectItem>
+                      <SelectItem value="month">Last 30 days</SelectItem>
+                      <SelectItem value="quarter">Last 3 months</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    setSelectedEmployeeFilter("all");
+                    setDateRangeFilter("all");
+                  }}
+                  data-testid="button-clear-all-filters"
+                >
+                  Clear All Filters
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           {timesheetsLoading ? (
             <div className="grid gap-4">
               {[...Array(5)].map((_, i) => (
@@ -1285,8 +1364,27 @@ export default function AdminDashboard() {
                 </Card>
               ))}
             </div>
-          ) : allTimesheets && allTimesheets.length > 0 ? (
+          ) : filteredTimesheets && filteredTimesheets.length > 0 ? (
             <div className="space-y-4">
+              {/* Employee-specific summary when filtered */}
+              {selectedEmployeeFilter !== "all" && (
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Users className="h-8 w-8 text-blue-600" />
+                      <div>
+                        <h3 className="font-semibold text-blue-900">
+                          {staffForTimesheets?.find(s => s.id === selectedEmployeeFilter)?.name || 'Selected Employee'}
+                        </h3>
+                        <p className="text-sm text-blue-700">
+                          {filteredTimesheets.length} entries • {filteredTimesheets.reduce((total, entry) => total + parseFloat(entry.hours || 0), 0).toFixed(1)} hours total
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                 <Card>
@@ -1295,7 +1393,7 @@ export default function AdminDashboard() {
                       <Calendar className="h-8 w-8 text-blue-500" />
                       <div>
                         <p className="text-sm text-muted-foreground">Total Entries</p>
-                        <p className="text-2xl font-bold">{allTimesheets.length}</p>
+                        <p className="text-2xl font-bold">{filteredTimesheets.length}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -1307,7 +1405,7 @@ export default function AdminDashboard() {
                       <div>
                         <p className="text-sm text-muted-foreground">Total Hours</p>
                         <p className="text-2xl font-bold">
-                          {allTimesheets.reduce((total, entry) => total + parseFloat(entry.hours || 0), 0).toFixed(1)}h
+                          {filteredTimesheets.reduce((total, entry) => total + parseFloat(entry.hours || 0), 0).toFixed(1)}h
                         </p>
                       </div>
                     </div>
@@ -1320,7 +1418,7 @@ export default function AdminDashboard() {
                       <div>
                         <p className="text-sm text-muted-foreground">Approved</p>
                         <p className="text-2xl font-bold">
-                          {allTimesheets.filter(entry => entry.approved).length}
+                          {filteredTimesheets.filter(entry => entry.approved).length}
                         </p>
                       </div>
                     </div>
@@ -1330,7 +1428,7 @@ export default function AdminDashboard() {
 
               {/* Timesheet Entries */}
               <div className="space-y-3">
-                {allTimesheets.map((entry) => (
+                {filteredTimesheets.map((entry) => (
                   <Card key={entry.id} data-testid={`card-timesheet-${entry.id}`}>
                     <CardContent className="p-4">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -1381,8 +1479,14 @@ export default function AdminDashboard() {
           ) : (
             <Card className="p-8 text-center">
               <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">No timesheet entries yet</h3>
-              <p className="text-muted-foreground">Staff timesheet entries will appear here once submitted</p>
+              <h3 className="text-lg font-medium mb-2">
+                {selectedEmployeeFilter === "all" ? "No timesheet entries yet" : "No entries for selected employee"}
+              </h3>
+              <p className="text-muted-foreground">
+                {selectedEmployeeFilter === "all" 
+                  ? "Staff timesheet entries will appear here once submitted" 
+                  : "This employee has not submitted any timesheet entries yet"}
+              </p>
             </Card>
           )}
         </TabsContent>

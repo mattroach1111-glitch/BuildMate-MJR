@@ -25,6 +25,8 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 - ✅ **Admin Timesheet Management**: Added admin capability to create timesheet entries for any staff member with approval controls
 - ✅ **Staff Calendar View**: Enhanced staff dashboard with visual fortnight calendar showing daily hour breakdowns and missing entries
 - ✅ **Automatic Staff Integration**: New employees automatically appear in timesheet staff selection list with duplicate entry prevention
+- ✅ **Employee Timesheet Filtering**: Added comprehensive employee timesheet viewing with individual employee filtering and date range options
+- ✅ **Timesheet Analytics**: Enhanced admin view with employee-specific summaries and filtering by week/month/quarter periods
 
 # User Preferences
 
