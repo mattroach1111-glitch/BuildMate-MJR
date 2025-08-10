@@ -106,6 +106,35 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   console.log('Current fortnight entries:', currentFortnightEntries);
 
+  // Mutations for editing and deleting saved entries
+  const editTimesheetMutation = useMutation({
+    mutationFn: async ({ id, field, value }: { id: string; field: string; value: string }) => {
+      return apiRequest(`/api/timesheet/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ [field]: value }),
+      });
+    },
+    onSuccess: () => {
+      refetchTimesheetEntries();
+    },
+  });
+
+  const deleteTimesheetMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest(`/api/timesheet/${id}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      refetchTimesheetEntries();
+      toast({
+        title: "Entry Deleted",
+        description: "Timesheet entry has been removed.",
+        variant: "default",
+      });
+    },
+  });
+
   const updateTimesheetMutation = useMutation({
     mutationFn: async (data: any) => {
       const endpoint = isAdminView ? "/api/admin/timesheet" : "/api/timesheet";
@@ -265,6 +294,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
     // Clear local data after successful save
     setTimesheetData({});
+  };
+
+  // Functions for editing and deleting saved entries
+  const editSavedEntry = (id: string, field: string, value: string) => {
+    editTimesheetMutation.mutate({ id, field, value });
+  };
+
+  const deleteSavedEntry = (id: string) => {
+    deleteTimesheetMutation.mutate(id);
   };
 
   const getTotalHours = () => {
@@ -632,16 +670,32 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 step="0.5"
                                 placeholder="0"
                                 value={entry?.hours || ''}
-                                onChange={(e) => handleCellChange(day, entryIndex, 'hours', e.target.value)}
+                                onChange={(e) => {
+                                  if (entry?.id && !entry?.approved) {
+                                    // Edit saved entry directly
+                                    editSavedEntry(entry.id, 'hours', e.target.value);
+                                  } else {
+                                    // Handle unsaved entry
+                                    handleCellChange(day, entryIndex, 'hours', e.target.value);
+                                  }
+                                }}
                                 className="w-20"
-                                disabled={entry?.id && entry?.approved} // Disable if it's a saved approved entry
+                                disabled={entry?.approved} // Only disable if approved
                               />
                             </td>
                             <td className="p-3">
                               <Select
                                 value={entry?.jobId || 'no-job'}
-                                onValueChange={(value) => handleCellChange(day, entryIndex, 'jobId', value)}
-                                disabled={entry?.id && entry?.approved} // Disable if it's a saved approved entry
+                                onValueChange={(value) => {
+                                  if (entry?.id && !entry?.approved) {
+                                    // Edit saved entry directly
+                                    editSavedEntry(entry.id, 'jobId', value);
+                                  } else {
+                                    // Handle unsaved entry
+                                    handleCellChange(day, entryIndex, 'jobId', value);
+                                  }
+                                }}
+                                disabled={entry?.approved} // Only disable if approved
                               >
                                 <SelectTrigger className="min-w-40">
                                   <SelectValue placeholder="Select job" />
@@ -684,6 +738,16 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     size="sm"
                                     variant="destructive"
                                     onClick={() => removeJobEntry(day, entryIndex)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {entry?.id && !entry?.approved && (
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => deleteSavedEntry(entry.id)}
+                                    className="ml-1"
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>

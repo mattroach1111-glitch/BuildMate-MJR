@@ -90,6 +90,8 @@ export interface IStorage {
   getTimesheetEntriesByPeriod(staffId: string, startDate: string, endDate: string): Promise<any[]>;
   createAdminTimesheetEntry(data: any): Promise<any>;
   updateTimesheetEntry(id: string, data: any): Promise<void>;
+  addLaborEntry(entry: { jobId: string; employeeId: string; hours: number; hourlyRate: number; date: string }): Promise<void>;
+  markTimesheetEntriesConfirmed(staffId: string, startDate: string, endDate: string): Promise<void>;
   
   // Sync operations
   syncEmployeesToJob(jobId: string): Promise<void>;
@@ -763,11 +765,35 @@ export class DatabaseStorage implements IStorage {
       .update(timesheetEntries)
       .set({
         hours: data.hours,
-        description: data.description,
+        jobId: data.jobId,
         materials: data.materials,
         approved: data.approved,
       })
       .where(eq(timesheetEntries.id, id));
+  }
+
+  // New methods for PDF generation
+  async addLaborEntry(entry: { jobId: string; employeeId: string; hours: number; hourlyRate: number; date: string }): Promise<void> {
+    await db.insert(laborEntries).values({
+      jobId: entry.jobId,
+      staffId: entry.employeeId,
+      hoursLogged: entry.hours.toString(),
+      hourlyRate: entry.hourlyRate.toString(),
+      date: entry.date,
+    });
+  }
+
+  async markTimesheetEntriesConfirmed(staffId: string, startDate: string, endDate: string): Promise<void> {
+    await db
+      .update(timesheetEntries)
+      .set({ approved: true })
+      .where(
+        and(
+          eq(timesheetEntries.staffId, staffId),
+          gte(timesheetEntries.date, startDate),
+          lte(timesheetEntries.date, endDate)
+        )
+      );
   }
 }
 

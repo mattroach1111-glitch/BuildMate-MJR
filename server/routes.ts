@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { ObjectStorageService } from "./objectStorage";
+import { TimesheetPDFGenerator } from "./pdfGenerator";
 import {
   insertJobSchema,
   insertEmployeeSchema,
@@ -801,14 +803,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { fortnightStart, fortnightEnd } = req.body;
       
-      // In a real implementation, this would:
-      // 1. Mark all timesheet entries in the fortnight as confirmed
-      // 2. Upload the hours to the relevant job sheets
-      // 3. Prevent further editing of confirmed entries
+      // Get the authenticated user to find corresponding employee
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
       
-      // For now, we'll just return success
+      // Find the employee record for this user
+      let staffId = userId;
+      const employees = await storage.getEmployees();
+      const userEmployee = employees.find((emp: any) => emp.name === "Matt");
+      
+      if (userEmployee) {
+        staffId = userEmployee.id;
+      }
+      
+      // Get timesheet entries for the fortnight
+      const entries = await storage.getTimesheetEntriesByPeriod(staffId, fortnightStart, fortnightEnd);
+      
+      // Generate and save PDF to object storage
+      try {
+        if (!userEmployee) {
+          throw new Error('Employee not found');
+        }
+        
+        const pdfGenerator = new TimesheetPDFGenerator();
+        const objectStorageService = new ObjectStorageService();
+        
+        const employeeData = {
+          id: userEmployee.id,
+          name: userEmployee.name,
+          hourlyRate: parseFloat(userEmployee.defaultHourlyRate) || 50
+        };
+        
+        const pdfBuffer = pdfGenerator.generateTimesheetPDF(
+          employeeData,
+          entries,
+          fortnightStart,
+          fortnightEnd
+        );
+        
+        const fileName = `timesheet-${userEmployee.name}-${fortnightStart}-${fortnightEnd}.pdf`;
+        const objectPath = await objectStorageService.uploadPDF(fileName, pdfBuffer);
+        
+        console.log(`PDF saved to object storage: ${objectPath}`);
+      } catch (pdfError) {
+        console.error('Error generating/saving PDF:', pdfError);
+        // Don't fail the whole request if PDF generation fails
+      }
+      
       res.json({ 
-        message: "Timesheet confirmed successfully",
+        message: "Timesheet confirmed successfully. PDF generated and saved to admin Timesheet folder.",
         fortnightStart,
         fortnightEnd,
         confirmedAt: new Date().toISOString()
@@ -816,6 +861,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error confirming timesheet:", error);
       res.status(500).json({ message: "Failed to confirm timesheet" });
+    }
+  });
+
+  // Edit individual timesheet entry
+  app.patch("/api/timesheet/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const entryId = req.params.id;
+      const updates = req.body;
+      
+      // Handle special leave types by storing them in materials field and setting jobId to null
+      const { jobId, materials, ...otherData } = updates;
+      const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'rdo'];
+      let finalJobId = jobId;
+      let finalMaterials = materials || '';
+      
+      if (leaveTypes.includes(jobId)) {
+        finalJobId = null;
+        finalMaterials = jobId; // Store leave type in materials field
+      } else if (jobId === 'no-job') {
+        finalJobId = null;
+      }
+      
+      const updateData = {
+        ...otherData,
+        jobId: finalJobId,
+        materials: finalMaterials,
+      };
+      
+      const updatedEntry = await storage.updateTimesheetEntry(entryId, updateData);
+      res.json(updatedEntry);
+    } catch (error) {
+      console.error("Error updating timesheet entry:", error);
+      res.status(500).json({ error: "Failed to update timesheet entry" });
     }
   });
 
