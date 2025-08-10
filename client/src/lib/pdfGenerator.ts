@@ -357,94 +357,62 @@ export async function generateJobListPDF(jobs: JobListItem[], managerName: strin
   yPos += 30;
   
   // Table headers
-  doc.setFontSize(10);
+  doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
   doc.text('Job Address', 20, yPos);
-  doc.text('Client', 80, yPos);
-  doc.text('Status', 130, yPos);
-  doc.text('Rate', 160, yPos);
-  doc.text('Margin', 180, yPos);
-  yPos += 3;
+  doc.text('Client', 90, yPos);
+  doc.text('Notes', 140, yPos);
+  yPos += 5;
   
   // Header underline
   doc.line(20, yPos, 190, yPos);
-  yPos += 10;
+  yPos += 15;
   
-  // Job entries
+  // Job entries with notes space
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
+  doc.setFontSize(10);
   
   jobs.forEach((job, index) => {
-    checkPageBreak(15);
+    checkPageBreak(25); // More space needed for notes area
     
-    // Alternate row background (simulated with lighter text for odd rows)
-    if (index % 2 === 1) {
-      doc.setTextColor(100, 100, 100);
-    } else {
-      doc.setTextColor(0, 0, 0);
-    }
-    
-    // Job address (truncate if too long)
-    const address = job.jobAddress.length > 25 ? 
-      job.jobAddress.substring(0, 22) + '...' : job.jobAddress;
+    // Job address (allow more space)
+    const address = job.jobAddress.length > 30 ? 
+      job.jobAddress.substring(0, 27) + '...' : job.jobAddress;
     doc.text(address, 20, yPos);
     
-    // Client name (truncate if too long)
-    const client = job.clientName.length > 20 ? 
-      job.clientName.substring(0, 17) + '...' : job.clientName;
-    doc.text(client, 80, yPos);
+    // Client name
+    const client = job.clientName.length > 22 ? 
+      job.clientName.substring(0, 19) + '...' : job.clientName;
+    doc.text(client, 90, yPos);
     
-    // Status
-    const status = job.status.replace(/_/g, ' ').toUpperCase();
-    doc.text(status, 130, yPos);
+    // Notes area - draw a line for writing
+    doc.setDrawColor(200, 200, 200); // Light gray
+    doc.line(140, yPos + 2, 190, yPos + 2); // Notes line
     
-    // Hourly rate
-    doc.text(`$${parseFloat(job.defaultHourlyRate).toFixed(0)}`, 160, yPos);
-    
-    // Builder margin
-    doc.text(`${job.builderMargin}%`, 180, yPos);
-    
-    yPos += 12;
+    // Add some extra space between entries for better readability
+    yPos += 20;
   });
   
   // Reset text color
   doc.setTextColor(0, 0, 0);
   
-  // Summary section
-  yPos += 10;
-  checkPageBreak(30);
+  // Simple footer with space for additional notes
+  yPos += 20;
+  checkPageBreak(40);
   
   doc.line(20, yPos, 190, yPos);
   yPos += 15;
   
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.text('SUMMARY', 20, yPos);
+  doc.text('ADDITIONAL NOTES', 20, yPos);
   yPos += 15;
   
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  
-  // Status breakdown
-  const statusCounts = jobs.reduce((acc, job) => {
-    const status = job.status.replace(/_/g, ' ').toUpperCase();
-    acc[status] = (acc[status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  
-  Object.entries(statusCounts).forEach(([status, count]) => {
-    doc.text(`${status}: ${count} jobs`, 25, yPos);
-    yPos += 8;
-  });
-  
-  // Average rates
-  yPos += 5;
-  const avgRate = jobs.reduce((sum, job) => sum + parseFloat(job.defaultHourlyRate), 0) / jobs.length;
-  const avgMargin = jobs.reduce((sum, job) => sum + parseFloat(job.builderMargin), 0) / jobs.length;
-  
-  doc.text(`Average Hourly Rate: $${avgRate.toFixed(2)}`, 25, yPos);
-  yPos += 8;
-  doc.text(`Average Builder Margin: ${avgMargin.toFixed(1)}%`, 25, yPos);
+  // Add several lines for additional notes
+  doc.setDrawColor(200, 200, 200); // Light gray
+  for (let i = 0; i < 6; i++) {
+    doc.line(20, yPos + (i * 15), 190, yPos + (i * 15));
+  }
   
   // Save the PDF
   const fileName = `${managerName.replace(/[^a-zA-Z0-9]/g, '-')}-job-list-${new Date().toISOString().split('T')[0]}.pdf`;
