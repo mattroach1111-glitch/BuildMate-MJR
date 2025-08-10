@@ -61,7 +61,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     retry: false,
   });
 
-  const { data: timesheetEntries } = useQuery({
+  const { data: timesheetEntries, refetch: refetchTimesheetEntries } = useQuery({
     queryKey: isAdminView ? ["/api/admin/timesheets"] : ["/api/timesheet"],
     retry: false,
     refetchOnMount: true,
@@ -212,7 +212,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       try {
         await new Promise((resolve, reject) => {
           updateTimesheetMutation.mutate(entriesToSave[i], {
-            onSuccess: resolve,
+            onSuccess: async () => {
+              // Force refresh of timesheet data
+              await refetchTimesheetEntries();
+              resolve(undefined);
+            },
             onError: reject
           });
         });
@@ -232,9 +236,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       }
     }
 
+    // Final refresh to ensure all data is up to date
+    await refetchTimesheetEntries();
+
     toast({
       title: "Timesheet Saved",
-      description: `Successfully saved ${entriesToSave.length} entries!`,
+      description: `Successfully saved ${entriesToSave.length} entries! They should now appear in the timesheet.`,
       variant: "default",
     });
 
