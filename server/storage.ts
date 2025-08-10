@@ -84,6 +84,7 @@ export interface IStorage {
   updateTimesheetApproval(id: string, approved: boolean): Promise<void>;
   updateFortnightApproval(staffId: string, fortnightStart: string, fortnightEnd: string, approved: boolean): Promise<void>;
   clearFortnightTimesheet(staffId: string, fortnightStart: string, fortnightEnd: string): Promise<void>;
+  clearTimesheetEntry(entryId: string): Promise<void>;
   getStaffUsers(): Promise<User[]>;
   getStaffForTimesheets(): Promise<Array<{ id: string; name: string; type: 'user' | 'employee' }>>;
   getTimesheetEntriesByPeriod(staffId: string, startDate: string, endDate: string): Promise<any[]>;
@@ -595,6 +596,38 @@ export class DatabaseStorage implements IStorage {
       if (jobId) {
         await this.updateLaborHoursFromTimesheet(staffId, jobId);
       }
+    }
+  }
+
+  async clearTimesheetEntry(entryId: string): Promise<void> {
+    // Get the entry to update affected job before deletion
+    const [entry] = await db
+      .select()
+      .from(timesheetEntries)
+      .where(
+        and(
+          eq(timesheetEntries.id, entryId),
+          eq(timesheetEntries.approved, false) // Only delete unapproved entries
+        )
+      );
+
+    if (!entry) {
+      throw new Error("Entry not found or already approved");
+    }
+
+    // Delete the specific timesheet entry (only if unapproved)
+    await db
+      .delete(timesheetEntries)
+      .where(
+        and(
+          eq(timesheetEntries.id, entryId),
+          eq(timesheetEntries.approved, false) // Only delete unapproved entries
+        )
+      );
+
+    // Update labor hours for affected job
+    if (entry.jobId) {
+      await this.updateLaborHoursFromTimesheet(entry.staffId, entry.jobId);
     }
   }
 

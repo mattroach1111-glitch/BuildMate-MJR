@@ -547,6 +547,37 @@ export default function AdminDashboard() {
     },
   });
 
+  const clearEntryMutation = useMutation({
+    mutationFn: async (entryId: string) => {
+      await apiRequest("DELETE", `/api/admin/timesheet/entry/${entryId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/timesheets"] });
+      toast({
+        title: "Success",
+        description: "Timesheet entry cleared successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to clear timesheet entry",
+        variant: "destructive",
+      });
+    },
+  });
+
   const createTimesheetMutation = useMutation({
     mutationFn: async (data: z.infer<typeof adminTimesheetFormSchema>) => {
       const response = await apiRequest("POST", "/api/admin/timesheet", {
@@ -2539,6 +2570,23 @@ export default function AdminDashboard() {
                                   })()} • {entry.clientName} • {parseFloat(entry.hours || 0)}h
                                 </div>
                               </div>
+                              {!entry.approved && (
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => {
+                                    if (confirm(`Are you sure you want to clear this timesheet entry for ${format(parseISO(entry.date), 'dd/MM/yyyy')}? This action cannot be undone.`)) {
+                                      clearEntryMutation.mutate(entry.id);
+                                    }
+                                  }}
+                                  disabled={clearEntryMutation.isPending}
+                                  data-testid={`button-clear-entry-${entry.id}`}
+                                  className="min-w-20"
+                                >
+                                  <Trash2 className="h-3 w-3 mr-1" />
+                                  Clear
+                                </Button>
+                              )}
                             </div>
                           ))}
                         </div>

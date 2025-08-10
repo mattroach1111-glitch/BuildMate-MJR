@@ -637,6 +637,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/admin/timesheet/entry/:entryId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const entryId = req.params.entryId;
+      
+      if (!entryId) {
+        return res.status(400).json({ message: "Entry ID is required" });
+      }
+
+      await storage.clearTimesheetEntry(entryId);
+      
+      res.status(200).json({ 
+        message: "Timesheet entry cleared successfully",
+        entryId
+      });
+    } catch (error) {
+      console.error("Error clearing timesheet entry:", error);
+      res.status(500).json({ message: "Failed to clear timesheet entry" });
+    }
+  });
+
   app.post("/api/admin/timesheet", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
