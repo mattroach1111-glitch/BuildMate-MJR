@@ -777,95 +777,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                 </div>
               </CardHeader>
               <CardContent>
-                {/* Mobile Card Layout */}
-                <div className="block md:hidden space-y-4">
-                  {jobDetails.laborEntries.map((entry) => (
-                    <div key={entry.id} className="mobile-table-card animate-in">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-sm font-bold text-primary">
-                            {(entry.staff?.name || entry.staffId).charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <span className="font-semibold text-lg" data-testid={`text-labor-staff-${entry.id}`}>
-                          {entry.staff?.name || entry.staffId}
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <label className="text-sm font-medium text-gray-600 block mb-2">Hourly Rate</label>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-500">$</span>
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={localLaborRates[entry.id] || entry.hourlyRate}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                setLocalLaborRates(prev => ({
-                                  ...prev,
-                                  [entry.id]: newValue
-                                }));
-                                setHasUnsavedRates(true);
-                              }}
-                              className="flex-1 text-base border rounded-md px-3 py-3 focus:border-primary focus:ring-1 focus:ring-primary bg-white"
-                              data-testid={`input-labor-rate-${entry.id}`}
-                            />
-                            <span className="text-sm text-gray-500">/hr</span>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <label className="text-sm font-medium text-gray-600 block mb-2">Hours Logged</label>
-                          <div className="text-xl font-bold py-3 text-primary" data-testid={`text-labor-hours-${entry.id}`}>
-                            {entry.hoursLogged} hrs
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="mb-4">
-                        <label className="text-sm font-medium text-gray-600 block mb-2">Add Extra Hours</label>
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="number"
-                            step="0.5"
-                            min="0"
-                            placeholder="0"
-                            value={extraHours[entry.id] || ""}
-                            onChange={(e) => {
-                              setExtraHours(prev => ({
-                                ...prev,
-                                [entry.id]: e.target.value
-                              }));
-                            }}
-                            className="flex-1 text-base border rounded-md px-3 py-3 focus:border-primary focus:ring-1 focus:ring-primary bg-white"
-                            data-testid={`input-extra-hours-${entry.id}`}
-                          />
-                          <Button
-                            onClick={() => handleAddExtraHours(entry.id)}
-                            disabled={!extraHours[entry.id] || parseFloat(extraHours[entry.id]) <= 0 || addExtraHoursMutation.isPending}
-                            className="px-6 py-3 min-h-[48px] font-semibold"
-                            data-testid={`button-add-extra-hours-${entry.id}`}
-                          >
-                            {addExtraHoursMutation.isPending ? "..." : "Add"}
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-                        <span className="text-sm font-medium text-gray-600">Total:</span>
-                        <span className="font-bold text-xl text-primary" data-testid={`text-labor-total-${entry.id}`}>
-                          ${(parseFloat(localLaborRates[entry.id] || entry.hourlyRate) * parseFloat(entry.hoursLogged)).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Desktop Table Layout */}
-                <div className="hidden md:block overflow-x-auto">
+                <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="text-left text-sm font-medium text-gray-700">
@@ -989,46 +901,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                 </div>
               </CardHeader>
               <CardContent>
-                {/* Mobile Card Layout for Materials */}
-                <div className="block md:hidden space-y-3">
-                  {jobDetails.materials.map((material, index) => (
-                    <div key={index} className="mobile-table-card animate-in">
-                      <div className="space-y-3">
-                        <div>
-                          <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Description</label>
-                          <div className="text-base font-medium mt-1" data-testid={`text-material-description-${index}`}>
-                            {material.description}
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Supplier</label>
-                            <div className="text-sm mt-1" data-testid={`text-material-supplier-${index}`}>
-                              {material.supplier}
-                            </div>
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Date</label>
-                            <div className="text-sm mt-1" data-testid={`text-material-date-${index}`}>
-                              {material.invoiceDate}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                          <span className="text-sm font-medium text-gray-600">Amount:</span>
-                          <span className="font-bold text-lg text-primary" data-testid={`text-material-amount-${index}`}>
-                            ${parseFloat(material.amount).toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Desktop Table Layout for Materials */}
-                <div className="hidden md:block overflow-x-auto">
+                <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="text-left text-sm font-medium text-gray-700">
@@ -1090,46 +963,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                 </div>
               </CardHeader>
               <CardContent>
-                {/* Mobile Card Layout for Sub Trades */}
-                <div className="block md:hidden space-y-3">
-                  {jobDetails.subTrades.map((subTrade, index) => (
-                    <div key={index} className="mobile-table-card animate-in">
-                      <div className="space-y-3">
-                        <div>
-                          <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Trade</label>
-                          <div className="text-base font-medium mt-1" data-testid={`text-subtrade-trade-${index}`}>
-                            {subTrade.trade}
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Contractor</label>
-                            <div className="text-sm mt-1" data-testid={`text-subtrade-contractor-${index}`}>
-                              {subTrade.contractor}
-                            </div>
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Date</label>
-                            <div className="text-sm mt-1" data-testid={`text-subtrade-date-${index}`}>
-                              {subTrade.invoiceDate}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                          <span className="text-sm font-medium text-gray-600">Amount:</span>
-                          <span className="font-bold text-lg text-primary" data-testid={`text-subtrade-amount-${index}`}>
-                            ${parseFloat(subTrade.amount).toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Desktop Table Layout for Sub Trades */}
-                <div className="hidden md:block overflow-x-auto">
+                <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="text-left text-sm font-medium text-gray-700">
