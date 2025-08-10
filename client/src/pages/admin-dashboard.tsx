@@ -51,6 +51,8 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>("all");
   const [dateRangeFilter, setDateRangeFilter] = useState<string>("all");
+  const [isAddingNewProjectManager, setIsAddingNewProjectManager] = useState(false);
+  const [newProjectManagerName, setNewProjectManagerName] = useState("");
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -121,6 +123,9 @@ export default function AdminDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
       setIsCreateJobOpen(false);
+      jobForm.reset();
+      setIsAddingNewProjectManager(false);
+      setNewProjectManagerName("");
       toast({
         title: "Success",
         description: "Job created successfully",
@@ -491,6 +496,17 @@ export default function AdminDashboard() {
     }
   }, [groupBy]);
 
+  // Get unique project managers from existing jobs
+  const projectManagers = jobs ? [...new Set(jobs.map(job => job.projectName).filter(Boolean))] : [];
+
+  const handleAddProjectManager = () => {
+    if (newProjectManagerName.trim()) {
+      jobForm.setValue('projectName', newProjectManagerName.trim());
+      setNewProjectManagerName("");
+      setIsAddingNewProjectManager(false);
+    }
+  };
+
   const employeeForm = useForm<z.infer<typeof employeeFormSchema>>({
     resolver: zodResolver(employeeFormSchema),
     defaultValues: {
@@ -510,6 +526,16 @@ export default function AdminDashboard() {
 
   const onJobSubmit = (data: z.infer<typeof jobFormSchema>) => {
     createJobMutation.mutate(data);
+  };
+
+  // Handle project manager selection change
+  const handleProjectManagerChange = (value: string) => {
+    if (value === "__add_new__") {
+      setIsAddingNewProjectManager(true);
+      setNewProjectManagerName("");
+    } else {
+      jobForm.setValue('projectName', value);
+    }
   };
 
   const onEmployeeSubmit = (data: z.infer<typeof employeeFormSchema>) => {
@@ -650,9 +676,70 @@ export default function AdminDashboard() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Project Manager</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter project manager name" {...field} data-testid="input-project-manager" />
-                          </FormControl>
+                          <div className="space-y-2">
+                            {!isAddingNewProjectManager ? (
+                              <div className="flex gap-2">
+                                <FormControl className="flex-1">
+                                  <Select onValueChange={handleProjectManagerChange} value={field.value}>
+                                    <SelectTrigger data-testid="select-project-manager">
+                                      <SelectValue placeholder="Select or add project manager" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {projectManagers.map((manager) => (
+                                        <SelectItem key={manager} value={manager}>
+                                          {manager}
+                                        </SelectItem>
+                                      ))}
+                                      <SelectItem value="__add_new__" className="text-primary font-medium">
+                                        + Add New Project Manager
+                                      </SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </FormControl>
+                              </div>
+                            ) : (
+                              <div className="flex gap-2">
+                                <Input
+                                  placeholder="Enter new project manager name"
+                                  value={newProjectManagerName}
+                                  onChange={(e) => setNewProjectManagerName(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleAddProjectManager();
+                                    } else if (e.key === 'Escape') {
+                                      setIsAddingNewProjectManager(false);
+                                      setNewProjectManagerName("");
+                                    }
+                                  }}
+                                  className="flex-1"
+                                  data-testid="input-new-project-manager"
+                                  autoFocus
+                                />
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  onClick={handleAddProjectManager}
+                                  disabled={!newProjectManagerName.trim()}
+                                  data-testid="button-add-project-manager"
+                                >
+                                  Add
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setIsAddingNewProjectManager(false);
+                                    setNewProjectManagerName("");
+                                  }}
+                                  data-testid="button-cancel-project-manager"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            )}
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
