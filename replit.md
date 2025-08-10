@@ -71,6 +71,7 @@ Preferred communication style: Simple, everyday language.
 
 ## Cloud Integrations
 - **Google Drive Integration**: OAuth flow for personal Google Drive connections, allowing timesheet PDFs to auto-save.
+- **Object Storage**: Replit Object Storage integration for job document management with upload, download, and delete capabilities.
 
 ## Utilities
 - **date-fns**: Date manipulation.
