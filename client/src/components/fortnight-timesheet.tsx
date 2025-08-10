@@ -55,8 +55,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     enabled: isAdminView,
   });
 
-  const { data: jobs } = useQuery({
-    queryKey: isAdminView ? ["/api/jobs"] : ["/api/jobs-for-staff"],
+  const { data: jobs, isLoading: jobsLoading, error: jobsError } = useQuery({
+    queryKey: ["/api/jobs-for-staff"], // Always use jobs-for-staff since it works for both admin and staff
     retry: false,
   });
 
@@ -388,6 +388,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     {Array.isArray(timesheetEntries) && timesheetEntries.length > 0 && (
                       <p>Debug: First Timesheet Entry: {JSON.stringify(timesheetEntries[0])}</p>
                     )}
+                    {Array.isArray(jobs) && jobs.length > 0 && (
+                      <p>Debug: First Job: {JSON.stringify(jobs[0])}</p>
+                    )}
+                    <p>Debug: Jobs Count: {Array.isArray(jobs) ? jobs.length : 'Not loaded'}</p>
+                    <p>Debug: Jobs Loading: {jobsLoading ? 'Yes' : 'No'}</p>
+                    <p>Debug: Jobs Error: {jobsError ? String(jobsError) : 'None'}</p>
                   </div>
                 )}
               </div>
@@ -502,12 +508,18 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="no-job">No job</SelectItem>
-                                  {Array.isArray(jobs) && jobs.length > 0 ? jobs.filter((job: any) => job.id && job.id.trim() !== '').map((job: any) => (
-                                    <SelectItem key={job.id} value={job.id}>
-                                      {job.jobAddress || job.address || 'Unnamed Job'}
-                                    </SelectItem>
-                                  )) : (
+                                  {jobsLoading ? (
                                     <SelectItem value="loading" disabled>Loading jobs...</SelectItem>
+                                  ) : jobsError ? (
+                                    <SelectItem value="error" disabled>Error loading jobs</SelectItem>
+                                  ) : Array.isArray(jobs) && jobs.length > 0 ? (
+                                    jobs.filter((job: any) => job.id && job.id.trim() !== '').map((job: any) => (
+                                      <SelectItem key={job.id} value={job.id}>
+                                        {job.jobAddress || job.address || job.jobName || job.name || `Job ${job.id}`}
+                                      </SelectItem>
+                                    ))
+                                  ) : (
+                                    <SelectItem value="no-jobs" disabled>No jobs available</SelectItem>
                                   )}
                                 </SelectContent>
                               </Select>
