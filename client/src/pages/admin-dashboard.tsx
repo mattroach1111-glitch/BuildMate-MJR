@@ -18,7 +18,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { insertJobSchema, insertEmployeeSchema } from "@shared/schema";
 import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
-import { Plus, Users, Briefcase, Trash2 } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown } from "lucide-react";
 import type { Job, Employee } from "@shared/schema";
 
 const jobFormSchema = insertJobSchema.extend({
@@ -38,6 +38,9 @@ export default function AdminDashboard() {
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
   const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
   const [isCreateEmployeeOpen, setIsCreateEmployeeOpen] = useState(false);
+  const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
+  const [expandedManagers, setExpandedManagers] = useState<Set<string>>(new Set());
+  const [groupBy, setGroupBy] = useState<'client' | 'manager' | 'none'>('client');
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -176,6 +179,51 @@ export default function AdminDashboard() {
       defaultHourlyRate: "50",
     },
   });
+
+  // Group jobs by client or project manager
+  const groupedJobs = jobs ? (() => {
+    if (groupBy === 'none') return { 'All Jobs': jobs };
+    
+    if (groupBy === 'client') {
+      return jobs.reduce((groups, job) => {
+        const client = job.clientName || 'Unknown Client';
+        if (!groups[client]) groups[client] = [];
+        groups[client].push(job);
+        return groups;
+      }, {} as Record<string, Job[]>);
+    }
+    
+    if (groupBy === 'manager') {
+      return jobs.reduce((groups, job) => {
+        const manager = job.projectName || 'Unknown Manager';
+        if (!groups[manager]) groups[manager] = [];
+        groups[manager].push(job);
+        return groups;
+      }, {} as Record<string, Job[]>);
+    }
+    
+    return {};
+  })() : {};
+
+  const toggleClientExpanded = (client: string) => {
+    const newExpanded = new Set(expandedClients);
+    if (newExpanded.has(client)) {
+      newExpanded.delete(client);
+    } else {
+      newExpanded.add(client);
+    }
+    setExpandedClients(newExpanded);
+  };
+
+  const toggleManagerExpanded = (manager: string) => {
+    const newExpanded = new Set(expandedManagers);
+    if (newExpanded.has(manager)) {
+      newExpanded.delete(manager);
+    } else {
+      newExpanded.add(manager);
+    }
+    setExpandedManagers(newExpanded);
+  };
 
   const employeeForm = useForm<z.infer<typeof employeeFormSchema>>({
     resolver: zodResolver(employeeFormSchema),
@@ -317,9 +365,9 @@ export default function AdminDashboard() {
                       name="projectName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Project Name</FormLabel>
+                          <FormLabel>Project Manager</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter project name" {...field} data-testid="input-project-name" />
+                            <Input placeholder="Enter project manager name" {...field} data-testid="input-project-manager" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -401,6 +449,36 @@ export default function AdminDashboard() {
             </Dialog>
           </div>
 
+          {/* Group By Controls */}
+          <div className="flex gap-2 mb-4 flex-wrap">
+            <Button 
+              variant={groupBy === 'client' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setGroupBy('client')}
+              data-testid="button-group-by-client"
+            >
+              <Folder className="h-4 w-4 mr-1" />
+              Group by Client
+            </Button>
+            <Button 
+              variant={groupBy === 'manager' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setGroupBy('manager')}
+              data-testid="button-group-by-manager"
+            >
+              <Folder className="h-4 w-4 mr-1" />
+              Group by Manager
+            </Button>
+            <Button 
+              variant={groupBy === 'none' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setGroupBy('none')}
+              data-testid="button-group-by-none"
+            >
+              No Grouping
+            </Button>
+          </div>
+
           {/* Jobs Grid */}
           {jobsLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -417,34 +495,103 @@ export default function AdminDashboard() {
                 </Card>
               ))}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {jobs?.map((job) => (
-                <Card 
-                  key={job.id} 
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => setSelectedJob(job.id)}
-                  data-testid={`card-job-${job.id}`}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-lg leading-tight">{job.jobAddress}</CardTitle>
-                      <Badge className={`${getStatusColor(job.status)} text-xs shrink-0 ml-2`}>
-                        {formatStatus(job.status)}
+          ) : jobs && jobs.length > 0 ? (
+            <div className="space-y-4">
+              {Object.entries(groupedJobs).map(([groupName, groupJobs]) => {
+                const isExpanded = groupBy === 'client' ? expandedClients.has(groupName) : 
+                                 groupBy === 'manager' ? expandedManagers.has(groupName) : true;
+                const toggleExpanded = groupBy === 'client' ? () => toggleClientExpanded(groupName) :
+                                     groupBy === 'manager' ? () => toggleManagerExpanded(groupName) : null;
+                
+                // Show individual jobs if no grouping or only one group
+                if (groupBy === 'none' || Object.keys(groupedJobs).length === 1) {
+                  return (
+                    <div key={groupName} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {groupJobs.map((job) => (
+                        <Card 
+                          key={job.id} 
+                          className="cursor-pointer hover:shadow-md transition-shadow"
+                          onClick={() => setSelectedJob(job.id)}
+                          data-testid={`card-job-${job.id}`}
+                        >
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                              <CardTitle className="text-lg leading-tight">{job.jobAddress}</CardTitle>
+                              <Badge className={`${getStatusColor(job.status)} text-xs shrink-0 ml-2`}>
+                                {formatStatus(job.status)}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <p className="text-sm text-muted-foreground mb-2">PM: {job.projectName}</p>
+                            <div className="text-xs text-muted-foreground">
+                              Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  );
+                }
+
+                // Show grouped folders
+                return (
+                  <div key={groupName} className="border rounded-lg p-4 bg-gray-50">
+                    <div 
+                      className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded"
+                      onClick={toggleExpanded}
+                      data-testid={`folder-${groupName}`}
+                    >
+                      {isExpanded ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                      {isExpanded ? (
+                        <FolderOpen className="h-5 w-5 text-blue-600" />
+                      ) : (
+                        <Folder className="h-5 w-5 text-blue-600" />
+                      )}
+                      <span className="font-medium">{groupName}</span>
+                      <Badge variant="secondary" className="ml-2">
+                        {groupJobs.length} job{groupJobs.length !== 1 ? 's' : ''}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-sm text-muted-foreground mb-2">{job.projectName}</p>
-                    <div className="text-xs text-muted-foreground">
-                      Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    
+                    {isExpanded && (
+                      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {groupJobs.map((job) => (
+                          <Card 
+                            key={job.id} 
+                            className="cursor-pointer hover:shadow-md transition-shadow bg-white"
+                            onClick={() => setSelectedJob(job.id)}
+                            data-testid={`card-job-${job.id}`}
+                          >
+                            <CardHeader className="pb-3">
+                              <div className="flex items-start justify-between">
+                                <CardTitle className="text-lg leading-tight">{job.jobAddress}</CardTitle>
+                                <Badge className={`${getStatusColor(job.status)} text-xs shrink-0 ml-2`}>
+                                  {formatStatus(job.status)}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                              <p className="text-sm text-muted-foreground mb-2">PM: {job.projectName}</p>
+                              <div className="text-xs text-muted-foreground">
+                                Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          )}
+          ) : null}
 
           {jobs && jobs.length === 0 && !jobsLoading && (
             <Card className="p-8 text-center">

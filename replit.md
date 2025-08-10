@@ -14,6 +14,8 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 - ✅ **Smart Employee Sync**: New employees automatically added to existing jobs; job sheets sync all current staff
 - ✅ **Simplified Staff Management**: Removed hourly rates from staff management - all rates managed on job sheets
 - ✅ **Address-First Display**: Job cards now show address as heading for easier identification
+- ✅ **Folder Grouping System**: Jobs can be grouped by client names or project managers with expandable folders
+- ✅ **Project Manager Field**: Changed "Project Name" to "Project Manager" for better role clarity
 
 # User Preferences
 
