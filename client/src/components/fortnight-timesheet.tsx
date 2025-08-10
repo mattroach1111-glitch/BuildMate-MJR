@@ -444,7 +444,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         <th className="text-left p-3 font-medium">Date</th>
                         <th className="text-left p-3 font-medium">Hours</th>
                         <th className="text-left p-3 font-medium">Job</th>
-                        <th className="text-left p-3 font-medium">Materials</th>
+                        <th className="text-left p-3 font-medium">Job Description</th>
                         <th className="text-left p-3 font-medium">Actions</th>
                       </tr>
                     </thead>
@@ -495,6 +495,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="no-job">No job</SelectItem>
+                                  <SelectItem value="rdo">RDO (Rest Day Off)</SelectItem>
                                   {jobsLoading ? (
                                     <SelectItem value="loading" disabled>Loading jobs...</SelectItem>
                                   ) : jobsError ? (
@@ -512,12 +513,31 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               </Select>
                             </td>
                             <td className="p-3">
-                              <Input
-                                placeholder="Materials used..."
+                              <Select
                                 value={entry.materials || ''}
-                                onChange={(e) => handleCellChange(day, entryIndex, 'materials', e.target.value)}
-                                className="min-w-40"
-                              />
+                                onValueChange={(value) => handleCellChange(day, entryIndex, 'materials', value)}
+                              >
+                                <SelectTrigger className="min-w-40">
+                                  <SelectValue placeholder="Job description..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="">No description</SelectItem>
+                                  <SelectItem value="Materials">Materials</SelectItem>
+                                  <SelectItem value="Labour">Labour</SelectItem>
+                                  <SelectItem value="Equipment">Equipment</SelectItem>
+                                  <SelectItem value="Travel">Travel</SelectItem>
+                                  <SelectItem value="Meeting">Meeting</SelectItem>
+                                  <SelectItem value="Training">Training</SelectItem>
+                                  <SelectItem value="Cleanup">Cleanup</SelectItem>
+                                  <SelectItem value="Preparation">Preparation</SelectItem>
+                                  <SelectItem value="Site Visit">Site Visit</SelectItem>
+                                  <SelectItem value="Administration">Administration</SelectItem>
+                                  {/* Separator for leave types */}
+                                  <SelectItem value="sick-leave">Sick Leave</SelectItem>
+                                  <SelectItem value="personal-leave">Personal Leave</SelectItem>
+                                  <SelectItem value="annual-leave">Annual Leave</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </td>
                             <td className="p-3">
                               <div className="flex gap-2">
