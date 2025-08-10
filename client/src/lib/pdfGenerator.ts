@@ -12,7 +12,7 @@ type JobWithRelations = {
     id: string;
     hourlyRate: string;
     hoursLogged: string;
-    employee?: {
+    staff?: {
       name: string;
     };
   }>;
@@ -38,12 +38,12 @@ export async function generateJobPDF(job: JobWithRelations) {
   
   // Header - centered like Excel
   doc.setFontSize(16);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.text('JOB COST SHEET', 105, 20, { align: 'center' });
   
   // Job details - top left
   doc.setFontSize(10);
-  doc.setFont(undefined, 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.text(`Job: ${job.jobAddress}`, 20, 35);
   doc.text(`Client: ${job.clientName}`, 20, 42);
   doc.text(`Project Manager: ${job.projectName}`, 20, 49);
@@ -54,13 +54,13 @@ export async function generateJobPDF(job: JobWithRelations) {
 
   // LABOR SECTION - Excel style table
   doc.setFontSize(12);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.text('LABOR', 20, yPos);
   yPos += 8;
 
   // Table headers
   doc.setFontSize(9);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.text('Name', 25, yPos);
   doc.text('Hourly Rate', 80, yPos);
   doc.text('Hours', 130, yPos);
@@ -72,10 +72,10 @@ export async function generateJobPDF(job: JobWithRelations) {
   yPos += 8;
 
   // Labor entries
-  doc.setFont(undefined, 'normal');
+  doc.setFont('helvetica', 'normal');
   let laborTotal = 0;
   job.laborEntries.forEach((entry) => {
-    const employeeName = entry.employee?.name || 'Unknown Staff';
+    const employeeName = entry.staff?.name || 'Unknown Staff';
     const rate = parseFloat(entry.hourlyRate);
     const hours = parseFloat(entry.hoursLogged);
     const entryTotal = rate * hours;
@@ -90,7 +90,7 @@ export async function generateJobPDF(job: JobWithRelations) {
 
   // Labor total
   yPos += 3;
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.text('Total', 120, yPos);
   doc.text(`$${laborTotal.toFixed(2)}`, 160, yPos);
   yPos += 20;
@@ -108,7 +108,7 @@ export async function generateJobPDF(job: JobWithRelations) {
     doc.line(20, yPos, 190, yPos);
     yPos += 8;
 
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     let materialsTotal = 0;
     job.materials.forEach((material) => {
       const amount = parseFloat(material.amount);
@@ -120,7 +120,7 @@ export async function generateJobPDF(job: JobWithRelations) {
     });
 
     yPos += 3;
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.text('Total', 120, yPos);
     doc.text(`$${materialsTotal.toFixed(2)}`, 160, yPos);
     yPos += 20;
@@ -139,7 +139,7 @@ export async function generateJobPDF(job: JobWithRelations) {
     doc.line(20, yPos, 190, yPos);
     yPos += 8;
 
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     let subTradesTotal = 0;
     job.subTrades.forEach((subTrade) => {
       const amount = parseFloat(subTrade.amount);
@@ -151,7 +151,7 @@ export async function generateJobPDF(job: JobWithRelations) {
     });
 
     yPos += 3;
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.text('Total', 120, yPos);
     doc.text(`$${subTradesTotal.toFixed(2)}`, 160, yPos);
     yPos += 20;
@@ -170,7 +170,7 @@ export async function generateJobPDF(job: JobWithRelations) {
     doc.line(20, yPos, 190, yPos);
     yPos += 8;
 
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     job.otherCosts.forEach((cost) => {
       const amount = parseFloat(cost.amount);
       
@@ -199,12 +199,12 @@ export async function generateJobPDF(job: JobWithRelations) {
   const finalTotal = subtotalWithMargin + gstAmount;
 
   doc.setFontSize(11);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.text('SUMMARY', 20, yPos);
   yPos += 15;
 
   doc.setFontSize(10);
-  doc.setFont(undefined, 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.text('Total', 120, yPos);
   doc.text(`$${subtotal.toFixed(2)}`, 160, yPos);
   yPos += 10;
@@ -221,7 +221,7 @@ export async function generateJobPDF(job: JobWithRelations) {
 
   // Final total - highlighted like Excel
   doc.setFontSize(12);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.text('Total inc GST', 120, yPos);
   doc.setTextColor(220, 20, 60); // Deep red like Excel
   doc.text(`$${finalTotal.toFixed(2)}`, 160, yPos);
