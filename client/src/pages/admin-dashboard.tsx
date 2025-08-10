@@ -18,7 +18,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { insertJobSchema, insertEmployeeSchema, insertTimesheetEntrySchema } from "@shared/schema";
 import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle } from "lucide-react";
+import StaffDashboard from "@/pages/staff-dashboard";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
@@ -674,7 +675,7 @@ export default function AdminDashboard() {
 
       {/* Mobile-First Tabs */}
       <Tabs defaultValue="jobs" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
+        <TabsList className="grid w-full grid-cols-4 mb-6">
           <TabsTrigger value="jobs" className="flex items-center gap-2">
             <Briefcase className="h-4 w-4" />
             <span className="hidden sm:inline">Jobs</span>
@@ -686,6 +687,10 @@ export default function AdminDashboard() {
           <TabsTrigger value="timesheets" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
             <span className="hidden sm:inline">Timesheets</span>
+          </TabsTrigger>
+          <TabsTrigger value="staff-view" className="flex items-center gap-2" data-testid="tab-staff-view">
+            <Eye className="h-4 w-4" />
+            <span className="hidden sm:inline">Staff View</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1665,6 +1670,19 @@ export default function AdminDashboard() {
               </p>
             </Card>
           )}
+        </TabsContent>
+
+        {/* Staff View Tab */}
+        <TabsContent value="staff-view" className="space-y-6" data-testid="content-staff-view">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div>
+              <h2 className="text-xl font-semibold" data-testid="text-staff-preview-title">Staff Dashboard Preview</h2>
+              <p className="text-sm text-muted-foreground">View the staff experience as an admin</p>
+            </div>
+          </div>
+          <div className="border rounded-lg bg-muted/30 p-1" data-testid="container-staff-preview">
+            <StaffDashboard />
+          </div>
         </TabsContent>
       </Tabs>
 
