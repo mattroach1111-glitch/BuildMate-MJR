@@ -40,6 +40,7 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 - ✅ **Modern UI/UX Redesign (January 2025)**: Complete interface overhaul with professional navigation system, consistent PageLayout component, BuildFlow Pro branding, and improved mobile responsiveness for better user experience.
 - ✅ **Enhanced Navigation**: Added back navigation from timesheet view to dashboard, making it easier for admins and staff to move between sections without getting lost.
 - ✅ **Collapsible Timesheet Approvals**: Added expand/collapse functionality to timesheet approvals, grouping all entries under each staff member's name with toggle buttons for cleaner admin interface management.
+- ✅ **Approved Timesheets Folder**: Separated approved timesheets into dedicated collapsible folder with green color scheme, keeping main view focused on pending approvals for better workflow organization.
 
 # User Preferences
 

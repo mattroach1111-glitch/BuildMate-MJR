@@ -55,6 +55,8 @@ export default function AdminDashboard() {
   const [dateRangeFilter, setDateRangeFilter] = useState<string>("all");
   // Start with all fortnights collapsed by default for cleaner view
   const [collapsedFortnights, setCollapsedFortnights] = useState<Set<string>>(new Set());
+  // Separate state for approved timesheets folder
+  const [isApprovedFolderCollapsed, setIsApprovedFolderCollapsed] = useState(true);
   const [isAddingNewProjectManager, setIsAddingNewProjectManager] = useState(false);
   const [newProjectManagerName, setNewProjectManagerName] = useState("");
   const [isAddingNewClient, setIsAddingNewClient] = useState(false);
@@ -198,6 +200,15 @@ export default function AdminDashboard() {
       return b.fortnightStart.getTime() - a.fortnightStart.getTime();
     });
   }, [allTimesheets, selectedEmployeeFilter, dateRangeFilter]);
+
+  // Split timesheets into pending and approved
+  const pendingTimesheets = useMemo(() => {
+    return groupedTimesheets?.filter(fortnight => !fortnight.allApproved) || [];
+  }, [groupedTimesheets]);
+
+  const approvedTimesheets = useMemo(() => {
+    return groupedTimesheets?.filter(fortnight => fortnight.allApproved) || [];
+  }, [groupedTimesheets]);
 
   // Auto-collapse all fortnights by default when groupedTimesheets changes
   useEffect(() => {
@@ -1773,9 +1784,14 @@ export default function AdminDashboard() {
                 </Card>
               </div>
 
-              {/* Fortnight Grouped Timesheet Entries */}
+              {/* Pending Timesheets Section */}
               <div className="space-y-4">
-                {groupedTimesheets.map((fortnight) => (
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-orange-500" />
+                  Pending Approvals ({pendingTimesheets.length})
+                </h3>
+                
+                {pendingTimesheets.map((fortnight) => (
                   <Card key={`${fortnight.staffId}-${fortnight.fortnightStart.toISOString()}`} className="overflow-hidden">
                     <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -1876,6 +1892,152 @@ export default function AdminDashboard() {
                     )}
                   </Card>
                 ))}
+                
+                {pendingTimesheets.length === 0 && (
+                  <Card className="p-6 text-center">
+                    <CheckCircle className="h-10 w-10 mx-auto text-green-500 mb-3" />
+                    <h3 className="text-lg font-medium mb-2">All caught up!</h3>
+                    <p className="text-muted-foreground">
+                      No pending timesheet approvals at this time.
+                    </p>
+                  </Card>
+                )}
+
+                {/* Approved Timesheets Folder */}
+                {approvedTimesheets.length > 0 && (
+                  <div className="mt-8">
+                    <Card className="overflow-hidden border-green-200 bg-green-50/50">
+                      <CardHeader 
+                        className="pb-3 bg-gradient-to-r from-green-50 to-emerald-50 cursor-pointer hover:from-green-100 hover:to-emerald-100 transition-colors"
+                        onClick={() => setIsApprovedFolderCollapsed(!isApprovedFolderCollapsed)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <CheckCircle className="h-5 w-5 text-green-600" />
+                            <div>
+                              <h3 className="text-lg font-semibold text-green-800">
+                                Approved Timesheets ({approvedTimesheets.length})
+                              </h3>
+                              <p className="text-sm text-green-600">
+                                {approvedTimesheets.reduce((total, ft) => total + ft.totalHours, 0).toFixed(1)} hours approved
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-green-700 hover:text-green-800 hover:bg-green-100"
+                            data-testid="button-toggle-approved-folder"
+                          >
+                            {isApprovedFolderCollapsed ? (
+                              <ChevronRight className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      
+                      {!isApprovedFolderCollapsed && (
+                        <CardContent className="p-4">
+                          <div className="space-y-3">
+                            {approvedTimesheets.map((fortnight) => (
+                              <Card key={`approved-${fortnight.staffId}-${fortnight.fortnightStart.toISOString()}`} className="border-green-200">
+                                <CardHeader className="pb-3 bg-green-50/50">
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                    <div className="space-y-1">
+                                      <div className="flex items-center gap-3">
+                                        <div className="font-semibold text-lg text-green-800">{fortnight.staffName || 'Unknown Staff'}</div>
+                                        <Badge variant="default" className="bg-green-600 px-3 py-1">
+                                          ✓ Approved
+                                        </Badge>
+                                      </div>
+                                      <div className="text-sm text-green-600 font-medium">
+                                        Fortnight: {format(fortnight.fortnightStart, 'dd/MM/yyyy')} - {format(fortnight.fortnightEnd, 'dd/MM/yyyy')}
+                                      </div>
+                                      <div className="text-sm text-green-600">
+                                        Total Hours: {fortnight.totalHours.toFixed(1)}h • {fortnight.totalCount} entries
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => {
+                                          const fortnightKey = `${fortnight.staffId}-${fortnight.fortnightStart.toISOString()}`;
+                                          const newCollapsed = new Set(collapsedFortnights);
+                                          if (newCollapsed.has(fortnightKey)) {
+                                            newCollapsed.delete(fortnightKey);
+                                          } else {
+                                            newCollapsed.add(fortnightKey);
+                                          }
+                                          setCollapsedFortnights(newCollapsed);
+                                        }}
+                                        data-testid={`button-toggle-approved-entries-${fortnight.staffId}-${fortnight.fortnightStart.toISOString().split('T')[0]}`}
+                                        className="text-green-700 hover:text-green-800 hover:bg-green-100 p-2"
+                                      >
+                                        {collapsedFortnights.has(`${fortnight.staffId}-${fortnight.fortnightStart.toISOString()}`) ? (
+                                          <ChevronRight className="h-4 w-4" />
+                                        ) : (
+                                          <ChevronDown className="h-4 w-4" />
+                                        )}
+                                      </Button>
+                                      <Button
+                                        size="default"
+                                        variant="outline"
+                                        onClick={() => {
+                                          approveFortnightMutation.mutate({
+                                            staffId: fortnight.staffId,
+                                            fortnightStart: fortnight.fortnightStart.toISOString().split('T')[0],
+                                            fortnightEnd: fortnight.fortnightEnd.toISOString().split('T')[0],
+                                            approved: false
+                                          });
+                                        }}
+                                        disabled={approveFortnightMutation.isPending}
+                                        data-testid={`button-unapprove-fortnight-${fortnight.staffId}-${fortnight.fortnightStart.toISOString().split('T')[0]}`}
+                                        className="border-green-300 text-green-700 hover:bg-green-100 min-w-32"
+                                      >
+                                        <XCircle className="h-4 w-4 mr-2" />
+                                        Unapprove
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </CardHeader>
+                                {!collapsedFortnights.has(`${fortnight.staffId}-${fortnight.fortnightStart.toISOString()}`) && (
+                                  <CardContent className="p-4">
+                                    <div className="space-y-2">
+                                      {fortnight.entries.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((entry: any) => (
+                                        <div 
+                                          key={entry.id} 
+                                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg bg-green-50"
+                                          data-testid={`approved-entry-${entry.id}`}
+                                        >
+                                          <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                              <div className="text-sm font-medium text-green-800">
+                                                {format(parseISO(entry.date), 'dd/MM/yyyy (EEEE)')}
+                                              </div>
+                                              <Badge variant="default" className="text-xs bg-green-600">
+                                                ✓
+                                              </Badge>
+                                            </div>
+                                            <div className="text-sm text-green-600">
+                                              {entry.jobAddress || 'Unknown Job'} • {entry.clientName} • {parseFloat(entry.hours || 0)}h
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </CardContent>
+                                )}
+                              </Card>
+                            ))}
+                          </div>
+                        </CardContent>
+                      )}
+                    </Card>
+                  </div>
+                )}
                 
                 {groupedTimesheets.length === 0 && (
                   <Card className="p-8 text-center">
