@@ -21,11 +21,24 @@ export function UserManagement() {
     queryFn: async () => {
       try {
         const response = await apiRequest("GET", "/api/users");
-        // Ensure response is an array
-        const userData = Array.isArray(response) ? response : [];
+        console.log("User management API response:", response);
+        
+        // Handle different response formats
+        let userData: User[] = [];
+        if (Array.isArray(response)) {
+          userData = response;
+        } else if (response && typeof response === 'object' && response.data && Array.isArray(response.data)) {
+          userData = response.data;
+        } else {
+          console.warn("Unexpected API response format:", response);
+          userData = [];
+        }
+        
+        console.log("Processed user data:", userData);
         return userData as User[];
       } catch (err: any) {
-        if (err.message?.includes("Unauthorized") || err.status === 401) {
+        console.error("User management API error:", err);
+        if (err.message?.includes("Unauthorized") || err.status === 401 || err.status === 403) {
           throw new Error("Admin access required to manage users");
         }
         throw err;
@@ -130,7 +143,7 @@ export function UserManagement() {
         <div>
           <h4 className="font-semibold mb-3 flex items-center gap-2">
             <UserCheck className="h-4 w-4" />
-            Current Users
+            Current Users ({users?.length || 0})
           </h4>
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {Array.isArray(users) && users.length > 0 ? (
