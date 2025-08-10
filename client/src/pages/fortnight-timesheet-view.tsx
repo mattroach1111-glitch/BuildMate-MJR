@@ -1,9 +1,14 @@
 import { FortnightTimesheet } from "@/components/fortnight-timesheet";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
+import PageLayout from "@/components/page-layout";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function FortnightTimesheetView() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [employeeId, setEmployeeId] = useState<string>("");
   const [isAdminView, setIsAdminView] = useState<boolean>(false);
 
@@ -21,14 +26,55 @@ export default function FortnightTimesheetView() {
     }
   }, []);
 
+  const handleBackNavigation = () => {
+    if ((user as any)?.role === "admin") {
+      setLocation("/");
+    } else {
+      setLocation("/");
+    }
+  };
+
+  const getTitle = () => {
+    if (isAdminView && employeeId) {
+      return "Staff Timesheet Management";
+    }
+    return "Fortnight Timesheet";
+  };
+
+  const getSubtitle = () => {
+    if (isAdminView && employeeId) {
+      return "Managing timesheet entries and approvals";
+    }
+    return "Track your hours and submit timesheet entries";
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-4 max-w-6xl">
-        <FortnightTimesheet 
-          selectedEmployeeId={employeeId}
-          isAdminView={isAdminView}
-        />
+    <PageLayout 
+      title={getTitle()}
+      subtitle={getSubtitle()}
+    >
+      <div className="space-y-6">
+        {/* Navigation Bar */}
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            onClick={handleBackNavigation}
+            className="flex items-center gap-2"
+            data-testid="button-back-to-dashboard"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+        </div>
+
+        {/* Timesheet Component */}
+        <div className="max-w-6xl mx-auto">
+          <FortnightTimesheet 
+            selectedEmployeeId={employeeId}
+            isAdminView={isAdminView}
+          />
+        </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }
