@@ -249,7 +249,7 @@ export class DatabaseStorage implements IStorage {
   async updateLaborHoursFromTimesheet(staffId: string, jobId: string): Promise<void> {
     // Get total hours from timesheet for this staff and job
     const result = await db
-      .select({ totalHours: sum(timesheetEntries.hours) })
+      .select({ totalHours: sql`COALESCE(SUM(CAST(${timesheetEntries.hours} AS NUMERIC)), 0)`.as('totalHours') })
       .from(timesheetEntries)
       .where(
         and(
@@ -263,7 +263,7 @@ export class DatabaseStorage implements IStorage {
     // Update labor entry hours
     await db
       .update(laborEntries)
-      .set({ hoursLogged: totalHours, updatedAt: new Date() })
+      .set({ hoursLogged: totalHours.toString(), updatedAt: new Date() })
       .where(
         and(
           eq(laborEntries.staffId, staffId),
