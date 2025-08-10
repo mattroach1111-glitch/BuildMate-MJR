@@ -65,6 +65,16 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
+  /* Enhanced scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Enhanced animations */
+  * {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
   /* Mobile-first optimizations */
   @media (max-width: 768px) {
     .container {
@@ -72,22 +82,71 @@
       padding-right: 1rem;
     }
     
+    /* Touch-friendly buttons */
+    button, .button {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Better input handling */
+    input, select, textarea {
+      font-size: 16px; /* Prevents zoom on iOS */
+      min-height: 44px;
+    }
+    
+    /* Modal improvements */
     .modal-content {
       margin: 0;
       max-height: 100vh;
       border-radius: 0;
     }
     
-    /* Touch-friendly buttons */
-    button {
-      min-height: 44px;
-      min-width: 44px;
+    /* Better spacing for mobile */
+    .space-y-4 > * + * {
+      margin-top: 1.5rem;
     }
     
-    /* Larger form inputs for mobile */
-    input, select, textarea {
-      font-size: 16px; /* Prevents zoom on iOS */
-      min-height: 44px;
+    .space-y-6 > * + * {
+      margin-top: 2rem;
+    }
+    
+    /* Job card improvements */
+    .job-card {
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    /* Responsive grid */
+    .grid-cols-2 {
+      grid-template-columns: 1fr;
+    }
+    
+    .sm\:grid-cols-2 {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  /* Enhanced mobile interactions */
+  @media (max-width: 640px) {
+    /* Full-width buttons on small screens */
+    .w-full-mobile {
+      width: 100%;
+    }
+    
+    /* Stack form elements */
+    .flex-col-mobile {
+      flex-direction: column;
+    }
+    
+    /* Hide text on very small screens, keep icons */
+    .hidden-text-xs span {
+      display: none;
+    }
+    
+    /* Larger tap targets */
+    .tap-target {
+      min-height: 48px;
+      min-width: 48px;
     }
   }
 }
@@ -126,4 +185,160 @@
 
 .btn-secondary:hover {
   background-color: hsl(154.3, 59.3%, 30%);
+}
+
+/* Enhanced mobile experience improvements */
+@media (max-width: 768px) {
+  /* Better input styling for mobile */
+  input[type="number"], 
+  input[type="text"], 
+  input[type="email"],
+  input[type="tel"],
+  select,
+  textarea {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+    padding: 14px 16px !important;
+    border-radius: 8px !important;
+    border: 2px solid #e2e8f0 !important;
+    transition: all 0.2s ease !important;
+    background: white !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+  }
+  
+  input[type="number"]:focus, 
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="tel"]:focus,
+  select:focus,
+  textarea:focus {
+    border-color: hsl(var(--primary)) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px hsla(var(--primary), 0.1) !important;
+    transform: translateY(-1px) !important;
+  }
+  
+  button {
+    min-height: 48px !important;
+    font-size: 16px !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.025em !important;
+  }
+  
+  button:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12) !important;
+  }
+  
+  button:active {
+    transform: scale(0.98) translateY(0) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  /* Smooth scrolling for mobile */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Remove tap highlight on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Job sheet modal improvements */
+  .job-sheet-modal {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .job-sheet-content {
+    max-height: 75vh;
+    overflow-y: auto;
+  }
+  
+  .job-sheet-scrollable {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Enhanced mobile table styling */
+.mobile-table-card {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-table-card:hover {
+  background: #f1f5f9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-table-card:active {
+  transform: scale(0.99);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced button animations */
+button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* Better focus states */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* Smooth animations for cards and modals */
+.animate-in {
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Loading states */
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }

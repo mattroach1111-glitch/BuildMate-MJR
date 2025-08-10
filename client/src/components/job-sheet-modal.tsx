@@ -521,18 +521,18 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
-        className="max-w-6xl max-h-screen overflow-y-auto sm:max-w-6xl w-full max-w-[95vw] sm:w-auto" 
+        className="max-w-6xl max-h-[95vh] overflow-hidden sm:max-w-6xl w-full max-w-[95vw] sm:w-auto flex flex-col" 
         aria-describedby="job-sheet-description"
       >
-        <DialogHeader>
+        <DialogHeader className="flex-shrink-0 pb-4 border-b">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               {!isEditing ? (
                 <>
-                  <DialogTitle data-testid="text-job-sheet-title" className="text-lg sm:text-xl">
+                  <DialogTitle data-testid="text-job-sheet-title" className="text-lg sm:text-xl font-semibold truncate">
                     {jobDetails ? `${jobDetails.projectName} - ${jobDetails.clientName}` : "Loading..."}
                   </DialogTitle>
-                  <p className="text-gray-600 text-sm" data-testid="text-job-address">
+                  <p className="text-gray-600 text-sm truncate" data-testid="text-job-address">
                     {jobDetails?.jobAddress}
                   </p>
                   <p id="job-sheet-description" className="text-xs text-muted-foreground mt-1">
@@ -737,16 +737,17 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
           </div>
         </DialogHeader>
 
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : !jobDetails ? (
-          <div className="text-center py-8 text-gray-500">
-            Job not found
-          </div>
-        ) : (
-          <div className="space-y-8">
+        <div className="flex-1 overflow-y-auto min-h-0">
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : !jobDetails ? (
+            <div className="text-center py-8 text-gray-500">
+              Job not found
+            </div>
+          ) : (
+            <div className="space-y-6 p-4 sm:p-6">
             {/* Labour Section */}
             <Card>
               <CardHeader>
@@ -776,7 +777,95 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
+                {/* Mobile Card Layout */}
+                <div className="block md:hidden space-y-4">
+                  {jobDetails.laborEntries.map((entry) => (
+                    <div key={entry.id} className="mobile-table-card animate-in">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-sm font-bold text-primary">
+                            {(entry.staff?.name || entry.staffId).charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <span className="font-semibold text-lg" data-testid={`text-labor-staff-${entry.id}`}>
+                          {entry.staff?.name || entry.staffId}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <label className="text-sm font-medium text-gray-600 block mb-2">Hourly Rate</label>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-500">$</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={localLaborRates[entry.id] || entry.hourlyRate}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
+                                setLocalLaborRates(prev => ({
+                                  ...prev,
+                                  [entry.id]: newValue
+                                }));
+                                setHasUnsavedRates(true);
+                              }}
+                              className="flex-1 text-base border rounded-md px-3 py-3 focus:border-primary focus:ring-1 focus:ring-primary bg-white"
+                              data-testid={`input-labor-rate-${entry.id}`}
+                            />
+                            <span className="text-sm text-gray-500">/hr</span>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <label className="text-sm font-medium text-gray-600 block mb-2">Hours Logged</label>
+                          <div className="text-xl font-bold py-3 text-primary" data-testid={`text-labor-hours-${entry.id}`}>
+                            {entry.hoursLogged} hrs
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="mb-4">
+                        <label className="text-sm font-medium text-gray-600 block mb-2">Add Extra Hours</label>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="number"
+                            step="0.5"
+                            min="0"
+                            placeholder="0"
+                            value={extraHours[entry.id] || ""}
+                            onChange={(e) => {
+                              setExtraHours(prev => ({
+                                ...prev,
+                                [entry.id]: e.target.value
+                              }));
+                            }}
+                            className="flex-1 text-base border rounded-md px-3 py-3 focus:border-primary focus:ring-1 focus:ring-primary bg-white"
+                            data-testid={`input-extra-hours-${entry.id}`}
+                          />
+                          <Button
+                            onClick={() => handleAddExtraHours(entry.id)}
+                            disabled={!extraHours[entry.id] || parseFloat(extraHours[entry.id]) <= 0 || addExtraHoursMutation.isPending}
+                            className="px-6 py-3 min-h-[48px] font-semibold"
+                            data-testid={`button-add-extra-hours-${entry.id}`}
+                          >
+                            {addExtraHoursMutation.isPending ? "..." : "Add"}
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                        <span className="text-sm font-medium text-gray-600">Total:</span>
+                        <span className="font-bold text-xl text-primary" data-testid={`text-labor-total-${entry.id}`}>
+                          ${(parseFloat(localLaborRates[entry.id] || entry.hourlyRate) * parseFloat(entry.hoursLogged)).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table Layout */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="text-left text-sm font-medium text-gray-700">
@@ -812,12 +901,10 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                                 value={localLaborRates[entry.id] || entry.hourlyRate}
                                 onChange={(e) => {
                                   const newValue = e.target.value;
-                                  // Update local state immediately for responsive UI
                                   setLocalLaborRates(prev => ({
                                     ...prev,
                                     [entry.id]: newValue
                                   }));
-                                  // Mark as having unsaved changes
                                   setHasUnsavedRates(true);
                                 }}
                                 className="w-20 text-sm border-0 bg-transparent focus:bg-white focus:border focus:border-primary rounded px-2 py-1"
@@ -869,6 +956,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     </tbody>
                   </table>
                 </div>
+
                 <div className="text-right mt-4">
                   <span className="text-lg font-semibold" data-testid="text-labor-total">
                     Labour Total: ${totals.laborTotal.toFixed(2)}
@@ -901,7 +989,46 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
+                {/* Mobile Card Layout for Materials */}
+                <div className="block md:hidden space-y-3">
+                  {jobDetails.materials.map((material, index) => (
+                    <div key={index} className="mobile-table-card animate-in">
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Description</label>
+                          <div className="text-base font-medium mt-1" data-testid={`text-material-description-${index}`}>
+                            {material.description}
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Supplier</label>
+                            <div className="text-sm mt-1" data-testid={`text-material-supplier-${index}`}>
+                              {material.supplier}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Date</label>
+                            <div className="text-sm mt-1" data-testid={`text-material-date-${index}`}>
+                              {material.invoiceDate}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                          <span className="text-sm font-medium text-gray-600">Amount:</span>
+                          <span className="font-bold text-lg text-primary" data-testid={`text-material-amount-${index}`}>
+                            ${parseFloat(material.amount).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table Layout for Materials */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="text-left text-sm font-medium text-gray-700">
@@ -963,7 +1090,46 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
+                {/* Mobile Card Layout for Sub Trades */}
+                <div className="block md:hidden space-y-3">
+                  {jobDetails.subTrades.map((subTrade, index) => (
+                    <div key={index} className="mobile-table-card animate-in">
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Trade</label>
+                          <div className="text-base font-medium mt-1" data-testid={`text-subtrade-trade-${index}`}>
+                            {subTrade.trade}
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Contractor</label>
+                            <div className="text-sm mt-1" data-testid={`text-subtrade-contractor-${index}`}>
+                              {subTrade.contractor}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Date</label>
+                            <div className="text-sm mt-1" data-testid={`text-subtrade-date-${index}`}>
+                              {subTrade.invoiceDate}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                          <span className="text-sm font-medium text-gray-600">Amount:</span>
+                          <span className="font-bold text-lg text-primary" data-testid={`text-subtrade-amount-${index}`}>
+                            ${parseFloat(subTrade.amount).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table Layout for Sub Trades */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="text-left text-sm font-medium text-gray-700">
@@ -1137,8 +1303,9 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                 </div>
               </CardContent>
             </Card>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
