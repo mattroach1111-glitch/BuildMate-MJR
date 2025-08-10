@@ -225,6 +225,39 @@ export default function AdminDashboard() {
     setExpandedManagers(newExpanded);
   };
 
+  // Auto-expand folders when switching to a grouping mode
+  useEffect(() => {
+    if (groupBy === 'client' && jobs) {
+      const clientGroups = jobs.reduce((groups, job) => {
+        const client = job.clientName || 'Unknown Client';
+        if (!groups[client]) groups[client] = [];
+        groups[client].push(job);
+        return groups;
+      }, {} as Record<string, Job[]>);
+      
+      // Auto-expand clients with multiple jobs
+      const autoExpand = Object.entries(clientGroups)
+        .filter(([_, jobs]) => jobs.length > 1)
+        .map(([client, _]) => client);
+      setExpandedClients(new Set(autoExpand));
+    }
+    
+    if (groupBy === 'manager' && jobs) {
+      const managerGroups = jobs.reduce((groups, job) => {
+        const manager = job.projectName || 'Unknown Manager';
+        if (!groups[manager]) groups[manager] = [];
+        groups[manager].push(job);
+        return groups;
+      }, {} as Record<string, Job[]>);
+      
+      // Auto-expand managers with multiple jobs
+      const autoExpand = Object.entries(managerGroups)
+        .filter(([_, jobs]) => jobs.length > 1)
+        .map(([manager, _]) => manager);
+      setExpandedManagers(new Set(autoExpand));
+    }
+  }, [groupBy, jobs]);
+
   const employeeForm = useForm<z.infer<typeof employeeFormSchema>>({
     resolver: zodResolver(employeeFormSchema),
     defaultValues: {

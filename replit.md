@@ -16,6 +16,8 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 - ✅ **Address-First Display**: Job cards now show address as heading for easier identification
 - ✅ **Folder Grouping System**: Jobs can be grouped by client names or project managers with expandable folders
 - ✅ **Project Manager Field**: Changed "Project Name" to "Project Manager" for better role clarity
+- ✅ **Auto-Expanding Folders**: Folders automatically expand when they contain multiple jobs for better visibility
+- ✅ **Job Sheet Edit Button**: Added inline edit functionality to job sheets for quick updates
 
 # User Preferences
 

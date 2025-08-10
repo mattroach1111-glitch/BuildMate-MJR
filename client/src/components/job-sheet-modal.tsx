@@ -386,7 +386,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       jobAddress: editForm.jobAddress.trim(),
       clientName: editForm.clientName.trim(),
       projectName: editForm.projectName.trim(),
-      status: editForm.status,
+      status: editForm.status as "new_job" | "job_in_progress" | "job_complete" | "ready_for_billing",
     });
     setIsEditing(false);
   };
