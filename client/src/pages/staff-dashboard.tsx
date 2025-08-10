@@ -19,6 +19,8 @@ import type { Job, TimesheetEntry } from "@shared/schema";
 import { Calendar, Clock, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek, isSameWeek, parseISO } from "date-fns";
 import PageLayout from "@/components/page-layout";
+import { OnboardingTour, WelcomeAnimation } from "@/components/onboarding-tour";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 const timesheetFormSchema = insertTimesheetEntrySchema.extend({
   hours: z.string().min(1, "Hours is required"),
@@ -31,6 +33,14 @@ interface StaffDashboardProps {
 export default function StaffDashboard({ isAdminView = false }: StaffDashboardProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+  const { 
+    showWelcome, 
+    showTour, 
+    isOnboardingComplete,
+    startTour, 
+    completeTour, 
+    skipTour 
+  } = useOnboarding();
   
   // Current fortnight state
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -303,12 +313,12 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
       title="My Timesheet" 
       subtitle={`Welcome back, ${(user as any)?.firstName || 'Staff'}`}
     >
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6" data-testid="container-timesheet">
         {/* Quick Actions */}
         <div className="flex flex-col sm:flex-row justify-center gap-2">
           <Button 
             onClick={handleViewFortnightTimesheet}
-            data-testid="button-fortnight-timesheet"
+            data-testid="button-add-hours"
             className="flex items-center gap-2"
           >
             <Calendar className="h-4 w-4" />
@@ -564,7 +574,7 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
                         type="submit" 
                         className="w-full bg-primary hover:bg-blue-700 h-10"
                         disabled={createEntryMutation.isPending}
-                        data-testid="button-add-entry"
+                        data-testid="button-submit-timesheet"
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         {createEntryMutation.isPending ? "Adding..." : "Add"}
@@ -704,6 +714,19 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
             </CardContent>
           </Card>
       </div>
+
+      {/* Onboarding Components - Only show for staff (not in admin view) */}
+      {!isAdminView && showWelcome && (
+        <WelcomeAnimation onComplete={startTour} />
+      )}
+      
+      {!isAdminView && showTour && (
+        <OnboardingTour 
+          isOpen={showTour}
+          onClose={skipTour}
+          onComplete={completeTour}
+        />
+      )}
     </PageLayout>
   );
 }

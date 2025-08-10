@@ -25,6 +25,8 @@ import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
 import PageLayout from "@/components/page-layout";
 import { GoogleDriveIntegration } from "@/components/google-drive-integration";
+import { OnboardingTour, WelcomeAnimation } from "@/components/onboarding-tour";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -48,6 +50,14 @@ const adminTimesheetFormSchema = insertTimesheetEntrySchema.extend({
 export default function AdminDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+  const { 
+    showWelcome, 
+    showTour, 
+    isOnboardingComplete,
+    startTour, 
+    completeTour, 
+    skipTour 
+  } = useOnboarding();
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
   const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
   const [isCreateEmployeeOpen, setIsCreateEmployeeOpen] = useState(false);
@@ -1124,15 +1134,15 @@ export default function AdminDashboard() {
         {/* Mobile-First Tabs */}
         <Tabs defaultValue="jobs" className="w-full">
           <TabsList className="grid w-full grid-cols-5 mb-6">
-          <TabsTrigger value="jobs" className="flex items-center gap-2">
+          <TabsTrigger value="jobs" className="flex items-center gap-2" data-testid="tab-jobs">
             <Briefcase className="h-4 w-4" />
             <span className="hidden sm:inline">Jobs</span>
           </TabsTrigger>
-          <TabsTrigger value="employees" className="flex items-center gap-2">
+          <TabsTrigger value="employees" className="flex items-center gap-2" data-testid="tab-employees">
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Staff</span>
           </TabsTrigger>
-          <TabsTrigger value="timesheets" className="flex items-center gap-2">
+          <TabsTrigger value="timesheets" className="flex items-center gap-2" data-testid="tab-timesheets">
             <Clock className="h-4 w-4" />
             <span className="hidden sm:inline">Timesheets</span>
           </TabsTrigger>
@@ -1140,7 +1150,7 @@ export default function AdminDashboard() {
             <Eye className="h-4 w-4" />
             <span className="hidden sm:inline">Staff View</span>
           </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
+          <TabsTrigger value="settings" className="flex items-center gap-2" data-testid="tab-settings">
             <Settings className="h-4 w-4" />
             <span className="hidden sm:inline">Settings</span>
           </TabsTrigger>
@@ -2839,6 +2849,19 @@ export default function AdminDashboard() {
             jobId={selectedJob}
             isOpen={!!selectedJob}
             onClose={() => setSelectedJob(null)}
+          />
+        )}
+
+        {/* Onboarding Components */}
+        {showWelcome && (
+          <WelcomeAnimation onComplete={startTour} />
+        )}
+        
+        {showTour && (
+          <OnboardingTour 
+            isOpen={showTour}
+            onClose={skipTour}
+            onComplete={completeTour}
           />
         )}
       </div>
