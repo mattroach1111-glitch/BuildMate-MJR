@@ -19,12 +19,16 @@ type JobWithRelations = {
   materials: Array<{
     id: string;
     description: string;
+    supplier: string;
     amount: string;
+    invoiceDate: string;
   }>;
   subTrades: Array<{
     id: string;
-    description: string;
+    trade: string;
+    contractor: string;
     amount: string;
+    invoiceDate: string;
   }>;
   otherCosts: Array<{
     id: string;
@@ -103,6 +107,8 @@ export async function generateJobPDF(job: JobWithRelations) {
 
     doc.setFontSize(9);
     doc.text('Description', 25, yPos);
+    doc.text('Supplier', 100, yPos);
+    doc.text('Date', 130, yPos);
     doc.text('Amount', 160, yPos);
     yPos += 3;
     doc.line(20, yPos, 190, yPos);
@@ -115,6 +121,8 @@ export async function generateJobPDF(job: JobWithRelations) {
       materialsTotal += amount;
       
       doc.text(material.description || 'Material Item', 25, yPos);
+      doc.text(material.supplier || '-', 100, yPos);
+      doc.text(material.invoiceDate || '-', 130, yPos);
       doc.text(`$${amount.toFixed(2)}`, 160, yPos);
       yPos += 8;
     });
@@ -133,7 +141,9 @@ export async function generateJobPDF(job: JobWithRelations) {
     yPos += 10;
 
     doc.setFontSize(9);
-    doc.text('Description', 25, yPos);
+    doc.text('Trade', 25, yPos);
+    doc.text('Contractor', 80, yPos);
+    doc.text('Date', 130, yPos);
     doc.text('Amount', 160, yPos);
     yPos += 3;
     doc.line(20, yPos, 190, yPos);
@@ -145,7 +155,9 @@ export async function generateJobPDF(job: JobWithRelations) {
       const amount = parseFloat(subTrade.amount);
       subTradesTotal += amount;
       
-      doc.text(subTrade.description || 'Sub Trade Item', 25, yPos);
+      doc.text(subTrade.trade || 'Sub Trade', 25, yPos);
+      doc.text(subTrade.contractor || '-', 80, yPos);
+      doc.text(subTrade.invoiceDate || '-', 130, yPos);
       doc.text(`$${amount.toFixed(2)}`, 160, yPos);
       yPos += 8;
     });
