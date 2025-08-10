@@ -180,34 +180,66 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     }
   };
 
-  const saveAllEntries = () => {
-    let entriesSaved = 0;
+  const saveAllEntries = async () => {
+    const entriesToSave: any[] = [];
     
     Object.entries(timesheetData).forEach(([dateKey, dayEntries]) => {
       if (Array.isArray(dayEntries)) {
         dayEntries.forEach((entry, index) => {
           if (entry.hours && parseFloat(entry.hours) > 0 && entry.jobId && entry.jobId !== 'no-job') {
-            const date = new Date(dateKey);
-            saveEntry(date, index, entry);
-            entriesSaved++;
+            entriesToSave.push({
+              date: dateKey,
+              hours: parseFloat(entry.hours),
+              materials: entry.materials || '',
+              jobId: entry.jobId === 'no-job' ? null : entry.jobId || null,
+            });
           }
         });
       }
     });
 
-    if (entriesSaved > 0) {
-      toast({
-        title: "Saving Timesheet",
-        description: `Saving ${entriesSaved} entries...`,
-        variant: "default",
-      });
-    } else {
+    if (entriesToSave.length === 0) {
       toast({
         title: "No entries to save",
         description: "Please enter hours and select jobs first.",
         variant: "destructive",
       });
+      return;
     }
+
+    // Save entries one by one with delay to prevent conflicts
+    for (let i = 0; i < entriesToSave.length; i++) {
+      try {
+        await new Promise((resolve, reject) => {
+          updateTimesheetMutation.mutate(entriesToSave[i], {
+            onSuccess: resolve,
+            onError: reject
+          });
+        });
+        
+        // Small delay between saves
+        if (i < entriesToSave.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      } catch (error) {
+        console.error('Error saving entry:', error);
+        toast({
+          title: "Save Error",
+          description: `Failed to save some entries. Error: ${error}`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    toast({
+      title: "Timesheet Saved",
+      description: `Successfully saved ${entriesToSave.length} entries!`,
+      variant: "default",
+    });
+
+    // Clear local data after successful save
+    setTimesheetData({});
   };
 
   const getTotalHours = () => {
@@ -354,9 +386,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
-      Object.values(autoSaveTimeouts.current).forEach(timeout => {
-        clearTimeout(timeout);
-      });
+      if (autoSaveTimeout.current) {
+        clearTimeout(autoSaveTimeout.current);
+      }
     };
   }, []);
 
