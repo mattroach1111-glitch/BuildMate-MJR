@@ -1882,7 +1882,19 @@ export default function AdminDashboard() {
                                   </Badge>
                                 </div>
                                 <div className="text-sm text-muted-foreground">
-                                  {entry.jobAddress || 'Unknown Job'} • {entry.clientName} • {parseFloat(entry.hours || 0)}h
+                                  {(() => {
+                                    // Handle leave types stored in materials field
+                                    if (!entry.jobAddress && entry.materials) {
+                                      const leaveTypes: { [key: string]: string } = {
+                                        'sick-leave': 'Sick Leave',
+                                        'personal-leave': 'Personal Leave', 
+                                        'annual-leave': 'Annual Leave',
+                                        'rdo': 'RDO (Rest Day Off)'
+                                      };
+                                      return leaveTypes[entry.materials] || entry.materials;
+                                    }
+                                    return entry.jobAddress || 'Unknown Job';
+                                  })()} • {entry.clientName} • {parseFloat(entry.hours || 0)}h
                                 </div>
                               </div>
                             </div>
