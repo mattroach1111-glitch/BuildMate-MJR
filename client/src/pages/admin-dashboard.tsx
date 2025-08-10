@@ -69,6 +69,7 @@ export default function AdminDashboard() {
   const [colorPickerOpen, setColorPickerOpen] = useState<string | null>(null);
   const [isDeletedFolderExpanded, setIsDeletedFolderExpanded] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState<'address' | 'client' | 'manager' | 'status'>('address');
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -571,6 +572,41 @@ export default function AdminDashboard() {
     return [...jobs].sort((a, b) => getStatusPriority(a.status) - getStatusPriority(b.status));
   };
 
+  // Numerical sorting function for addresses
+  const sortJobsBy = (jobs: Job[], criteria: string): Job[] => {
+    return [...jobs].sort((a, b) => {
+      switch (criteria) {
+        case 'address':
+          // Extract numbers from address for numerical sorting
+          const extractNumber = (address: string): number => {
+            const match = address.match(/(\d+)/);
+            return match ? parseInt(match[1], 10) : 0;
+          };
+          const numA = extractNumber(a.jobAddress);
+          const numB = extractNumber(b.jobAddress);
+          
+          // If both have numbers, sort numerically
+          if (numA !== 0 && numB !== 0) {
+            return numA - numB;
+          }
+          // Otherwise, sort alphabetically
+          return a.jobAddress.localeCompare(b.jobAddress);
+          
+        case 'client':
+          return a.clientName.localeCompare(b.clientName);
+          
+        case 'manager':
+          return a.projectName.localeCompare(b.projectName);
+          
+        case 'status':
+          return getStatusPriority(a.status) - getStatusPriority(b.status);
+          
+        default:
+          return 0;
+      }
+    });
+  };
+
   // Filter jobs based on search query
   const filteredJobs = jobs ? jobs.filter(job => {
     if (!searchQuery.trim()) return true;
@@ -583,13 +619,16 @@ export default function AdminDashboard() {
     );
   }) : [];
 
+  // Apply sorting to filtered jobs
+  const sortedJobs = sortJobsBy(filteredJobs, sortBy);
+
   // Group filtered jobs by client or project manager
-  const groupedJobs = filteredJobs ? (() => {
-    if (groupBy === 'none') return { 'All Jobs': sortJobsByStatus(filteredJobs) };
+  const groupedJobs = sortedJobs ? (() => {
+    if (groupBy === 'none') return { 'All Jobs': sortedJobs };
     
     // Separate ready for billing jobs
-    const readyForBillingJobs = filteredJobs.filter(job => job.status === 'ready_for_billing');
-    const otherJobs = filteredJobs.filter(job => job.status !== 'ready_for_billing');
+    const readyForBillingJobs = sortedJobs.filter(job => job.status === 'ready_for_billing');
+    const otherJobs = sortedJobs.filter(job => job.status !== 'ready_for_billing');
     
     if (groupBy === 'client') {
       const groups: Record<string, Job[]> = {};
@@ -607,9 +646,9 @@ export default function AdminDashboard() {
         return groups;
       }, {} as Record<string, Job[]>);
       
-      // Sort jobs within each client group by status
+      // Sort jobs within each client group by the selected criteria
       Object.keys(clientGroups).forEach(client => {
-        clientGroups[client] = sortJobsByStatus(clientGroups[client]);
+        clientGroups[client] = sortJobsBy(clientGroups[client], sortBy);
         groups[client] = clientGroups[client];
       });
       
@@ -632,9 +671,9 @@ export default function AdminDashboard() {
         return groups;
       }, {} as Record<string, Job[]>);
       
-      // Sort jobs within each manager group by status
+      // Sort jobs within each manager group by the selected criteria
       Object.keys(managerGroups).forEach(manager => {
-        managerGroups[manager] = sortJobsByStatus(managerGroups[manager]);
+        managerGroups[manager] = sortJobsBy(managerGroups[manager], sortBy);
         groups[manager] = managerGroups[manager];
       });
       
@@ -1311,6 +1350,21 @@ export default function AdminDashboard() {
                   <List className="h-4 w-4" />
                 </Button>
               </div>
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
+                <SelectTrigger 
+                  className="w-auto min-w-32"
+                  data-testid="select-sort-by"
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="address">Sort by Address</SelectItem>
+                  <SelectItem value="client">Sort by Client</SelectItem>
+                  <SelectItem value="manager">Sort by Manager</SelectItem>
+                  <SelectItem value="status">Sort by Status</SelectItem>
+                </SelectContent>
+              </Select>
               <Button 
                 variant={groupBy === 'client' ? 'default' : 'outline'} 
                 size="sm"
