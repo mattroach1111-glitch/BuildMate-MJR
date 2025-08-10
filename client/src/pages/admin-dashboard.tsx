@@ -428,7 +428,7 @@ export default function AdminDashboard() {
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
-                      <CardTitle className="text-lg leading-tight">{job.projectName}</CardTitle>
+                      <CardTitle className="text-lg leading-tight">{job.jobAddress}</CardTitle>
                       <Badge className={`${getStatusColor(job.status)} text-xs shrink-0 ml-2`}>
                         {formatStatus(job.status)}
                       </Badge>
@@ -436,7 +436,7 @@ export default function AdminDashboard() {
                     <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <p className="text-sm text-muted-foreground mb-2">{job.jobAddress}</p>
+                    <p className="text-sm text-muted-foreground mb-2">{job.projectName}</p>
                     <div className="text-xs text-muted-foreground">
                       Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
                     </div>

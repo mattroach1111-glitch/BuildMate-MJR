@@ -10,8 +10,10 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 - ✅ **Australian GST**: Integrated 10% GST calculation on all job totals
 - ✅ **Improved Accessibility**: Added proper ARIA labels and mobile-optimized dialogs
 - ✅ **Auto-Staff Assignment**: All employees automatically added to job sheets with their default hourly rates
-- ✅ **Inline Rate Editing**: Job sheet hourly rates can be edited directly with live updates
+- ✅ **Independent Job Rates**: Job sheet hourly rates are fully independent per job with manual save system
 - ✅ **Smart Employee Sync**: New employees automatically added to existing jobs; job sheets sync all current staff
+- ✅ **Simplified Staff Management**: Removed hourly rates from staff management - all rates managed on job sheets
+- ✅ **Address-First Display**: Job cards now show address as heading for easier identification
 
 # User Preferences
 
