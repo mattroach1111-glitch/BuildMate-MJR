@@ -670,26 +670,27 @@ export default function AdminDashboard() {
                             <div className="flex items-start justify-between">
                               <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
                               <div className="flex items-center gap-2 shrink-0">
-                                <Select 
-                                  value={job.status} 
-                                  onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
-                                >
-                                  <SelectTrigger 
-                                    className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
-                                    onClick={(e) => e.stopPropagation()}
-                                    data-testid={`select-status-${job.id}`}
+                                <div onClick={(e) => e.stopPropagation()}>
+                                  <Select 
+                                    value={job.status} 
+                                    onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
                                   >
-                                    <Badge className={`${getStatusColor(job.status)} text-xs`}>
-                                      {formatStatus(job.status)}
-                                    </Badge>
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="new_job">New Job</SelectItem>
-                                    <SelectItem value="job_in_progress">Job In Progress</SelectItem>
-                                    <SelectItem value="job_complete">Job Complete</SelectItem>
-                                    <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
-                                  </SelectContent>
-                                </Select>
+                                    <SelectTrigger 
+                                      className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
+                                      data-testid={`select-status-${job.id}`}
+                                    >
+                                      <Badge className={`${getStatusColor(job.status)} text-xs`}>
+                                        {formatStatus(job.status)}
+                                      </Badge>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="new_job">New Job</SelectItem>
+                                      <SelectItem value="job_in_progress">Job In Progress</SelectItem>
+                                      <SelectItem value="job_complete">Job Complete</SelectItem>
+                                      <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
                                 {job.status === 'ready_for_billing' && (
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
@@ -773,26 +774,27 @@ export default function AdminDashboard() {
                               <div className="flex items-start justify-between">
                                 <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
                                 <div className="flex items-center gap-2 shrink-0">
-                                  <Select 
-                                    value={job.status} 
-                                    onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
-                                  >
-                                    <SelectTrigger 
-                                      className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
-                                      onClick={(e) => e.stopPropagation()}
-                                      data-testid={`select-status-${job.id}`}
+                                  <div onClick={(e) => e.stopPropagation()}>
+                                    <Select 
+                                      value={job.status} 
+                                      onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
                                     >
-                                      <Badge className={`${getStatusColor(job.status)} text-xs`}>
-                                        {formatStatus(job.status)}
-                                      </Badge>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="new_job">New Job</SelectItem>
-                                      <SelectItem value="job_in_progress">Job In Progress</SelectItem>
-                                      <SelectItem value="job_complete">Job Complete</SelectItem>
-                                      <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                      <SelectTrigger 
+                                        className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
+                                        data-testid={`select-status-${job.id}`}
+                                      >
+                                        <Badge className={`${getStatusColor(job.status)} text-xs`}>
+                                          {formatStatus(job.status)}
+                                        </Badge>
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="new_job">New Job</SelectItem>
+                                        <SelectItem value="job_in_progress">Job In Progress</SelectItem>
+                                        <SelectItem value="job_complete">Job Complete</SelectItem>
+                                        <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
                                   {job.status === 'ready_for_billing' && (
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
