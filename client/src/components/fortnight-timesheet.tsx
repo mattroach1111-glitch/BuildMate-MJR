@@ -521,7 +521,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   <SelectValue placeholder="Job description..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="">No description</SelectItem>
+                                  <SelectItem value="none">No description</SelectItem>
                                   <SelectItem value="Materials">Materials</SelectItem>
                                   <SelectItem value="Labour">Labour</SelectItem>
                                   <SelectItem value="Equipment">Equipment</SelectItem>
