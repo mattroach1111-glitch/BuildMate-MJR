@@ -480,6 +480,48 @@ export default function AdminDashboard() {
   // Check if a group is the special "Ready for Billing" group
   const isReadyForBillingGroup = (groupName: string) => groupName === '🧾 Ready for Billing';
 
+  // Get folder color scheme based on group type and name
+  const getFolderColors = (groupName: string, groupType: string) => {
+    if (isReadyForBillingGroup(groupName)) {
+      return {
+        bg: 'bg-emerald-50 border-emerald-200',
+        folderBg: 'bg-emerald-100 hover:bg-emerald-150',
+        folderIcon: 'text-emerald-600',
+        folderText: 'text-emerald-800',
+        badge: 'bg-emerald-200 text-emerald-800 border-emerald-300'
+      };
+    }
+    
+    if (groupType === 'client') {
+      // Client folders use blue theme
+      return {
+        bg: 'bg-blue-50 border-blue-200',
+        folderBg: 'bg-blue-100 hover:bg-blue-150',
+        folderIcon: 'text-blue-600',
+        folderText: 'text-blue-800',
+        badge: 'bg-blue-200 text-blue-800 border-blue-300'
+      };
+    } else if (groupType === 'manager') {
+      // Project manager folders use purple theme
+      return {
+        bg: 'bg-purple-50 border-purple-200',
+        folderBg: 'bg-purple-100 hover:bg-purple-150',
+        folderIcon: 'text-purple-600',
+        folderText: 'text-purple-800',
+        badge: 'bg-purple-200 text-purple-800 border-purple-300'
+      };
+    }
+    
+    // Default gray theme
+    return {
+      bg: 'bg-gray-50 border-gray-200',
+      folderBg: 'bg-gray-100 hover:bg-gray-150',
+      folderIcon: 'text-gray-600',
+      folderText: 'text-gray-800',
+      badge: 'bg-gray-200 text-gray-800 border-gray-300'
+    };
+  };
+
   // Special state for Ready for Billing folder - start closed
   const [readyForBillingExpanded, setReadyForBillingExpanded] = useState(false);
 
@@ -1055,21 +1097,14 @@ export default function AdminDashboard() {
                 }
 
                 // Show grouped folders
+                const colors = getFolderColors(groupName, groupBy);
                 return (
                   <div 
                     key={groupName} 
-                    className={`border rounded-lg p-4 ${
-                      isReadyForBillingGroup(groupName) 
-                        ? 'bg-green-50 border-green-200' 
-                        : 'bg-gray-50'
-                    }`}
+                    className={`border rounded-lg p-4 transition-colors ${colors.bg}`}
                   >
                     <div 
-                      className={`flex items-center gap-2 p-2 rounded transition-colors cursor-pointer ${
-                        isReadyForBillingGroup(groupName)
-                          ? 'bg-green-100 hover:bg-green-150'
-                          : 'hover:bg-gray-100'
-                      }`}
+                      className={`flex items-center gap-2 p-2 rounded transition-colors cursor-pointer ${colors.folderBg}`}
                       onClick={toggleExpanded}
                       data-testid={`folder-${groupName}`}
                     >
@@ -1079,24 +1114,14 @@ export default function AdminDashboard() {
                         <ChevronRight className="h-4 w-4" />
                       )}
                       {isExpanded ? (
-                        <FolderOpen className={`h-5 w-5 ${
-                          isReadyForBillingGroup(groupName) ? 'text-green-600' : 'text-blue-600'
-                        }`} />
+                        <FolderOpen className={`h-5 w-5 ${colors.folderIcon}`} />
                       ) : (
-                        <Folder className={`h-5 w-5 ${
-                          isReadyForBillingGroup(groupName) ? 'text-green-600' : 'text-blue-600'
-                        }`} />
+                        <Folder className={`h-5 w-5 ${colors.folderIcon}`} />
                       )}
-                      <span className={`font-medium ${
-                        isReadyForBillingGroup(groupName) ? 'text-green-800' : ''
-                      }`}>{groupName}</span>
+                      <span className={`font-medium ${colors.folderText}`}>{groupName}</span>
                       <Badge 
                         variant="secondary" 
-                        className={`ml-2 ${
-                          isReadyForBillingGroup(groupName) 
-                            ? 'bg-green-200 text-green-800 border-green-300' 
-                            : ''
-                        }`}
+                        className={`ml-2 ${colors.badge}`}
                       >
                         {groupJobs.length} job{groupJobs.length !== 1 ? 's' : ''}
                       </Badge>
