@@ -606,14 +606,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
                         ) : [];
                         
-                        // Show existing entries plus any unsaved local entries
-                        const allEntries = [...existingEntries];
-                        if (dayEntries.length > 0) {
-                          allEntries.push(...dayEntries);
-                        }
-                        
-                        // Always show at least one entry row per day
-                        const entriesToShow = allEntries.length > 0 ? allEntries : [{}];
+                        // Show only existing entries from database OR local unsaved entries, not both
+                        // If we have local entries, show those (user is editing)
+                        // If no local entries, show existing entries from database
+                        // Always show at least one entry row per day for new input
+                        const entriesToShow = dayEntries.length > 0 ? dayEntries : (existingEntries.length > 0 ? existingEntries : [{}]);
                         
                         return entriesToShow.map((entry: any, entryIndex: number) => (
                           <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'bg-gray-50' : ''}`}>
@@ -632,12 +629,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 value={entry?.hours || ''}
                                 onChange={(e) => handleCellChange(day, entryIndex, 'hours', e.target.value)}
                                 className="w-20"
+                                disabled={entry?.id && entry?.approved} // Disable if it's a saved approved entry
                               />
                             </td>
                             <td className="p-3">
                               <Select
                                 value={entry?.jobId || 'no-job'}
                                 onValueChange={(value) => handleCellChange(day, entryIndex, 'jobId', value)}
+                                disabled={entry?.id && entry?.approved} // Disable if it's a saved approved entry
                               >
                                 <SelectTrigger className="min-w-40">
                                   <SelectValue placeholder="Select job" />
@@ -684,11 +683,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 )}
-                                {entry?.hours && entry?.jobId && entry?.jobId !== 'no-job' && (
+                                {entry?.id ? (
                                   <span className="text-xs text-green-600 flex items-center">
                                     ✓ Saved
                                   </span>
-                                )}
+                                ) : entry?.hours && entry?.jobId && entry?.jobId !== 'no-job' ? (
+                                  <span className="text-xs text-yellow-600 flex items-center">
+                                    ⏳ Unsaved
+                                  </span>
+                                ) : null}
                               </div>
                             </td>
                           </tr>
