@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft, Users, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft, Users, Plus, Trash2, Save } from "lucide-react";
 import { format, addDays, parseISO } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -33,8 +33,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   const [currentFortnightIndex, setCurrentFortnightIndex] = useState(getCurrentFortnightIndex());
   const [timesheetData, setTimesheetData] = useState<any>({});
-  const autoSaveTimeouts = useRef<{ [key: string]: NodeJS.Timeout }>({});
-  const savedEntries = useRef<Set<string>>(new Set()); // Track which entries have been saved
+  const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null); // Single timeout for all auto-saves
 
   // Calculate fortnight boundaries based on August 11, 2025 start date
   const getFortnightDates = (fortnightIndex: number) => {
@@ -159,23 +158,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         [field]: value
       };
       
-      // Auto-save when hours and job are filled (with better debouncing)
-      if (field === 'hours' || field === 'jobId') {
-        const entry = updatedEntries[entryIndex];
-        if (entry.hours && parseFloat(entry.hours) > 0 && entry.jobId && entry.jobId !== 'no-job') {
-          // Clear any existing timeout for this specific entry
-          const entryKey = `${format(date, 'yyyy-MM-dd')}-${entryIndex}-${entry.jobId}-${entry.hours}`;
-          if (autoSaveTimeouts.current[entryKey]) {
-            clearTimeout(autoSaveTimeouts.current[entryKey]);
-          }
-          
-          // Set new timeout with unique key to prevent cross-interference
-          autoSaveTimeouts.current[entryKey] = setTimeout(() => {
-            autoSaveEntry(date, entryIndex, entry);
-            delete autoSaveTimeouts.current[entryKey];
-          }, 2000); // Increased debounce time to 2 seconds
-        }
-      }
+      // No auto-save - user must use manual save button
       
       return {
         ...prev,
@@ -184,32 +167,45 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     });
   };
 
-  const autoSaveEntry = (date: Date, entryIndex: number, data: any) => {
+  const saveEntry = (date: Date, entryIndex: number, data: any) => {
     if (data && data.hours && parseFloat(data.hours) > 0) {
       const dateStr = format(date, 'yyyy-MM-dd');
-      
-      // Create a unique key for this specific entry
-      const entryKey = `${dateStr}-${data.jobId || 'no-job'}-${data.hours}-${entryIndex}`;
-      
-      // Check if this exact entry has already been saved
-      if (savedEntries.current.has(entryKey)) {
-        console.log('Entry already saved, skipping:', entryKey);
-        return;
-      }
-      
-      // Mark this entry as being saved
-      savedEntries.current.add(entryKey);
       
       updateTimesheetMutation.mutate({
         date: dateStr,
         hours: parseFloat(data.hours),
         materials: data.materials || '',
         jobId: data.jobId === 'no-job' ? null : data.jobId || null,
-      }, {
-        onError: () => {
-          // Remove from saved entries if the save failed
-          savedEntries.current.delete(entryKey);
-        }
+      });
+    }
+  };
+
+  const saveAllEntries = () => {
+    let entriesSaved = 0;
+    
+    Object.entries(timesheetData).forEach(([dateKey, dayEntries]) => {
+      if (Array.isArray(dayEntries)) {
+        dayEntries.forEach((entry, index) => {
+          if (entry.hours && parseFloat(entry.hours) > 0 && entry.jobId && entry.jobId !== 'no-job') {
+            const date = new Date(dateKey);
+            saveEntry(date, index, entry);
+            entriesSaved++;
+          }
+        });
+      }
+    });
+
+    if (entriesSaved > 0) {
+      toast({
+        title: "Saving Timesheet",
+        description: `Saving ${entriesSaved} entries...`,
+        variant: "default",
+      });
+    } else {
+      toast({
+        title: "No entries to save",
+        description: "Please enter hours and select jobs first.",
+        variant: "destructive",
       });
     }
   };
@@ -340,14 +336,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       // Clear local timesheet data
       setTimesheetData({});
       
-      // Clear any pending auto-save timeouts
-      Object.values(autoSaveTimeouts.current).forEach(timeout => {
-        clearTimeout(timeout);
-      });
-      autoSaveTimeouts.current = {};
-      
-      // Clear saved entries tracking
-      savedEntries.current.clear();
+      // Clear any pending auto-save timeout
+      if (autoSaveTimeout.current) {
+        clearTimeout(autoSaveTimeout.current);
+        autoSaveTimeout.current = null;
+      }
       
       // Show success message
       toast({
@@ -389,6 +382,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
+            <Button 
+              onClick={saveAllEntries}
+              variant="default"
+              disabled={updateTimesheetMutation.isPending}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {updateTimesheetMutation.isPending ? 'Saving...' : 'Save All'}
+            </Button>
             <Button onClick={exportToPDF} variant="outline">
               <Download className="h-4 w-4 mr-2" />
               Export PDF
