@@ -12,7 +12,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 
-const FORTNIGHT_START_DATE = new Date(2025, 7, 11); // August 11, 2025
+const FORTNIGHT_START_DATE = new Date(2025, 7, 11); // August 11, 2025 (month is 0-indexed)
 
 interface FortnightTimesheetProps {
   selectedEmployeeId?: string;
@@ -23,7 +23,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedEmployee, setSelectedEmployee] = useState<string>(selectedEmployeeId || "");
-  const [currentFortnightIndex, setCurrentFortnightIndex] = useState(0);
+  // Calculate which fortnight we should start with based on current date
+  const getCurrentFortnightIndex = () => {
+    const today = new Date();
+    const startDate = FORTNIGHT_START_DATE;
+    const daysDiff = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.max(0, Math.floor(daysDiff / 14));
+  };
+
+  const [currentFortnightIndex, setCurrentFortnightIndex] = useState(getCurrentFortnightIndex());
   const [timesheetData, setTimesheetData] = useState<any>({});
 
   // Calculate fortnight boundaries based on August 11, 2025 start date
@@ -68,15 +76,28 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   // Filter entries for current fortnight and selected employee (if admin view)
   const currentFortnightEntries = Array.isArray(timesheetEntries) ? timesheetEntries.filter((entry: any) => {
-    const entryDate = parseISO(entry.date);
-    const isInFortnight = entryDate >= currentFortnight.start && entryDate <= currentFortnight.end;
-    
-    if (isAdminView && selectedEmployee) {
-      // In admin view, filter by the selected employee's ID
-      return isInFortnight && entry.staffId === selectedEmployee;
+    try {
+      const entryDate = parseISO(entry.date);
+      const fortnightStart = new Date(currentFortnight.start);
+      const fortnightEnd = new Date(currentFortnight.end);
+      
+      // Set time to start/end of day for accurate comparison
+      fortnightStart.setHours(0, 0, 0, 0);
+      fortnightEnd.setHours(23, 59, 59, 999);
+      entryDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
+      
+      const isInFortnight = entryDate >= fortnightStart && entryDate <= fortnightEnd;
+      
+      if (isAdminView && selectedEmployee) {
+        // In admin view, filter by the selected employee's ID
+        return isInFortnight && entry.staffId === selectedEmployee;
+      }
+      
+      return isInFortnight;
+    } catch (error) {
+      console.error('Error filtering timesheet entry:', error, entry);
+      return false;
     }
-    
-    return isInFortnight;
   }) : [];
 
   const updateTimesheetMutation = useMutation({
@@ -357,6 +378,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     <p>Debug: Current Fortnight Entries: {currentFortnightEntries.length}</p>
                     <p>Debug: Fortnight Start: {format(currentFortnight.start, 'yyyy-MM-dd')}</p>
                     <p>Debug: Fortnight End: {format(currentFortnight.end, 'yyyy-MM-dd')}</p>
+                    <p>Debug: Fortnight Index: {currentFortnightIndex}</p>
+                    {Array.isArray(timesheetEntries) && timesheetEntries.length > 0 && (
+                      <p>Debug: Sample Entry Date: {timesheetEntries[0]?.date}</p>
+                    )}
                     {Array.isArray(staffMembers) && staffMembers.length > 0 && (
                       <p>Debug: First Staff Member: {JSON.stringify(staffMembers[0])}</p>
                     )}
@@ -477,11 +502,13 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="no-job">No job</SelectItem>
-                                  {Array.isArray(jobs) ? jobs.filter((job: any) => job.id && job.id.trim() !== '').map((job: any) => (
+                                  {Array.isArray(jobs) && jobs.length > 0 ? jobs.filter((job: any) => job.id && job.id.trim() !== '').map((job: any) => (
                                     <SelectItem key={job.id} value={job.id}>
-                                      {job.jobAddress}
+                                      {job.jobAddress || job.address || 'Unnamed Job'}
                                     </SelectItem>
-                                  )) : []}
+                                  )) : (
+                                    <SelectItem value="loading" disabled>Loading jobs...</SelectItem>
+                                  )}
                                 </SelectContent>
                               </Select>
                             </td>
