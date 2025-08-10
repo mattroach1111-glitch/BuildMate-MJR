@@ -193,8 +193,8 @@ export async function generateJobPDF(job: JobWithRelations) {
     yPos += 10;
   }
 
-  // SUMMARY SECTION - like Excel bottom
-  yPos += 10;
+  // SUMMARY SECTION - Enhanced with detailed breakdown
+  yPos += 20;
   doc.line(20, yPos, 190, yPos);
   yPos += 15;
 
@@ -210,33 +210,75 @@ export async function generateJobPDF(job: JobWithRelations) {
   const gstAmount = subtotalWithMargin * 0.10;
   const finalTotal = subtotalWithMargin + gstAmount;
 
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.text('SUMMARY', 20, yPos);
-  yPos += 15;
-
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Total', 120, yPos);
-  doc.text(`$${subtotal.toFixed(2)}`, 160, yPos);
-  yPos += 10;
-
-  if (marginPercent > 0) {
-    doc.text(`Builder Margin (${job.builderMargin}%)`, 120, yPos);
-    doc.text(`$${marginAmount.toFixed(2)}`, 160, yPos);
-    yPos += 10;
-  }
-
-  doc.text('GST (10%)', 120, yPos);
-  doc.text(`$${gstAmount.toFixed(2)}`, 160, yPos);
-  yPos += 15;
-
-  // Final total - highlighted like Excel
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.text('Total inc GST', 120, yPos);
-  doc.setTextColor(220, 20, 60); // Deep red like Excel
-  doc.text(`$${finalTotal.toFixed(2)}`, 160, yPos);
+  doc.text('JOB COST SUMMARY', 20, yPos);
+  yPos += 15;
+
+  // Individual subtotals
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  
+  doc.text('Labour Total:', 25, yPos);
+  doc.text(`$${laborTotal.toFixed(2)}`, 160, yPos, { align: 'right' });
+  yPos += 8;
+  
+  doc.text('Materials Total:', 25, yPos);
+  doc.text(`$${materialsTotal.toFixed(2)}`, 160, yPos, { align: 'right' });
+  yPos += 8;
+  
+  doc.text('Sub Trades Total:', 25, yPos);
+  doc.text(`$${subTradesTotal.toFixed(2)}`, 160, yPos, { align: 'right' });
+  yPos += 8;
+  
+  if (otherCostsTotal > 0) {
+    doc.text('Other Costs Total:', 25, yPos);
+    doc.text(`$${otherCostsTotal.toFixed(2)}`, 160, yPos, { align: 'right' });
+    yPos += 8;
+  }
+  
+  // Subtotal line
+  yPos += 5;
+  doc.line(25, yPos, 190, yPos);
+  yPos += 10;
+  
+  doc.setFont('helvetica', 'bold');
+  doc.text('SUBTOTAL:', 25, yPos);
+  doc.text(`$${subtotal.toFixed(2)}`, 160, yPos, { align: 'right' });
+  yPos += 12;
+
+  // Builder margin if applicable
+  if (marginPercent > 0) {
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Builder Margin (${job.builderMargin}%):`, 25, yPos);
+    doc.text(`$${marginAmount.toFixed(2)}`, 160, yPos, { align: 'right' });
+    yPos += 8;
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('Subtotal with Margin:', 25, yPos);
+    doc.text(`$${subtotalWithMargin.toFixed(2)}`, 160, yPos, { align: 'right' });
+    yPos += 12;
+  }
+
+  // GST
+  doc.setFont('helvetica', 'normal');
+  doc.text('GST (10%):', 25, yPos);
+  doc.text(`$${gstAmount.toFixed(2)}`, 160, yPos, { align: 'right' });
+  yPos += 12;
+
+  // Final total line
+  doc.line(25, yPos, 190, yPos);
+  yPos += 12;
+
+  // Final total - highlighted
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(220, 20, 60); // Deep red
+  doc.text('TOTAL (inc GST):', 25, yPos);
+  doc.text(`$${finalTotal.toFixed(2)}`, 160, yPos, { align: 'right' });
+  
+  // Reset color
+  doc.setTextColor(0, 0, 0);
   
   // Save the PDF
   doc.save(`${job.jobAddress.replace(/[^a-zA-Z0-9]/g, '-')}-job-sheet.pdf`);
