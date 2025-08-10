@@ -51,6 +51,7 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 - ✅ **Numerical Job Sorting (August 2025)**: Implemented intelligent sorting that extracts numbers from job addresses for proper numerical ordering (e.g., "123 Main St" before "456 Oak Ave"), with status priority and alphabetical fallback sorting.
 - ✅ **Admin View Mode Toggle (August 2025)**: Added card/list view preference controls in job management with localStorage persistence, providing compact list view option alongside traditional card layout for admin flexibility.
 - ✅ **Staff Job Dropdown Fix**: Updated staff timesheet job selection to exclude archived jobs and display job addresses as primary identifier for easier job selection.
+- 🔧 **Admin Dashboard Debug (August 2025)**: Ongoing debugging of React/TypeScript syntax errors in admin-dashboard.tsx component. Resolved multiple JSX structure issues, map function nesting problems, and variable reference mismatches. Current issue: persistent syntax error at line 2010 with JSX conditional rendering structure.
 
 # User Preferences
 
