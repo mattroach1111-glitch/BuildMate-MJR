@@ -457,6 +457,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin timesheet routes
+  app.get("/api/admin/timesheets", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const entries = await storage.getAllTimesheetEntries();
+      res.json(entries);
+    } catch (error) {
+      console.error("Error fetching all timesheet entries:", error);
+      res.status(500).json({ message: "Failed to fetch timesheet entries" });
+    }
+  });
+
+  app.patch("/api/admin/timesheet/:id/approve", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { approved } = req.body;
+      await storage.updateTimesheetApproval(req.params.id, approved);
+      res.status(200).json({ message: "Timesheet approval updated" });
+    } catch (error) {
+      console.error("Error updating timesheet approval:", error);
+      res.status(500).json({ message: "Failed to update timesheet approval" });
+    }
+  });
+
   app.post("/api/timesheet", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

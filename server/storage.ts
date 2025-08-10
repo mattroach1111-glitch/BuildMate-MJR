@@ -395,6 +395,36 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Admin timesheet methods
+  async getAllTimesheetEntries(): Promise<any[]> {
+    return await db
+      .select({
+        id: timesheetEntries.id,
+        staffId: timesheetEntries.staffId,
+        jobId: timesheetEntries.jobId,
+        date: timesheetEntries.date,
+        hours: timesheetEntries.hours,
+        approved: timesheetEntries.approved,
+        createdAt: timesheetEntries.createdAt,
+        staffName: users.firstName,
+        staffEmail: users.email,
+        jobAddress: jobs.jobAddress,
+        clientName: jobs.clientName,
+        projectName: jobs.projectName,
+      })
+      .from(timesheetEntries)
+      .leftJoin(users, eq(timesheetEntries.staffId, users.id))
+      .leftJoin(jobs, eq(timesheetEntries.jobId, jobs.id))
+      .orderBy(desc(timesheetEntries.date));
+  }
+
+  async updateTimesheetApproval(id: string, approved: boolean): Promise<void> {
+    await db
+      .update(timesheetEntries)
+      .set({ approved })
+      .where(eq(timesheetEntries.id, id));
+  }
+
   async getJobsForStaff(): Promise<Job[]> {
     return await db
       .select()

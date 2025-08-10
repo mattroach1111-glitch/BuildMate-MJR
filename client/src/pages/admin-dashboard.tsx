@@ -18,9 +18,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { insertJobSchema, insertEmployeeSchema } from "@shared/schema";
 import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import type { Job, Employee } from "@shared/schema";
+import type { Job, Employee, TimesheetEntry } from "@shared/schema";
+import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -65,6 +66,11 @@ export default function AdminDashboard() {
 
   const { data: employees, isLoading: employeesLoading } = useQuery<Employee[]>({
     queryKey: ["/api/employees"],
+    retry: false,
+  });
+
+  const { data: allTimesheets, isLoading: timesheetsLoading } = useQuery({
+    queryKey: ["/api/admin/timesheets"],
     retry: false,
   });
 
@@ -229,6 +235,37 @@ export default function AdminDashboard() {
       toast({
         title: "Error",
         description: "Failed to remove employee",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const approveTimesheetMutation = useMutation({
+    mutationFn: async ({ id, approved }: { id: string; approved: boolean }) => {
+      await apiRequest("PATCH", `/api/admin/timesheet/${id}/approve`, { approved });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/timesheets"] });
+      toast({
+        title: "Success",
+        description: "Timesheet approval updated",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update timesheet approval",
         variant: "destructive",
       });
     },
@@ -475,7 +512,7 @@ export default function AdminDashboard() {
 
       {/* Mobile-First Tabs */}
       <Tabs defaultValue="jobs" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
           <TabsTrigger value="jobs" className="flex items-center gap-2">
             <Briefcase className="h-4 w-4" />
             <span className="hidden sm:inline">Jobs</span>
@@ -483,6 +520,10 @@ export default function AdminDashboard() {
           <TabsTrigger value="employees" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Staff</span>
+          </TabsTrigger>
+          <TabsTrigger value="timesheets" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            <span className="hidden sm:inline">Timesheets</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1038,6 +1079,128 @@ export default function AdminDashboard() {
                 <Plus className="h-4 w-4 mr-2" />
                 Add First Staff Member
               </Button>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Timesheets Tab */}
+        <TabsContent value="timesheets" className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h2 className="text-xl font-semibold">Timesheet Management</h2>
+          </div>
+
+          {timesheetsLoading ? (
+            <div className="grid gap-4">
+              {[...Array(5)].map((_, i) => (
+                <Card key={i}>
+                  <CardContent className="p-4">
+                    <div className="animate-pulse space-y-3">
+                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : allTimesheets && allTimesheets.length > 0 ? (
+            <div className="space-y-4">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="h-8 w-8 text-blue-500" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Entries</p>
+                        <p className="text-2xl font-bold">{allTimesheets.length}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Clock className="h-8 w-8 text-green-500" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Hours</p>
+                        <p className="text-2xl font-bold">
+                          {allTimesheets.reduce((total, entry) => total + entry.hours, 0).toFixed(1)}h
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="h-8 w-8 text-purple-500" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Approved</p>
+                        <p className="text-2xl font-bold">
+                          {allTimesheets.filter(entry => entry.approved).length}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Timesheet Entries */}
+              <div className="space-y-3">
+                {allTimesheets.map((entry) => (
+                  <Card key={entry.id} data-testid={`card-timesheet-${entry.id}`}>
+                    <CardContent className="p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <div className="font-medium">{entry.staffName || 'Unknown Staff'}</div>
+                            <Badge variant={entry.approved ? "default" : "secondary"}>
+                              {entry.approved ? "Approved" : "Pending"}
+                            </Badge>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {entry.jobAddress || 'Unknown Job'} • {entry.clientName}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {format(parseISO(entry.date), 'dd/MM/yyyy')} • {entry.hours}h
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant={entry.approved ? "outline" : "default"}
+                            onClick={() => approveTimesheetMutation.mutate({ 
+                              id: entry.id, 
+                              approved: !entry.approved 
+                            })}
+                            disabled={approveTimesheetMutation.isPending}
+                            data-testid={`button-approve-timesheet-${entry.id}`}
+                          >
+                            {entry.approved ? (
+                              <>
+                                <XCircle className="h-4 w-4 mr-2" />
+                                Unapprove
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Approve
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <Card className="p-8 text-center">
+              <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">No timesheet entries yet</h3>
+              <p className="text-muted-foreground">Staff timesheet entries will appear here once submitted</p>
             </Card>
           )}
         </TabsContent>
