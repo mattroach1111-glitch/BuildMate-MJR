@@ -278,8 +278,22 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           xPos += colWidths[0];
           doc.text(entry.hours || '', xPos, yPos);
           xPos += colWidths[1];
-          const job = Array.isArray(jobs) ? jobs.find((j: any) => j.id === entry.jobId) : null;
-          doc.text((job?.jobAddress || 'No job').substring(0, 25), xPos, yPos);
+          // Handle leave types stored in materials field
+          let jobText = 'No job';
+          if (entry.jobId) {
+            const job = Array.isArray(jobs) ? jobs.find((j: any) => j.id === entry.jobId) : null;
+            jobText = job?.jobAddress || 'Job not found';
+          } else if (entry.materials) {
+            // Check if materials contains leave type
+            const leaveTypes = {
+              'sick-leave': 'Sick Leave',
+              'personal-leave': 'Personal Leave', 
+              'annual-leave': 'Annual Leave',
+              'rdo': 'RDO (Rest Day Off)'
+            };
+            jobText = leaveTypes[entry.materials] || entry.materials;
+          }
+          doc.text(jobText.substring(0, 25), xPos, yPos);
           xPos += colWidths[2];
           doc.text((entry.materials || '').substring(0, 25), xPos, yPos);
           

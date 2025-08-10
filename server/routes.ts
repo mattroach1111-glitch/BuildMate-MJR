@@ -618,9 +618,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use the user ID directly for timesheet entries
       const staffId = userId;
       
+      // Handle special leave types by storing them in materials field and setting jobId to null
+      const { jobId, materials, ...otherData } = req.body;
+      const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'rdo'];
+      let finalJobId = jobId;
+      let finalMaterials = materials || '';
+      
+      if (leaveTypes.includes(jobId)) {
+        finalJobId = null;
+        finalMaterials = jobId; // Store leave type in materials field
+      } else if (jobId === 'no-job') {
+        finalJobId = null;
+      }
+      
       const validatedData = insertTimesheetEntrySchema.parse({
-        ...req.body,
+        ...otherData,
         staffId: staffId,
+        jobId: finalJobId,
+        materials: finalMaterials,
       });
       const entry = await storage.createTimesheetEntry(validatedData);
       res.status(201).json(entry);
