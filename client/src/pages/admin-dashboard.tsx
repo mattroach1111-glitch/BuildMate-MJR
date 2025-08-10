@@ -54,10 +54,7 @@ export default function AdminDashboard() {
   const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>("all");
   const [dateRangeFilter, setDateRangeFilter] = useState<string>("all");
   // Start with all fortnights collapsed by default for cleaner view
-  const [collapsedFortnights, setCollapsedFortnights] = useState<Set<string>>(() => {
-    // Initialize with all current fortnight entries collapsed
-    return new Set();
-  });
+  const [collapsedFortnights, setCollapsedFortnights] = useState<Set<string>>(new Set());
   const [isAddingNewProjectManager, setIsAddingNewProjectManager] = useState(false);
   const [newProjectManagerName, setNewProjectManagerName] = useState("");
   const [isAddingNewClient, setIsAddingNewClient] = useState(false);
@@ -107,6 +104,8 @@ export default function AdminDashboard() {
     staff.id.trim() !== '' &&
     staff.name
   ) || [];
+
+
 
   // Filter timesheets based on selected employee and date range
   // Helper function to get fortnight start date (Monday)
@@ -199,6 +198,16 @@ export default function AdminDashboard() {
       return b.fortnightStart.getTime() - a.fortnightStart.getTime();
     });
   }, [allTimesheets, selectedEmployeeFilter, dateRangeFilter]);
+
+  // Auto-collapse all fortnights by default when groupedTimesheets changes
+  useEffect(() => {
+    if (groupedTimesheets && groupedTimesheets.length > 0) {
+      const allFortnightKeys = groupedTimesheets.map(fortnight => 
+        `${fortnight.staffId}-${fortnight.fortnightStart.toISOString()}`
+      );
+      setCollapsedFortnights(new Set(allFortnightKeys));
+    }
+  }, [groupedTimesheets]);
 
   // Keep filteredTimesheets for backward compatibility with existing summary cards
   const filteredTimesheets = allTimesheets?.filter((entry: any) => {
