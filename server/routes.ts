@@ -46,7 +46,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/google-drive/callback', async (req: any, res) => {
+  app.get('/api/google-drive/callback', isAuthenticated, async (req: any, res) => {
     try {
       const { code } = req.query;
       if (!code) {
@@ -56,10 +56,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const googleAuth = new GoogleDriveAuth();
       const tokens = await googleAuth.getTokens(code as string);
       
-      // Store tokens in user's database record
-      if (req.user?.id) {
-        await storage.updateUserGoogleDriveTokens(req.user.id, JSON.stringify(tokens));
-      }
+      // Store tokens in user's database record using the authenticated user ID
+      const userId = req.user.claims.sub;
+      await storage.updateUserGoogleDriveTokens(userId, JSON.stringify(tokens));
+      
+      console.log(`Google Drive tokens saved for user ${userId}`);
       
       // Redirect back to the admin dashboard settings tab
       res.redirect('/?tab=settings&google_drive_connected=true');
@@ -92,6 +93,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       const isConnected = !!(user?.googleDriveTokens);
+      console.log(`Google Drive status check for user ${userId}: connected=${isConnected}, has tokens=${!!user?.googleDriveTokens}`);
       res.json({ connected: isConnected });
     } catch (error) {
       console.error("Error checking Google Drive status:", error);
