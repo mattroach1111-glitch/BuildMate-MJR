@@ -27,14 +27,16 @@ export function UserManagement() {
         let userData: User[] = [];
         if (Array.isArray(response)) {
           userData = response;
-        } else if (response && typeof response === 'object' && response.data && Array.isArray(response.data)) {
-          userData = response.data;
+        } else if (response && typeof response === 'object' && 'data' in response && Array.isArray((response as any).data)) {
+          userData = (response as any).data;
         } else {
           console.warn("Unexpected API response format:", response);
           userData = [];
         }
         
         console.log("Processed user data:", userData);
+        console.log("Is userData an array?", Array.isArray(userData));
+        console.log("userData length:", userData.length);
         return userData as User[];
       } catch (err: any) {
         console.error("User management API error:", err);
@@ -146,7 +148,12 @@ export function UserManagement() {
             Current Users ({users?.length || 0})
           </h4>
           <div className="space-y-2 max-h-60 overflow-y-auto">
-            {Array.isArray(users) && users.length > 0 ? (
+            {(() => {
+              console.log("Rendering users:", users);
+              console.log("Is users array?", Array.isArray(users));
+              console.log("Users length:", users?.length);
+              return Array.isArray(users) && users.length > 0;
+            })() ? (
               users.map((user) => (
                 <div
                   key={user.id}
