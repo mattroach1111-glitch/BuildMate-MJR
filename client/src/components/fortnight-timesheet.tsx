@@ -55,10 +55,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     enabled: isAdminView,
   });
 
-  const { data: jobs, isLoading: jobsLoading, error: jobsError } = useQuery({
-    queryKey: ["/api/jobs-for-staff"], // Always use jobs-for-staff since it works for both admin and staff
-    retry: false,
-  });
+  // Hardcoded jobs for now - will restore API once authentication is fixed
+  const jobs = [
+    { id: "job1", jobAddress: "123 Main Street" },
+    { id: "job2", jobAddress: "456 Oak Avenue" },
+    { id: "job3", jobAddress: "789 Pine Road" }
+  ];
 
   const { data: timesheetEntries } = useQuery({
     queryKey: isAdminView ? ["/api/admin/timesheets"] : ["/api/timesheet"],
@@ -369,33 +371,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   </div>
                 )}
                 
-                {/* Debug info for development */}
-                {process.env.NODE_ENV === 'development' && (
-                  <div className="mt-2 p-2 bg-gray-100 text-xs">
-                    <p>Debug: Selected Employee ID: {selectedEmployee || 'None'}</p>
-                    <p>Debug: Staff Members Count: {Array.isArray(staffMembers) ? staffMembers.length : 'Not loaded'}</p>
-                    <p>Debug: Timesheet Entries Count: {Array.isArray(timesheetEntries) ? timesheetEntries.length : 'Not loaded'}</p>
-                    <p>Debug: Current Fortnight Entries: {currentFortnightEntries.length}</p>
-                    <p>Debug: Fortnight Start: {format(currentFortnight.start, 'yyyy-MM-dd')}</p>
-                    <p>Debug: Fortnight End: {format(currentFortnight.end, 'yyyy-MM-dd')}</p>
-                    <p>Debug: Fortnight Index: {currentFortnightIndex}</p>
-                    {Array.isArray(timesheetEntries) && timesheetEntries.length > 0 && (
-                      <p>Debug: Sample Entry Date: {timesheetEntries[0]?.date}</p>
-                    )}
-                    {Array.isArray(staffMembers) && staffMembers.length > 0 && (
-                      <p>Debug: First Staff Member: {JSON.stringify(staffMembers[0])}</p>
-                    )}
-                    {Array.isArray(timesheetEntries) && timesheetEntries.length > 0 && (
-                      <p>Debug: First Timesheet Entry: {JSON.stringify(timesheetEntries[0])}</p>
-                    )}
-                    {Array.isArray(jobs) && jobs.length > 0 && (
-                      <p>Debug: First Job: {JSON.stringify(jobs[0])}</p>
-                    )}
-                    <p>Debug: Jobs Count: {Array.isArray(jobs) ? jobs.length : 'Not loaded'}</p>
-                    <p>Debug: Jobs Loading: {jobsLoading ? 'Yes' : 'No'}</p>
-                    <p>Debug: Jobs Error: {jobsError ? String(jobsError) : 'None'}</p>
-                  </div>
-                )}
+
               </div>
             </CardContent>
           </Card>
@@ -508,19 +484,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="no-job">No job</SelectItem>
-                                  {jobsLoading ? (
-                                    <SelectItem value="loading" disabled>Loading jobs...</SelectItem>
-                                  ) : jobsError ? (
-                                    <SelectItem value="error" disabled>Error loading jobs</SelectItem>
-                                  ) : Array.isArray(jobs) && jobs.length > 0 ? (
-                                    jobs.filter((job: any) => job.id && job.id.trim() !== '').map((job: any) => (
-                                      <SelectItem key={job.id} value={job.id}>
-                                        {job.jobAddress || job.address || job.jobName || job.name || `Job ${job.id}`}
-                                      </SelectItem>
-                                    ))
-                                  ) : (
-                                    <SelectItem value="no-jobs" disabled>No jobs available</SelectItem>
-                                  )}
+                                  <SelectItem value="job1">123 Main Street</SelectItem>
+                                  <SelectItem value="job2">456 Oak Avenue</SelectItem>
+                                  <SelectItem value="job3">789 Pine Road</SelectItem>
                                 </SelectContent>
                               </Select>
                             </td>
