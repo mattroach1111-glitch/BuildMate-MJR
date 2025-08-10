@@ -748,6 +748,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     variant="destructive"
                                     onClick={() => deleteSavedEntry(entry.id)}
                                     className="ml-1"
+                                    data-testid={`button-delete-entry-${entry.id}`}
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>

@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService } from "./objectStorage";
 import { TimesheetPDFGenerator } from "./pdfGenerator";
+import { GoogleDriveService } from "./googleDriveService";
 import {
   insertJobSchema,
   insertEmployeeSchema,
@@ -821,14 +822,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get timesheet entries for the fortnight
       const entries = await storage.getTimesheetEntriesByPeriod(staffId, fortnightStart, fortnightEnd);
       
-      // Generate and save PDF to object storage
+      // Generate and save PDF to Google Drive
       try {
         if (!userEmployee) {
           throw new Error('Employee not found');
         }
         
         const pdfGenerator = new TimesheetPDFGenerator();
-        const objectStorageService = new ObjectStorageService();
+        const googleDriveService = new GoogleDriveService();
         
         const employeeData = {
           id: userEmployee.id,
@@ -844,16 +845,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
         
         const fileName = `timesheet-${userEmployee.name}-${fortnightStart}-${fortnightEnd}.pdf`;
-        const objectPath = await objectStorageService.uploadPDF(fileName, pdfBuffer);
         
-        console.log(`PDF saved to object storage: ${objectPath}`);
+        // Create or find BuildFlow Pro folder in Google Drive
+        const buildFlowFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro Timesheets');
+        
+        // Upload PDF to Google Drive
+        const driveLink = await googleDriveService.uploadPDF(fileName, pdfBuffer, buildFlowFolderId);
+        
+        if (driveLink) {
+          console.log(`PDF saved to Google Drive: ${driveLink}`);
+        } else {
+          console.log('PDF generation successful, but Google Drive upload failed. Check Google Drive credentials.');
+        }
       } catch (pdfError) {
         console.error('Error generating/saving PDF:', pdfError);
         // Don't fail the whole request if PDF generation fails
       }
       
       res.json({ 
-        message: "Timesheet confirmed successfully. PDF generated and saved to admin Timesheet folder.",
+        message: "Timesheet confirmed successfully. PDF generated and saved to your Google Drive in 'BuildFlow Pro Timesheets' folder.",
         fortnightStart,
         fortnightEnd,
         confirmedAt: new Date().toISOString()
@@ -899,11 +909,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/timesheet/:id", isAuthenticated, async (req: any, res) => {
     try {
-      await storage.deleteTimesheetEntry(req.params.id);
-      res.status(204).send();
+      const entryId = req.params.id;
+      console.log(`Attempting to delete timesheet entry: ${entryId}`);
+      
+      await storage.deleteTimesheetEntry(entryId);
+      console.log(`Successfully deleted timesheet entry: ${entryId}`);
+      
+      res.json({ message: "Timesheet entry deleted successfully" });
     } catch (error) {
       console.error("Error deleting timesheet entry:", error);
-      res.status(500).json({ message: "Failed to delete timesheet entry" });
+      res.status(500).json({ error: "Failed to delete timesheet entry" });
     }
   });
 
