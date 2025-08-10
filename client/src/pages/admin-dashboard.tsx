@@ -862,15 +862,15 @@ export default function AdminDashboard() {
       badge: 'bg-indigo-200 text-indigo-800 border-indigo-300',
       preview: 'bg-indigo-500'
     },
-    // Purples
+    // Purples (Dark Purple for Mark's jobs)
     {
-      name: 'Purple',
-      bg: 'bg-purple-50 border-purple-200',
-      folderBg: 'bg-purple-100 hover:bg-purple-150',
-      folderIcon: 'text-purple-600',
-      folderText: 'text-purple-800',
-      badge: 'bg-purple-200 text-purple-800 border-purple-300',
-      preview: 'bg-purple-500'
+      name: 'Dark Purple',
+      bg: 'bg-purple-100 border-purple-400',
+      folderBg: 'bg-purple-200 hover:bg-purple-250',
+      folderIcon: 'text-purple-700',
+      folderText: 'text-purple-900',
+      badge: 'bg-purple-300 text-purple-900 border-purple-400',
+      preview: 'bg-purple-700'
     },
     // Reds
     {
