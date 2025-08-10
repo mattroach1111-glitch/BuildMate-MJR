@@ -109,6 +109,7 @@ export const timesheetEntries = pgTable("timesheet_entries", {
   materials: text("materials"),
   approved: boolean("approved").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const jobFiles = pgTable("job_files", {

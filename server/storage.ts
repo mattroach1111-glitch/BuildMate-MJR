@@ -640,6 +640,7 @@ export class DatabaseStorage implements IStorage {
         materials: timesheetEntries.materials,
         approved: timesheetEntries.approved,
         createdAt: timesheetEntries.createdAt,
+        updatedAt: timesheetEntries.updatedAt,
         staffName: sql`COALESCE(${users.firstName}, ${employees.name}, CASE WHEN ${users.email} IS NOT NULL THEN SPLIT_PART(${users.email}, '@', 1) ELSE 'Unknown Staff' END, 'Unknown Staff')`.as('staffName'),
         staffEmail: users.email,
         jobAddress: jobs.jobAddress,
@@ -881,6 +882,7 @@ export class DatabaseStorage implements IStorage {
         jobId: data.jobId,
         materials: data.materials,
         approved: data.approved,
+        updatedAt: new Date(),
       })
       .where(eq(timesheetEntries.id, id));
   }

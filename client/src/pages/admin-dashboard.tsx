@@ -2576,6 +2576,11 @@ export default function AdminDashboard() {
                                     return entry.jobAddress || 'Unknown Job';
                                   })()} • {entry.clientName} • {parseFloat(entry.hours || 0)}h
                                 </div>
+                                {entry.updatedAt && entry.updatedAt !== entry.createdAt && (
+                                  <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                                    Last updated: {format(parseISO(entry.updatedAt), 'dd/MM/yyyy HH:mm')}
+                                  </div>
+                                )}
                               </div>
                               {!entry.approved && (
                                 <Button
@@ -2733,6 +2738,11 @@ export default function AdminDashboard() {
                                             <div className="text-sm text-green-600">
                                               {entry.jobAddress || 'Unknown Job'} • {entry.clientName} • {parseFloat(entry.hours || 0)}h
                                             </div>
+                                            {entry.updatedAt && entry.updatedAt !== entry.createdAt && (
+                                              <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                                                Last updated: {format(parseISO(entry.updatedAt), 'dd/MM/yyyy HH:mm')}
+                                              </div>
+                                            )}
                                           </div>
                                         </div>
                                       ))}
