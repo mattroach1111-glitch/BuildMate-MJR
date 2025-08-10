@@ -438,7 +438,7 @@ export class DatabaseStorage implements IStorage {
         materials: timesheetEntries.materials,
         approved: timesheetEntries.approved,
         createdAt: timesheetEntries.createdAt,
-        staffName: sql`COALESCE(${users.firstName}, SUBSTRING(${users.email}, 1, POSITION('@' IN ${users.email}) - 1), 'Unknown Staff')`.as('staffName'),
+        staffName: sql`COALESCE(${users.firstName}, CASE WHEN ${users.email} IS NOT NULL THEN SPLIT_PART(${users.email}, '@', 1) ELSE 'Unknown Staff' END, 'Unknown Staff')`.as('staffName'),
         staffEmail: users.email,
         jobAddress: jobs.jobAddress,
         clientName: jobs.clientName,
