@@ -38,6 +38,10 @@ const employeeFormSchema = insertEmployeeSchema;
 
 const adminTimesheetFormSchema = insertTimesheetEntrySchema.extend({
   hours: z.string().min(1, "Hours is required"),
+  staffId: z.string().min(1, "Staff member is required"),
+  date: z.string().min(1, "Date is required"),
+}).omit({
+  approved: true,
 });
 
 export default function AdminDashboard() {
@@ -2088,8 +2092,10 @@ export default function AdminDashboard() {
               <p className="text-sm text-muted-foreground">View the staff experience as an admin</p>
             </div>
           </div>
-          <div className="border rounded-lg bg-muted/30 p-1" data-testid="container-staff-preview">
-            <StaffDashboard isAdminView={true} />
+          <div className="border rounded-lg bg-muted/30 p-4" data-testid="container-staff-preview">
+            <div className="bg-white rounded-lg p-4">
+              <StaffDashboard isAdminView={false} />
+            </div>
           </div>
         </TabsContent>
         </Tabs>

@@ -509,14 +509,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 type="number"
                                 step="0.5"
                                 placeholder="0"
-                                value={entry.hours || ''}
+                                value={entry?.hours || ''}
                                 onChange={(e) => handleCellChange(day, entryIndex, 'hours', e.target.value)}
                                 className="w-20"
                               />
                             </td>
                             <td className="p-3">
                               <Select
-                                value={entry.jobId || 'no-job'}
+                                value={entry?.jobId || 'no-job'}
                                 onValueChange={(value) => handleCellChange(day, entryIndex, 'jobId', value)}
                               >
                                 <SelectTrigger className="min-w-40">
