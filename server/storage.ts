@@ -44,6 +44,7 @@ export interface IStorage {
   getJob(id: string): Promise<Job | undefined>;
   createJob(job: InsertJob): Promise<Job>;
   updateJob(id: string, job: Partial<InsertJob>): Promise<Job>;
+  updateJobStatus(id: string, status: "new_job" | "job_in_progress" | "job_complete" | "ready_for_billing"): Promise<Job>;
   deleteJob(id: string): Promise<void>;
   
   // Labor entry operations
@@ -179,9 +180,28 @@ export class DatabaseStorage implements IStorage {
     return updatedJob;
   }
 
+  async updateJobStatus(id: string, status: "new_job" | "job_in_progress" | "job_complete" | "ready_for_billing"): Promise<Job> {
+    const [updatedJob] = await db
+      .update(jobs)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(jobs.id, id))
+      .returning();
+    return updatedJob;
+  }
+
   async deleteJob(id: string): Promise<void> {
+    // Delete all related data first
+    await db.delete(laborEntries).where(eq(laborEntries.jobId, id));
+    await db.delete(materials).where(eq(materials.jobId, id));
+    await db.delete(subTrades).where(eq(subTrades.jobId, id));
+    await db.delete(otherCosts).where(eq(otherCosts.jobId, id));
+    await db.delete(timesheetEntries).where(eq(timesheetEntries.jobId, id));
+    
+    // Delete the job itself
     await db.delete(jobs).where(eq(jobs.id, id));
   }
+
+
 
   // Labor entry operations
   async getLaborEntriesForJob(jobId: string): Promise<any[]> {

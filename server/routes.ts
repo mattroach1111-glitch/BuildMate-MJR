@@ -180,6 +180,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
+      // Check if this is a simple status update
+      if (req.body.status && Object.keys(req.body).length === 1) {
+        const job = await storage.updateJobStatus(req.params.id, req.body.status);
+        return res.json(job);
+      }
+
+      // Otherwise, handle as a full job update
       const validatedData = insertJobSchema.partial().parse(req.body);
       const job = await storage.updateJob(req.params.id, validatedData);
       res.json(job);
@@ -189,6 +196,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error("Error updating job:", error);
       res.status(500).json({ message: "Failed to update job" });
+    }
+  });
+
+  app.delete("/api/jobs/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      await storage.deleteJob(req.params.id);
+      res.json({ message: "Job deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting job:", error);
+      res.status(500).json({ message: "Failed to delete job" });
     }
   });
 

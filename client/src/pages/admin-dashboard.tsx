@@ -18,7 +18,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { insertJobSchema, insertEmployeeSchema } from "@shared/schema";
 import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Job, Employee } from "@shared/schema";
 
 const jobFormSchema = insertJobSchema.extend({
@@ -136,6 +137,70 @@ export default function AdminDashboard() {
     },
   });
 
+  const updateJobStatusMutation = useMutation({
+    mutationFn: async ({ jobId, status }: { jobId: string; status: string }) => {
+      const response = await apiRequest("PATCH", `/api/jobs/${jobId}`, { status });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      toast({
+        title: "Success",
+        description: "Job status updated successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update job status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteJobMutation = useMutation({
+    mutationFn: async (jobId: string) => {
+      const response = await apiRequest("DELETE", `/api/jobs/${jobId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      toast({
+        title: "Success",
+        description: "Job deleted successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to delete job",
+        variant: "destructive",
+      });
+    },
+  });
+
 
 
   const deleteEmployeeMutation = useMutation({
@@ -176,8 +241,8 @@ export default function AdminDashboard() {
       clientName: "",
       projectName: "",
       status: "new_job",
-      builderMargin: "25",
-      defaultHourlyRate: "50",
+      builderMargin: "0",
+      defaultHourlyRate: "0",
     },
   });
 
@@ -450,7 +515,7 @@ export default function AdminDashboard() {
                           <FormItem>
                             <FormLabel>Builder Margin (%)</FormLabel>
                             <FormControl>
-                              <Input type="number" placeholder="25" {...field} data-testid="input-builder-margin" />
+                              <Input type="number" placeholder="0" {...field} data-testid="input-builder-margin" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -463,7 +528,7 @@ export default function AdminDashboard() {
                           <FormItem>
                             <FormLabel>Default Rate ($)</FormLabel>
                             <FormControl>
-                              <Input type="number" placeholder="50" {...field} data-testid="input-default-rate" />
+                              <Input type="number" placeholder="0" {...field} data-testid="input-default-rate" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -568,16 +633,65 @@ export default function AdminDashboard() {
                       {groupJobs.map((job) => (
                         <Card 
                           key={job.id} 
-                          className="cursor-pointer hover:shadow-md transition-shadow"
+                          className="cursor-pointer hover:shadow-md transition-shadow relative"
                           onClick={() => setSelectedJob(job.id)}
                           data-testid={`card-job-${job.id}`}
                         >
                           <CardHeader className="pb-3">
                             <div className="flex items-start justify-between">
-                              <CardTitle className="text-lg leading-tight">{job.jobAddress}</CardTitle>
-                              <Badge className={`${getStatusColor(job.status)} text-xs shrink-0 ml-2`}>
-                                {formatStatus(job.status)}
-                              </Badge>
+                              <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <Select 
+                                  value={job.status} 
+                                  onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
+                                >
+                                  <SelectTrigger 
+                                    className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
+                                    onClick={(e) => e.stopPropagation()}
+                                    data-testid={`select-status-${job.id}`}
+                                  >
+                                    <Badge className={`${getStatusColor(job.status)} text-xs`}>
+                                      {formatStatus(job.status)}
+                                    </Badge>
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="new_job">New Job</SelectItem>
+                                    <SelectItem value="job_in_progress">Job In Progress</SelectItem>
+                                    <SelectItem value="job_complete">Job Complete</SelectItem>
+                                    <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                {job.status === 'ready_for_billing' && (
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="h-7 w-7 p-0"
+                                        onClick={(e) => e.stopPropagation()}
+                                        data-testid={`menu-${job.id}`}
+                                      >
+                                        <MoreVertical className="h-3 w-3" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+                                            deleteJobMutation.mutate(job.id);
+                                          }
+                                        }}
+                                        className="text-red-600 focus:text-red-600"
+                                        data-testid={`delete-job-${job.id}`}
+                                      >
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Delete Job
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                )}
+                              </div>
                             </div>
                             <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
                           </CardHeader>
@@ -622,16 +736,65 @@ export default function AdminDashboard() {
                         {groupJobs.map((job) => (
                           <Card 
                             key={job.id} 
-                            className="cursor-pointer hover:shadow-md transition-shadow bg-white"
+                            className="cursor-pointer hover:shadow-md transition-shadow bg-white relative"
                             onClick={() => setSelectedJob(job.id)}
                             data-testid={`card-job-${job.id}`}
                           >
                             <CardHeader className="pb-3">
                               <div className="flex items-start justify-between">
-                                <CardTitle className="text-lg leading-tight">{job.jobAddress}</CardTitle>
-                                <Badge className={`${getStatusColor(job.status)} text-xs shrink-0 ml-2`}>
-                                  {formatStatus(job.status)}
-                                </Badge>
+                                <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <Select 
+                                    value={job.status} 
+                                    onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
+                                  >
+                                    <SelectTrigger 
+                                      className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
+                                      onClick={(e) => e.stopPropagation()}
+                                      data-testid={`select-status-${job.id}`}
+                                    >
+                                      <Badge className={`${getStatusColor(job.status)} text-xs`}>
+                                        {formatStatus(job.status)}
+                                      </Badge>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="new_job">New Job</SelectItem>
+                                      <SelectItem value="job_in_progress">Job In Progress</SelectItem>
+                                      <SelectItem value="job_complete">Job Complete</SelectItem>
+                                      <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  {job.status === 'ready_for_billing' && (
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm" 
+                                          className="h-7 w-7 p-0"
+                                          onClick={(e) => e.stopPropagation()}
+                                          data-testid={`menu-${job.id}`}
+                                        >
+                                          <MoreVertical className="h-3 w-3" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+                                              deleteJobMutation.mutate(job.id);
+                                            }
+                                          }}
+                                          className="text-red-600 focus:text-red-600"
+                                          data-testid={`delete-job-${job.id}`}
+                                        >
+                                          <Trash2 className="h-4 w-4 mr-2" />
+                                          Delete Job
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  )}
+                                </div>
                               </div>
                               <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
                             </CardHeader>
