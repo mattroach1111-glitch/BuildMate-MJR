@@ -55,12 +55,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     enabled: isAdminView,
   });
 
-  // Hardcoded jobs for now - will restore API once authentication is fixed
-  const jobs = [
-    { id: "job1", jobAddress: "123 Main Street" },
-    { id: "job2", jobAddress: "456 Oak Avenue" },
-    { id: "job3", jobAddress: "789 Pine Road" }
-  ];
+  const { data: jobs, isLoading: jobsLoading, error: jobsError } = useQuery({
+    queryKey: ["/api/jobs-for-staff"],
+    retry: false,
+  });
 
   const { data: timesheetEntries } = useQuery({
     queryKey: isAdminView ? ["/api/admin/timesheets"] : ["/api/timesheet"],
@@ -497,9 +495,19 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="no-job">No job</SelectItem>
-                                  <SelectItem value="job1">123 Main Street</SelectItem>
-                                  <SelectItem value="job2">456 Oak Avenue</SelectItem>
-                                  <SelectItem value="job3">789 Pine Road</SelectItem>
+                                  {jobsLoading ? (
+                                    <SelectItem value="loading" disabled>Loading jobs...</SelectItem>
+                                  ) : jobsError ? (
+                                    <SelectItem value="error" disabled>Error loading jobs</SelectItem>
+                                  ) : Array.isArray(jobs) && jobs.length > 0 ? (
+                                    jobs.filter((job: any) => job.id && job.id.trim() !== '').map((job: any) => (
+                                      <SelectItem key={job.id} value={job.id}>
+                                        {job.jobAddress || job.address || job.jobName || job.name || `Job ${job.id}`}
+                                      </SelectItem>
+                                    ))
+                                  ) : (
+                                    <SelectItem value="no-jobs" disabled>No jobs available</SelectItem>
+                                  )}
                                 </SelectContent>
                               </Select>
                             </td>
