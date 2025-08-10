@@ -260,9 +260,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               <p className="text-muted-foreground">
                 {format(currentFortnight.start, 'MMM dd, yyyy')} - {format(currentFortnight.end, 'MMM dd, yyyy')}
               </p>
-              {isAdminView && selectedEmployee && (
-                <p className="text-sm text-primary font-medium">
-                  Viewing: {Array.isArray(staffMembers) ? staffMembers.find((s: any) => s.id === selectedEmployee)?.firstName || '' : ''} {Array.isArray(staffMembers) ? staffMembers.find((s: any) => s.id === selectedEmployee)?.lastName || '' : ''}
+              {isAdminView && selectedEmployee && Array.isArray(staffMembers) && (
+                <p className="text-sm text-primary font-medium bg-blue-50 px-2 py-1 rounded">
+                  Viewing: {staffMembers.find((s: any) => s.id === selectedEmployee)?.firstName} {staffMembers.find((s: any) => s.id === selectedEmployee)?.lastName}'s Timesheet
                 </p>
               )}
             </div>
@@ -314,7 +314,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     setTimesheetData({});
                   }}>
                     <SelectTrigger data-testid="select-employee-timesheet" className="mt-1">
-                      <SelectValue placeholder="Choose a staff member..." />
+                      <SelectValue placeholder="Choose a staff member...">
+                        {selectedEmployee && Array.isArray(staffMembers) ? 
+                          `${staffMembers.find((s: any) => s.id === selectedEmployee)?.firstName} ${staffMembers.find((s: any) => s.id === selectedEmployee)?.lastName}` : 
+                          "Choose a staff member..."
+                        }
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {Array.isArray(staffMembers) ? staffMembers.filter((staff: any) => staff.id && staff.id.trim() !== '').map((staff: any) => (
@@ -325,11 +330,13 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     </SelectContent>
                   </Select>
                 </div>
-                {selectedEmployee && (
-                  <div className="flex items-end">
-                    <div className="text-sm text-muted-foreground">
-                      <p>Selected: {Array.isArray(staffMembers) ? staffMembers.find((s: any) => s.id === selectedEmployee)?.firstName || '' : ''} {Array.isArray(staffMembers) ? staffMembers.find((s: any) => s.id === selectedEmployee)?.lastName || '' : ''}</p>
-                      <p>Viewing their timesheet data</p>
+                {selectedEmployee && Array.isArray(staffMembers) && (
+                  <div className="flex items-center p-3 bg-green-50 border border-green-200 rounded-md">
+                    <div className="text-sm">
+                      <p className="font-medium text-green-800">
+                        Currently Selected: {staffMembers.find((s: any) => s.id === selectedEmployee)?.firstName} {staffMembers.find((s: any) => s.id === selectedEmployee)?.lastName}
+                      </p>
+                      <p className="text-green-600">Viewing their timesheet data below</p>
                     </div>
                   </div>
                 )}
@@ -547,13 +554,16 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
         {/* Show message when no employee selected in admin view */}
         {isAdminView && !selectedEmployee && (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">Select a Staff Member</h3>
-              <p className="text-muted-foreground">
-                Choose a staff member from the dropdown above to view their timesheet
+          <Card className="border-2 border-dashed border-gray-300">
+            <CardContent className="p-12 text-center">
+              <Users className="h-16 w-16 mx-auto text-gray-400 mb-6" />
+              <h3 className="text-xl font-medium mb-3 text-gray-700">No Staff Member Selected</h3>
+              <p className="text-gray-500 mb-4">
+                Choose a staff member from the dropdown above to view their timesheet data
               </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-blue-700">
+                💡 Tip: The timesheet will automatically load once you select an employee
+              </div>
             </CardContent>
           </Card>
         )}
