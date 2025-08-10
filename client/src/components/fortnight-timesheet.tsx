@@ -109,10 +109,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   // Mutations for editing and deleting saved entries
   const editTimesheetMutation = useMutation({
     mutationFn: async ({ id, field, value }: { id: string; field: string; value: string }) => {
-      return apiRequest(`/api/timesheet/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ [field]: value }),
-      });
+      return apiRequest('PATCH', `/api/timesheet/${id}`, { [field]: value });
     },
     onSuccess: () => {
       refetchTimesheetEntries();
@@ -121,9 +118,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   const deleteTimesheetMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest(`/api/timesheet/${id}`, {
-        method: 'DELETE',
-      });
+      return apiRequest('DELETE', `/api/timesheet/${id}`);
     },
     onSuccess: () => {
       refetchTimesheetEntries();
@@ -228,7 +223,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       if (Array.isArray(dayEntries)) {
         dayEntries.forEach((entry, index) => {
           console.log('Processing entry:', entry);
-          if (entry.hours && parseFloat(entry.hours) > 0 && entry.jobId && entry.jobId !== 'no-job') {
+          if (entry.hours && parseFloat(entry.hours) > 0) {
             const entryData: any = {
               date: dateKey,
               hours: parseFloat(entry.hours),
@@ -244,7 +239,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             console.log('Adding entry to save:', entryData);
             entriesToSave.push(entryData);
           } else {
-            console.log('Skipping entry - missing required fields:', { hours: entry.hours, jobId: entry.jobId });
+            console.log('Skipping entry - missing required fields:', { hours: entry.hours });
           }
         });
       }
@@ -255,7 +250,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     if (entriesToSave.length === 0) {
       toast({
         title: "No entries to save",
-        description: "Please enter hours and select jobs first.",
+        description: "Please enter hours for at least one entry.",
         variant: "destructive",
       });
       return;
@@ -636,7 +631,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         <th className="text-left p-3 font-medium">Date</th>
                         <th className="text-left p-3 font-medium">Hours</th>
                         <th className="text-left p-3 font-medium">Job</th>
-
+                        <th className="text-left p-3 font-medium">Materials/Notes</th>
                         <th className="text-left p-3 font-medium">Actions</th>
                       </tr>
                     </thead>
@@ -723,6 +718,24 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               </Select>
                             </td>
                             <td className="p-3">
+                              <Input
+                                type="text"
+                                placeholder="Materials or notes"
+                                value={entry?.materials || ''}
+                                onChange={(e) => {
+                                  if (entry?.id && !entry?.approved) {
+                                    // Edit saved entry directly
+                                    editSavedEntry(entry.id, 'materials', e.target.value);
+                                  } else {
+                                    // Handle unsaved entry
+                                    handleCellChange(day, entryIndex, 'materials', e.target.value);
+                                  }
+                                }}
+                                className="min-w-32"
+                                disabled={entry?.approved} // Only disable if approved
+                              />
+                            </td>
+                            <td className="p-3">
                               <div className="flex gap-2">
                                 {entryIndex === 0 && (
                                   <Button
@@ -757,7 +770,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   <span className="text-xs text-green-600 flex items-center">
                                     ✓ Saved
                                   </span>
-                                ) : entry?.hours && entry?.jobId && entry?.jobId !== 'no-job' ? (
+                                ) : entry?.hours && parseFloat(entry?.hours) > 0 ? (
                                   <span className="text-xs text-yellow-600 flex items-center">
                                     ⏳ Unsaved
                                   </span>

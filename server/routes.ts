@@ -641,7 +641,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Find the employee record for this user
       let staffId = userId;
       const employees = await storage.getEmployees();
-      const userEmployee = employees.find((emp: any) => emp.name === "Matt"); // Map to Matt for now
+      const userEmployee = employees.find((emp: any) => {
+        // First try to match by user ID (for users created from employees)
+        if (emp.id === userId) {
+          return true;
+        }
+        // Fallback: match by name patterns for backwards compatibility
+        if (user) {
+          const userName = (user.firstName + ' ' + (user.lastName || '')).trim();
+          return emp.name.toLowerCase() === userName.toLowerCase();
+        }
+        return false;
+      });
       
       if (userEmployee) {
         staffId = userEmployee.id;
@@ -886,12 +897,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let staffId = userId;
       
       // Check if this user corresponds to a specific employee
-      // You can expand this mapping as needed
+      // Match user to employee by finding an employee with the same ID as the user
       const employees = await storage.getEmployees();
       const userEmployee = employees.find((emp: any) => {
-        // Match by name patterns or other identifiers
-        // For Matt's case, we'll map to the "Matt" employee
-        return emp.name === "Matt"; // This can be made more dynamic
+        // First try to match by user ID (for users created from employees)
+        if (emp.id === userId) {
+          return true;
+        }
+        // Fallback: match by name patterns for backwards compatibility
+        const userName = (user.firstName + ' ' + (user.lastName || '')).trim();
+        return emp.name.toLowerCase() === userName.toLowerCase();
       });
       
       if (userEmployee) {
@@ -945,7 +960,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Find the employee record for this user
       let staffId = userId;
       const employees = await storage.getEmployees();
-      const userEmployee = employees.find((emp: any) => emp.name === "Matt");
+      const userEmployee = employees.find((emp: any) => {
+        // First try to match by user ID (for users created from employees)
+        if (emp.id === userId) {
+          return true;
+        }
+        // Fallback: match by name patterns for backwards compatibility
+        if (user) {
+          const userName = (user.firstName + ' ' + (user.lastName || '')).trim();
+          return emp.name.toLowerCase() === userName.toLowerCase();
+        }
+        return false;
+      });
       
       if (userEmployee) {
         staffId = userEmployee.id;
