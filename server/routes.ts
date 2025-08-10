@@ -588,9 +588,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/timesheet", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      
+      // Get the authenticated user to check for corresponding employee record
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Check if there's a corresponding employee with the same email
+      const employees = await storage.getEmployees();
+      const matchingEmployee = employees.find(emp => emp.email === user.email);
+      
+      // Use employee ID if exists, otherwise use user ID
+      const staffId = matchingEmployee ? matchingEmployee.id : userId;
+      
       const validatedData = insertTimesheetEntrySchema.parse({
         ...req.body,
-        staffId: userId,
+        staffId: staffId,
       });
       const entry = await storage.createTimesheetEntry(validatedData);
       res.status(201).json(entry);
