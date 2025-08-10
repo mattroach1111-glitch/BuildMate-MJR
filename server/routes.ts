@@ -104,12 +104,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User management routes
   app.get('/api/users', isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUser(req.user.claims.sub);
-      if (currentUser?.role !== 'admin') {
+      const userId = req.user.claims.sub;
+      console.log(`User management access attempt by user: ${userId}`);
+      
+      const currentUser = await storage.getUser(userId);
+      console.log(`Current user found: ${currentUser ? `${currentUser.email} (${currentUser.role})` : 'not found'}`);
+      
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (currentUser.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
       
       const users = await storage.getAllUsers();
+      console.log(`Returning ${users.length} users for management`);
       res.json(users);
     } catch (error) {
       console.error("Error fetching users:", error);
