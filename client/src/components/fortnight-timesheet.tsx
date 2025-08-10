@@ -186,19 +186,25 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   const getTotalHours = () => {
     // Sum hours from saved timesheet entries 
-    const savedHours = currentFortnightEntries.reduce((total: number, entry: any) => total + (entry.hours || 0), 0);
+    const savedHours = Array.isArray(currentFortnightEntries) ? 
+      currentFortnightEntries.reduce((total: number, entry: any) => {
+        const hours = parseFloat(entry.hours);
+        return total + (isNaN(hours) ? 0 : hours);
+      }, 0) : 0;
     
     // Sum hours from unsaved form data
     const formHours = Object.values(timesheetData).reduce((total: number, dayEntries: any) => {
       if (Array.isArray(dayEntries)) {
         return total + dayEntries.reduce((dayTotal: number, entry: any) => {
-          return dayTotal + (entry.hours ? parseFloat(entry.hours) : 0);
+          const hours = parseFloat(entry.hours);
+          return dayTotal + (isNaN(hours) ? 0 : hours);
         }, 0);
       }
       return total;
     }, 0);
     
-    return savedHours + formHours;
+    const totalHours = savedHours + formHours;
+    return isNaN(totalHours) ? 0 : totalHours;
   };
 
   const addJobEntry = (date: Date) => {
@@ -402,7 +408,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             <Card>
               <CardContent className="p-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold">{currentFortnightEntries.length}</p>
+                  <p className="text-2xl font-bold">{Array.isArray(currentFortnightEntries) ? currentFortnightEntries.length : 0}</p>
                   <p className="text-sm text-muted-foreground">Entries</p>
                 </div>
               </CardContent>
@@ -410,7 +416,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             <Card>
               <CardContent className="p-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold">{Math.round((getTotalHours() / 80) * 100)}%</p>
+                  <p className="text-2xl font-bold">{(() => {
+                    const totalHours = getTotalHours();
+                    const percentage = totalHours > 0 ? Math.round((totalHours / 80) * 100) : 0;
+                    return isNaN(percentage) ? 0 : percentage;
+                  })()}%</p>
                   <p className="text-sm text-muted-foreground">of 80 hours</p>
                 </div>
               </CardContent>
@@ -418,7 +428,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             <Card>
               <CardContent className="p-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold">{(getTotalHours() / 14).toFixed(1)}h</p>
+                  <p className="text-2xl font-bold">{(() => {
+                    const totalHours = getTotalHours();
+                    const avgPerDay = totalHours > 0 ? (totalHours / 14) : 0;
+                    return isNaN(avgPerDay) ? "0.0" : avgPerDay.toFixed(1);
+                  })()}h</p>
                   <p className="text-sm text-muted-foreground">Avg per day</p>
                 </div>
               </CardContent>
@@ -589,7 +603,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     <div>
                       <p className="font-medium">Total Hours: {getTotalHours()}h</p>
                       <p className="text-sm text-muted-foreground">
-                        {currentFortnightEntries.length + Object.values(timesheetData).reduce((total: number, dayEntries: any) => {
+                        {(Array.isArray(currentFortnightEntries) ? currentFortnightEntries.length : 0) + Object.values(timesheetData).reduce((total: number, dayEntries: any) => {
                           return total + (Array.isArray(dayEntries) ? dayEntries.filter((e: any) => e.hours && parseFloat(e.hours) > 0).length : 0);
                         }, 0)} entries recorded
                       </p>
