@@ -19,10 +19,11 @@ import { insertJobSchema, insertEmployeeSchema, insertTimesheetEntrySchema } fro
 import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
+import PageLayout from "@/components/page-layout";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -765,30 +766,14 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-7xl">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground" data-testid="text-dashboard-title">
-            BuildFlow Pro - Admin Dashboard
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Welcome back, {(user as any)?.firstName || 'Admin'}
-          </p>
-        </div>
-        <Button 
-          onClick={() => window.location.href = "/api/logout"}
-          className="w-full sm:w-auto"
-          variant="outline"
-          data-testid="button-logout"
-        >
-          Logout
-        </Button>
-      </div>
-
-      {/* Mobile-First Tabs */}
-      <Tabs defaultValue="jobs" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-6">
+    <PageLayout 
+      title="Job Management" 
+      subtitle={`Welcome back, ${(user as any)?.firstName || 'Admin'}`}
+    >
+      <div className="space-y-6">
+        {/* Mobile-First Tabs */}
+        <Tabs defaultValue="jobs" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
           <TabsTrigger value="jobs" className="flex items-center gap-2">
             <Briefcase className="h-4 w-4" />
             <span className="hidden sm:inline">Jobs</span>
@@ -1827,7 +1812,7 @@ export default function AdminDashboard() {
                     </CardHeader>
                     <CardContent className="p-4">
                       <div className="space-y-2">
-                        {fortnight.entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((entry) => (
+                        {fortnight.entries.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((entry: any) => (
                           <div 
                             key={entry.id} 
                             className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50"
@@ -1894,16 +1879,17 @@ export default function AdminDashboard() {
             <StaffDashboard />
           </div>
         </TabsContent>
-      </Tabs>
+        </Tabs>
 
-      {/* Job Sheet Modal */}
-      {selectedJob && (
-        <JobSheetModal
-          jobId={selectedJob}
-          isOpen={!!selectedJob}
-          onClose={() => setSelectedJob(null)}
-        />
-      )}
-    </div>
+        {/* Job Sheet Modal */}
+        {selectedJob && (
+          <JobSheetModal
+            jobId={selectedJob}
+            isOpen={!!selectedJob}
+            onClose={() => setSelectedJob(null)}
+          />
+        )}
+      </div>
+    </PageLayout>
   );
 }

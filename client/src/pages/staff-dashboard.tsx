@@ -18,6 +18,7 @@ import { z } from "zod";
 import type { Job, TimesheetEntry } from "@shared/schema";
 import { Calendar, Clock, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek, isSameWeek, parseISO } from "date-fns";
+import PageLayout from "@/components/page-layout";
 
 const timesheetFormSchema = insertTimesheetEntrySchema.extend({
   hours: z.string().min(1, "Hours is required"),
@@ -182,13 +183,14 @@ export default function StaffDashboard() {
     const summary: Record<string, { jobTitle: string; totalHours: number }> = {};
     
     currentFortnightEntries.forEach((entry: TimesheetEntry) => {
-      if (!summary[entry.jobId]) {
-        summary[entry.jobId] = {
-          jobTitle: getJobTitle(entry.jobId),
+      const jobId = entry.jobId || '';
+      if (!summary[jobId]) {
+        summary[jobId] = {
+          jobTitle: getJobTitle(jobId),
           totalHours: 0,
         };
       }
-      summary[entry.jobId].totalHours += parseFloat(entry.hours);
+      summary[jobId].totalHours += parseFloat(entry.hours);
     });
     
     return Object.values(summary);
@@ -239,59 +241,24 @@ export default function StaffDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4">
-          <div className="flex items-center space-x-3">
-            <div className="bg-primary text-white rounded-lg w-10 h-10 flex items-center justify-center">
-              <Clock className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-lg sm:text-xl font-bold text-gray-800" data-testid="text-app-name">
-                BuildFlow Pro
-              </h1>
-              <p className="text-xs sm:text-sm text-gray-600" data-testid="text-dashboard-type">
-                Staff Portal
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <span className="text-xs sm:text-sm text-gray-600 hidden sm:block" data-testid="text-user-info">
-              {(user as any)?.firstName || (user as any)?.email}
-            </span>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleViewFortnightTimesheet}
-                data-testid="button-fortnight-timesheet"
-                className="px-3 py-1 text-xs"
-              >
-                Fortnight View
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleLogout}
-                data-testid="button-logout"
-                className="p-2"
-              >
-                <span className="sr-only">Logout</span>
-                ←
-              </Button>
-            </div>
-          </div>
+    <PageLayout 
+      title="My Timesheet" 
+      subtitle={`Welcome back, ${(user as any)?.firstName || 'Staff'}`}
+    >
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Quick Actions */}
+        <div className="flex justify-center">
+          <Button 
+            onClick={handleViewFortnightTimesheet}
+            data-testid="button-fortnight-timesheet"
+            className="flex items-center gap-2"
+          >
+            <Calendar className="h-4 w-4" />
+            Open Full Timesheet
+          </Button>
         </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto p-4 sm:p-6">
-        <div className="space-y-4 sm:space-y-6">
-          {/* Period Navigation */}
-          <div className="text-center">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4" data-testid="text-page-title">
-              My Timesheet
-            </h2>
+        {/* Period Navigation */}
+        <div className="text-center">
             <div className="flex items-center justify-center space-x-4 mb-2">
               <Button
                 variant="outline"
@@ -478,7 +445,7 @@ export default function StaffDashboard() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Job</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value || ''}>
                             <FormControl>
                               <SelectTrigger data-testid="select-job" className="text-base">
                                 <SelectValue placeholder="Select Job" />
@@ -572,7 +539,7 @@ export default function StaffDashboard() {
                               {format(parseISO(entry.date), 'EEE, MMM d')}
                             </p>
                             <p className="text-sm text-gray-600" data-testid={`text-entry-job-${entry.id}`}>
-                              {getJobTitle(entry.jobId)}
+                              {getJobTitle(entry.jobId || '')}
                             </p>
                           </div>
                           <div className="text-right">
@@ -621,7 +588,7 @@ export default function StaffDashboard() {
                               {format(parseISO(entry.date), 'EEE, MMM d')}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-600" data-testid={`text-entry-job-${entry.id}`}>
-                              {getJobTitle(entry.jobId)}
+                              {getJobTitle(entry.jobId || '')}
                             </td>
                             <td className="px-4 py-3" data-testid={`text-entry-hours-${entry.id}`}>
                               <Badge variant="secondary">{entry.hours}h</Badge>
@@ -668,8 +635,7 @@ export default function StaffDashboard() {
               )}
             </CardContent>
           </Card>
-        </div>
-      </main>
-    </div>
+      </div>
+    </PageLayout>
   );
 }
