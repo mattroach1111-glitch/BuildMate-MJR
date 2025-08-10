@@ -615,12 +615,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Check if there's a corresponding employee with the same email
-      const employees = await storage.getEmployees();
-      const matchingEmployee = employees.find(emp => emp.email === user.email);
-      
-      // Use employee ID if exists, otherwise use user ID
-      const staffId = matchingEmployee ? matchingEmployee.id : userId;
+      // Use the user ID directly for timesheet entries
+      const staffId = userId;
       
       const validatedData = insertTimesheetEntrySchema.parse({
         ...req.body,

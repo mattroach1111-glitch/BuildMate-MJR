@@ -180,10 +180,8 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
   const addExtraHoursMutation = useMutation({
     mutationFn: async ({ laborEntryId, extraHours }: { laborEntryId: string; extraHours: string }) => {
-      await apiRequest(`/api/labor-entries/${laborEntryId}/add-extra-hours`, {
-        method: "PATCH",
-        body: JSON.stringify({ extraHours }),
-      });
+      const response = await apiRequest("PATCH", `/api/labor-entries/${laborEntryId}/add-extra-hours`, { extraHours });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
@@ -206,7 +204,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       }
       toast({
         title: "Error",
-        description: "Failed to add extra hours",
+        description: error.message || "Failed to add extra hours",
         variant: "destructive",
       });
     },
