@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { generateJobPDF } from "@/lib/pdfGenerator";
 import { debounce } from "lodash";
@@ -31,6 +32,13 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const [defaultHourlyRate, setDefaultHourlyRate] = useState("50");
   const [localLaborRates, setLocalLaborRates] = useState<Record<string, string>>({});
   const [hasUnsavedRates, setHasUnsavedRates] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    jobAddress: "",
+    clientName: "",
+    projectName: "",
+    status: "",
+  });
 
   const { data: jobDetails, isLoading } = useQuery<JobDetails>({
     queryKey: ["/api/jobs", jobId],
@@ -278,6 +286,14 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       });
       setLocalLaborRates(rates);
       setHasUnsavedRates(false);
+
+      // Initialize edit form
+      setEditForm({
+        jobAddress: jobDetails.jobAddress || "",
+        clientName: jobDetails.clientName || "",
+        projectName: jobDetails.projectName || "",
+        status: jobDetails.status || "",
+      });
     }
   }, [jobDetails]);
 
@@ -356,6 +372,37 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     }
   };
 
+  const handleEditSave = () => {
+    if (!editForm.jobAddress.trim() || !editForm.clientName.trim() || !editForm.projectName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateJobMutation.mutate({
+      jobAddress: editForm.jobAddress.trim(),
+      clientName: editForm.clientName.trim(),
+      projectName: editForm.projectName.trim(),
+      status: editForm.status,
+    });
+    setIsEditing(false);
+  };
+
+  const handleEditCancel = () => {
+    if (jobDetails) {
+      setEditForm({
+        jobAddress: jobDetails.jobAddress || "",
+        clientName: jobDetails.clientName || "",
+        projectName: jobDetails.projectName || "",
+        status: jobDetails.status || "",
+      });
+    }
+    setIsEditing(false);
+  };
+
   const totals = calculateTotals();
 
   if (!isOpen) return null;
@@ -367,29 +414,106 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
         aria-describedby="job-sheet-description"
       >
         <DialogHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div className="flex-1">
-              <DialogTitle data-testid="text-job-sheet-title" className="text-lg sm:text-xl">
-                {jobDetails ? `${jobDetails.projectName} - ${jobDetails.clientName}` : "Loading..."}
-              </DialogTitle>
-              <p className="text-gray-600 text-sm" data-testid="text-job-address">
-                {jobDetails?.jobAddress}
-              </p>
-              <p id="job-sheet-description" className="text-xs text-muted-foreground mt-1">
-                Manage job details, costs, and generate PDF reports
-              </p>
+              {!isEditing ? (
+                <>
+                  <DialogTitle data-testid="text-job-sheet-title" className="text-lg sm:text-xl">
+                    {jobDetails ? `${jobDetails.projectName} - ${jobDetails.clientName}` : "Loading..."}
+                  </DialogTitle>
+                  <p className="text-gray-600 text-sm" data-testid="text-job-address">
+                    {jobDetails?.jobAddress}
+                  </p>
+                  <p id="job-sheet-description" className="text-xs text-muted-foreground mt-1">
+                    Manage job details, costs, and generate PDF reports
+                  </p>
+                </>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="edit-address" className="text-sm font-medium">Job Address</Label>
+                    <Input
+                      id="edit-address"
+                      value={editForm.jobAddress}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, jobAddress: e.target.value }))}
+                      placeholder="Enter job address"
+                      className="mt-1"
+                      data-testid="input-edit-address"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="edit-client" className="text-sm font-medium">Client Name</Label>
+                      <Input
+                        id="edit-client"
+                        value={editForm.clientName}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, clientName: e.target.value }))}
+                        placeholder="Enter client name"
+                        className="mt-1"
+                        data-testid="input-edit-client"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-manager" className="text-sm font-medium">Project Manager</Label>
+                      <Input
+                        id="edit-manager"
+                        value={editForm.projectName}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, projectName: e.target.value }))}
+                        placeholder="Enter project manager"
+                        className="mt-1"
+                        data-testid="input-edit-manager"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-              <Button 
-                onClick={handleDownloadPDF}
-                className="bg-secondary hover:bg-green-700 w-full sm:w-auto"
-                size="sm"
-                disabled={!jobDetails}
-                data-testid="button-download-pdf"
-              >
-                <i className="fas fa-download mr-2"></i>
-                Download PDF
-              </Button>
+              {!isEditing ? (
+                <>
+                  <Button 
+                    onClick={() => setIsEditing(true)}
+                    variant="outline"
+                    size="sm"
+                    disabled={!jobDetails}
+                    data-testid="button-edit-job"
+                  >
+                    <i className="fas fa-edit mr-2"></i>
+                    Edit
+                  </Button>
+                  <Button 
+                    onClick={handleDownloadPDF}
+                    className="bg-secondary hover:bg-green-700 w-full sm:w-auto"
+                    size="sm"
+                    disabled={!jobDetails}
+                    data-testid="button-download-pdf"
+                  >
+                    <i className="fas fa-download mr-2"></i>
+                    Download PDF
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button 
+                    onClick={handleEditSave}
+                    size="sm"
+                    disabled={updateJobMutation.isPending}
+                    data-testid="button-save-edit"
+                  >
+                    <i className="fas fa-check mr-2"></i>
+                    {updateJobMutation.isPending ? "Saving..." : "Save"}
+                  </Button>
+                  <Button 
+                    onClick={handleEditCancel}
+                    variant="outline"
+                    size="sm"
+                    data-testid="button-cancel-edit"
+                  >
+                    <i className="fas fa-times mr-2"></i>
+                    Cancel
+                  </Button>
+                </>
+              )}
 
               <Button variant="ghost" onClick={onClose} className="w-full sm:w-auto" size="sm" data-testid="button-close-modal">
                 <i className="fas fa-times text-xl"></i>
