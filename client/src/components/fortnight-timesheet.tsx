@@ -303,15 +303,15 @@ export function FortnightTimesheet() {
                         </td>
                         <td className="p-3">
                           <Select
-                            value={entry?.jobId || timesheetData[dateKey]?.jobId || ''}
-                            onValueChange={(value) => handleCellChange(day, 'jobId', value)}
+                            value={entry?.jobId || timesheetData[dateKey]?.jobId || 'no-job'}
+                            onValueChange={(value) => handleCellChange(day, 'jobId', value === 'no-job' ? '' : value)}
                           >
                             <SelectTrigger className="w-40">
                               <SelectValue placeholder="Select job" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">No job</SelectItem>
-                              {jobs?.map((job: any) => (
+                              <SelectItem value="no-job">No job</SelectItem>
+                              {jobs?.filter((job: any) => job.id && job.id.trim() !== '').map((job: any) => (
                                 <SelectItem key={job.id} value={job.id}>
                                   {job.jobAddress}
                                 </SelectItem>
