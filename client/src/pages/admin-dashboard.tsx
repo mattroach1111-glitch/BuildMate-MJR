@@ -1306,7 +1306,7 @@ export default function AdminDashboard() {
                       <div>
                         <p className="text-sm text-muted-foreground">Total Hours</p>
                         <p className="text-2xl font-bold">
-                          {allTimesheets.reduce((total, entry) => total + entry.hours, 0).toFixed(1)}h
+                          {allTimesheets.reduce((total, entry) => total + parseFloat(entry.hours || 0), 0).toFixed(1)}h
                         </p>
                       </div>
                     </div>
@@ -1344,7 +1344,7 @@ export default function AdminDashboard() {
                             {entry.jobAddress || 'Unknown Job'} • {entry.clientName}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {format(parseISO(entry.date), 'dd/MM/yyyy')} • {entry.hours}h
+                            {format(parseISO(entry.date), 'dd/MM/yyyy')} • {parseFloat(entry.hours || 0)}h
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
