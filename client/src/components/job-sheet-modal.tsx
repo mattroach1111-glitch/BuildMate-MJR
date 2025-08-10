@@ -889,7 +889,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       const description = prompt("Enter material description:");
                       const supplier = prompt("Enter supplier:");
                       const amount = prompt("Enter amount:");
-                      const invoiceDate = prompt("Enter invoice date (YYYY-MM-DD):");
+                      const invoiceDate = prompt("Enter invoice date (e.g., 8th Aug):");
                       if (description && supplier && amount && invoiceDate) {
                         addMaterialMutation.mutate({ description, supplier, amount, invoiceDate });
                       }
@@ -921,7 +921,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                             {material.supplier}
                           </td>
                           <td className="py-2" data-testid={`text-material-date-${material.id}`}>
-                            {new Date(material.invoiceDate).toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit' })}
+                            {material.invoiceDate}
                           </td>
                           <td className="py-2" data-testid={`text-material-amount-${material.id}`}>
                             ${parseFloat(material.amount).toFixed(2)}
@@ -951,7 +951,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       const trade = prompt("Enter trade type:");
                       const contractor = prompt("Enter contractor:");
                       const amount = prompt("Enter amount:");
-                      const invoiceDate = prompt("Enter invoice date (YYYY-MM-DD):");
+                      const invoiceDate = prompt("Enter invoice date (e.g., 8th Aug):");
                       if (trade && contractor && amount && invoiceDate) {
                         addSubTradeMutation.mutate({ trade, contractor, amount, invoiceDate });
                       }
@@ -983,7 +983,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                             {subTrade.contractor}
                           </td>
                           <td className="py-2" data-testid={`text-subtrade-date-${subTrade.id}`}>
-                            {new Date(subTrade.invoiceDate).toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit' })}
+                            {subTrade.invoiceDate}
                           </td>
                           <td className="py-2" data-testid={`text-subtrade-amount-${subTrade.id}`}>
                             ${parseFloat(subTrade.amount).toFixed(2)}

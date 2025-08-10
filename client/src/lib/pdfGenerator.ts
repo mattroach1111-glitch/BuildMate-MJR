@@ -52,7 +52,7 @@ export async function generateJobPDF(job: JobWithRelations) {
   doc.text(`Client: ${job.clientName}`, 20, 42);
   doc.text(`Project Manager: ${job.projectName}`, 20, 49);
   doc.text(`Status: ${job.status.replace(/_/g, ' ').toUpperCase()}`, 20, 56);
-  doc.text(`Date: ${new Date().toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit' })}`, 150, 35);
+  doc.text(`Date: ${new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}`, 150, 35);
 
   let yPos = 75;
 
@@ -122,9 +122,7 @@ export async function generateJobPDF(job: JobWithRelations) {
       
       doc.text(material.description || 'Material Item', 25, yPos);
       doc.text(material.supplier || '-', 100, yPos);
-      const materialDate = material.invoiceDate ? 
-        new Date(material.invoiceDate).toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit' }) : '-';
-      doc.text(materialDate, 130, yPos);
+      doc.text(material.invoiceDate || '-', 130, yPos);
       doc.text(`$${amount.toFixed(2)}`, 160, yPos);
       yPos += 8;
     });
@@ -159,9 +157,7 @@ export async function generateJobPDF(job: JobWithRelations) {
       
       doc.text(subTrade.trade || 'Sub Trade', 25, yPos);
       doc.text(subTrade.contractor || '-', 80, yPos);
-      const subTradeDate = subTrade.invoiceDate ? 
-        new Date(subTrade.invoiceDate).toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit' }) : '-';
-      doc.text(subTradeDate, 130, yPos);
+      doc.text(subTrade.invoiceDate || '-', 130, yPos);
       doc.text(`$${amount.toFixed(2)}`, 160, yPos);
       yPos += 8;
     });
