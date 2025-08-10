@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -103,6 +103,98 @@ export default function AdminDashboard() {
   ) || [];
 
   // Filter timesheets based on selected employee and date range
+  // Helper function to get fortnight start date (Monday)
+  const getFortnightStart = (date: Date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+    d.setDate(diff);
+    
+    // Find which fortnight this Monday belongs to (assuming fortnights start from Aug 11, 2025)
+    const baseDate = new Date('2025-08-11'); // Base Monday for fortnight calculation
+    const diffTime = d.getTime() - baseDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const fortnightNumber = Math.floor(diffDays / 14);
+    const fortnightStart = new Date(baseDate);
+    fortnightStart.setDate(baseDate.getDate() + (fortnightNumber * 14));
+    
+    return fortnightStart;
+  };
+
+  // Helper function to get fortnight end date (Sunday)
+  const getFortnightEnd = (fortnightStart: Date) => {
+    const end = new Date(fortnightStart);
+    end.setDate(fortnightStart.getDate() + 13);
+    return end;
+  };
+
+  // Group timesheets by staff and fortnight
+  const groupedTimesheets = useMemo(() => {
+    const filtered = allTimesheets?.filter((entry: any) => {
+      const employeeMatch = selectedEmployeeFilter === "all" || entry.staffId === selectedEmployeeFilter;
+      
+      if (!employeeMatch) return false;
+      
+      if (dateRangeFilter === "all") return true;
+      
+      const entryDate = new Date(entry.date);
+      const today = new Date();
+      
+      switch (dateRangeFilter) {
+        case "week":
+          const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+          return entryDate >= weekAgo;
+        case "month":
+          const monthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+          return entryDate >= monthAgo;
+        case "quarter":
+          const quarterAgo = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate());
+          return entryDate >= quarterAgo;
+        default:
+          return true;
+      }
+    }) || [];
+
+    const grouped = new Map();
+
+    filtered.forEach((entry) => {
+      const entryDate = new Date(entry.date);
+      const fortnightStart = getFortnightStart(entryDate);
+      const fortnightEnd = getFortnightEnd(fortnightStart);
+      const key = `${entry.staffId}-${fortnightStart.toISOString().split('T')[0]}`;
+
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          staffId: entry.staffId,
+          staffName: entry.staffName,
+          fortnightStart,
+          fortnightEnd,
+          entries: [],
+          totalHours: 0,
+          approvedCount: 0,
+          totalCount: 0,
+          allApproved: false
+        });
+      }
+
+      const group = grouped.get(key);
+      group.entries.push(entry);
+      group.totalHours += parseFloat(entry.hours || 0);
+      group.totalCount += 1;
+      if (entry.approved) group.approvedCount += 1;
+      group.allApproved = group.approvedCount === group.totalCount && group.totalCount > 0;
+    });
+
+    return Array.from(grouped.values()).sort((a, b) => {
+      // Sort by staff name, then by fortnight start date (newest first)
+      if (a.staffName !== b.staffName) {
+        return (a.staffName || 'Unknown').localeCompare(b.staffName || 'Unknown');
+      }
+      return b.fortnightStart.getTime() - a.fortnightStart.getTime();
+    });
+  }, [allTimesheets, selectedEmployeeFilter, dateRangeFilter]);
+
+  // Keep filteredTimesheets for backward compatibility with existing summary cards
   const filteredTimesheets = allTimesheets?.filter((entry: any) => {
     const employeeMatch = selectedEmployeeFilter === "all" || entry.staffId === selectedEmployeeFilter;
     
@@ -126,7 +218,7 @@ export default function AdminDashboard() {
       default:
         return true;
     }
-  });
+  }) || [];
 
   const createJobMutation = useMutation({
     mutationFn: async (data: z.infer<typeof jobFormSchema>) => {
@@ -1379,7 +1471,7 @@ export default function AdminDashboard() {
         {/* Timesheets Tab */}
         <TabsContent value="timesheets" className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h2 className="text-xl font-semibold">Timesheet Management</h2>
+            <h2 className="text-xl font-semibold">Fortnight Timesheet Management</h2>
             <Dialog open={isCreateTimesheetOpen} onOpenChange={setIsCreateTimesheetOpen}>
               <DialogTrigger asChild>
                 <Button className="w-full sm:w-auto" data-testid="button-create-timesheet">
@@ -1682,49 +1774,43 @@ export default function AdminDashboard() {
                 </Card>
               </div>
 
-              {/* Timesheet Entries */}
-              <div className="space-y-3">
-                {filteredTimesheets.map((entry) => (
-                  <Card key={entry.id} data-testid={`card-timesheet-${entry.id}`}>
-                    <CardContent className="p-4">
+              {/* Fortnight Grouped Timesheet Entries */}
+              <div className="space-y-4">
+                {groupedTimesheets.map((fortnight) => (
+                  <Card key={`${fortnight.staffId}-${fortnight.fortnightStart.toISOString()}`} className="overflow-hidden">
+                    <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <div className="font-medium">{entry.staffName || 'Unknown Staff'}</div>
-                            <Badge variant={entry.approved ? "default" : "secondary"}>
-                              {entry.approved ? "Approved" : "Pending"}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-3">
+                            <div className="font-semibold text-lg">{fortnight.staffName || 'Unknown Staff'}</div>
+                            <Badge variant={fortnight.allApproved ? "default" : "secondary"} className="px-3 py-1">
+                              {fortnight.allApproved ? "All Approved" : `${fortnight.approvedCount}/${fortnight.totalCount} Approved`}
                             </Badge>
                           </div>
-                          <div className="text-sm text-muted-foreground">
-                            {entry.jobAddress || 'Unknown Job'} • {entry.clientName}
+                          <div className="text-sm text-muted-foreground font-medium">
+                            Fortnight: {format(fortnight.fortnightStart, 'dd/MM/yyyy')} - {format(fortnight.fortnightEnd, 'dd/MM/yyyy')}
                           </div>
-                          <div className="text-sm text-muted-foreground">
-                            {format(parseISO(entry.date), 'dd/MM/yyyy')} • {parseFloat(entry.hours || 0)}h
+                          <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                            Total Hours: {fortnight.totalHours.toFixed(1)}h • {fortnight.totalCount} entries
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
-                            size="sm"
-                            variant={entry.approved ? "outline" : "default"}
+                            size="default"
+                            variant={fortnight.allApproved ? "outline" : "default"}
                             onClick={() => {
-                              // Use fortnightly approval - calculate fortnight period from entry date
-                              const entryDate = new Date(entry.date);
-                              const fortnightStart = new Date(entryDate);
-                              fortnightStart.setDate(entryDate.getDate() - entryDate.getDay() + 1); // Start of fortnight (Monday)
-                              const fortnightEnd = new Date(fortnightStart);
-                              fortnightEnd.setDate(fortnightStart.getDate() + 13); // End of fortnight (Sunday)
-                              
                               approveFortnightMutation.mutate({
-                                staffId: entry.staffId,
-                                fortnightStart: fortnightStart.toISOString().split('T')[0],
-                                fortnightEnd: fortnightEnd.toISOString().split('T')[0],
-                                approved: !entry.approved
+                                staffId: fortnight.staffId,
+                                fortnightStart: fortnight.fortnightStart.toISOString().split('T')[0],
+                                fortnightEnd: fortnight.fortnightEnd.toISOString().split('T')[0],
+                                approved: !fortnight.allApproved
                               });
                             }}
                             disabled={approveFortnightMutation.isPending}
-                            data-testid={`button-approve-timesheet-${entry.id}`}
+                            data-testid={`button-approve-fortnight-${fortnight.staffId}-${fortnight.fortnightStart.toISOString().split('T')[0]}`}
+                            className="min-w-40"
                           >
-                            {entry.approved ? (
+                            {fortnight.allApproved ? (
                               <>
                                 <XCircle className="h-4 w-4 mr-2" />
                                 Unapprove Fortnight
@@ -1738,9 +1824,47 @@ export default function AdminDashboard() {
                           </Button>
                         </div>
                       </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <div className="space-y-2">
+                        {fortnight.entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((entry) => (
+                          <div 
+                            key={entry.id} 
+                            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+                            data-testid={`entry-${entry.id}`}
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <div className="text-sm font-medium">
+                                  {format(parseISO(entry.date), 'dd/MM/yyyy (EEEE)')}
+                                </div>
+                                <Badge variant={entry.approved ? "default" : "secondary"} className="text-xs">
+                                  {entry.approved ? "✓" : "○"}
+                                </Badge>
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {entry.jobAddress || 'Unknown Job'} • {entry.clientName} • {parseFloat(entry.hours || 0)}h
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
+                
+                {groupedTimesheets.length === 0 && (
+                  <Card className="p-8 text-center">
+                    <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No timesheet entries found</h3>
+                    <p className="text-muted-foreground">
+                      {selectedEmployeeFilter === "all" 
+                        ? "No timesheet entries match your current filters"
+                        : "This staff member has no timesheet entries for the selected period"
+                      }
+                    </p>
+                  </Card>
+                )}
               </div>
             </div>
           ) : (
