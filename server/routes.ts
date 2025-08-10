@@ -669,7 +669,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error clearing timesheet entry:", error);
-      res.status(500).json({ message: "Failed to clear timesheet entry", error: error.message });
+      res.status(500).json({ message: "Failed to clear timesheet entry", error: (error as Error).message });
     }
   });
 
@@ -850,7 +850,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const buildFlowFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro Timesheets');
         
         // Upload PDF to Google Drive
-        const driveLink = await googleDriveService.uploadPDF(fileName, pdfBuffer, buildFlowFolderId);
+        const driveLink = await googleDriveService.uploadPDF(fileName, pdfBuffer, buildFlowFolderId || undefined);
         
         if (driveLink) {
           console.log(`PDF saved to Google Drive: ${driveLink}`);
