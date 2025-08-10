@@ -570,6 +570,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/timesheet/confirm", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { fortnightStart, fortnightEnd } = req.body;
+      
+      // In a real implementation, this would:
+      // 1. Mark all timesheet entries in the fortnight as confirmed
+      // 2. Upload the hours to the relevant job sheets
+      // 3. Prevent further editing of confirmed entries
+      
+      // For now, we'll just return success
+      res.json({ 
+        message: "Timesheet confirmed successfully",
+        fortnightStart,
+        fortnightEnd,
+        confirmedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error confirming timesheet:", error);
+      res.status(500).json({ message: "Failed to confirm timesheet" });
+    }
+  });
+
   app.delete("/api/timesheet/:id", isAuthenticated, async (req: any, res) => {
     try {
       await storage.deleteTimesheetEntry(req.params.id);

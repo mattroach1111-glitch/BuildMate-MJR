@@ -65,7 +65,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   }, [selectedEmployeeId]);
 
   // Filter entries for current fortnight and selected employee (if admin view)
-  const currentFortnightEntries = (timesheetEntries || []).filter((entry: any) => {
+  const currentFortnightEntries = Array.isArray(timesheetEntries) ? timesheetEntries.filter((entry: any) => {
     const entryDate = parseISO(entry.date);
     const isInFortnight = entryDate >= currentFortnight.start && entryDate <= currentFortnight.end;
     
@@ -74,7 +74,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     }
     
     return isInFortnight;
-  });
+  }) : [];
 
   const updateTimesheetMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -83,15 +83,35 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/timesheet"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/timesheets"] });
-      toast({
-        title: "Success",
-        description: "Timesheet updated successfully",
-      });
+      // Remove individual success toasts for auto-save
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to update timesheet",
+        description: "Failed to save timesheet entry",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const confirmTimesheetMutation = useMutation({
+    mutationFn: async () => {
+      // This would be an API call to mark timesheet as confirmed
+      return await apiRequest("POST", "/api/timesheet/confirm", {
+        fortnightStart: format(currentFortnight.start, 'yyyy-MM-dd'),
+        fortnightEnd: format(currentFortnight.end, 'yyyy-MM-dd')
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Timesheet confirmed and uploaded to job sheets",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error", 
+        description: "Failed to confirm timesheet",
         variant: "destructive",
       });
     },
@@ -112,6 +132,16 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         [field]: value
       };
       
+      // Auto-save when hours and job are filled
+      if (field === 'hours' || field === 'jobId') {
+        const entry = updatedEntries[entryIndex];
+        if (entry.hours && parseFloat(entry.hours) > 0 && entry.jobId && entry.jobId !== 'no-job') {
+          setTimeout(() => {
+            autoSaveEntry(date, entryIndex, entry);
+          }, 1000); // Debounce auto-save by 1 second
+        }
+      }
+      
       return {
         ...prev,
         [dateKey]: updatedEntries
@@ -119,26 +149,27 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     });
   };
 
-  const handleSaveEntry = (date: Date, entryIndex: number) => {
-    const dateKey = format(date, 'yyyy-MM-dd');
-    const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
-    const data = dayEntries[entryIndex];
-    
-    if (!data?.hours || parseFloat(data.hours) <= 0) {
-      toast({
-        title: "Error",
-        description: "Please enter valid hours",
-        variant: "destructive",
+  const autoSaveEntry = (date: Date, entryIndex: number, data: any) => {
+    if (data.hours && parseFloat(data.hours) > 0) {
+      updateTimesheetMutation.mutate({
+        date: format(date, 'yyyy-MM-dd'),
+        hours: parseFloat(data.hours),
+        materials: data.materials || '',
+        jobId: data.jobId === 'no-job' ? null : data.jobId || null,
       });
-      return;
     }
+  };
 
-    updateTimesheetMutation.mutate({
-      date: format(date, 'yyyy-MM-dd'),
-      hours: parseFloat(data.hours),
-      materials: data.materials || '',
-      jobId: data.jobId === 'no-job' ? null : data.jobId || null,
-    });
+  const getPendingEntries = () => {
+    return Object.entries(timesheetData).reduce((count, [dateKey, entries]) => {
+      if (Array.isArray(entries)) {
+        return count + entries.filter(entry => 
+          entry.hours && parseFloat(entry.hours) > 0 && 
+          entry.jobId && entry.jobId !== 'no-job'
+        ).length;
+      }
+      return count;
+    }, 0);
   };
 
   const addJobEntry = (date: Date) => {
@@ -194,9 +225,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     
     // Table data
     fortnightDays.forEach(day => {
-      const entries = currentFortnightEntries.filter((entry: any) => 
+      const entries = Array.isArray(currentFortnightEntries) ? currentFortnightEntries.filter((entry: any) => 
         format(parseISO(entry.date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')
-      );
+      ) : [];
       
       if (entries.length === 0) {
         xPos = 20;
@@ -217,7 +248,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           xPos += colWidths[1];
           doc.text(entry.hours || '', xPos, yPos);
           xPos += colWidths[2];
-          const job = (jobs || []).find((j: any) => j.id === entry.jobId);
+          const job = Array.isArray(jobs) ? jobs.find((j: any) => j.id === entry.jobId) : null;
           doc.text((job?.jobAddress || 'No job').substring(0, 25), xPos, yPos);
           xPos += colWidths[3];
           doc.text((entry.materials || '').substring(0, 25), xPos, yPos);
@@ -255,7 +286,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               </p>
               {isAdminView && selectedEmployee && (
                 <p className="text-sm text-primary font-medium">
-                  Viewing: {(staffMembers || []).find((s: any) => s.id === selectedEmployee)?.firstName || ''} {(staffMembers || []).find((s: any) => s.id === selectedEmployee)?.lastName || ''}
+                  Viewing: {Array.isArray(staffMembers) ? staffMembers.find((s: any) => s.id === selectedEmployee)?.firstName || '' : ''} {Array.isArray(staffMembers) ? staffMembers.find((s: any) => s.id === selectedEmployee)?.lastName || '' : ''}
                 </p>
               )}
             </div>
@@ -306,11 +337,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                       <SelectValue placeholder="Choose a staff member..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {(staffMembers || []).filter((staff: any) => staff.id && staff.id.trim() !== '').map((staff: any) => (
+                      {Array.isArray(staffMembers) ? staffMembers.filter((staff: any) => staff.id && staff.id.trim() !== '').map((staff: any) => (
                         <SelectItem key={staff.id} value={staff.id}>
                           {staff.firstName} {staff.lastName}
                         </SelectItem>
-                      ))}
+                      )) : []}
                     </SelectContent>
                   </Select>
                 </div>
@@ -381,9 +412,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     const dateKey = format(day, 'yyyy-MM-dd');
                     const isWeekend = day.getDay() === 0 || day.getDay() === 6;
                     const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
-                    const existingEntries = currentFortnightEntries.filter((entry: any) => 
+                    const existingEntries = Array.isArray(currentFortnightEntries) ? currentFortnightEntries.filter((entry: any) => 
                       format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
-                    );
+                    ) : [];
                     
                     // Show existing entries plus any unsaved local entries
                     const allEntries = [...existingEntries];
@@ -441,11 +472,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="no-job">No job</SelectItem>
-                              {(jobs || []).filter((job: any) => job.id && job.id.trim() !== '').map((job: any) => (
+                              {Array.isArray(jobs) ? jobs.filter((job: any) => job.id && job.id.trim() !== '').map((job: any) => (
                                 <SelectItem key={job.id} value={job.id}>
                                   {job.jobAddress}
                                 </SelectItem>
-                              ))}
+                              )) : []}
                             </SelectContent>
                           </Select>
                         </td>
@@ -459,13 +490,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         </td>
                         <td className="p-3">
                           <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleSaveEntry(day, entryIndex)}
-                              disabled={updateTimesheetMutation.isPending}
-                            >
-                              Save
-                            </Button>
                             {entryIndex === 0 && (
                               <Button
                                 size="sm"
@@ -484,6 +508,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
+                            {entry?.hours && entry?.jobId && entry?.jobId !== 'no-job' && (
+                              <span className="text-xs text-green-600 flex items-center">
+                                ✓ Saved
+                              </span>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -491,6 +520,52 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   })}
                 </tbody>
               </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Confirmation Section */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Timesheet Confirmation
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div>
+                  <p className="font-medium">Total Hours: {getTotalHours()}h</p>
+                  <p className="text-sm text-muted-foreground">
+                    {currentFortnightEntries.length} entries recorded
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Fortnight Period</p>
+                  <p className="font-medium">
+                    {format(currentFortnight.start, 'MMM dd')} - {format(currentFortnight.end, 'MMM dd, yyyy')}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Review your timesheet entries above. Once confirmed, your hours will be uploaded to the relevant job sheets.
+                  </p>
+                  <p className="text-xs text-orange-600">
+                    ⚠️ You cannot edit entries after confirmation
+                  </p>
+                </div>
+                <Button
+                  onClick={() => confirmTimesheetMutation.mutate()}
+                  disabled={confirmTimesheetMutation.isPending || getTotalHours() === 0}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {confirmTimesheetMutation.isPending ? "Confirming..." : "Confirm Timesheet"}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

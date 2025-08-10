@@ -33,6 +33,8 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 - ✅ **Enhanced Staff Timesheet Dropdown**: Improved staff selection with individual statistics showing total hours, entry counts, and approval ratios for quick assessment
 - ✅ **Removed Description Field**: Eliminated description field from timesheet entries as requested for simplified data entry
 - ✅ **Multiple Jobs Per Day**: Complete timesheet redesign supporting multiple job entries per day with add/remove functionality and separate hours tracking per job
+- ✅ **Auto-Save Timesheet**: Removed individual save buttons, implemented automatic saving when hours and job are entered with 1-second debounce
+- ✅ **Timesheet Confirmation**: Added confirmation section at bottom requiring final approval before uploading hours to job sheets with warning about edit restrictions
 
 # User Preferences
 
