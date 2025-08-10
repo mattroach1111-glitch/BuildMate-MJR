@@ -982,6 +982,23 @@ export default function AdminDashboard() {
     return allColorThemes[13]; // Slate
   };
 
+  // Helper function to get job card colors based on project manager
+  const getJobCardColors = (job: Job) => {
+    const managerName = (job.projectName || '').toLowerCase();
+    if (managerName.includes('will')) {
+      return allColorThemes[2]; // Pink for Will's jobs
+    } else if (managerName.includes('mark')) {
+      return allColorThemes[6]; // Purple for Mark's jobs
+    }
+    
+    // Default white background for other jobs
+    return {
+      bg: 'bg-white',
+      border: 'border-gray-200',
+      hover: 'hover:shadow-md'
+    };
+  };
+
   // Handle color change for folder
   const handleColorChange = (groupName: string, colorIndex: number) => {
     setFolderColors(prev => ({
@@ -1539,7 +1556,11 @@ export default function AdminDashboard() {
                         viewMode === 'grid' ? (
                           <Card 
                             key={job.id} 
-                            className="cursor-pointer hover:shadow-md transition-shadow relative"
+                            className={`cursor-pointer transition-shadow relative ${
+                              groupBy === 'none' 
+                                ? `${getJobCardColors(job).bg} ${getJobCardColors(job).border || 'border-gray-200'} ${getJobCardColors(job).hover || 'hover:shadow-md'} border`
+                                : 'hover:shadow-md bg-white'
+                            }`}
                             onClick={() => setSelectedJob(job.id)}
                             data-testid={`card-job-${job.id}`}
                           >
@@ -1605,7 +1626,11 @@ export default function AdminDashboard() {
                         ) : (
                           <Card 
                             key={job.id} 
-                            className="cursor-pointer hover:shadow-md transition-shadow relative"
+                            className={`cursor-pointer transition-shadow relative ${
+                              groupBy === 'none' 
+                                ? `${getJobCardColors(job).bg} ${getJobCardColors(job).border || 'border-gray-200'} ${getJobCardColors(job).hover || 'hover:shadow-md'} border`
+                                : 'hover:shadow-md bg-white'
+                            }`}
                             onClick={() => setSelectedJob(job.id)}
                             data-testid={`card-job-${job.id}`}
                           >

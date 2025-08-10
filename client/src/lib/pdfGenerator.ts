@@ -316,8 +316,10 @@ type JobListItem = {
   status: string;
   builderMargin: string;
   defaultHourlyRate: string;
-  isDeleted?: boolean;
-  deletedAt?: string | null;
+  isDeleted?: boolean | null;
+  deletedAt?: Date | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
 };
 
 export async function generateJobListPDF(jobs: JobListItem[], managerName: string) {
