@@ -39,6 +39,18 @@ type JobWithRelations = {
 
 export async function generateJobPDF(job: JobWithRelations) {
   const doc = new jsPDF();
+  const pageHeight = doc.internal.pageSize.height;
+  const marginBottom = 20;
+  
+  // Function to check if we need a new page
+  const checkPageBreak = (requiredSpace: number = 20) => {
+    if (yPos + requiredSpace > pageHeight - marginBottom) {
+      doc.addPage();
+      yPos = 20;
+      return true;
+    }
+    return false;
+  };
   
   // Header - centered like Excel
   doc.setFontSize(16);
@@ -79,6 +91,8 @@ export async function generateJobPDF(job: JobWithRelations) {
   doc.setFont('helvetica', 'normal');
   let laborTotal = 0;
   job.laborEntries.forEach((entry) => {
+    checkPageBreak(10);
+    
     const employeeName = entry.staff?.name || 'Unknown Staff';
     const rate = parseFloat(entry.hourlyRate);
     const hours = parseFloat(entry.hoursLogged);
@@ -101,6 +115,7 @@ export async function generateJobPDF(job: JobWithRelations) {
 
   // MATERIALS SECTION
   if (job.materials.length > 0) {
+    checkPageBreak(30);
     doc.setFontSize(12);
     doc.text('MATERIALS', 20, yPos);
     yPos += 10;
@@ -117,6 +132,8 @@ export async function generateJobPDF(job: JobWithRelations) {
     doc.setFont('helvetica', 'normal');
     let materialsTotal = 0;
     job.materials.forEach((material) => {
+      checkPageBreak(10);
+      
       const amount = parseFloat(material.amount);
       materialsTotal += amount;
       
@@ -136,6 +153,7 @@ export async function generateJobPDF(job: JobWithRelations) {
 
   // SUB TRADES SECTION
   if (job.subTrades.length > 0) {
+    checkPageBreak(30);
     doc.setFontSize(12);
     doc.text('SUB TRADES', 20, yPos);
     yPos += 10;
@@ -152,6 +170,8 @@ export async function generateJobPDF(job: JobWithRelations) {
     doc.setFont('helvetica', 'normal');
     let subTradesTotal = 0;
     job.subTrades.forEach((subTrade) => {
+      checkPageBreak(10);
+      
       const amount = parseFloat(subTrade.amount);
       subTradesTotal += amount;
       
@@ -171,6 +191,7 @@ export async function generateJobPDF(job: JobWithRelations) {
 
   // OTHER COSTS SECTION
   if (job.otherCosts.length > 0) {
+    checkPageBreak(30);
     doc.setFontSize(12);
     doc.text('OTHER COSTS', 20, yPos);
     yPos += 10;
@@ -184,6 +205,8 @@ export async function generateJobPDF(job: JobWithRelations) {
 
     doc.setFont('helvetica', 'normal');
     job.otherCosts.forEach((cost) => {
+      checkPageBreak(10);
+      
       const amount = parseFloat(cost.amount);
       
       doc.text(cost.description, 25, yPos);
@@ -194,6 +217,7 @@ export async function generateJobPDF(job: JobWithRelations) {
   }
 
   // SUMMARY SECTION - Enhanced with detailed breakdown
+  checkPageBreak(100); // Ensure summary stays together
   yPos += 20;
   doc.line(20, yPos, 190, yPos);
   yPos += 15;
