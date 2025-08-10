@@ -52,6 +52,7 @@ export const jobs = pgTable("jobs", {
   status: varchar("status", { enum: ["new_job", "job_in_progress", "job_complete", "ready_for_billing"] }).notNull().default("new_job"),
   builderMargin: decimal("builder_margin", { precision: 5, scale: 2 }).notNull().default("0"),
   defaultHourlyRate: decimal("default_hourly_rate", { precision: 10, scale: 2 }).notNull().default("50"),
+  sortOrder: integer("sort_order").default(0),
   isDeleted: boolean("is_deleted").default(false),
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow(),

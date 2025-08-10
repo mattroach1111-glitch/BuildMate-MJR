@@ -214,6 +214,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update job order for drag and drop
+  app.patch('/api/jobs/reorder', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { jobIds } = req.body;
+      
+      if (!Array.isArray(jobIds)) {
+        return res.status(400).json({ message: "Job IDs array is required" });
+      }
+
+      await storage.updateJobOrder(jobIds);
+      
+      res.json({ message: "Job order updated successfully" });
+    } catch (error) {
+      console.error("Error updating job order:", error);
+      res.status(500).json({ message: "Failed to update job order" });
+    }
+  });
+
   // Add route to get deleted jobs - must come before generic job routes
   app.get("/api/deleted-jobs", isAuthenticated, async (req: any, res) => {
     try {

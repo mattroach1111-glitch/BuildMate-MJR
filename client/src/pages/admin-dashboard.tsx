@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -545,6 +546,33 @@ export default function AdminDashboard() {
     },
   });
 
+  const reorderJobsMutation = useMutation({
+    mutationFn: async (jobIds: string[]) => {
+      await apiRequest("PATCH", "/api/jobs/reorder", { jobIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to reorder jobs",
+        variant: "destructive",
+      });
+    },
+  });
+
   const jobForm = useForm<z.infer<typeof jobFormSchema>>({
     resolver: zodResolver(jobFormSchema),
     defaultValues: {
@@ -691,6 +719,33 @@ export default function AdminDashboard() {
       newExpanded.add(client);
     }
     setExpandedClients(newExpanded);
+  };
+
+  // Handle drag end for reordering jobs
+  const handleDragEnd = (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    // If no destination, exit
+    if (!destination) return;
+
+    // If dropped in the same position, exit
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+
+    // Get the current group being dragged within
+    const groupName = source.droppableId;
+    const groupJobs = groupedJobs[groupName];
+    if (!groupJobs) return;
+
+    // Create new jobs array with reordered items
+    const reorderedJobs = Array.from(groupJobs);
+    const [draggedJob] = reorderedJobs.splice(source.index, 1);
+    reorderedJobs.splice(destination.index, 0, draggedJob);
+
+    // Get the IDs in the new order
+    const reorderedJobIds = reorderedJobs.map(job => job.id);
+
+    // Update the jobs order
+    reorderJobsMutation.mutate(reorderedJobIds);
   };
 
   const toggleManagerExpanded = (manager: string) => {
@@ -1413,7 +1468,7 @@ export default function AdminDashboard() {
             </div>
           ) : filteredJobs && filteredJobs.length > 0 ? (
             <div className="space-y-4">
-              {Object.entries(groupedJobs).map(([groupName, groupJobs]) => {
+                {Object.entries(groupedJobs).map(([groupName, groupJobs]) => {
                 const isExpanded = isReadyForBillingGroup(groupName) ? readyForBillingExpanded :
                                  groupBy === 'client' ? expandedClients.has(groupName) : 
                                  groupBy === 'manager' ? expandedManagers.has(groupName) : true;
@@ -1576,6 +1631,78 @@ export default function AdminDashboard() {
                               </div>
                             </CardContent>
                           </Card>
+                        ) : (
+                          <div 
+                            className="flex items-center gap-4 p-4 bg-card border rounded-lg cursor-pointer hover:shadow-sm transition-shadow"
+                            onClick={() => setSelectedJob(job.id)}
+                            data-testid={`row-job-${job.id}`}
+                          >
+                            <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+                              <div>
+                                <div className="font-medium truncate">{job.jobAddress}</div>
+                                <div className="text-sm text-muted-foreground truncate">{job.clientName}</div>
+                              </div>
+                              <div className="text-sm text-muted-foreground hidden md:block">
+                                PM: {job.projectName}
+                              </div>
+                              <div className="text-sm">
+                                ${job.defaultHourlyRate}/hr • {job.builderMargin}%
+                              </div>
+                              <div className="flex items-center justify-end gap-2">
+                                <div onClick={(e) => e.stopPropagation()}>
+                                  <Select 
+                                    value={job.status} 
+                                    onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
+                                  >
+                                    <SelectTrigger 
+                                      className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
+                                      data-testid={`select-status-${job.id}`}
+                                    >
+                                      <Badge className={`${getStatusColor(job.status)} text-xs`}>
+                                        {formatStatus(job.status)}
+                                      </Badge>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="new_job">New Job</SelectItem>
+                                      <SelectItem value="job_in_progress">Job In Progress</SelectItem>
+                                      <SelectItem value="job_complete">Job Complete</SelectItem>
+                                      <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                {job.status === 'ready_for_billing' && (
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="h-7 w-7 p-0"
+                                        onClick={(e) => e.stopPropagation()}
+                                        data-testid={`menu-${job.id}`}
+                                      >
+                                        <MoreVertical className="h-3 w-3" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+                                            deleteJobMutation.mutate(job.id);
+                                          }
+                                        }}
+                                        className="text-red-600 focus:text-red-600"
+                                        data-testid={`delete-job-${job.id}`}
+                                      >
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Delete Job
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                         )
                       )}
                     </div>
