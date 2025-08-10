@@ -1480,37 +1480,64 @@ export default function AdminDashboard() {
             </Dialog>
           </div>
 
-          {/* Employee and Date Range Filters */}
+          {/* Staff Timesheet Filters */}
           <Card>
-            <CardContent className="p-4">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Staff Timesheet Viewer
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                View and manage individual staff member timesheets
+              </p>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="employee-filter">Filter by Employee</Label>
+                  <Label htmlFor="employee-filter" className="text-sm font-medium">Select Staff Member</Label>
                   <Select value={selectedEmployeeFilter} onValueChange={setSelectedEmployeeFilter}>
-                    <SelectTrigger data-testid="select-employee-filter">
-                      <SelectValue placeholder="All employees" />
+                    <SelectTrigger data-testid="select-employee-filter" className="mt-1">
+                      <SelectValue placeholder="Choose a staff member..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All employees</SelectItem>
-                      {staffForTimesheets?.map((staff) => (
-                        <SelectItem key={`filter-${staff.id}`} value={staff.id}>
-                          {staff.name} ({staff.type === 'employee' ? 'Employee' : 'User'})
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="all" className="font-medium text-primary">
+                        📊 All Staff Members
+                      </SelectItem>
+                      {staffForTimesheets?.map((staff) => {
+                        const staffEntries = allTimesheets?.filter(entry => entry.staffId === staff.id) || [];
+                        const totalHours = staffEntries.reduce((total, entry) => total + parseFloat(entry.hours || 0), 0);
+                        const approvedEntries = staffEntries.filter(entry => entry.approved).length;
+                        
+                        return (
+                          <SelectItem key={`filter-${staff.id}`} value={staff.id}>
+                            <div className="flex items-center justify-between w-full min-w-0">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="font-medium truncate">{staff.name}</span>
+                                <span className="text-xs text-muted-foreground flex-shrink-0">
+                                  ({staff.type === 'employee' ? 'Employee' : 'User'})
+                                </span>
+                              </div>
+                              <div className="text-xs text-muted-foreground flex-shrink-0 ml-3">
+                                {totalHours.toFixed(1)}h • {approvedEntries}/{staffEntries.length} ✓
+                              </div>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="date-range-filter">Filter by Date Range</Label>
+                  <Label htmlFor="date-range-filter" className="text-sm font-medium">Time Period</Label>
                   <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
-                    <SelectTrigger data-testid="select-date-range-filter">
+                    <SelectTrigger data-testid="select-date-range-filter" className="mt-1">
                       <SelectValue placeholder="All time" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All time</SelectItem>
-                      <SelectItem value="week">Last 7 days</SelectItem>
-                      <SelectItem value="month">Last 30 days</SelectItem>
-                      <SelectItem value="quarter">Last 3 months</SelectItem>
+                      <SelectItem value="all">📅 All Time</SelectItem>
+                      <SelectItem value="week">📊 Last 7 Days</SelectItem>
+                      <SelectItem value="month">📈 Last 30 Days</SelectItem>
+                      <SelectItem value="quarter">📉 Last 3 Months</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1547,19 +1574,31 @@ export default function AdminDashboard() {
             </div>
           ) : filteredTimesheets && filteredTimesheets.length > 0 ? (
             <div className="space-y-4">
-              {/* Employee-specific summary when filtered */}
+              {/* Individual Staff Member Summary */}
               {selectedEmployeeFilter !== "all" && (
-                <Card className="bg-blue-50 border-blue-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <Users className="h-8 w-8 text-blue-600" />
-                      <div>
-                        <h3 className="font-semibold text-blue-900">
-                          {staffForTimesheets?.find(s => s.id === selectedEmployeeFilter)?.name || 'Selected Employee'}
-                        </h3>
-                        <p className="text-sm text-blue-700">
-                          {filteredTimesheets.length} entries • {filteredTimesheets.reduce((total, entry) => total + parseFloat(entry.hours || 0), 0).toFixed(1)} hours total
-                        </p>
+                <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 dark:from-blue-900/20 dark:to-indigo-900/20">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-full">
+                          <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold text-blue-900 dark:text-blue-100">
+                            {staffForTimesheets?.find(s => s.id === selectedEmployeeFilter)?.name || 'Selected Employee'}
+                          </h3>
+                          <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                            {staffForTimesheets?.find(s => s.id === selectedEmployeeFilter)?.type === 'employee' ? 'Employee' : 'User'} • Individual Timesheet View
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                          {filteredTimesheets.reduce((total, entry) => total + parseFloat(entry.hours || 0), 0).toFixed(1)}h
+                        </div>
+                        <div className="text-sm text-blue-700 dark:text-blue-300">
+                          {filteredTimesheets.length} entries
+                        </div>
                       </div>
                     </div>
                   </CardContent>

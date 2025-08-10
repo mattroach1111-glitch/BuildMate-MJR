@@ -30,6 +30,7 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 - ✅ **Enhanced Folder Colors**: Added distinctive color themes for folder organization - emerald for Ready for Billing, blue for Client folders, purple for Project Manager folders
 - ✅ **Job Edit Dropdowns**: Added project manager and client name dropdown menus to job editing with add new functionality matching the job creation interface
 - ✅ **Admin Staff View Access**: Added dedicated "Staff View" tab in admin dashboard allowing admins to preview the staff experience without switching accounts
+- ✅ **Enhanced Staff Timesheet Dropdown**: Improved staff selection with individual statistics showing total hours, entry counts, and approval ratios for quick assessment
 
 # User Preferences
 
