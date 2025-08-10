@@ -246,6 +246,21 @@ export default function AdminDashboard() {
     },
   });
 
+  // Status priority for sorting
+  const getStatusPriority = (status: string): number => {
+    const statusOrder = {
+      'new_job': 1,
+      'job_in_progress': 2,
+      'job_complete': 3,
+      'ready_for_billing': 4
+    };
+    return statusOrder[status as keyof typeof statusOrder] || 5;
+  };
+
+  const sortJobsByStatus = (jobs: Job[]): Job[] => {
+    return [...jobs].sort((a, b) => getStatusPriority(a.status) - getStatusPriority(b.status));
+  };
+
   // Filter jobs based on search query
   const filteredJobs = jobs ? jobs.filter(job => {
     if (!searchQuery.trim()) return true;
@@ -260,24 +275,38 @@ export default function AdminDashboard() {
 
   // Group filtered jobs by client or project manager
   const groupedJobs = filteredJobs ? (() => {
-    if (groupBy === 'none') return { 'All Jobs': filteredJobs };
+    if (groupBy === 'none') return { 'All Jobs': sortJobsByStatus(filteredJobs) };
     
     if (groupBy === 'client') {
-      return filteredJobs.reduce((groups, job) => {
+      const groups = filteredJobs.reduce((groups, job) => {
         const client = job.clientName || 'Unknown Client';
         if (!groups[client]) groups[client] = [];
         groups[client].push(job);
         return groups;
       }, {} as Record<string, Job[]>);
+      
+      // Sort jobs within each client group by status
+      Object.keys(groups).forEach(client => {
+        groups[client] = sortJobsByStatus(groups[client]);
+      });
+      
+      return groups;
     }
     
     if (groupBy === 'manager') {
-      return filteredJobs.reduce((groups, job) => {
+      const groups = filteredJobs.reduce((groups, job) => {
         const manager = job.projectName || 'Unknown Manager';
         if (!groups[manager]) groups[manager] = [];
         groups[manager].push(job);
         return groups;
       }, {} as Record<string, Job[]>);
+      
+      // Sort jobs within each manager group by status
+      Object.keys(groups).forEach(manager => {
+        groups[manager] = sortJobsByStatus(groups[manager]);
+      });
+      
+      return groups;
     }
     
     return {};
