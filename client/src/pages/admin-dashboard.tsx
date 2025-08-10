@@ -28,6 +28,7 @@ import { GoogleDriveIntegration } from "@/components/google-drive-integration";
 import { OnboardingTour, WelcomeAnimation } from "@/components/onboarding-tour";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { UserManagement } from "@/components/user-management";
+import { PendingUsers } from "@/components/pending-users";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -1134,7 +1135,7 @@ export default function AdminDashboard() {
       <div className="space-y-6">
         {/* Mobile-First Tabs */}
         <Tabs defaultValue="jobs" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-6 mb-6">
           <TabsTrigger value="jobs" className="flex items-center gap-2" data-testid="tab-jobs">
             <Briefcase className="h-4 w-4" />
             <span className="hidden sm:inline">Jobs</span>
@@ -1150,6 +1151,10 @@ export default function AdminDashboard() {
           <TabsTrigger value="staff-view" className="flex items-center gap-2" data-testid="tab-staff-view">
             <Eye className="h-4 w-4" />
             <span className="hidden sm:inline">Staff View</span>
+          </TabsTrigger>
+          <TabsTrigger value="pending-users" className="flex items-center gap-2" data-testid="tab-pending-users">
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Pending</span>
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2" data-testid="tab-settings">
             <Settings className="h-4 w-4" />
@@ -2809,6 +2814,17 @@ export default function AdminDashboard() {
               <StaffDashboard isAdminView={false} />
             </div>
           </div>
+        </TabsContent>
+
+        {/* Pending Users Tab */}
+        <TabsContent value="pending-users" className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div>
+              <h2 className="text-xl font-semibold">Pending User Assignments</h2>
+              <p className="text-sm text-muted-foreground">Assign new users to existing employees</p>
+            </div>
+          </div>
+          <PendingUsers />
         </TabsContent>
 
         {/* Settings Tab */}

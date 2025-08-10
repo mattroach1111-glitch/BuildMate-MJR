@@ -34,6 +34,8 @@ export interface IStorage {
   updateUserGoogleDriveTokens(id: string, tokens: string | null): Promise<void>;
   getAllUsers(): Promise<User[]>;
   updateUserRole(id: string, role: "admin" | "staff"): Promise<void>;
+  assignUserToEmployee(userId: string, employeeId: string): Promise<void>;
+  getUnassignedUsers(): Promise<User[]>;
   
   // Employee operations
   getEmployees(): Promise<Employee[]>;
@@ -115,7 +117,10 @@ export class DatabaseStorage implements IStorage {
   async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
-      .values(userData)
+      .values({
+        ...userData,
+        isAssigned: false, // New users start unassigned
+      })
       .onConflictDoUpdate({
         target: users.id,
         set: {
@@ -149,6 +154,21 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date(),
       })
       .where(eq(users.id, id));
+  }
+
+  async assignUserToEmployee(userId: string, employeeId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ 
+        employeeId,
+        isAssigned: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async getUnassignedUsers(): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.isAssigned, false));
   }
 
   // Employee operations

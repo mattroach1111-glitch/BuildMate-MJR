@@ -34,6 +34,8 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   role: varchar("role", { enum: ["admin", "staff"] }).notNull().default("staff"),
   googleDriveTokens: text("google_drive_tokens"), // Store encrypted tokens as JSON
+  employeeId: varchar("employee_id").references(() => employees.id, { onDelete: "set null" }), // Link to existing employee
+  isAssigned: boolean("is_assigned").notNull().default(false), // Whether user has been assigned to an employee
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

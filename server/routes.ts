@@ -154,6 +154,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pending users routes  
+  app.get('/api/unassigned-users', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser || currentUser.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const unassignedUsers = await storage.getUnassignedUsers();
+      res.json(unassignedUsers);
+    } catch (error) {
+      console.error("Error fetching unassigned users:", error);
+      res.status(500).json({ message: "Failed to fetch unassigned users" });
+    }
+  });
+
+  app.post('/api/assign-user-to-employee', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUserId = req.user.claims.sub;
+      const { userId, employeeId } = req.body;
+      
+      const currentUser = await storage.getUser(currentUserId);
+      if (!currentUser || currentUser.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      if (!userId || !employeeId) {
+        return res.status(400).json({ message: "User ID and Employee ID are required" });
+      }
+      
+      await storage.assignUserToEmployee(userId, employeeId);
+      console.log(`User ${userId} assigned to employee ${employeeId}`);
+      res.json({ message: "User assigned successfully" });
+    } catch (error) {
+      console.error("Error assigning user to employee:", error);
+      res.status(500).json({ message: "Failed to assign user to employee" });
+    }
+  });
+
   app.delete('/api/google-drive/disconnect', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -641,21 +682,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Find the employee record for this user
       let staffId = userId;
       const employees = await storage.getEmployees();
-      const userEmployee = employees.find((emp: any) => {
-        // First try to match by user ID (for users created from employees)
-        if (emp.id === userId) {
-          return true;
-        }
-        // Fallback: match by name patterns for backwards compatibility
-        if (user) {
-          const userName = (user.firstName + ' ' + (user.lastName || '')).trim();
-          return emp.name.toLowerCase() === userName.toLowerCase();
-        }
-        return false;
-      });
       
-      if (userEmployee) {
-        staffId = userEmployee.id;
+      // Check if user is directly assigned to an employee
+      if (user && user.employeeId && user.isAssigned) {
+        // User has been assigned to a specific employee
+        const assignedEmployee = employees.find(emp => emp.id === user.employeeId);
+        if (assignedEmployee) {
+          staffId = assignedEmployee.id;
+        }
+      } else {
+        // Fallback: find by matching patterns for unassigned users
+        const userEmployee = employees.find((emp: any) => {
+          // First try to match by user ID (for users created from employees)
+          if (emp.id === userId) {
+            return true;
+          }
+          // Fallback: match by name patterns for backwards compatibility
+          if (user) {
+            const userName = (user.firstName + ' ' + (user.lastName || '')).trim();
+            return emp.name.toLowerCase() === userName.toLowerCase();
+          }
+          return false;
+        });
+        
+        if (userEmployee) {
+          staffId = userEmployee.id;
+        }
       }
       
       const entries = await storage.getTimesheetEntries(staffId);
@@ -960,21 +1012,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Find the employee record for this user
       let staffId = userId;
       const employees = await storage.getEmployees();
-      const userEmployee = employees.find((emp: any) => {
-        // First try to match by user ID (for users created from employees)
-        if (emp.id === userId) {
-          return true;
-        }
-        // Fallback: match by name patterns for backwards compatibility
-        if (user) {
-          const userName = (user.firstName + ' ' + (user.lastName || '')).trim();
-          return emp.name.toLowerCase() === userName.toLowerCase();
-        }
-        return false;
-      });
       
-      if (userEmployee) {
-        staffId = userEmployee.id;
+      // Check if user is directly assigned to an employee
+      if (user && user.employeeId && user.isAssigned) {
+        // User has been assigned to a specific employee
+        const assignedEmployee = employees.find(emp => emp.id === user.employeeId);
+        if (assignedEmployee) {
+          staffId = assignedEmployee.id;
+        }
+      } else {
+        // Fallback: find by matching patterns for unassigned users
+        const userEmployee = employees.find((emp: any) => {
+          // First try to match by user ID (for users created from employees)
+          if (emp.id === userId) {
+            return true;
+          }
+          // Fallback: match by name patterns for backwards compatibility
+          if (user) {
+            const userName = (user.firstName + ' ' + (user.lastName || '')).trim();
+            return emp.name.toLowerCase() === userName.toLowerCase();
+          }
+          return false;
+        });
+        
+        if (userEmployee) {
+          staffId = userEmployee.id;
+        }
       }
       
       // Get timesheet entries for the fortnight
