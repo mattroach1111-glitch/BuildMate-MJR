@@ -644,7 +644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         jobId: finalJobId,
         materials: finalMaterials,
       });
-      const entry = await storage.createTimesheetEntry(validatedData);
+      const entry = await storage.upsertTimesheetEntry(validatedData);
       res.status(201).json(entry);
     } catch (error) {
       if (error instanceof z.ZodError) {

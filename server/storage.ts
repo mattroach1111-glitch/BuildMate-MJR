@@ -25,7 +25,7 @@ import {
   type InsertTimesheetEntry,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sum, ne, gte, lte, sql } from "drizzle-orm";
+import { eq, and, desc, sum, ne, gte, lte, sql, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -75,6 +75,7 @@ export interface IStorage {
   // Timesheet operations
   getTimesheetEntries(staffId: string): Promise<TimesheetEntry[]>;
   createTimesheetEntry(entry: InsertTimesheetEntry): Promise<TimesheetEntry>;
+  upsertTimesheetEntry(entry: InsertTimesheetEntry): Promise<TimesheetEntry>;
   deleteTimesheetEntry(id: string): Promise<void>;
   getJobsForStaff(): Promise<Job[]>;
   
@@ -409,6 +410,50 @@ export class DatabaseStorage implements IStorage {
     }
 
     return createdEntry;
+  }
+
+  async upsertTimesheetEntry(entry: InsertTimesheetEntry): Promise<TimesheetEntry> {
+    // Check if entry exists for the same staff, date, and job
+    const existingEntry = await db
+      .select()
+      .from(timesheetEntries)
+      .where(
+        and(
+          eq(timesheetEntries.staffId, entry.staffId),
+          eq(timesheetEntries.date, entry.date),
+          entry.jobId ? eq(timesheetEntries.jobId, entry.jobId) : isNull(timesheetEntries.jobId)
+        )
+      )
+      .limit(1);
+
+    let result: TimesheetEntry;
+
+    if (existingEntry.length > 0) {
+      // Update existing entry
+      const [updatedEntry] = await db
+        .update(timesheetEntries)
+        .set({
+          hours: entry.hours,
+          materials: entry.materials
+        })
+        .where(eq(timesheetEntries.id, existingEntry[0].id))
+        .returning();
+      result = updatedEntry;
+    } else {
+      // Create new entry
+      const [newEntry] = await db
+        .insert(timesheetEntries)
+        .values(entry)
+        .returning();
+      result = newEntry;
+    }
+
+    // Update labor hours for this staff/job combination
+    if (entry.jobId) {
+      await this.updateLaborHoursFromTimesheet(entry.staffId, entry.jobId);
+    }
+
+    return result;
   }
 
   async deleteTimesheetEntry(id: string): Promise<void> {

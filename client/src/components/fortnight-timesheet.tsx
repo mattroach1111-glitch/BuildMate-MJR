@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   const [currentFortnightIndex, setCurrentFortnightIndex] = useState(getCurrentFortnightIndex());
   const [timesheetData, setTimesheetData] = useState<any>({});
+  const autoSaveTimeouts = useRef<{ [key: string]: NodeJS.Timeout }>({});
 
   // Calculate fortnight boundaries based on August 11, 2025 start date
   const getFortnightDates = (fortnightIndex: number) => {
@@ -157,13 +158,21 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         [field]: value
       };
       
-      // Auto-save when hours and job are filled
+      // Auto-save when hours and job are filled (with better debouncing)
       if (field === 'hours' || field === 'jobId') {
         const entry = updatedEntries[entryIndex];
         if (entry.hours && parseFloat(entry.hours) > 0 && entry.jobId && entry.jobId !== 'no-job') {
-          setTimeout(() => {
+          // Clear any existing timeout for this entry
+          const entryKey = `${format(date, 'yyyy-MM-dd')}-${entryIndex}`;
+          if (autoSaveTimeouts.current[entryKey]) {
+            clearTimeout(autoSaveTimeouts.current[entryKey]);
+          }
+          
+          // Set new timeout
+          autoSaveTimeouts.current[entryKey] = setTimeout(() => {
             autoSaveEntry(date, entryIndex, entry);
-          }, 1000); // Debounce auto-save by 1 second
+            delete autoSaveTimeouts.current[entryKey];
+          }, 1500); // Debounce auto-save by 1.5 seconds
         }
       }
       
@@ -176,8 +185,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   const autoSaveEntry = (date: Date, entryIndex: number, data: any) => {
     if (data && data.hours && parseFloat(data.hours) > 0) {
+      // Always save - the backend should handle proper updates/creates
+      // This ensures we capture all timesheet entries the user intends to make
+      const dateStr = format(date, 'yyyy-MM-dd');
       updateTimesheetMutation.mutate({
-        date: format(date, 'yyyy-MM-dd'),
+        date: dateStr,
         hours: parseFloat(data.hours),
         materials: data.materials || '',
         jobId: data.jobId === 'no-job' ? null : data.jobId || null,
@@ -311,6 +323,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       // Clear local timesheet data
       setTimesheetData({});
       
+      // Clear any pending auto-save timeouts
+      Object.values(autoSaveTimeouts.current).forEach(timeout => {
+        clearTimeout(timeout);
+      });
+      autoSaveTimeouts.current = {};
+      
       // Show success message
       toast({
         title: "Timesheet Cleared",
@@ -319,6 +337,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       });
     }
   };
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(autoSaveTimeouts.current).forEach(timeout => {
+        clearTimeout(timeout);
+      });
+    };
+  }, []);
 
   return (
     <div className="p-4 max-w-7xl mx-auto">
