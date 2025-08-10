@@ -194,6 +194,7 @@ export default function AdminDashboard() {
     }
     
     if (groupBy === 'manager') {
+      console.log('Grouping by manager, jobs:', jobs.map(j => ({ id: j.id, projectName: j.projectName })));
       return jobs.reduce((groups, job) => {
         const manager = job.projectName || 'Unknown Manager';
         if (!groups[manager]) groups[manager] = [];
@@ -502,6 +503,12 @@ export default function AdminDashboard() {
               <Folder className="h-4 w-4 mr-1" />
               Group by Manager
             </Button>
+            {/* Debug info */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="text-xs text-gray-500 p-2 bg-gray-100 rounded ml-auto">
+                Mode: {groupBy} | Groups: {Object.keys(groupedJobs).length}
+              </div>
+            )}
             <Button 
               variant={groupBy === 'none' ? 'default' : 'outline'} 
               size="sm"
@@ -534,7 +541,7 @@ export default function AdminDashboard() {
                 const isExpanded = groupBy === 'client' ? expandedClients.has(groupName) : 
                                  groupBy === 'manager' ? expandedManagers.has(groupName) : true;
                 const toggleExpanded = groupBy === 'client' ? () => toggleClientExpanded(groupName) :
-                                     groupBy === 'manager' ? () => toggleManagerExpanded(groupName) : null;
+                                     groupBy === 'manager' ? () => toggleManagerExpanded(groupName) : () => {};
                 
                 // Show individual jobs if no grouping or only one group
                 if (groupBy === 'none' || Object.keys(groupedJobs).length === 1) {
