@@ -39,12 +39,60 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     projectName: "",
     status: "",
   });
+  const [isAddingNewClient, setIsAddingNewClient] = useState(false);
+  const [newClientName, setNewClientName] = useState("");
+  const [isAddingNewProjectManager, setIsAddingNewProjectManager] = useState(false);
+  const [newProjectManagerName, setNewProjectManagerName] = useState("");
 
   const { data: jobDetails, isLoading } = useQuery<JobDetails>({
     queryKey: ["/api/jobs", jobId],
     enabled: isOpen && !!jobId,
     retry: false,
   });
+
+  // Get all jobs for dropdown options
+  const { data: allJobs } = useQuery<Job[]>({
+    queryKey: ["/api/jobs"],
+    retry: false,
+  });
+
+  // Get unique project managers and clients from existing jobs
+  const projectManagers = allJobs ? Array.from(new Set(allJobs.map(job => job.projectName).filter(Boolean))) : [];
+  const clientNames = allJobs ? Array.from(new Set(allJobs.map(job => job.clientName).filter(Boolean))) : [];
+
+  const handleAddClient = () => {
+    if (newClientName.trim()) {
+      setEditForm(prev => ({ ...prev, clientName: newClientName.trim() }));
+      setNewClientName("");
+      setIsAddingNewClient(false);
+    }
+  };
+
+  const handleAddProjectManager = () => {
+    if (newProjectManagerName.trim()) {
+      setEditForm(prev => ({ ...prev, projectName: newProjectManagerName.trim() }));
+      setNewProjectManagerName("");
+      setIsAddingNewProjectManager(false);
+    }
+  };
+
+  const handleClientChange = (value: string) => {
+    if (value === "__add_new__") {
+      setIsAddingNewClient(true);
+      setNewClientName("");
+    } else {
+      setEditForm(prev => ({ ...prev, clientName: value }));
+    }
+  };
+
+  const handleProjectManagerChange = (value: string) => {
+    if (value === "__add_new__") {
+      setIsAddingNewProjectManager(true);
+      setNewProjectManagerName("");
+    } else {
+      setEditForm(prev => ({ ...prev, projectName: value }));
+    }
+  };
 
   const updateJobMutation = useMutation({
     mutationFn: async (data: Partial<Job>) => {
@@ -54,6 +102,11 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
+      setIsEditing(false);
+      setIsAddingNewClient(false);
+      setIsAddingNewProjectManager(false);
+      setNewClientName("");
+      setNewProjectManagerName("");
       toast({
         title: "Success",
         description: "Job updated successfully",
@@ -443,26 +496,130 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label htmlFor="edit-client" className="text-sm font-medium">Client Name</Label>
-                      <Input
-                        id="edit-client"
-                        value={editForm.clientName}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, clientName: e.target.value }))}
-                        placeholder="Enter client name"
-                        className="mt-1"
-                        data-testid="input-edit-client"
-                      />
+                      <Label className="text-sm font-medium">Client Name</Label>
+                      <div className="mt-1 space-y-2">
+                        {!isAddingNewClient ? (
+                          <Select onValueChange={handleClientChange} value={editForm.clientName}>
+                            <SelectTrigger data-testid="select-edit-client">
+                              <SelectValue placeholder="Select or add client" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {clientNames.map((client) => (
+                                <SelectItem key={client} value={client}>
+                                  {client}
+                                </SelectItem>
+                              ))}
+                              <SelectItem value="__add_new__" className="text-primary font-medium">
+                                + Add New Client
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Enter new client name"
+                              value={newClientName}
+                              onChange={(e) => setNewClientName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleAddClient();
+                                } else if (e.key === 'Escape') {
+                                  setIsAddingNewClient(false);
+                                  setNewClientName("");
+                                }
+                              }}
+                              className="flex-1"
+                              data-testid="input-new-edit-client"
+                              autoFocus
+                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={handleAddClient}
+                              disabled={!newClientName.trim()}
+                              data-testid="button-add-edit-client"
+                            >
+                              Add
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setIsAddingNewClient(false);
+                                setNewClientName("");
+                              }}
+                              data-testid="button-cancel-edit-client"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div>
-                      <Label htmlFor="edit-manager" className="text-sm font-medium">Project Manager</Label>
-                      <Input
-                        id="edit-manager"
-                        value={editForm.projectName}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, projectName: e.target.value }))}
-                        placeholder="Enter project manager"
-                        className="mt-1"
-                        data-testid="input-edit-manager"
-                      />
+                      <Label className="text-sm font-medium">Project Manager</Label>
+                      <div className="mt-1 space-y-2">
+                        {!isAddingNewProjectManager ? (
+                          <Select onValueChange={handleProjectManagerChange} value={editForm.projectName}>
+                            <SelectTrigger data-testid="select-edit-manager">
+                              <SelectValue placeholder="Select or add project manager" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {projectManagers.map((manager) => (
+                                <SelectItem key={manager} value={manager}>
+                                  {manager}
+                                </SelectItem>
+                              ))}
+                              <SelectItem value="__add_new__" className="text-primary font-medium">
+                                + Add New Project Manager
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Enter new project manager name"
+                              value={newProjectManagerName}
+                              onChange={(e) => setNewProjectManagerName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleAddProjectManager();
+                                } else if (e.key === 'Escape') {
+                                  setIsAddingNewProjectManager(false);
+                                  setNewProjectManagerName("");
+                                }
+                              }}
+                              className="flex-1"
+                              data-testid="input-new-edit-manager"
+                              autoFocus
+                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={handleAddProjectManager}
+                              disabled={!newProjectManagerName.trim()}
+                              data-testid="button-add-edit-manager"
+                            >
+                              Add
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setIsAddingNewProjectManager(false);
+                                setNewProjectManagerName("");
+                              }}
+                              data-testid="button-cancel-edit-manager"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
