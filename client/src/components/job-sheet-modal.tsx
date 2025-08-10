@@ -10,8 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { generateJobPDF } from "@/lib/pdfGenerator";
+import { ObjectUploader } from "@/components/ObjectUploader";
 import { debounce } from "lodash";
-import type { Job, LaborEntry, Material, SubTrade, OtherCost } from "@shared/schema";
+import { Upload, Download, Trash2, FileText } from "lucide-react";
+import type { Job, LaborEntry, Material, SubTrade, OtherCost, JobFile } from "@shared/schema";
 
 interface JobSheetModalProps {
   jobId: string;
@@ -47,6 +49,13 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
   const { data: jobDetails, isLoading } = useQuery<JobDetails>({
     queryKey: ["/api/jobs", jobId],
+    enabled: isOpen && !!jobId,
+    retry: false,
+  });
+
+  // Get job files
+  const { data: jobFiles = [] } = useQuery<JobFile[]>({
+    queryKey: ["/api/jobs", jobId, "files"],
     enabled: isOpen && !!jobId,
     retry: false,
   });
@@ -360,6 +369,111 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       });
     },
   });
+
+  // File upload mutations
+  const uploadFileMutation = useMutation({
+    mutationFn: async (fileData: { 
+      jobId: string; 
+      fileName: string; 
+      originalName: string; 
+      fileSize: number; 
+      mimeType: string; 
+      objectPath: string; 
+    }) => {
+      return await apiRequest("/api/job-files", "POST", fileData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId, "files"] });
+      toast({
+        title: "Success",
+        description: "File uploaded successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: error.message || "Failed to upload file",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteFileMutation = useMutation({
+    mutationFn: async (fileId: string) => {
+      return await apiRequest(`/api/job-files/${fileId}`, "DELETE");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId, "files"] });
+      toast({
+        title: "Success",
+        description: "File deleted successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete file",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle file upload
+  const handleGetUploadParameters = async () => {
+    const response = await apiRequest("/api/job-files/upload-url", "POST");
+    return {
+      method: "PUT" as const,
+      url: response.uploadURL,
+    };
+  };
+
+  const handleFileUploadComplete = (result: any) => {
+    if (result.successful && result.successful.length > 0) {
+      result.successful.forEach((file: any) => {
+        const uploadURL = file.uploadURL;
+        uploadFileMutation.mutate({
+          jobId,
+          fileName: file.name,
+          originalName: file.name,
+          fileSize: file.size,
+          mimeType: file.type,
+          objectPath: uploadURL,
+        });
+      });
+    }
+  };
+
+  const handleDownloadFile = (file: JobFile) => {
+    window.open(`/api/job-files/${file.id}/download`, '_blank');
+  };
+
+  const handleDeleteFile = (fileId: string) => {
+    if (confirm('Are you sure you want to delete this file?')) {
+      deleteFileMutation.mutate(fileId);
+    }
+  };
 
   useEffect(() => {
     if (jobDetails) {
@@ -1134,6 +1248,89 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     </div>
 
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* File Upload Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Documents
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Upload Area */}
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                    <ObjectUploader
+                      maxNumberOfFiles={5}
+                      maxFileSize={10485760} // 10MB
+                      onGetUploadParameters={handleGetUploadParameters}
+                      onComplete={handleFileUploadComplete}
+                      buttonClassName="w-full"
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <Upload className="h-8 w-8 text-gray-400" />
+                        <span className="text-lg font-medium">Drop files here or click to upload</span>
+                        <span className="text-sm text-gray-500">PDF, Word, Excel, Images (Max 10MB each)</span>
+                      </div>
+                    </ObjectUploader>
+                  </div>
+
+                  {/* File List */}
+                  {jobFiles.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm text-gray-700">Uploaded Files</h4>
+                      <div className="space-y-2">
+                        {jobFiles.map((file) => (
+                          <div
+                            key={file.id}
+                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
+                          >
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <FileText className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium truncate" title={file.originalName}>
+                                  {file.originalName}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {(file.fileSize / 1024 / 1024).toFixed(2)} MB • {new Date(file.uploadedAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDownloadFile(file)}
+                                data-testid={`button-download-file-${file.id}`}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteFile(file.id)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                disabled={deleteFileMutation.isPending}
+                                data-testid={`button-delete-file-${file.id}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {jobFiles.length === 0 && (
+                    <div className="text-center py-4 text-gray-500 text-sm">
+                      No documents uploaded yet
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

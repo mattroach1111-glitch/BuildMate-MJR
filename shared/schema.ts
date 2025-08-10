@@ -111,6 +111,18 @@ export const timesheetEntries = pgTable("timesheet_entries", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const jobFiles = pgTable("job_files", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobId: varchar("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
+  fileName: varchar("file_name").notNull(),
+  originalName: varchar("original_name").notNull(),
+  fileSize: integer("file_size").notNull(),
+  mimeType: varchar("mime_type").notNull(),
+  objectPath: varchar("object_path").notNull(), // Path in object storage
+  uploadedById: varchar("uploaded_by_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   laborEntries: many(laborEntries),
@@ -127,6 +139,7 @@ export const jobsRelations = relations(jobs, ({ many }) => ({
   subTrades: many(subTrades),
   otherCosts: many(otherCosts),
   timesheetEntries: many(timesheetEntries),
+  jobFiles: many(jobFiles),
 }));
 
 export const laborEntriesRelations = relations(laborEntries, ({ one }) => ({
@@ -169,6 +182,17 @@ export const timesheetEntriesRelations = relations(timesheetEntries, ({ one }) =
   job: one(jobs, {
     fields: [timesheetEntries.jobId],
     references: [jobs.id],
+  }),
+}));
+
+export const jobFilesRelations = relations(jobFiles, ({ one }) => ({
+  job: one(jobs, {
+    fields: [jobFiles.jobId],
+    references: [jobs.id],
+  }),
+  uploadedBy: one(users, {
+    fields: [jobFiles.uploadedById],
+    references: [users.id],
   }),
 }));
 
@@ -225,6 +249,11 @@ export const insertTimesheetEntrySchema = createInsertSchema(timesheetEntries).o
   hours: z.string().or(z.number()).transform(val => String(val)),
 });
 
+export const insertJobFileSchema = createInsertSchema(jobFiles).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -242,3 +271,5 @@ export type OtherCost = typeof otherCosts.$inferSelect;
 export type InsertOtherCost = z.infer<typeof insertOtherCostSchema>;
 export type TimesheetEntry = typeof timesheetEntries.$inferSelect;
 export type InsertTimesheetEntry = z.infer<typeof insertTimesheetEntrySchema>;
+export type JobFile = typeof jobFiles.$inferSelect;
+export type InsertJobFile = z.infer<typeof insertJobFileSchema>;

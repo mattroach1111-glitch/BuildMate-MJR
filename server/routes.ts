@@ -14,6 +14,7 @@ import {
   insertSubTradeSchema,
   insertOtherCostSchema,
   insertTimesheetEntrySchema,
+  insertJobFileSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -1011,6 +1012,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Find the employee record for this user
       let staffId = userId;
+      let userEmployee = null;
       const employees = await storage.getEmployees();
       
       // Check if user is directly assigned to an employee
@@ -1019,10 +1021,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const assignedEmployee = employees.find(emp => emp.id === user.employeeId);
         if (assignedEmployee) {
           staffId = assignedEmployee.id;
+          userEmployee = assignedEmployee;
         }
       } else {
         // Fallback: find by matching patterns for unassigned users
-        const userEmployee = employees.find((emp: any) => {
+        userEmployee = employees.find((emp: any) => {
           // First try to match by user ID (for users created from employees)
           if (emp.id === userId) {
             return true;
@@ -1204,6 +1207,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating timesheet entry:", error);
       res.status(500).json({ message: "Failed to update timesheet entry" });
+    }
+  });
+
+  // Job file routes
+  // Get upload URL for job files
+  app.post("/api/job-files/upload-url", isAuthenticated, async (req: any, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getJobFileUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error getting upload URL:", error);
+      res.status(500).json({ message: "Failed to get upload URL" });
+    }
+  });
+
+  // Save job file metadata after upload
+  app.post("/api/job-files", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const validatedData = insertJobFileSchema.parse({
+        ...req.body,
+        uploadedById: userId,
+      });
+
+      const objectStorageService = new ObjectStorageService();
+      const normalizedPath = objectStorageService.normalizeJobFilePath(req.body.objectPath);
+      
+      const jobFile = await storage.createJobFile({
+        ...validatedData,
+        objectPath: normalizedPath,
+      });
+
+      res.status(201).json(jobFile);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      console.error("Error creating job file:", error);
+      res.status(500).json({ message: "Failed to create job file" });
+    }
+  });
+
+  // Get job files for a specific job
+  app.get("/api/jobs/:jobId/files", isAuthenticated, async (req: any, res) => {
+    try {
+      const { jobId } = req.params;
+      const files = await storage.getJobFiles(jobId);
+      res.json(files);
+    } catch (error) {
+      console.error("Error fetching job files:", error);
+      res.status(500).json({ message: "Failed to fetch job files" });
+    }
+  });
+
+  // Download job file
+  app.get("/api/job-files/:fileId/download", isAuthenticated, async (req: any, res) => {
+    try {
+      const { fileId } = req.params;
+      const file = await storage.getJobFile(fileId);
+      
+      if (!file) {
+        return res.status(404).json({ message: "File not found" });
+      }
+
+      const objectStorageService = new ObjectStorageService();
+      const objectFile = await objectStorageService.getJobFile(file.objectPath);
+      
+      // Set filename header for download
+      res.setHeader('Content-Disposition', `attachment; filename="${file.originalName}"`);
+      
+      await objectStorageService.downloadFile(objectFile, res);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      res.status(500).json({ message: "Failed to download file" });
+    }
+  });
+
+  // Delete job file
+  app.delete("/api/job-files/:fileId", isAuthenticated, async (req: any, res) => {
+    try {
+      const { fileId } = req.params;
+      await storage.deleteJobFile(fileId);
+      res.json({ message: "File deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting job file:", error);
+      res.status(500).json({ message: "Failed to delete job file" });
     }
   });
 

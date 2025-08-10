@@ -7,6 +7,7 @@ import {
   subTrades,
   otherCosts,
   timesheetEntries,
+  jobFiles,
   type User,
   type UpsertUser,
   type Employee,
@@ -23,6 +24,8 @@ import {
   type InsertOtherCost,
   type TimesheetEntry,
   type InsertTimesheetEntry,
+  type JobFile,
+  type InsertJobFile,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sum, ne, gte, lte, sql, isNull, or } from "drizzle-orm";
@@ -100,6 +103,12 @@ export interface IStorage {
   
   // Sync operations
   syncEmployeesToJob(jobId: string): Promise<void>;
+  
+  // Job files operations
+  getJobFiles(jobId: string): Promise<JobFile[]>;
+  getJobFile(id: string): Promise<JobFile | undefined>;
+  createJobFile(jobFile: InsertJobFile): Promise<JobFile>;
+  deleteJobFile(id: string): Promise<void>;
   
   // Soft delete operations  
   getDeletedJobs(): Promise<Job[]>;
@@ -295,6 +304,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(subTrades).where(eq(subTrades.jobId, id));
     await db.delete(otherCosts).where(eq(otherCosts.jobId, id));
     await db.delete(timesheetEntries).where(eq(timesheetEntries.jobId, id));
+    await db.delete(jobFiles).where(eq(jobFiles.jobId, id));
     
     // Delete the job itself
     await db.delete(jobs).where(eq(jobs.id, id));
@@ -328,7 +338,31 @@ export class DatabaseStorage implements IStorage {
       .where(eq(jobs.id, id));
   }
 
+  // Job files operations
+  async getJobFiles(jobId: string): Promise<JobFile[]> {
+    return await db
+      .select()
+      .from(jobFiles)
+      .where(eq(jobFiles.jobId, jobId))
+      .orderBy(desc(jobFiles.createdAt));
+  }
 
+  async getJobFile(id: string): Promise<JobFile | undefined> {
+    const [file] = await db.select().from(jobFiles).where(eq(jobFiles.id, id));
+    return file;
+  }
+
+  async createJobFile(jobFile: InsertJobFile): Promise<JobFile> {
+    const [createdFile] = await db
+      .insert(jobFiles)
+      .values(jobFile)
+      .returning();
+    return createdFile;
+  }
+
+  async deleteJobFile(id: string): Promise<void> {
+    await db.delete(jobFiles).where(eq(jobFiles.id, id));
+  }
 
   // Labor entry operations
   async getLaborEntriesForJob(jobId: string): Promise<any[]> {
