@@ -118,7 +118,9 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   // Create debounced version of the mutation calls
   const debouncedUpdateLaborRate = useCallback(
     debounce((id: string, hourlyRate: string) => {
-      updateLaborMutation.mutate({ id, hourlyRate });
+      if (hourlyRate && hourlyRate.trim() !== '' && !isNaN(parseFloat(hourlyRate))) {
+        updateLaborMutation.mutate({ id, hourlyRate });
+      }
     }, 1000), // Wait 1 second after user stops typing
     [updateLaborMutation]
   );
@@ -129,6 +131,42 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     }, 1000),
     [updateJobMutation]
   );
+
+  const addOtherCostMutation = useMutation({
+    mutationFn: async (data: { description: string; amount: string }) => {
+      const response = await apiRequest("POST", "/api/other-costs", {
+        jobId,
+        description: data.description,
+        amount: data.amount,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
+      toast({
+        title: "Success",
+        description: "Other cost added successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add other cost",
+        variant: "destructive",
+      });
+    },
+  });
 
   const addMaterialMutation = useMutation({
     mutationFn: async (data: { description: string; supplier: string; amount: string; invoiceDate: string }) => {
@@ -559,13 +597,33 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
             {/* Other Costs Section */}
             <Card>
               <CardHeader>
-                <CardTitle data-testid="text-other-costs-title">Other Costs</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle data-testid="text-other-costs-title">Other Costs</CardTitle>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      const description = prompt("Enter cost description:");
+                      const amount = prompt("Enter amount:");
+                      if (description && amount && !isNaN(parseFloat(amount))) {
+                        addOtherCostMutation.mutate({
+                          description: description.trim(),
+                          amount: parseFloat(amount).toString()
+                        });
+                      }
+                    }}
+                    data-testid="button-add-other-cost"
+                  >
+                    <i className="fas fa-plus mr-1"></i>
+                    Add
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 {jobDetails?.otherCosts?.map((cost) => (
                   <div key={cost.id} className="flex justify-between items-center p-2 border rounded">
-                    <span>{cost.description}</span>
-                    <span>${parseFloat(cost.amount).toFixed(2)}</span>
+                    <span data-testid={`text-other-cost-description-${cost.id}`}>{cost.description}</span>
+                    <span data-testid={`text-other-cost-amount-${cost.id}`}>${parseFloat(cost.amount).toFixed(2)}</span>
                   </div>
                 ))}
                 {(!jobDetails?.otherCosts || jobDetails.otherCosts.length === 0) && (
