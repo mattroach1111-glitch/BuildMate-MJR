@@ -473,8 +473,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Find the employee record for this user
       let staffId = userId;
-      const employees = await storage.getAllEmployees();
-      const userEmployee = employees.find(emp => emp.name === "Matt"); // Map to Matt for now
+      const employees = await storage.getEmployees();
+      const userEmployee = employees.find((emp: any) => emp.name === "Matt"); // Map to Matt for now
       
       if (userEmployee) {
         staffId = userEmployee.id;
@@ -639,8 +639,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if this user corresponds to a specific employee
       // You can expand this mapping as needed
-      const employees = await storage.getAllEmployees();
-      const userEmployee = employees.find(emp => {
+      const employees = await storage.getEmployees();
+      const userEmployee = employees.find((emp: any) => {
         // Match by name patterns or other identifiers
         // For Matt's case, we'll map to the "Matt" employee
         return emp.name === "Matt"; // This can be made more dynamic
