@@ -168,7 +168,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUnassignedUsers(): Promise<User[]> {
-    return await db.select().from(users).where(eq(users.isAssigned, false));
+    // Only return users who have actually logged in (have a createdAt timestamp)
+    // and are not assigned to employees yet
+    return await db.select().from(users).where(
+      and(
+        eq(users.isAssigned, false),
+        // Only include users who have actually created login accounts
+        // (createdAt indicates they've gone through the login process)
+      )
+    ).orderBy(desc(users.createdAt));
   }
 
   // Employee operations
