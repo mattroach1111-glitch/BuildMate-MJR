@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -53,8 +53,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   });
 
   const { data: timesheetEntries } = useQuery({
-    queryKey: isAdminView && selectedEmployee ? ["/api/admin/timesheets"] : ["/api/timesheet"],
+    queryKey: isAdminView && selectedEmployee ? ["/api/admin/timesheets", selectedEmployee] : ["/api/timesheet"],
     retry: false,
+    enabled: !isAdminView || !!selectedEmployee, // Only fetch when employee is selected in admin view
   });
 
   // Update selected employee when prop changes
@@ -160,16 +161,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     }
   };
 
-  const getPendingEntries = () => {
-    return Object.entries(timesheetData).reduce((count, [dateKey, entries]) => {
-      if (Array.isArray(entries)) {
-        return count + entries.filter(entry => 
-          entry.hours && parseFloat(entry.hours) > 0 && 
-          entry.jobId && entry.jobId !== 'no-job'
-        ).length;
-      }
-      return count;
-    }, 0);
+  const getTotalHours = () => {
+    return currentFortnightEntries.reduce((total: number, entry: any) => total + (entry.hours || 0), 0);
   };
 
   const addJobEntry = (date: Date) => {
@@ -178,7 +171,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       const dayEntries = Array.isArray(prev[dateKey]) ? prev[dateKey] : [];
       return {
         ...prev,
-        [dateKey]: [...dayEntries, { hours: '', jobId: 'no-job', materials: '' }]
+        [dateKey]: [...dayEntries, {}]
       };
     });
   };
@@ -187,39 +180,37 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     const dateKey = format(date, 'yyyy-MM-dd');
     setTimesheetData((prev: any) => {
       const dayEntries = Array.isArray(prev[dateKey]) ? prev[dateKey] : [];
+      const updatedEntries = dayEntries.filter((_, index) => index !== entryIndex);
       return {
         ...prev,
-        [dateKey]: dayEntries.filter((_: any, index: number) => index !== entryIndex)
+        [dateKey]: updatedEntries
       };
     });
   };
 
-  const getTotalHours = () => {
-    return currentFortnightEntries.reduce((total: number, entry: any) => 
-      total + parseFloat(entry.hours || '0'), 0
-    );
-  };
-
   const exportToPDF = () => {
-    const doc = new jsPDF('landscape');
+    const doc = new jsPDF();
     
-    // Header
+    // Title and header
     doc.setFontSize(16);
-    doc.text('Fortnight Timesheet', 20, 20);
+    doc.text('Timesheet Report', 20, 20);
     doc.setFontSize(12);
-    doc.text(`${format(currentFortnight.start, 'MMM dd, yyyy')} - ${format(currentFortnight.end, 'MMM dd, yyyy')}`, 20, 30);
-    doc.text(`Employee: ${(user as any)?.firstName || ''} ${(user as any)?.lastName || ''}`, 20, 40);
+    doc.text(`Period: ${format(currentFortnight.start, 'MMM dd')} - ${format(currentFortnight.end, 'MMM dd, yyyy')}`, 20, 30);
+    doc.text(`Total Hours: ${getTotalHours()}h`, 20, 40);
     
     // Table headers
     let yPos = 60;
-    const headers = ['Date', 'Day', 'Hours', 'Job', 'Materials'];
-    const colWidths = [40, 30, 30, 80, 80];
+    const colWidths = [30, 20, 60, 60];
     let xPos = 20;
     
-    headers.forEach((header, i) => {
-      doc.text(header, xPos, yPos);
-      xPos += colWidths[i];
-    });
+    doc.setFontSize(10);
+    doc.text('Date', xPos, yPos);
+    xPos += colWidths[0];
+    doc.text('Hours', xPos, yPos);
+    xPos += colWidths[1];
+    doc.text('Job', xPos, yPos);
+    xPos += colWidths[2];
+    doc.text('Materials', xPos, yPos);
     
     yPos += 10;
     
@@ -232,25 +223,22 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       if (entries.length === 0) {
         xPos = 20;
         doc.text(format(day, 'MMM dd'), xPos, yPos);
-        xPos += colWidths[0];
-        doc.text(format(day, 'EEE'), xPos, yPos);
         yPos += 8;
       } else {
-        entries.forEach((entry: any, index: number) => {
-          xPos = 20;
-          if (index === 0) {
-            doc.text(format(day, 'MMM dd'), xPos, yPos);
-            xPos += colWidths[0];
-            doc.text(format(day, 'EEE'), xPos, yPos);
-          } else {
-            xPos += colWidths[0] + colWidths[1];
+        entries.forEach((entry: any) => {
+          if (yPos > 280) {
+            doc.addPage();
+            yPos = 20;
           }
-          xPos += colWidths[1];
+          
+          xPos = 20;
+          doc.text(format(parseISO(entry.date), 'MMM dd'), xPos, yPos);
+          xPos += colWidths[0];
           doc.text(entry.hours || '', xPos, yPos);
-          xPos += colWidths[2];
+          xPos += colWidths[1];
           const job = Array.isArray(jobs) ? jobs.find((j: any) => j.id === entry.jobId) : null;
           doc.text((job?.jobAddress || 'No job').substring(0, 25), xPos, yPos);
-          xPos += colWidths[3];
+          xPos += colWidths[2];
           doc.text((entry.materials || '').substring(0, 25), xPos, yPos);
           
           yPos += 8;
@@ -258,29 +246,17 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       }
     });
     
-    // Total
-    yPos += 10;
-    doc.text(`Total Hours: ${getTotalHours()}`, 20, yPos);
-    
-    doc.save(`timesheet_${format(currentFortnight.start, 'yyyy-MM-dd')}.pdf`);
-  };
-
-  const goBack = () => {
-    window.location.href = '/';
+    doc.save(`timesheet-${format(currentFortnight.start, 'yyyy-MM-dd')}-to-${format(currentFortnight.end, 'yyyy-MM-dd')}.pdf`);
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-4 max-w-7xl">
+    <div className="p-4 max-w-7xl mx-auto">
+      <div className="mb-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button onClick={goBack} variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Fortnight Timesheet</h1>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold mb-2">Fortnight Timesheet</h1>
+            <div className="flex flex-col gap-1">
               <p className="text-muted-foreground">
                 {format(currentFortnight.start, 'MMM dd, yyyy')} - {format(currentFortnight.end, 'MMM dd, yyyy')}
               </p>
@@ -291,7 +267,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               )}
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Button onClick={exportToPDF} variant="outline">
               <Download className="h-4 w-4 mr-2" />
               Export PDF
@@ -332,7 +308,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="employee-select" className="text-sm font-medium">Select Staff Member</Label>
-                  <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                  <Select value={selectedEmployee} onValueChange={(value) => {
+                    setSelectedEmployee(value);
+                    // Clear local timesheet data when switching employees
+                    setTimesheetData({});
+                  }}>
                     <SelectTrigger data-testid="select-employee-timesheet" className="mt-1">
                       <SelectValue placeholder="Choose a staff member..." />
                     </SelectTrigger>
@@ -345,230 +325,238 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     </SelectContent>
                   </Select>
                 </div>
+                {selectedEmployee && (
+                  <div className="flex items-end">
+                    <div className="text-sm text-muted-foreground">
+                      <p>Selected: {Array.isArray(staffMembers) ? staffMembers.find((s: any) => s.id === selectedEmployee)?.firstName || '' : ''} {Array.isArray(staffMembers) ? staffMembers.find((s: any) => s.id === selectedEmployee)?.lastName || '' : ''}</p>
+                      <p>Viewing their timesheet data</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-primary">{getTotalHours()}h</p>
-                <p className="text-sm text-muted-foreground">Total Hours</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold">{currentFortnightEntries.length}</p>
-                <p className="text-sm text-muted-foreground">Entries</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold">{Math.round((getTotalHours() / 80) * 100)}%</p>
-                <p className="text-sm text-muted-foreground">of 80 hours</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold">{(getTotalHours() / 14).toFixed(1)}h</p>
-                <p className="text-sm text-muted-foreground">Avg per day</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Summary Cards - Only show when employee is selected in admin view */}
+        {(!isAdminView || selectedEmployee) && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-primary">{getTotalHours()}h</p>
+                  <p className="text-sm text-muted-foreground">Total Hours</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold">{currentFortnightEntries.length}</p>
+                  <p className="text-sm text-muted-foreground">Entries</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold">{Math.round((getTotalHours() / 80) * 100)}%</p>
+                  <p className="text-sm text-muted-foreground">of 80 hours</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold">{(getTotalHours() / 14).toFixed(1)}h</p>
+                  <p className="text-sm text-muted-foreground">Avg per day</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-        {/* Timesheet Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Daily Timesheet Entries
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-3 font-medium">Date</th>
-                    <th className="text-left p-3 font-medium">Day</th>
-                    <th className="text-left p-3 font-medium">Hours</th>
-                    <th className="text-left p-3 font-medium">Job</th>
-                    <th className="text-left p-3 font-medium">Materials</th>
-                    <th className="text-left p-3 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fortnightDays.map((day, dayIndex) => {
-                    const dateKey = format(day, 'yyyy-MM-dd');
-                    const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-                    const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
-                    const existingEntries = Array.isArray(currentFortnightEntries) ? currentFortnightEntries.filter((entry: any) => 
-                      format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
-                    ) : [];
-                    
-                    // Show existing entries plus any unsaved local entries
-                    const allEntries = [...existingEntries];
-                    
-                    // Add local unsaved entries
-                    dayEntries.forEach((localEntry: any, index: number) => {
-                      if (!existingEntries[index]) {
-                        allEntries.push(localEntry);
-                      }
-                    });
-                    
-                    // If no entries at all, show one empty row
-                    if (allEntries.length === 0) {
-                      allEntries.push({});
-                    }
-                    
-                    return allEntries.map((entry: any, entryIndex: number) => (
-                      <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'bg-gray-50' : ''}`}>
-                        <td className="p-3">
-                          {entryIndex === 0 && (
-                            <>
-                              <div className="font-medium">{format(day, 'MMM dd')}</div>
-                              <div className="text-xs text-muted-foreground">{format(day, 'yyyy')}</div>
-                            </>
-                          )}
-                        </td>
-                        <td className="p-3">
-                          {entryIndex === 0 && (
-                            <span className={`px-2 py-1 rounded text-xs ${
-                              isWeekend ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800'
-                            }`}>
-                              {format(day, 'EEE')}
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-3">
-                          <Input
-                            type="number"
-                            step="0.25"
-                            min="0"
-                            max="24"
-                            placeholder="0"
-                            value={entry?.hours || dayEntries[entryIndex]?.hours || ''}
-                            onChange={(e) => handleCellChange(day, entryIndex, 'hours', e.target.value)}
-                            className="w-20"
-                          />
-                        </td>
-                        <td className="p-3">
-                          <Select
-                            value={entry?.jobId || dayEntries[entryIndex]?.jobId || 'no-job'}
-                            onValueChange={(value) => handleCellChange(day, entryIndex, 'jobId', value === 'no-job' ? '' : value)}
-                          >
-                            <SelectTrigger className="w-40">
-                              <SelectValue placeholder="Select job" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="no-job">No job</SelectItem>
-                              {Array.isArray(jobs) ? jobs.filter((job: any) => job.id && job.id.trim() !== '').map((job: any) => (
-                                <SelectItem key={job.id} value={job.id}>
-                                  {job.jobAddress}
-                                </SelectItem>
-                              )) : []}
-                            </SelectContent>
-                          </Select>
-                        </td>
-                        <td className="p-3">
-                          <Input
-                            placeholder="Materials used"
-                            value={entry?.materials || dayEntries[entryIndex]?.materials || ''}
-                            onChange={(e) => handleCellChange(day, entryIndex, 'materials', e.target.value)}
-                            className="min-w-40"
-                          />
-                        </td>
-                        <td className="p-3">
-                          <div className="flex gap-2">
-                            {entryIndex === 0 && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => addJobEntry(day)}
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {entryIndex > 0 && (
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => removeJobEntry(day, entryIndex)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {entry?.hours && entry?.jobId && entry?.jobId !== 'no-job' && (
-                              <span className="text-xs text-green-600 flex items-center">
-                                ✓ Saved
-                              </span>
-                            )}
-                          </div>
-                        </td>
+        {/* Timesheet Table - Only show when employee is selected in admin view */}
+        {(!isAdminView || selectedEmployee) && (
+          <>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Daily Timesheet Entries
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-3 font-medium">Date</th>
+                        <th className="text-left p-3 font-medium">Hours</th>
+                        <th className="text-left p-3 font-medium">Job</th>
+                        <th className="text-left p-3 font-medium">Materials</th>
+                        <th className="text-left p-3 font-medium">Actions</th>
                       </tr>
-                    ));
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                    </thead>
+                    <tbody>
+                      {fortnightDays.map((day, dayIndex) => {
+                        const dateKey = format(day, 'yyyy-MM-dd');
+                        const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+                        const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
+                        const existingEntries = Array.isArray(currentFortnightEntries) ? currentFortnightEntries.filter((entry: any) => 
+                          format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
+                        ) : [];
+                        
+                        // Show existing entries plus any unsaved local entries
+                        const allEntries = [...existingEntries];
+                        if (dayEntries.length > 0) {
+                          allEntries.push(...dayEntries);
+                        }
+                        
+                        // Always show at least one entry row per day
+                        const entriesToShow = allEntries.length > 0 ? allEntries : [{}];
+                        
+                        return entriesToShow.map((entry: any, entryIndex: number) => (
+                          <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'bg-gray-50' : ''}`}>
+                            <td className="p-3">
+                              {entryIndex === 0 && (
+                                <div className="font-medium">
+                                  {format(day, 'EEE, MMM dd')}
+                                </div>
+                              )}
+                            </td>
+                            <td className="p-3">
+                              <Input
+                                type="number"
+                                step="0.5"
+                                placeholder="0"
+                                value={entry.hours || ''}
+                                onChange={(e) => handleCellChange(day, entryIndex, 'hours', e.target.value)}
+                                className="w-20"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <Select
+                                value={entry.jobId || 'no-job'}
+                                onValueChange={(value) => handleCellChange(day, entryIndex, 'jobId', value)}
+                              >
+                                <SelectTrigger className="min-w-40">
+                                  <SelectValue placeholder="Select job" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="no-job">No job</SelectItem>
+                                  {Array.isArray(jobs) ? jobs.filter((job: any) => job.id && job.id.trim() !== '').map((job: any) => (
+                                    <SelectItem key={job.id} value={job.id}>
+                                      {job.jobAddress}
+                                    </SelectItem>
+                                  )) : []}
+                                </SelectContent>
+                              </Select>
+                            </td>
+                            <td className="p-3">
+                              <Input
+                                placeholder="Materials used..."
+                                value={entry.materials || ''}
+                                onChange={(e) => handleCellChange(day, entryIndex, 'materials', e.target.value)}
+                                className="min-w-40"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <div className="flex gap-2">
+                                {entryIndex === 0 && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => addJobEntry(day)}
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {entryIndex > 0 && (
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => removeJobEntry(day, entryIndex)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {entry?.hours && entry?.jobId && entry?.jobId !== 'no-job' && (
+                                  <span className="text-xs text-green-600 flex items-center">
+                                    ✓ Saved
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ));
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Confirmation Section */}
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Timesheet Confirmation
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium">Total Hours: {getTotalHours()}h</p>
-                  <p className="text-sm text-muted-foreground">
-                    {currentFortnightEntries.length} entries recorded
-                  </p>
+            {/* Confirmation Section */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Timesheet Confirmation
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium">Total Hours: {getTotalHours()}h</p>
+                      <p className="text-sm text-muted-foreground">
+                        {currentFortnightEntries.length} entries recorded
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">Fortnight Period</p>
+                      <p className="font-medium">
+                        {format(currentFortnight.start, 'MMM dd')} - {format(currentFortnight.end, 'MMM dd, yyyy')}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Review your timesheet entries above. Once confirmed, your hours will be uploaded to the relevant job sheets.
+                      </p>
+                      <p className="text-xs text-orange-600">
+                        ⚠️ You cannot edit entries after confirmation
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => confirmTimesheetMutation.mutate()}
+                      disabled={confirmTimesheetMutation.isPending || getTotalHours() === 0}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {confirmTimesheetMutation.isPending ? "Confirming..." : "Confirm Timesheet"}
+                    </Button>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Fortnight Period</p>
-                  <p className="font-medium">
-                    {format(currentFortnight.start, 'MMM dd')} - {format(currentFortnight.end, 'MMM dd, yyyy')}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Review your timesheet entries above. Once confirmed, your hours will be uploaded to the relevant job sheets.
-                  </p>
-                  <p className="text-xs text-orange-600">
-                    ⚠️ You cannot edit entries after confirmation
-                  </p>
-                </div>
-                <Button
-                  onClick={() => confirmTimesheetMutation.mutate()}
-                  disabled={confirmTimesheetMutation.isPending || getTotalHours() === 0}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {confirmTimesheetMutation.isPending ? "Confirming..." : "Confirm Timesheet"}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </>
+        )}
+
+        {/* Show message when no employee selected in admin view */}
+        {isAdminView && !selectedEmployee && (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">Select a Staff Member</h3>
+              <p className="text-muted-foreground">
+                Choose a staff member from the dropdown above to view their timesheet
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
