@@ -19,7 +19,7 @@ import { insertJobSchema, insertEmployeeSchema, insertTimesheetEntrySchema } fro
 import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
@@ -65,6 +65,8 @@ export default function AdminDashboard() {
   const [newProjectManagerName, setNewProjectManagerName] = useState("");
   const [isAddingNewClient, setIsAddingNewClient] = useState(false);
   const [newClientName, setNewClientName] = useState("");
+  const [folderColors, setFolderColors] = useState<Record<string, number>>({});
+  const [colorPickerOpen, setColorPickerOpen] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -624,143 +626,205 @@ export default function AdminDashboard() {
   // Check if a group is the special "Ready for Billing" group
   const isReadyForBillingGroup = (groupName: string) => groupName === '🧾 Ready for Billing';
 
-  // Get folder color scheme based on group type and name - Fun colorful themes!
-  const getFolderColors = (groupName: string, groupType: string) => {
-    if (isReadyForBillingGroup(groupName)) {
-      // Keep green for Ready for Billing
-      return {
-        bg: 'bg-emerald-50 border-emerald-200',
-        folderBg: 'bg-emerald-100 hover:bg-emerald-150',
-        folderIcon: 'text-emerald-600',
-        folderText: 'text-emerald-800',
-        badge: 'bg-emerald-200 text-emerald-800 border-emerald-300'
-      };
-    }
-    
-    if (groupType === 'client') {
-      // Client folders - Use different vibrant colors based on client name
-      const clientColors = [
-        // Vibrant Blue
-        {
-          bg: 'bg-blue-50 border-blue-200',
-          folderBg: 'bg-blue-100 hover:bg-blue-150',
-          folderIcon: 'text-blue-600',
-          folderText: 'text-blue-800',
-          badge: 'bg-blue-200 text-blue-800 border-blue-300'
-        },
-        // Vibrant Orange
-        {
-          bg: 'bg-orange-50 border-orange-200',
-          folderBg: 'bg-orange-100 hover:bg-orange-150',
-          folderIcon: 'text-orange-600',
-          folderText: 'text-orange-800',
-          badge: 'bg-orange-200 text-orange-800 border-orange-300'
-        },
-        // Vibrant Pink
-        {
-          bg: 'bg-pink-50 border-pink-200',
-          folderBg: 'bg-pink-100 hover:bg-pink-150',
-          folderIcon: 'text-pink-600',
-          folderText: 'text-pink-800',
-          badge: 'bg-pink-200 text-pink-800 border-pink-300'
-        },
-        // Vibrant Cyan
-        {
-          bg: 'bg-cyan-50 border-cyan-200',
-          folderBg: 'bg-cyan-100 hover:bg-cyan-150',
-          folderIcon: 'text-cyan-600',
-          folderText: 'text-cyan-800',
-          badge: 'bg-cyan-200 text-cyan-800 border-cyan-300'
-        },
-        // Vibrant Teal
-        {
-          bg: 'bg-teal-50 border-teal-200',
-          folderBg: 'bg-teal-100 hover:bg-teal-150',
-          folderIcon: 'text-teal-600',
-          folderText: 'text-teal-800',
-          badge: 'bg-teal-200 text-teal-800 border-teal-300'
-        },
-        // Vibrant Indigo
-        {
-          bg: 'bg-indigo-50 border-indigo-200',
-          folderBg: 'bg-indigo-100 hover:bg-indigo-150',
-          folderIcon: 'text-indigo-600',
-          folderText: 'text-indigo-800',
-          badge: 'bg-indigo-200 text-indigo-800 border-indigo-300'
-        }
-      ];
-      
-      // Use groupName hash to consistently assign colors
-      const hash = groupName.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-      return clientColors[hash % clientColors.length];
-      
-    } else if (groupType === 'manager') {
-      // Project manager folders - Use different warm colors
-      const managerColors = [
-        // Vibrant Purple
-        {
-          bg: 'bg-purple-50 border-purple-200',
-          folderBg: 'bg-purple-100 hover:bg-purple-150',
-          folderIcon: 'text-purple-600',
-          folderText: 'text-purple-800',
-          badge: 'bg-purple-200 text-purple-800 border-purple-300'
-        },
-        // Vibrant Red
-        {
-          bg: 'bg-red-50 border-red-200',
-          folderBg: 'bg-red-100 hover:bg-red-150',
-          folderIcon: 'text-red-600',
-          folderText: 'text-red-800',
-          badge: 'bg-red-200 text-red-800 border-red-300'
-        },
-        // Vibrant Yellow
-        {
-          bg: 'bg-yellow-50 border-yellow-200',
-          folderBg: 'bg-yellow-100 hover:bg-yellow-150',
-          folderIcon: 'text-yellow-600',
-          folderText: 'text-yellow-800',
-          badge: 'bg-yellow-200 text-yellow-800 border-yellow-300'
-        },
-        // Vibrant Lime
-        {
-          bg: 'bg-lime-50 border-lime-200',
-          folderBg: 'bg-lime-100 hover:bg-lime-150',
-          folderIcon: 'text-lime-600',
-          folderText: 'text-lime-800',
-          badge: 'bg-lime-200 text-lime-800 border-lime-300'
-        },
-        // Vibrant Rose
-        {
-          bg: 'bg-rose-50 border-rose-200',
-          folderBg: 'bg-rose-100 hover:bg-rose-150',
-          folderIcon: 'text-rose-600',
-          folderText: 'text-rose-800',
-          badge: 'bg-rose-200 text-rose-800 border-rose-300'
-        },
-        // Vibrant Violet
-        {
-          bg: 'bg-violet-50 border-violet-200',
-          folderBg: 'bg-violet-100 hover:bg-violet-150',
-          folderIcon: 'text-violet-600',
-          folderText: 'text-violet-800',
-          badge: 'bg-violet-200 text-violet-800 border-violet-300'
-        }
-      ];
-      
-      // Use groupName hash to consistently assign colors
-      const hash = groupName.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-      return managerColors[hash % managerColors.length];
-    }
-    
-    // Default neutral theme for edge cases
-    return {
+  // All available color themes
+  const allColorThemes = [
+    // Blues
+    {
+      name: 'Blue',
+      bg: 'bg-blue-50 border-blue-200',
+      folderBg: 'bg-blue-100 hover:bg-blue-150',
+      folderIcon: 'text-blue-600',
+      folderText: 'text-blue-800',
+      badge: 'bg-blue-200 text-blue-800 border-blue-300',
+      preview: 'bg-blue-500'
+    },
+    // Oranges
+    {
+      name: 'Orange',
+      bg: 'bg-orange-50 border-orange-200',
+      folderBg: 'bg-orange-100 hover:bg-orange-150',
+      folderIcon: 'text-orange-600',
+      folderText: 'text-orange-800',
+      badge: 'bg-orange-200 text-orange-800 border-orange-300',
+      preview: 'bg-orange-500'
+    },
+    // Pinks
+    {
+      name: 'Pink',
+      bg: 'bg-pink-50 border-pink-200',
+      folderBg: 'bg-pink-100 hover:bg-pink-150',
+      folderIcon: 'text-pink-600',
+      folderText: 'text-pink-800',
+      badge: 'bg-pink-200 text-pink-800 border-pink-300',
+      preview: 'bg-pink-500'
+    },
+    // Cyans
+    {
+      name: 'Cyan',
+      bg: 'bg-cyan-50 border-cyan-200',
+      folderBg: 'bg-cyan-100 hover:bg-cyan-150',
+      folderIcon: 'text-cyan-600',
+      folderText: 'text-cyan-800',
+      badge: 'bg-cyan-200 text-cyan-800 border-cyan-300',
+      preview: 'bg-cyan-500'
+    },
+    // Teals
+    {
+      name: 'Teal',
+      bg: 'bg-teal-50 border-teal-200',
+      folderBg: 'bg-teal-100 hover:bg-teal-150',
+      folderIcon: 'text-teal-600',
+      folderText: 'text-teal-800',
+      badge: 'bg-teal-200 text-teal-800 border-teal-300',
+      preview: 'bg-teal-500'
+    },
+    // Indigos
+    {
+      name: 'Indigo',
+      bg: 'bg-indigo-50 border-indigo-200',
+      folderBg: 'bg-indigo-100 hover:bg-indigo-150',
+      folderIcon: 'text-indigo-600',
+      folderText: 'text-indigo-800',
+      badge: 'bg-indigo-200 text-indigo-800 border-indigo-300',
+      preview: 'bg-indigo-500'
+    },
+    // Purples
+    {
+      name: 'Purple',
+      bg: 'bg-purple-50 border-purple-200',
+      folderBg: 'bg-purple-100 hover:bg-purple-150',
+      folderIcon: 'text-purple-600',
+      folderText: 'text-purple-800',
+      badge: 'bg-purple-200 text-purple-800 border-purple-300',
+      preview: 'bg-purple-500'
+    },
+    // Reds
+    {
+      name: 'Red',
+      bg: 'bg-red-50 border-red-200',
+      folderBg: 'bg-red-100 hover:bg-red-150',
+      folderIcon: 'text-red-600',
+      folderText: 'text-red-800',
+      badge: 'bg-red-200 text-red-800 border-red-300',
+      preview: 'bg-red-500'
+    },
+    // Yellows
+    {
+      name: 'Yellow',
+      bg: 'bg-yellow-50 border-yellow-200',
+      folderBg: 'bg-yellow-100 hover:bg-yellow-150',
+      folderIcon: 'text-yellow-600',
+      folderText: 'text-yellow-800',
+      badge: 'bg-yellow-200 text-yellow-800 border-yellow-300',
+      preview: 'bg-yellow-500'
+    },
+    // Limes
+    {
+      name: 'Lime',
+      bg: 'bg-lime-50 border-lime-200',
+      folderBg: 'bg-lime-100 hover:bg-lime-150',
+      folderIcon: 'text-lime-600',
+      folderText: 'text-lime-800',
+      badge: 'bg-lime-200 text-lime-800 border-lime-300',
+      preview: 'bg-lime-500'
+    },
+    // Roses
+    {
+      name: 'Rose',
+      bg: 'bg-rose-50 border-rose-200',
+      folderBg: 'bg-rose-100 hover:bg-rose-150',
+      folderIcon: 'text-rose-600',
+      folderText: 'text-rose-800',
+      badge: 'bg-rose-200 text-rose-800 border-rose-300',
+      preview: 'bg-rose-500'
+    },
+    // Violets
+    {
+      name: 'Violet',
+      bg: 'bg-violet-50 border-violet-200',
+      folderBg: 'bg-violet-100 hover:bg-violet-150',
+      folderIcon: 'text-violet-600',
+      folderText: 'text-violet-800',
+      badge: 'bg-violet-200 text-violet-800 border-violet-300',
+      preview: 'bg-violet-500'
+    },
+    // Emerald (for Ready for Billing - always available)
+    {
+      name: 'Emerald',
+      bg: 'bg-emerald-50 border-emerald-200',
+      folderBg: 'bg-emerald-100 hover:bg-emerald-150',
+      folderIcon: 'text-emerald-600',
+      folderText: 'text-emerald-800',
+      badge: 'bg-emerald-200 text-emerald-800 border-emerald-300',
+      preview: 'bg-emerald-500'
+    },
+    // Slate (neutral)
+    {
+      name: 'Slate',
       bg: 'bg-slate-50 border-slate-200',
       folderBg: 'bg-slate-100 hover:bg-slate-150',
       folderIcon: 'text-slate-600',
       folderText: 'text-slate-800',
-      badge: 'bg-slate-200 text-slate-800 border-slate-300'
-    };
+      badge: 'bg-slate-200 text-slate-800 border-slate-300',
+      preview: 'bg-slate-500'
+    }
+  ];
+
+  // Get folder color scheme based on user choice or defaults
+  const getFolderColors = (groupName: string, groupType: string) => {
+    // Check if user has selected a custom color for this folder
+    const userColorIndex = folderColors[groupName];
+    if (userColorIndex !== undefined && allColorThemes[userColorIndex]) {
+      return allColorThemes[userColorIndex];
+    }
+
+    if (isReadyForBillingGroup(groupName)) {
+      // Default green for Ready for Billing
+      return allColorThemes[12]; // Emerald
+    }
+    
+    if (groupType === 'client') {
+      // Client folders - Use different vibrant colors based on client name
+      const clientColors = [0, 1, 2, 3, 4, 5]; // Blue, Orange, Pink, Cyan, Teal, Indigo
+      const hash = groupName.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+      return allColorThemes[clientColors[hash % clientColors.length]];
+      
+    } else if (groupType === 'manager') {
+      // Project manager folders - Use different warm colors
+      const managerColors = [6, 7, 8, 9, 10, 11]; // Purple, Red, Yellow, Lime, Rose, Violet
+      const hash = groupName.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+      return allColorThemes[managerColors[hash % managerColors.length]];
+    }
+    
+    // Default neutral theme
+    return allColorThemes[13]; // Slate
   };
+
+  // Handle color change for folder
+  const handleColorChange = (groupName: string, colorIndex: number) => {
+    setFolderColors(prev => ({
+      ...prev,
+      [groupName]: colorIndex
+    }));
+    setColorPickerOpen(null);
+    
+    // Store in localStorage for persistence
+    const stored = JSON.parse(localStorage.getItem('buildflow-folder-colors') || '{}');
+    stored[groupName] = colorIndex;
+    localStorage.setItem('buildflow-folder-colors', JSON.stringify(stored));
+  };
+
+  // Load saved folder colors on component mount
+  useEffect(() => {
+    const stored = localStorage.getItem('buildflow-folder-colors');
+    if (stored) {
+      try {
+        setFolderColors(JSON.parse(stored));
+      } catch (error) {
+        console.error('Failed to load folder colors:', error);
+      }
+    }
+  }, []);
 
   // Special state for Ready for Billing folder - start closed
   const [readyForBillingExpanded, setReadyForBillingExpanded] = useState(false);
@@ -1332,27 +1396,77 @@ export default function AdminDashboard() {
                     className={`border rounded-lg p-4 transition-colors ${colors.bg}`}
                   >
                     <div 
-                      className={`flex items-center gap-2 p-2 rounded transition-colors cursor-pointer ${colors.folderBg}`}
-                      onClick={toggleExpanded}
-                      data-testid={`folder-${groupName}`}
+                      className={`flex items-center gap-2 p-2 rounded transition-colors ${colors.folderBg}`}
                     >
-                      {isExpanded ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                      {isExpanded ? (
-                        <FolderOpen className={`h-5 w-5 ${colors.folderIcon}`} />
-                      ) : (
-                        <Folder className={`h-5 w-5 ${colors.folderIcon}`} />
-                      )}
-                      <span className={`font-medium ${colors.folderText}`}>{groupName}</span>
-                      <Badge 
-                        variant="secondary" 
-                        className={`ml-2 ${colors.badge}`}
+                      <div 
+                        className="flex items-center gap-2 flex-1 cursor-pointer"
+                        onClick={toggleExpanded}
+                        data-testid={`folder-${groupName}`}
                       >
-                        {groupJobs.length} job{groupJobs.length !== 1 ? 's' : ''}
-                      </Badge>
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                        {isExpanded ? (
+                          <FolderOpen className={`h-5 w-5 ${colors.folderIcon}`} />
+                        ) : (
+                          <Folder className={`h-5 w-5 ${colors.folderIcon}`} />
+                        )}
+                        <span className={`font-medium ${colors.folderText}`}>{groupName}</span>
+                        <Badge 
+                          variant="secondary" 
+                          className={`ml-2 ${colors.badge}`}
+                        >
+                          {groupJobs.length} job{groupJobs.length !== 1 ? 's' : ''}
+                        </Badge>
+                      </div>
+                      
+                      {/* Color Picker Button */}
+                      <DropdownMenu 
+                        open={colorPickerOpen === groupName} 
+                        onOpenChange={(open) => setColorPickerOpen(open ? groupName : null)}
+                      >
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 hover:bg-white/20"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setColorPickerOpen(colorPickerOpen === groupName ? null : groupName);
+                            }}
+                            data-testid={`color-picker-${groupName}`}
+                          >
+                            <Palette className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent 
+                          align="end" 
+                          className="w-56 p-2"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="text-sm font-medium mb-2 px-2">Choose Folder Color</div>
+                          <div className="grid grid-cols-4 gap-2">
+                            {allColorThemes.map((theme, index) => (
+                              <button
+                                key={theme.name}
+                                className={`w-10 h-10 rounded-lg border-2 transition-all hover:scale-110 ${theme.preview} ${
+                                  folderColors[groupName] === index 
+                                    ? 'ring-2 ring-offset-2 ring-blue-500' 
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                                onClick={() => handleColorChange(groupName, index)}
+                                title={theme.name}
+                                data-testid={`color-option-${theme.name.toLowerCase()}`}
+                              />
+                            ))}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-2 px-2">
+                            Click a color to customize this folder
+                          </div>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                     
                     {isExpanded && (
