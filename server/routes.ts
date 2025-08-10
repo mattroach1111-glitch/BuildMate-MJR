@@ -639,20 +639,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/admin/timesheet/entry/:entryId", isAuthenticated, async (req: any, res) => {
     try {
+      console.log('DELETE /api/admin/timesheet/entry/:entryId called');
       const userId = req.user.claims.sub;
+      console.log('User ID:', userId);
       const user = await storage.getUser(userId);
+      console.log('User:', user);
       
       if (user?.role !== 'admin') {
+        console.log('User is not admin, role:', user?.role);
         return res.status(403).json({ message: "Admin access required" });
       }
 
       const entryId = req.params.entryId;
+      console.log('Entry ID to clear:', entryId);
       
       if (!entryId) {
         return res.status(400).json({ message: "Entry ID is required" });
       }
 
       await storage.clearTimesheetEntry(entryId);
+      console.log('Entry cleared successfully');
       
       res.status(200).json({ 
         message: "Timesheet entry cleared successfully",
@@ -660,7 +666,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error clearing timesheet entry:", error);
-      res.status(500).json({ message: "Failed to clear timesheet entry" });
+      res.status(500).json({ message: "Failed to clear timesheet entry", error: error.message });
     }
   });
 

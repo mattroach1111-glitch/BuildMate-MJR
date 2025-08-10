@@ -591,11 +591,10 @@ export class DatabaseStorage implements IStorage {
       );
 
     // Update labor hours for affected jobs
-    const uniqueJobIds = [...new Set(entriesToDelete.map(entry => entry.jobId).filter(Boolean))];
+    const jobIds = entriesToDelete.map(entry => entry.jobId).filter(Boolean) as string[];
+    const uniqueJobIds = Array.from(new Set(jobIds));
     for (const jobId of uniqueJobIds) {
-      if (jobId) {
-        await this.updateLaborHoursFromTimesheet(staffId, jobId);
-      }
+      await this.updateLaborHoursFromTimesheet(staffId, jobId);
     }
   }
 

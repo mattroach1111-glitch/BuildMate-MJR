@@ -549,9 +549,18 @@ export default function AdminDashboard() {
 
   const clearEntryMutation = useMutation({
     mutationFn: async (entryId: string) => {
-      await apiRequest("DELETE", `/api/admin/timesheet/entry/${entryId}`);
+      console.log('Attempting to clear entry:', entryId);
+      try {
+        const response = await apiRequest("DELETE", `/api/admin/timesheet/entry/${entryId}`);
+        console.log('Clear entry response:', response);
+        return response;
+      } catch (error) {
+        console.error('Clear entry error:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
+      console.log('Clear entry success');
       queryClient.invalidateQueries({ queryKey: ["/api/admin/timesheets"] });
       toast({
         title: "Success",
@@ -559,6 +568,7 @@ export default function AdminDashboard() {
       });
     },
     onError: (error) => {
+      console.error('Clear entry mutation error:', error);
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -572,7 +582,7 @@ export default function AdminDashboard() {
       }
       toast({
         title: "Error",
-        description: "Failed to clear timesheet entry",
+        description: `Failed to clear timesheet entry: ${error.message}`,
         variant: "destructive",
       });
     },
