@@ -277,8 +277,20 @@ export default function AdminDashboard() {
   const groupedJobs = filteredJobs ? (() => {
     if (groupBy === 'none') return { 'All Jobs': sortJobsByStatus(filteredJobs) };
     
+    // Separate ready for billing jobs
+    const readyForBillingJobs = filteredJobs.filter(job => job.status === 'ready_for_billing');
+    const otherJobs = filteredJobs.filter(job => job.status !== 'ready_for_billing');
+    
     if (groupBy === 'client') {
-      const groups = filteredJobs.reduce((groups, job) => {
+      const groups: Record<string, Job[]> = {};
+      
+      // Add ready for billing group first if there are any
+      if (readyForBillingJobs.length > 0) {
+        groups['🧾 Ready for Billing'] = readyForBillingJobs;
+      }
+      
+      // Group other jobs by client
+      const clientGroups = otherJobs.reduce((groups, job) => {
         const client = job.clientName || 'Unknown Client';
         if (!groups[client]) groups[client] = [];
         groups[client].push(job);
@@ -286,15 +298,24 @@ export default function AdminDashboard() {
       }, {} as Record<string, Job[]>);
       
       // Sort jobs within each client group by status
-      Object.keys(groups).forEach(client => {
-        groups[client] = sortJobsByStatus(groups[client]);
+      Object.keys(clientGroups).forEach(client => {
+        clientGroups[client] = sortJobsByStatus(clientGroups[client]);
+        groups[client] = clientGroups[client];
       });
       
       return groups;
     }
     
     if (groupBy === 'manager') {
-      const groups = filteredJobs.reduce((groups, job) => {
+      const groups: Record<string, Job[]> = {};
+      
+      // Add ready for billing group first if there are any
+      if (readyForBillingJobs.length > 0) {
+        groups['🧾 Ready for Billing'] = readyForBillingJobs;
+      }
+      
+      // Group other jobs by manager
+      const managerGroups = otherJobs.reduce((groups, job) => {
         const manager = job.projectName || 'Unknown Manager';
         if (!groups[manager]) groups[manager] = [];
         groups[manager].push(job);
@@ -302,8 +323,9 @@ export default function AdminDashboard() {
       }, {} as Record<string, Job[]>);
       
       // Sort jobs within each manager group by status
-      Object.keys(groups).forEach(manager => {
-        groups[manager] = sortJobsByStatus(groups[manager]);
+      Object.keys(managerGroups).forEach(manager => {
+        managerGroups[manager] = sortJobsByStatus(managerGroups[manager]);
+        groups[manager] = managerGroups[manager];
       });
       
       return groups;
@@ -331,6 +353,9 @@ export default function AdminDashboard() {
     }
     setExpandedManagers(newExpanded);
   };
+
+  // Check if a group is the special "Ready for Billing" group
+  const isReadyForBillingGroup = (groupName: string) => groupName === '🧾 Ready for Billing';
 
   // Auto-expand folders when switching to a grouping mode
   useEffect(() => {
@@ -650,9 +675,11 @@ export default function AdminDashboard() {
           ) : filteredJobs && filteredJobs.length > 0 ? (
             <div className="space-y-4">
               {Object.entries(groupedJobs).map(([groupName, groupJobs]) => {
-                const isExpanded = groupBy === 'client' ? expandedClients.has(groupName) : 
+                const isExpanded = isReadyForBillingGroup(groupName) ? true : // Always expand Ready for Billing
+                                 groupBy === 'client' ? expandedClients.has(groupName) : 
                                  groupBy === 'manager' ? expandedManagers.has(groupName) : true;
-                const toggleExpanded = groupBy === 'client' ? () => toggleClientExpanded(groupName) :
+                const toggleExpanded = isReadyForBillingGroup(groupName) ? () => {} : // Don't allow collapsing Ready for Billing
+                                     groupBy === 'client' ? () => toggleClientExpanded(groupName) :
                                      groupBy === 'manager' ? () => toggleManagerExpanded(groupName) : () => {};
                 
                 // Show individual jobs if no grouping or only one group
@@ -739,24 +766,50 @@ export default function AdminDashboard() {
 
                 // Show grouped folders
                 return (
-                  <div key={groupName} className="border rounded-lg p-4 bg-gray-50">
+                  <div 
+                    key={groupName} 
+                    className={`border rounded-lg p-4 ${
+                      isReadyForBillingGroup(groupName) 
+                        ? 'bg-green-50 border-green-200' 
+                        : 'bg-gray-50'
+                    }`}
+                  >
                     <div 
-                      className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded"
+                      className={`flex items-center gap-2 p-2 rounded transition-colors ${
+                        isReadyForBillingGroup(groupName)
+                          ? 'cursor-default bg-green-100'
+                          : 'cursor-pointer hover:bg-gray-100'
+                      }`}
                       onClick={toggleExpanded}
                       data-testid={`folder-${groupName}`}
                     >
-                      {isExpanded ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
+                      {!isReadyForBillingGroup(groupName) && (
+                        isExpanded ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )
                       )}
                       {isExpanded ? (
-                        <FolderOpen className="h-5 w-5 text-blue-600" />
+                        <FolderOpen className={`h-5 w-5 ${
+                          isReadyForBillingGroup(groupName) ? 'text-green-600' : 'text-blue-600'
+                        }`} />
                       ) : (
-                        <Folder className="h-5 w-5 text-blue-600" />
+                        <Folder className={`h-5 w-5 ${
+                          isReadyForBillingGroup(groupName) ? 'text-green-600' : 'text-blue-600'
+                        }`} />
                       )}
-                      <span className="font-medium">{groupName}</span>
-                      <Badge variant="secondary" className="ml-2">
+                      <span className={`font-medium ${
+                        isReadyForBillingGroup(groupName) ? 'text-green-800' : ''
+                      }`}>{groupName}</span>
+                      <Badge 
+                        variant="secondary" 
+                        className={`ml-2 ${
+                          isReadyForBillingGroup(groupName) 
+                            ? 'bg-green-200 text-green-800 border-green-300' 
+                            : ''
+                        }`}
+                      >
                         {groupJobs.length} job{groupJobs.length !== 1 ? 's' : ''}
                       </Badge>
                     </div>
