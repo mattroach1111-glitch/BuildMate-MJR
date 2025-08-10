@@ -419,12 +419,12 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-    const totalHours = result[0]?.totalHours || "0";
+    const totalHours = result[0]?.totalHours || 0;
 
     // Update labor entry hours
     await db
       .update(laborEntries)
-      .set({ hoursLogged: totalHours.toString(), updatedAt: new Date() })
+      .set({ hoursLogged: totalHours, updatedAt: new Date() })
       .where(
         and(
           eq(laborEntries.staffId, staffId),
@@ -842,6 +842,8 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
+    let result: any;
+
     if (existing.length > 0) {
       // Update existing entry
       const [updated] = await db
@@ -851,10 +853,11 @@ export class DatabaseStorage implements IStorage {
           description: data.description,
           materials: data.materials,
           approved: data.approved || false,
+          updatedAt: new Date(),
         })
         .where(eq(timesheetEntries.id, existing[0].id))
         .returning();
-      return updated;
+      result = updated;
     } else {
       // Create new entry
       const [entry] = await db
@@ -869,8 +872,15 @@ export class DatabaseStorage implements IStorage {
           approved: data.approved || false,
         })
         .returning();
-      return entry;
+      result = entry;
     }
+
+    // Update labor hours for this staff/job combination
+    if (data.jobId) {
+      await this.updateLaborHoursFromTimesheet(data.staffId, data.jobId);
+    }
+
+    return result;
   }
 
   // Update timesheet entry
