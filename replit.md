@@ -52,6 +52,7 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 - ✅ **Smart Job Sorting (August 2025)**: Implemented comprehensive sorting functionality with dropdown selector offering Address (numerical), Client, Manager, and Status sorting options. Address sorting intelligently extracts numbers for proper numerical ordering (e.g., "2 Main St" before "10 Main St"), working seamlessly with search, grouping, and view mode features.
 - ✅ **Individual Timesheet Entry Clearing (August 2025)**: Added ability to clear individual daily timesheet entries with dedicated Clear buttons for each unapproved entry, including frontend mutations, backend API endpoints, and database methods with proper job hour updates.
 - ✅ **Timesheet Duplication Fix (August 2025)**: Resolved timesheet entry duplication issues by improving backend duplicate detection logic to only prevent true exact duplicates (same staff, date, job, hours, and materials) while allowing multiple different entries per day. Optimized frontend saving to use parallel requests instead of sequential saves.
+- ✅ **Google Drive Integration (January 2025)**: Implemented user-friendly OAuth flow for personal Google Drive connections, allowing timesheet PDFs to automatically save to "BuildFlow Pro Timesheets" folder. Added Settings tab to admin dashboard for Google Drive management. Requires Google Cloud Console OAuth setup with proper redirect URIs and consent screen configuration.
 
 # User Preferences
 
