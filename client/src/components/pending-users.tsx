@@ -51,6 +51,16 @@ export function PendingUsers() {
     },
   });
 
+  // Fetch all users for the dropdown (both assigned and unassigned)
+  const { data: allUsers, isLoading: allUsersLoading } = useQuery({
+    queryKey: ["/api/users"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/users");
+      const userData = await response.json();
+      return userData as User[];
+    },
+  });
+
   // Assign user to employee mutation
   const assignUserMutation = useMutation({
     mutationFn: async ({ userId, employeeId }: { userId: string; employeeId: string }) => {
@@ -96,7 +106,7 @@ export function PendingUsers() {
     });
   };
 
-  if (usersLoading || employeesLoading) {
+  if (usersLoading || employeesLoading || allUsersLoading) {
     return (
       <Card>
         <CardHeader>
@@ -140,7 +150,7 @@ export function PendingUsers() {
           Pending User Assignments
         </CardTitle>
         <CardDescription>
-          New users who need to be assigned to existing employees. Users must be assigned to access timesheets.
+          Users who have logged in but haven't been assigned to employee records yet. Assignment is required to access timesheets.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -201,20 +211,33 @@ export function PendingUsers() {
               <div className="grid gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Select Employee to Assign To:
+                    Match to Employee:
                   </label>
                   <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Choose an employee..." />
+                      <SelectValue placeholder="Choose employee to match..." />
                     </SelectTrigger>
                     <SelectContent>
+                      <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b">Existing Employees</div>
                       {employees?.map((employee) => (
                         <SelectItem key={employee.id} value={employee.id}>
                           {employee.name}
                         </SelectItem>
                       ))}
+                      <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-t mt-1">All Users (for reference)</div>
+                      {allUsers?.map((user) => (
+                        <SelectItem key={`user-${user.id}`} value={user.id} disabled>
+                          {user.firstName && user.lastName 
+                            ? `${user.firstName} ${user.lastName}` 
+                            : user.firstName || user.email} 
+                          {user.isAssigned ? " (already assigned)" : " (available)"}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Select an employee record to link this user account to
+                  </p>
                 </div>
 
                 <AlertDialog>
