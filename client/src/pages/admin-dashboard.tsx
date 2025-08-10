@@ -41,6 +41,7 @@ export default function AdminDashboard() {
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
   const [expandedManagers, setExpandedManagers] = useState<Set<string>>(new Set());
   const [groupBy, setGroupBy] = useState<'client' | 'manager' | 'none'>('client');
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -180,12 +181,24 @@ export default function AdminDashboard() {
     },
   });
 
-  // Group jobs by client or project manager
-  const groupedJobs = jobs ? (() => {
-    if (groupBy === 'none') return { 'All Jobs': jobs };
+  // Filter jobs based on search query
+  const filteredJobs = jobs ? jobs.filter(job => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      job.jobAddress.toLowerCase().includes(query) ||
+      job.clientName.toLowerCase().includes(query) ||
+      job.projectName.toLowerCase().includes(query) ||
+      job.status.toLowerCase().includes(query)
+    );
+  }) : [];
+
+  // Group filtered jobs by client or project manager
+  const groupedJobs = filteredJobs ? (() => {
+    if (groupBy === 'none') return { 'All Jobs': filteredJobs };
     
     if (groupBy === 'client') {
-      return jobs.reduce((groups, job) => {
+      return filteredJobs.reduce((groups, job) => {
         const client = job.clientName || 'Unknown Client';
         if (!groups[client]) groups[client] = [];
         groups[client].push(job);
@@ -194,8 +207,7 @@ export default function AdminDashboard() {
     }
     
     if (groupBy === 'manager') {
-      console.log('Grouping by manager, jobs:', jobs.map(j => ({ id: j.id, projectName: j.projectName })));
-      return jobs.reduce((groups, job) => {
+      return filteredJobs.reduce((groups, job) => {
         const manager = job.projectName || 'Unknown Manager';
         if (!groups[manager]) groups[manager] = [];
         groups[manager].push(job);
@@ -483,40 +495,46 @@ export default function AdminDashboard() {
             </Dialog>
           </div>
 
-          {/* Group By Controls */}
-          <div className="flex gap-2 mb-4 flex-wrap">
-            <Button 
-              variant={groupBy === 'client' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setGroupBy('client')}
-              data-testid="button-group-by-client"
-            >
-              <Folder className="h-4 w-4 mr-1" />
-              Group by Client
-            </Button>
-            <Button 
-              variant={groupBy === 'manager' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setGroupBy('manager')}
-              data-testid="button-group-by-manager"
-            >
-              <Folder className="h-4 w-4 mr-1" />
-              Group by Manager
-            </Button>
-            {/* Debug info */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="text-xs text-gray-500 p-2 bg-gray-100 rounded ml-auto">
-                Mode: {groupBy} | Groups: {Object.keys(groupedJobs).length}
-              </div>
-            )}
-            <Button 
-              variant={groupBy === 'none' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setGroupBy('none')}
-              data-testid="button-group-by-none"
-            >
-              No Grouping
-            </Button>
+          {/* Search and Group Controls */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+            <div className="flex-1">
+              <Input
+                placeholder="Search jobs by address, client, manager, or status..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full"
+                data-testid="input-search-jobs"
+              />
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <Button 
+                variant={groupBy === 'client' ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setGroupBy('client')}
+                data-testid="button-group-by-client"
+              >
+                <Folder className="h-4 w-4 mr-1" />
+                Group by Client
+              </Button>
+              <Button 
+                variant={groupBy === 'manager' ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setGroupBy('manager')}
+                data-testid="button-group-by-manager"
+              >
+                <Folder className="h-4 w-4 mr-1" />
+                Group by Manager
+              </Button>
+              <Button 
+                variant={groupBy === 'none' ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setGroupBy('none')}
+                data-testid="button-group-by-none"
+              >
+                No Grouping
+              </Button>
+            </div>
+
           </div>
 
           {/* Jobs Grid */}
@@ -535,7 +553,7 @@ export default function AdminDashboard() {
                 </Card>
               ))}
             </div>
-          ) : jobs && jobs.length > 0 ? (
+          ) : filteredJobs && filteredJobs.length > 0 ? (
             <div className="space-y-4">
               {Object.entries(groupedJobs).map(([groupName, groupJobs]) => {
                 const isExpanded = groupBy === 'client' ? expandedClients.has(groupName) : 
@@ -630,6 +648,17 @@ export default function AdminDashboard() {
                   </div>
                 );
               })}
+            </div>
+          ) : searchQuery ? (
+            <div className="text-center py-12">
+              <div className="text-gray-500 mb-4">No jobs found matching "{searchQuery}"</div>
+              <Button 
+                variant="outline" 
+                onClick={() => setSearchQuery("")}
+                data-testid="button-clear-search"
+              >
+                Clear Search
+              </Button>
             </div>
           ) : null}
 
