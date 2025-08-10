@@ -357,6 +357,13 @@ export default function AdminDashboard() {
   // Check if a group is the special "Ready for Billing" group
   const isReadyForBillingGroup = (groupName: string) => groupName === '🧾 Ready for Billing';
 
+  // Special state for Ready for Billing folder
+  const [readyForBillingExpanded, setReadyForBillingExpanded] = useState(true);
+
+  const toggleReadyForBillingExpanded = () => {
+    setReadyForBillingExpanded(!readyForBillingExpanded);
+  };
+
   // Auto-expand folders when switching to a grouping mode
   useEffect(() => {
     if (groupBy === 'client' && jobs) {
@@ -675,10 +682,10 @@ export default function AdminDashboard() {
           ) : filteredJobs && filteredJobs.length > 0 ? (
             <div className="space-y-4">
               {Object.entries(groupedJobs).map(([groupName, groupJobs]) => {
-                const isExpanded = isReadyForBillingGroup(groupName) ? true : // Always expand Ready for Billing
+                const isExpanded = isReadyForBillingGroup(groupName) ? readyForBillingExpanded :
                                  groupBy === 'client' ? expandedClients.has(groupName) : 
                                  groupBy === 'manager' ? expandedManagers.has(groupName) : true;
-                const toggleExpanded = isReadyForBillingGroup(groupName) ? () => {} : // Don't allow collapsing Ready for Billing
+                const toggleExpanded = isReadyForBillingGroup(groupName) ? toggleReadyForBillingExpanded :
                                      groupBy === 'client' ? () => toggleClientExpanded(groupName) :
                                      groupBy === 'manager' ? () => toggleManagerExpanded(groupName) : () => {};
                 
@@ -775,20 +782,18 @@ export default function AdminDashboard() {
                     }`}
                   >
                     <div 
-                      className={`flex items-center gap-2 p-2 rounded transition-colors ${
+                      className={`flex items-center gap-2 p-2 rounded transition-colors cursor-pointer ${
                         isReadyForBillingGroup(groupName)
-                          ? 'cursor-default bg-green-100'
-                          : 'cursor-pointer hover:bg-gray-100'
+                          ? 'bg-green-100 hover:bg-green-150'
+                          : 'hover:bg-gray-100'
                       }`}
                       onClick={toggleExpanded}
                       data-testid={`folder-${groupName}`}
                     >
-                      {!isReadyForBillingGroup(groupName) && (
-                        isExpanded ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )
+                      {isExpanded ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
                       )}
                       {isExpanded ? (
                         <FolderOpen className={`h-5 w-5 ${
