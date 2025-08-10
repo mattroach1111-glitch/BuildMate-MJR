@@ -285,7 +285,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             jobText = job?.jobAddress || 'Job not found';
           } else if (entry.materials) {
             // Check if materials contains leave type
-            const leaveTypes = {
+            const leaveTypes: { [key: string]: string } = {
               'sick-leave': 'Sick Leave',
               'personal-leave': 'Personal Leave', 
               'annual-leave': 'Annual Leave',

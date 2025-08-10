@@ -435,9 +435,10 @@ export class DatabaseStorage implements IStorage {
         jobId: timesheetEntries.jobId,
         date: timesheetEntries.date,
         hours: timesheetEntries.hours,
+        materials: timesheetEntries.materials,
         approved: timesheetEntries.approved,
         createdAt: timesheetEntries.createdAt,
-        staffName: sql`COALESCE(${users.firstName}, ${employees.name}, 'Unknown Staff')`.as('staffName'),
+        staffName: sql`COALESCE(${users.firstName}, ${users.email}, 'Unknown Staff')`.as('staffName'),
         staffEmail: users.email,
         jobAddress: jobs.jobAddress,
         clientName: jobs.clientName,
@@ -445,7 +446,6 @@ export class DatabaseStorage implements IStorage {
       })
       .from(timesheetEntries)
       .leftJoin(users, eq(timesheetEntries.staffId, users.id))
-      .leftJoin(employees, eq(timesheetEntries.staffId, employees.id))
       .leftJoin(jobs, eq(timesheetEntries.jobId, jobs.id))
       .orderBy(desc(timesheetEntries.date));
   }
