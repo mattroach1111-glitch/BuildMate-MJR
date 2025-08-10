@@ -121,7 +121,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       if (hourlyRate && hourlyRate.trim() !== '' && !isNaN(parseFloat(hourlyRate))) {
         updateLaborMutation.mutate({ id, hourlyRate });
       }
-    }, 1000), // Wait 1 second after user stops typing
+    }, 2000), // Wait 2 seconds after user stops typing for smoother experience
     [updateLaborMutation]
   );
 
@@ -134,8 +134,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
   const addOtherCostMutation = useMutation({
     mutationFn: async (data: { description: string; amount: string }) => {
-      const response = await apiRequest("POST", "/api/other-costs", {
-        jobId,
+      const response = await apiRequest("POST", `/api/jobs/${jobId}/othercosts`, {
         description: data.description,
         amount: data.amount,
       });
@@ -433,15 +432,18 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                                 min="0"
                                 value={localLaborRates[entry.id] || entry.hourlyRate}
                                 onChange={(e) => {
+                                  const newValue = e.target.value;
                                   // Update local state immediately for responsive UI
                                   setLocalLaborRates(prev => ({
                                     ...prev,
-                                    [entry.id]: e.target.value
+                                    [entry.id]: newValue
                                   }));
-                                  // Debounced update - waits 1 second after user stops typing
-                                  debouncedUpdateLaborRate(entry.id, e.target.value);
+                                  // Only save if it's a valid number
+                                  if (newValue && !isNaN(parseFloat(newValue))) {
+                                    debouncedUpdateLaborRate(entry.id, newValue);
+                                  }
                                 }}
-                                className="w-16 text-sm border-0 bg-transparent focus:bg-white focus:border focus:border-primary rounded px-1"
+                                className="w-20 text-sm border-0 bg-transparent focus:bg-white focus:border focus:border-primary rounded px-2 py-1"
                                 data-testid={`input-labor-rate-${entry.id}`}
                               />
                               <span className="text-sm text-gray-500">/hr</span>
