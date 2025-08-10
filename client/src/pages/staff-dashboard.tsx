@@ -195,6 +195,37 @@ export default function StaffDashboard() {
     setCurrentDate(newDate);
   };
 
+  // Generate array of all days in the current fortnight
+  const getFortnightDays = () => {
+    const days = [];
+    let currentDay = new Date(currentFortnight.start);
+    
+    while (currentDay <= currentFortnight.end) {
+      days.push(new Date(currentDay));
+      currentDay = addDays(currentDay, 1);
+    }
+    
+    return days;
+  };
+
+  // Get entries for a specific date
+  const getEntriesForDate = (date: Date) => {
+    return currentFortnightEntries.filter((entry: TimesheetEntry) => {
+      const entryDate = parseISO(entry.date);
+      return entryDate.toDateString() === date.toDateString();
+    });
+  };
+
+  // Check if a date has any entries
+  const hasEntriesForDate = (date: Date) => {
+    return getEntriesForDate(date).length > 0;
+  };
+
+  // Get total hours for a specific date
+  const getHoursForDate = (date: Date) => {
+    return getEntriesForDate(date).reduce((total, entry) => total + parseFloat(entry.hours), 0);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -303,12 +334,98 @@ export default function StaffDashboard() {
             <Card className="p-4">
               <div className="text-center">
                 <p className="text-lg font-bold text-gray-800">
-                  {(calculateTotalHours() / 10 * 100).toFixed(0)}%
+                  {(calculateTotalHours() / 80 * 100).toFixed(0)}%
                 </p>
                 <p className="text-xs text-gray-600">of 80h</p>
               </div>
             </Card>
           </div>
+
+          {/* Fortnight Calendar */}
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2" data-testid="text-calendar-title">
+                <Calendar className="h-5 w-5" />
+                Daily Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-7 gap-2 mb-4">
+                {/* Day headers */}
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+                  <div key={day} className="text-center text-xs font-medium text-gray-500 py-2">
+                    {day}
+                  </div>
+                ))}
+                
+                {/* Calendar days */}
+                {getFortnightDays().map((day, index) => {
+                  const hasEntries = hasEntriesForDate(day);
+                  const totalHours = getHoursForDate(day);
+                  const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+                  const isToday = day.toDateString() === new Date().toDateString();
+                  
+                  return (
+                    <div
+                      key={`day-${format(day, 'yyyy-MM-dd')}`}
+                      className={`
+                        relative p-3 rounded-lg border text-center transition-colors
+                        ${hasEntries 
+                          ? 'bg-green-50 border-green-200 hover:bg-green-100' 
+                          : isWeekend 
+                            ? 'bg-gray-50 border-gray-200' 
+                            : 'bg-red-50 border-red-200 hover:bg-red-100'
+                        }
+                        ${isToday ? 'ring-2 ring-blue-400' : ''}
+                      `}
+                      data-testid={`calendar-day-${format(day, 'yyyy-MM-dd')}`}
+                    >
+                      <div className={`
+                        text-sm font-medium
+                        ${hasEntries ? 'text-green-800' : isWeekend ? 'text-gray-600' : 'text-red-600'}
+                        ${isToday ? 'text-blue-600' : ''}
+                      `}>
+                        {format(day, 'd')}
+                      </div>
+                      {hasEntries && (
+                        <div className="text-xs text-green-600 font-medium mt-1">
+                          {totalHours}h
+                        </div>
+                      )}
+                      {!hasEntries && !isWeekend && (
+                        <div className="text-xs text-red-500 mt-1">
+                          -
+                        </div>
+                      )}
+                      {isToday && (
+                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full"></div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Legend */}
+              <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-gray-600 border-t pt-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-50 border border-green-200 rounded"></div>
+                  <span>Hours logged</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-red-50 border border-red-200 rounded"></div>
+                  <span>Missing entry</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-gray-50 border border-gray-200 rounded"></div>
+                  <span>Weekend</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <span>Today</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Timesheet Entry Form */}
           <Card>
