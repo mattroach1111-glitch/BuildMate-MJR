@@ -79,8 +79,8 @@ export default function AdminDashboard() {
     retry: false,
   });
 
-  // Get all users who can be staff (have role 'staff' or no role specified)
-  const { data: staffUsers, isLoading: staffUsersLoading } = useQuery<any[]>({
+  // Get all staff (users and employees) for timesheet assignment
+  const { data: staffForTimesheets, isLoading: staffUsersLoading } = useQuery<any[]>({
     queryKey: ["/api/staff-users"],
     retry: false,
   });
@@ -1178,14 +1178,9 @@ export default function AdminDashboard() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {staffUsers?.map((staff) => (
+                              {staffForTimesheets?.map((staff) => (
                                 <SelectItem key={staff.id} value={staff.id}>
-                                  {staff.firstName || staff.email}
-                                </SelectItem>
-                              ))}
-                              {(!staffUsers || staffUsers.length === 0) && employees?.map((employee) => (
-                                <SelectItem key={employee.id} value={employee.id}>
-                                  {employee.name} (Employee)
+                                  {staff.name} {staff.type === 'employee' ? '(Employee)' : '(User)'}
                                 </SelectItem>
                               ))}
                             </SelectContent>

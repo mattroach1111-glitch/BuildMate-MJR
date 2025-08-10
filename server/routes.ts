@@ -503,6 +503,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const validatedData = insertTimesheetEntrySchema.parse(req.body);
+      
+      // Check if staffId is a valid user, if not, create a user record for the employee
+      const existingUser = await storage.getUser(validatedData.staffId);
+      if (!existingUser) {
+        // Try to get employee data to create a user record
+        const employee = await storage.getEmployee(validatedData.staffId);
+        if (employee) {
+          // Create a user record for this employee
+          await storage.upsertUser({
+            id: employee.id,
+            email: `${employee.name.toLowerCase().replace(/\s+/g, '.')}@company.local`,
+            firstName: employee.name.split(' ')[0],
+            lastName: employee.name.split(' ').slice(1).join(' ') || '',
+            role: 'staff'
+          });
+        } else {
+          return res.status(400).json({ message: "Invalid staff member selected" });
+        }
+      }
+
       const entry = await storage.createTimesheetEntry(validatedData);
       res.status(201).json(entry);
     } catch (error) {
@@ -524,11 +544,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const staffUsers = await storage.getStaffUsers();
-      res.json(staffUsers);
+      const staffForTimesheets = await storage.getStaffForTimesheets();
+      res.json(staffForTimesheets);
     } catch (error) {
-      console.error("Error fetching staff users:", error);
-      res.status(500).json({ message: "Failed to fetch staff users" });
+      console.error("Error fetching staff for timesheets:", error);
+      res.status(500).json({ message: "Failed to fetch staff" });
     }
   });
 

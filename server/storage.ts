@@ -434,6 +434,29 @@ export class DatabaseStorage implements IStorage {
       .orderBy(users.firstName);
   }
 
+  // Get combined list of users and employees for timesheet assignment
+  async getStaffForTimesheets(): Promise<Array<{ id: string; name: string; type: 'user' | 'employee' }>> {
+    const [usersResult, employeesResult] = await Promise.all([
+      db.select().from(users).where(ne(users.role, 'admin')),
+      db.select().from(employees)
+    ]);
+
+    const result = [
+      ...usersResult.map(user => ({
+        id: user.id,
+        name: user.firstName || user.email || 'Unknown',
+        type: 'user' as const
+      })),
+      ...employeesResult.map(employee => ({
+        id: employee.id,
+        name: employee.name,
+        type: 'employee' as const
+      }))
+    ];
+
+    return result.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
   async getJobsForStaff(): Promise<Job[]> {
     return await db
       .select()
