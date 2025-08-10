@@ -504,7 +504,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                               <SelectValue placeholder="Select or add client" />
                             </SelectTrigger>
                             <SelectContent>
-                              {clientNames.map((client) => (
+                              {clientNames.filter(client => client && client.trim() !== '').map((client) => (
                                 <SelectItem key={client} value={client}>
                                   {client}
                                 </SelectItem>
@@ -567,7 +567,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                               <SelectValue placeholder="Select or add project manager" />
                             </SelectTrigger>
                             <SelectContent>
-                              {projectManagers.map((manager) => (
+                              {projectManagers.filter(manager => manager && manager.trim() !== '').map((manager) => (
                                 <SelectItem key={manager} value={manager}>
                                   {manager}
                                 </SelectItem>

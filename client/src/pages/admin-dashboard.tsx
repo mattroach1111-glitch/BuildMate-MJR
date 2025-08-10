@@ -92,6 +92,16 @@ export default function AdminDashboard() {
     retry: false,
   });
 
+  // Safely filter valid staff members
+  const validStaff = staffForTimesheets?.filter(staff => 
+    staff && 
+    typeof staff === 'object' && 
+    staff.id && 
+    typeof staff.id === 'string' && 
+    staff.id.trim() !== '' &&
+    staff.name
+  ) || [];
+
   // Filter timesheets based on selected employee and date range
   const filteredTimesheets = allTimesheets?.filter((entry: any) => {
     const employeeMatch = selectedEmployeeFilter === "all" || entry.staffId === selectedEmployeeFilter;
@@ -742,7 +752,7 @@ export default function AdminDashboard() {
                                       <SelectValue placeholder="Select or add client" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {clientNames.map((client) => (
+                                      {clientNames.filter(client => client && client.trim() !== '').map((client) => (
                                         <SelectItem key={client} value={client}>
                                           {client}
                                         </SelectItem>
@@ -816,7 +826,7 @@ export default function AdminDashboard() {
                                       <SelectValue placeholder="Select or add project manager" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {projectManagers.map((manager) => (
+                                      {projectManagers.filter(manager => manager && manager.trim() !== '').map((manager) => (
                                         <SelectItem key={manager} value={manager}>
                                           {manager}
                                         </SelectItem>
@@ -1388,7 +1398,7 @@ export default function AdminDashboard() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {staffForTimesheets?.map((staff) => (
+                              {validStaff.map((staff) => (
                                 <SelectItem key={`staff-${staff.id}-${staff.type}`} value={staff.id}>
                                   {staff.name} {staff.type === 'employee' ? '(Employee)' : '(User)'}
                                 </SelectItem>
@@ -1412,7 +1422,7 @@ export default function AdminDashboard() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {jobs?.map((job) => (
+                              {jobs?.filter(job => job.id && job.id.trim() !== '').map((job) => (
                                 <SelectItem key={job.id} value={job.id}>
                                   {job.jobAddress}
                                 </SelectItem>
@@ -1503,16 +1513,17 @@ export default function AdminDashboard() {
                       <SelectItem value="all" className="font-medium text-primary">
                         📊 All Staff Members
                       </SelectItem>
-                      {staffForTimesheets?.map((staff) => {
+                      {validStaff.length > 0 ? validStaff.map((staff) => {
+                        const staffId = staff.id || `staff-${Math.random().toString(36).substr(2, 9)}`;
                         const staffEntries = allTimesheets?.filter(entry => entry.staffId === staff.id) || [];
                         const totalHours = staffEntries.reduce((total, entry) => total + parseFloat(entry.hours || 0), 0);
                         const approvedEntries = staffEntries.filter(entry => entry.approved).length;
                         
                         return (
-                          <SelectItem key={`filter-${staff.id}`} value={staff.id}>
+                          <SelectItem key={`filter-${staffId}`} value={staffId}>
                             <div className="flex items-center justify-between w-full min-w-0">
                               <div className="flex items-center gap-2 min-w-0">
-                                <span className="font-medium truncate">{staff.name}</span>
+                                <span className="font-medium truncate">{staff.name || 'Unknown Staff'}</span>
                                 <span className="text-xs text-muted-foreground flex-shrink-0">
                                   ({staff.type === 'employee' ? 'Employee' : 'User'})
                                 </span>
@@ -1523,7 +1534,11 @@ export default function AdminDashboard() {
                             </div>
                           </SelectItem>
                         );
-                      })}
+                      }) : (
+                        <SelectItem value="no-staff" disabled>
+                          No staff members found
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1585,10 +1600,10 @@ export default function AdminDashboard() {
                         </div>
                         <div>
                           <h3 className="text-xl font-bold text-blue-900 dark:text-blue-100">
-                            {staffForTimesheets?.find(s => s.id === selectedEmployeeFilter)?.name || 'Selected Employee'}
+                            {validStaff.find(s => s.id === selectedEmployeeFilter)?.name || 'Selected Employee'}
                           </h3>
                           <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                            {staffForTimesheets?.find(s => s.id === selectedEmployeeFilter)?.type === 'employee' ? 'Employee' : 'User'} • Individual Timesheet View
+                            {validStaff.find(s => s.id === selectedEmployeeFilter)?.type === 'employee' ? 'Employee' : 'User'} • Individual Timesheet View
                           </p>
                         </div>
                       </div>
