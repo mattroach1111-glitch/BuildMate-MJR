@@ -5,6 +5,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService } from "./objectStorage";
 import { TimesheetPDFGenerator } from "./pdfGenerator";
 import { GoogleDriveService } from "./googleDriveService";
+import { GoogleDriveAuth } from "./googleAuth";
 import {
   insertJobSchema,
   insertEmployeeSchema,
@@ -45,22 +46,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/auth/google/callback', async (req, res) => {
+  app.get('/api/google-drive/callback', async (req: any, res) => {
     try {
       const { code } = req.query;
       if (!code) {
         return res.status(400).json({ message: "Authorization code required" });
       }
 
-      const googleDriveService = new GoogleDriveService();
-      const tokens = await googleDriveService.authorize(code as string);
+      const googleAuth = new GoogleDriveAuth();
+      const tokens = await googleAuth.getTokens(code as string);
       
-      // Store tokens in user's session or database
-      // For now, we'll redirect with a success message
-      res.redirect('/?google_drive_connected=true');
+      // Store tokens in user's database record
+      if (req.user?.id) {
+        await storage.updateUserGoogleDriveTokens(req.user.id, JSON.stringify(tokens));
+      }
+      
+      // Redirect back to the admin dashboard settings tab
+      res.redirect('/?tab=settings&google_drive_connected=true');
     } catch (error) {
       console.error("Error handling Google Drive callback:", error);
-      res.redirect('/?google_drive_error=true');
+      res.redirect('/?tab=settings&google_drive_error=true');
     }
   });
 
