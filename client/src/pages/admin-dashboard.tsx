@@ -286,7 +286,7 @@ export default function AdminDashboard() {
     mutationFn: async (data: z.infer<typeof adminTimesheetFormSchema>) => {
       const response = await apiRequest("POST", "/api/admin/timesheet", {
         ...data,
-        hours: parseFloat(data.hours),
+        hours: data.hours, // Keep as string for schema validation
       });
       return response.json();
     },

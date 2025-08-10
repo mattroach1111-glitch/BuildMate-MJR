@@ -214,6 +214,8 @@ export const insertSubTradeSchema = createInsertSchema(subTrades).omit({
 export const insertTimesheetEntrySchema = createInsertSchema(timesheetEntries).omit({
   id: true,
   createdAt: true,
+}).extend({
+  hours: z.string().or(z.number()).transform(val => String(val)),
 });
 
 // Types
