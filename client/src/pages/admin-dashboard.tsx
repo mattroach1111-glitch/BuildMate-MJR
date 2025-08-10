@@ -19,7 +19,7 @@ import { insertJobSchema, insertEmployeeSchema, insertTimesheetEntrySchema } fro
 import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw, Grid3X3, List } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
@@ -68,6 +68,7 @@ export default function AdminDashboard() {
   const [folderColors, setFolderColors] = useState<Record<string, number>>({});
   const [colorPickerOpen, setColorPickerOpen] = useState<string | null>(null);
   const [isDeletedFolderExpanded, setIsDeletedFolderExpanded] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -1290,6 +1291,26 @@ export default function AdminDashboard() {
               />
             </div>
             <div className="flex gap-2 flex-wrap">
+              <div className="flex items-center gap-1 border rounded-md p-1">
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className="h-8 w-8 p-0"
+                  data-testid="button-grid-view"
+                >
+                  <Grid3X3 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className="h-8 w-8 p-0"
+                  data-testid="button-list-view"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
               <Button 
                 variant={groupBy === 'client' ? 'default' : 'outline'} 
                 size="sm"
@@ -1349,81 +1370,160 @@ export default function AdminDashboard() {
                 // Show individual jobs if no grouping or only one group
                 if (groupBy === 'none' || Object.keys(groupedJobs).length === 1) {
                   return (
-                    <div key={groupName} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {groupJobs.map((job) => (
-                        <Card 
-                          key={job.id} 
-                          className="cursor-pointer hover:shadow-md transition-shadow relative"
-                          onClick={() => setSelectedJob(job.id)}
-                          data-testid={`card-job-${job.id}`}
-                        >
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start justify-between">
-                              <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
-                              <div className="flex items-center gap-2 shrink-0">
-                                <div onClick={(e) => e.stopPropagation()}>
-                                  <Select 
-                                    value={job.status} 
-                                    onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
-                                  >
-                                    <SelectTrigger 
-                                      className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
-                                      data-testid={`select-status-${job.id}`}
+                    <div key={groupName} className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-2"}>
+                      {groupJobs.map((job) => 
+                        viewMode === 'grid' ? (
+                          <Card 
+                            key={job.id} 
+                            className="cursor-pointer hover:shadow-md transition-shadow relative"
+                            onClick={() => setSelectedJob(job.id)}
+                            data-testid={`card-job-${job.id}`}
+                          >
+                            <CardHeader className="pb-3">
+                              <div className="flex items-start justify-between">
+                                <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <div onClick={(e) => e.stopPropagation()}>
+                                    <Select 
+                                      value={job.status} 
+                                      onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
                                     >
-                                      <Badge className={`${getStatusColor(job.status)} text-xs`}>
-                                        {formatStatus(job.status)}
-                                      </Badge>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="new_job">New Job</SelectItem>
-                                      <SelectItem value="job_in_progress">Job In Progress</SelectItem>
-                                      <SelectItem value="job_complete">Job Complete</SelectItem>
-                                      <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                      <SelectTrigger 
+                                        className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
+                                        data-testid={`select-status-${job.id}`}
+                                      >
+                                        <Badge className={`${getStatusColor(job.status)} text-xs`}>
+                                          {formatStatus(job.status)}
+                                        </Badge>
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="new_job">New Job</SelectItem>
+                                        <SelectItem value="job_in_progress">Job In Progress</SelectItem>
+                                        <SelectItem value="job_complete">Job Complete</SelectItem>
+                                        <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  {job.status === 'ready_for_billing' && (
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm" 
+                                          className="h-7 w-7 p-0"
+                                          onClick={(e) => e.stopPropagation()}
+                                          data-testid={`menu-${job.id}`}
+                                        >
+                                          <MoreVertical className="h-3 w-3" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+                                              deleteJobMutation.mutate(job.id);
+                                            }
+                                          }}
+                                          className="text-red-600 focus:text-red-600"
+                                          data-testid={`delete-job-${job.id}`}
+                                        >
+                                          <Trash2 className="h-4 w-4 mr-2" />
+                                          Delete Job
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  )}
                                 </div>
-                                {job.status === 'ready_for_billing' && (
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="sm" 
-                                        className="h-7 w-7 p-0"
-                                        onClick={(e) => e.stopPropagation()}
-                                        data-testid={`menu-${job.id}`}
-                                      >
-                                        <MoreVertical className="h-3 w-3" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuItem 
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
-                                            deleteJobMutation.mutate(job.id);
-                                          }
-                                        }}
-                                        className="text-red-600 focus:text-red-600"
-                                        data-testid={`delete-job-${job.id}`}
-                                      >
-                                        <Trash2 className="h-4 w-4 mr-2" />
-                                        Delete Job
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                )}
                               </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            <p className="text-sm text-muted-foreground mb-2">PM: {job.projectName}</p>
-                            <div className="text-xs text-muted-foreground">
-                              Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                              <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                              <p className="text-sm text-muted-foreground mb-2">PM: {job.projectName}</p>
+                              <div className="text-xs text-muted-foreground">
+                                Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ) : (
+                          <Card 
+                            key={job.id} 
+                            className="cursor-pointer hover:shadow-md transition-shadow relative"
+                            onClick={() => setSelectedJob(job.id)}
+                            data-testid={`card-job-${job.id}`}
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-4">
+                                    <div>
+                                      <h3 className="font-semibold text-lg">{job.jobAddress}</h3>
+                                      <p className="text-sm text-muted-foreground">{job.clientName} • PM: {job.projectName}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3 shrink-0">
+                                  <div className="text-xs text-muted-foreground text-right">
+                                    <div>Rate: ${job.defaultHourlyRate}/hr</div>
+                                    <div>Margin: {job.builderMargin}%</div>
+                                  </div>
+                                  <div onClick={(e) => e.stopPropagation()}>
+                                    <Select 
+                                      value={job.status} 
+                                      onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
+                                    >
+                                      <SelectTrigger 
+                                        className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
+                                        data-testid={`select-status-${job.id}`}
+                                      >
+                                        <Badge className={`${getStatusColor(job.status)} text-xs`}>
+                                          {formatStatus(job.status)}
+                                        </Badge>
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="new_job">New Job</SelectItem>
+                                        <SelectItem value="job_in_progress">Job In Progress</SelectItem>
+                                        <SelectItem value="job_complete">Job Complete</SelectItem>
+                                        <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  {job.status === 'ready_for_billing' && (
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm" 
+                                          className="h-7 w-7 p-0"
+                                          onClick={(e) => e.stopPropagation()}
+                                          data-testid={`menu-${job.id}`}
+                                        >
+                                          <MoreVertical className="h-3 w-3" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+                                              deleteJobMutation.mutate(job.id);
+                                            }
+                                          }}
+                                          className="text-red-600 focus:text-red-600"
+                                          data-testid={`delete-job-${job.id}`}
+                                        >
+                                          <Trash2 className="h-4 w-4 mr-2" />
+                                          Delete Job
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )
+                      )}
                     </div>
                   );
                 }
@@ -1510,14 +1610,15 @@ export default function AdminDashboard() {
                     </div>
                     
                     {isExpanded && (
-                      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {groupJobs.map((job) => (
-                          <Card 
-                            key={job.id} 
-                            className="cursor-pointer hover:shadow-md transition-shadow bg-white relative"
-                            onClick={() => setSelectedJob(job.id)}
-                            data-testid={`card-job-${job.id}`}
-                          >
+                      <div className={`mt-4 ${viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-2"}`}>
+                        {groupJobs.map((job) => 
+                          viewMode === 'grid' ? (
+                            <Card 
+                              key={job.id} 
+                              className="cursor-pointer hover:shadow-md transition-shadow bg-white relative"
+                              onClick={() => setSelectedJob(job.id)}
+                              data-testid={`card-job-${job.id}`}
+                            >
                             <CardHeader className="pb-3">
                               <div className="flex items-start justify-between">
                                 <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
@@ -1583,8 +1684,86 @@ export default function AdminDashboard() {
                                 Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
                               </div>
                             </CardContent>
-                          </Card>
-                        ))}
+                            </Card>
+                          ) : (
+                            <Card 
+                              key={job.id} 
+                              className="cursor-pointer hover:shadow-md transition-shadow bg-white relative"
+                              onClick={() => setSelectedJob(job.id)}
+                              data-testid={`card-job-${job.id}`}
+                            >
+                              <CardContent className="p-4">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-4">
+                                      <div>
+                                        <h3 className="font-semibold text-lg">{job.jobAddress}</h3>
+                                        <p className="text-sm text-muted-foreground">{job.clientName} • PM: {job.projectName}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-3 shrink-0">
+                                    <div className="text-xs text-muted-foreground text-right">
+                                      <div>Rate: ${job.defaultHourlyRate}/hr</div>
+                                      <div>Margin: {job.builderMargin}%</div>
+                                    </div>
+                                    <div onClick={(e) => e.stopPropagation()}>
+                                      <Select 
+                                        value={job.status} 
+                                        onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
+                                      >
+                                        <SelectTrigger 
+                                          className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
+                                          data-testid={`select-status-${job.id}`}
+                                        >
+                                          <Badge className={`${getStatusColor(job.status)} text-xs`}>
+                                            {formatStatus(job.status)}
+                                          </Badge>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="new_job">New Job</SelectItem>
+                                          <SelectItem value="job_in_progress">Job In Progress</SelectItem>
+                                          <SelectItem value="job_complete">Job Complete</SelectItem>
+                                          <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    {job.status === 'ready_for_billing' && (
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="h-7 w-7 p-0"
+                                            onClick={(e) => e.stopPropagation()}
+                                            data-testid={`menu-${job.id}`}
+                                          >
+                                            <MoreVertical className="h-3 w-3" />
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                          <DropdownMenuItem 
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+                                                deleteJobMutation.mutate(job.id);
+                                              }
+                                            }}
+                                            className="text-red-600 focus:text-red-600"
+                                            data-testid={`delete-job-${job.id}`}
+                                          >
+                                            <Trash2 className="h-4 w-4 mr-2" />
+                                            Delete Job
+                                          </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
+                                    )}
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )
+                        )}
                       </div>
                     )}
                   </div>
