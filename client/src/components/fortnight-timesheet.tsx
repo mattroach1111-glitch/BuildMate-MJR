@@ -181,6 +181,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   };
 
   const saveAllEntries = async () => {
+    console.log('Save All clicked, timesheetData:', timesheetData);
     const entriesToSave: any[] = [];
     
     Object.entries(timesheetData).forEach(([dateKey, dayEntries]) => {
@@ -197,6 +198,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         });
       }
     });
+
+    console.log('Entries to save:', entriesToSave);
 
     if (entriesToSave.length === 0) {
       toast({
@@ -227,9 +230,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         }
       } catch (error) {
         console.error('Error saving entry:', error);
+        console.error('Failed entry data:', entriesToSave[i]);
         toast({
           title: "Save Error",
-          description: `Failed to save some entries. Error: ${error}`,
+          description: `Failed to save entry ${i + 1}. Check console for details.`,
           variant: "destructive",
         });
         return;
