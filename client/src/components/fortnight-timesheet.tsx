@@ -91,15 +91,20 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       
       if (isAdminView && selectedEmployee) {
         // In admin view, filter by the selected employee's ID
-        return isInFortnight && entry.staffId === selectedEmployee;
+        const result = isInFortnight && entry.staffId === selectedEmployee;
+        console.log('Admin filter:', { entryStaffId: entry.staffId, selectedEmployee, isInFortnight, result });
+        return result;
       }
       
+      console.log('Staff filter:', { entryDate: entry.date, isInFortnight, fortnightStart: format(fortnightStart, 'yyyy-MM-dd'), fortnightEnd: format(fortnightEnd, 'yyyy-MM-dd') });
       return isInFortnight;
     } catch (error) {
       console.error('Error filtering timesheet entry:', error, entry);
       return false;
     }
   }) : [];
+
+  console.log('Current fortnight entries:', currentFortnightEntries);
 
   const updateTimesheetMutation = useMutation({
     mutationFn: async (data: any) => {

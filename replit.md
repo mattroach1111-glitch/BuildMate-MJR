@@ -36,6 +36,7 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 - ✅ **Auto-Save Timesheet**: Removed individual save buttons, implemented automatic saving when hours and job are entered with 1-second debounce
 - ✅ **Timesheet Confirmation**: Added confirmation section at bottom requiring final approval before uploading hours to job sheets with warning about edit restrictions
 - ✅ **Timesheet Bug Fixes (January 2025)**: Resolved critical issues with staff name display, timesheet data loading, job selection authentication, and total hours calculation for accurate timesheet functionality
+- ✅ **Duplicate Entry Resolution (August 2025)**: Completely redesigned auto-save system with manual "Save All" functionality to eliminate duplicate timesheet entries and provide better user control over data saving
 - ✅ **Admin Extra Hours Management**: Added admin-only functionality to manually add extra hours to job sheets outside of timesheet entries for additional work, overtime, and adjustments. Includes dedicated "Add Extra Hours" column in labor section with input fields and buttons for each staff member.
 - ✅ **Modern UI/UX Redesign (January 2025)**: Complete interface overhaul with professional navigation system, consistent PageLayout component, BuildFlow Pro branding, and improved mobile responsiveness for better user experience.
 - ✅ **Enhanced Navigation**: Added back navigation from timesheet view to dashboard, making it easier for admins and staff to move between sections without getting lost.
