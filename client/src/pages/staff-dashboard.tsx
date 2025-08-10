@@ -220,7 +220,7 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
 
   const getJobTitle = (jobId: string) => {
     const job = (jobs as Job[])?.find((j: Job) => j.id === jobId);
-    return job ? `${job.projectName} - ${job.clientName}` : "Unknown Job";
+    return job ? job.jobAddress : "Unknown Job";
   };
 
   // Filter entries for current fortnight
@@ -527,7 +527,7 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
                               ) : (
                                 (jobs as Job[]).map((job: Job) => (
                                   <SelectItem key={job.id} value={job.id}>
-                                    {job.projectName} - {job.clientName}
+                                    {job.jobAddress}
                                   </SelectItem>
                                 ))
                               )}

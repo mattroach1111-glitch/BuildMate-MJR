@@ -589,10 +589,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getJobsForStaff(): Promise<Job[]> {
-    // Return all jobs for timesheet selection - staff can log hours against any job
+    // Return all active jobs for timesheet selection - staff can log hours against any active job
     return await db
       .select()
       .from(jobs)
+      .where(or(eq(jobs.isDeleted, false), isNull(jobs.isDeleted)))
       .orderBy(jobs.jobAddress);
   }
 
