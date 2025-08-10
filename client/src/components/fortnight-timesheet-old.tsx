@@ -82,7 +82,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/timesheet"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/timesheets"] });
       toast({
         title: "Success",
         description: "Timesheet updated successfully",
@@ -100,7 +99,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const handleCellChange = (date: Date, entryIndex: number, field: string, value: string) => {
     const dateKey = format(date, 'yyyy-MM-dd');
     setTimesheetData((prev: any) => {
-      const dayEntries = Array.isArray(prev[dateKey]) ? prev[dateKey] : [];
+      const dayEntries = prev[dateKey] || [];
       const updatedEntries = [...dayEntries];
       
       if (!updatedEntries[entryIndex]) {
@@ -121,7 +120,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   const handleSaveEntry = (date: Date, entryIndex: number) => {
     const dateKey = format(date, 'yyyy-MM-dd');
-    const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
+    const dayEntries = timesheetData[dateKey] || [];
     const data = dayEntries[entryIndex];
     
     if (!data?.hours || parseFloat(data.hours) <= 0) {
@@ -144,7 +143,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const addJobEntry = (date: Date) => {
     const dateKey = format(date, 'yyyy-MM-dd');
     setTimesheetData((prev: any) => {
-      const dayEntries = Array.isArray(prev[dateKey]) ? prev[dateKey] : [];
+      const dayEntries = prev[dateKey] || [];
       return {
         ...prev,
         [dateKey]: [...dayEntries, { hours: '', jobId: 'no-job', materials: '' }]
@@ -155,12 +154,18 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const removeJobEntry = (date: Date, entryIndex: number) => {
     const dateKey = format(date, 'yyyy-MM-dd');
     setTimesheetData((prev: any) => {
-      const dayEntries = Array.isArray(prev[dateKey]) ? prev[dateKey] : [];
+      const dayEntries = prev[dateKey] || [];
       return {
         ...prev,
         [dateKey]: dayEntries.filter((_: any, index: number) => index !== entryIndex)
       };
     });
+  };
+
+  const getEntryForDate = (date: Date) => {
+    return currentFortnightEntries.find((entry: any) => 
+      format(parseISO(entry.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+    );
   };
 
   const getTotalHours = () => {
@@ -333,7 +338,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             <CardContent className="p-4">
               <div className="text-center">
                 <p className="text-2xl font-bold">{currentFortnightEntries.length}</p>
-                <p className="text-sm text-muted-foreground">Entries</p>
+                <p className="text-sm text-muted-foreground">Days Worked</p>
               </div>
             </CardContent>
           </Card>
@@ -380,7 +385,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   {fortnightDays.map((day, dayIndex) => {
                     const dateKey = format(day, 'yyyy-MM-dd');
                     const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-                    const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
+                    const dayEntries = timesheetData[dateKey] || [];
                     const existingEntries = currentFortnightEntries.filter((entry: any) => 
                       format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
                     );
@@ -472,7 +477,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 variant="outline"
                                 onClick={() => addJobEntry(day)}
                               >
-                                <Plus className="h-4 w-4" />
+                                + Job
                               </Button>
                             )}
                             {entryIndex > 0 && (
@@ -481,7 +486,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 variant="destructive"
                                 onClick={() => removeJobEntry(day, entryIndex)}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                Remove
                               </Button>
                             )}
                           </div>

@@ -31,6 +31,8 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 - ✅ **Job Edit Dropdowns**: Added project manager and client name dropdown menus to job editing with add new functionality matching the job creation interface
 - ✅ **Admin Staff View Access**: Added dedicated "Staff View" tab in admin dashboard allowing admins to preview the staff experience without switching accounts
 - ✅ **Enhanced Staff Timesheet Dropdown**: Improved staff selection with individual statistics showing total hours, entry counts, and approval ratios for quick assessment
+- ✅ **Removed Description Field**: Eliminated description field from timesheet entries as requested for simplified data entry
+- ✅ **Multiple Jobs Per Day**: Complete timesheet redesign supporting multiple job entries per day with add/remove functionality and separate hours tracking per job
 
 # User Preferences
 
