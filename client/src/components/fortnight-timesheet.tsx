@@ -260,9 +260,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               <p className="text-muted-foreground">
                 {format(currentFortnight.start, 'MMM dd, yyyy')} - {format(currentFortnight.end, 'MMM dd, yyyy')}
               </p>
-              {isAdminView && selectedEmployee && Array.isArray(staffMembers) && (
+              {isAdminView && selectedEmployee && Array.isArray(staffMembers) && staffMembers.length > 0 && (
                 <p className="text-sm text-primary font-medium bg-blue-50 px-2 py-1 rounded">
-                  Viewing: {staffMembers.find((s: any) => s.id === selectedEmployee)?.firstName} {staffMembers.find((s: any) => s.id === selectedEmployee)?.lastName}'s Timesheet
+                  Viewing: {(() => {
+                    const selected = staffMembers.find((s: any) => s.id === selectedEmployee);
+                    return selected ? `${selected.name || 'Unknown Staff Member'}'s Timesheet` : 'Unknown Staff Member\'s Timesheet';
+                  })()}
                 </p>
               )}
             </div>
@@ -314,30 +317,43 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     setTimesheetData({});
                   }}>
                     <SelectTrigger data-testid="select-employee-timesheet" className="mt-1">
-                      <SelectValue placeholder="Choose a staff member...">
-                        {selectedEmployee && Array.isArray(staffMembers) ? 
-                          `${staffMembers.find((s: any) => s.id === selectedEmployee)?.firstName} ${staffMembers.find((s: any) => s.id === selectedEmployee)?.lastName}` : 
-                          "Choose a staff member..."
-                        }
-                      </SelectValue>
+                      <SelectValue placeholder="Choose a staff member..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {Array.isArray(staffMembers) ? staffMembers.filter((staff: any) => staff.id && staff.id.trim() !== '').map((staff: any) => (
-                        <SelectItem key={staff.id} value={staff.id}>
-                          {staff.firstName} {staff.lastName}
-                        </SelectItem>
-                      )) : []}
+                      {Array.isArray(staffMembers) && staffMembers.length > 0 ? 
+                        staffMembers.filter((staff: any) => staff.id && staff.id.trim() !== '').map((staff: any) => (
+                          <SelectItem key={staff.id} value={staff.id}>
+                            {staff.name || 'No Name'}
+                          </SelectItem>
+                        )) : (
+                          <SelectItem value="no-staff" disabled>No staff members found</SelectItem>
+                        )
+                      }
                     </SelectContent>
                   </Select>
                 </div>
-                {selectedEmployee && Array.isArray(staffMembers) && (
+                {selectedEmployee && Array.isArray(staffMembers) && staffMembers.length > 0 && (
                   <div className="flex items-center p-3 bg-green-50 border border-green-200 rounded-md">
                     <div className="text-sm">
                       <p className="font-medium text-green-800">
-                        Currently Selected: {staffMembers.find((s: any) => s.id === selectedEmployee)?.firstName} {staffMembers.find((s: any) => s.id === selectedEmployee)?.lastName}
+                        Currently Selected: {(() => {
+                          const selected = staffMembers.find((s: any) => s.id === selectedEmployee);
+                          return selected ? selected.name || 'Unknown Staff Member' : 'Unknown Staff Member';
+                        })()}
                       </p>
                       <p className="text-green-600">Viewing their timesheet data below</p>
                     </div>
+                  </div>
+                )}
+                
+                {/* Debug info for development */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="mt-2 p-2 bg-gray-100 text-xs">
+                    <p>Debug: Selected Employee ID: {selectedEmployee || 'None'}</p>
+                    <p>Debug: Staff Members Count: {Array.isArray(staffMembers) ? staffMembers.length : 'Not loaded'}</p>
+                    {Array.isArray(staffMembers) && staffMembers.length > 0 && (
+                      <p>Debug: First Staff Member: {JSON.stringify(staffMembers[0])}</p>
+                    )}
                   </div>
                 )}
               </div>
