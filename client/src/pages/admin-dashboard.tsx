@@ -501,8 +501,8 @@ export default function AdminDashboard() {
   }, [groupBy]);
 
   // Get unique project managers and clients from existing jobs
-  const projectManagers = jobs ? [...new Set(jobs.map(job => job.projectName).filter(Boolean))] : [];
-  const clientNames = jobs ? [...new Set(jobs.map(job => job.clientName).filter(Boolean))] : [];
+  const projectManagers = jobs ? Array.from(new Set(jobs.map(job => job.projectName).filter(Boolean))) : [];
+  const clientNames = jobs ? Array.from(new Set(jobs.map(job => job.clientName).filter(Boolean))) : [];
 
   const handleAddProjectManager = () => {
     if (newProjectManagerName.trim()) {
@@ -1375,7 +1375,7 @@ export default function AdminDashboard() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Job</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                             <FormControl>
                               <SelectTrigger data-testid="select-job">
                                 <SelectValue placeholder="Select job" />
