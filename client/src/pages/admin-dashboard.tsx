@@ -2089,7 +2089,7 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="border rounded-lg bg-muted/30 p-1" data-testid="container-staff-preview">
-            <StaffDashboard />
+            <StaffDashboard isAdminView={true} />
           </div>
         </TabsContent>
         </Tabs>

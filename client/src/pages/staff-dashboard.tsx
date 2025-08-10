@@ -24,7 +24,11 @@ const timesheetFormSchema = insertTimesheetEntrySchema.extend({
   hours: z.string().min(1, "Hours is required"),
 }).omit({ staffId: true });
 
-export default function StaffDashboard() {
+interface StaffDashboardProps {
+  isAdminView?: boolean;
+}
+
+export default function StaffDashboard({ isAdminView = false }: StaffDashboardProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   
@@ -74,7 +78,8 @@ export default function StaffDashboard() {
 
   const createEntryMutation = useMutation({
     mutationFn: async (data: z.infer<typeof timesheetFormSchema>) => {
-      const response = await apiRequest("POST", "/api/timesheet", {
+      const endpoint = isAdminView ? "/api/admin/timesheet" : "/api/timesheet";
+      const response = await apiRequest("POST", endpoint, {
         ...data,
         hours: parseFloat(data.hours),
       });

@@ -102,7 +102,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   const updateTimesheetMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest("POST", "/api/timesheet", data);
+      const endpoint = isAdminView ? "/api/admin/timesheet" : "/api/timesheet";
+      return await apiRequest("POST", endpoint, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/timesheet"] });
