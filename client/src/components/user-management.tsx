@@ -50,10 +50,18 @@ export function UserManagement() {
       return apiRequest("PATCH", `/api/users/${userId}/role`, { role });
     },
     onSuccess: () => {
+      // Invalidate both user management and auth user queries
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      
+      const promotedUser = users?.find(u => u.id === selectedUserId);
+      const wasPromotedToAdmin = selectedRole === 'admin';
+      
       toast({
         title: "Role Updated",
-        description: "User role has been successfully updated.",
+        description: wasPromotedToAdmin 
+          ? `${promotedUser?.firstName} has been promoted to Admin. They should refresh their browser to see the admin dashboard.`
+          : `${promotedUser?.firstName}'s role has been updated to Staff.`,
       });
       setSelectedUserId("");
       setSelectedRole("staff");
