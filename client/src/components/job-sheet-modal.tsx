@@ -19,7 +19,7 @@ interface JobSheetModalProps {
 }
 
 interface JobDetails extends Job {
-  laborEntries: LaborEntry[];
+  laborEntries: (LaborEntry & { staff?: { name: string } })[];
   materials: Material[];
   subTrades: SubTrade[];
   otherCosts: OtherCost[];
@@ -29,6 +29,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const { toast } = useToast();
   const [builderMargin, setBuilderMargin] = useState("25");
   const [defaultHourlyRate, setDefaultHourlyRate] = useState("50");
+  const [localLaborRates, setLocalLaborRates] = useState<Record<string, string>>({});
 
   const { data: jobDetails, isLoading } = useQuery<JobDetails>({
     queryKey: ["/api/jobs", jobId],
@@ -207,6 +208,12 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     if (jobDetails) {
       setBuilderMargin(jobDetails.builderMargin);
       setDefaultHourlyRate(jobDetails.defaultHourlyRate);
+      // Initialize local labor rates
+      const rates: Record<string, string> = {};
+      jobDetails.laborEntries.forEach(entry => {
+        rates[entry.id] = entry.hourlyRate;
+      });
+      setLocalLaborRates(rates);
     }
   }, [jobDetails]);
 
@@ -214,7 +221,8 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     if (!jobDetails) return { laborTotal: 0, materialsTotal: 0, subTradesTotal: 0, otherCostsTotal: 0, subtotal: 0, marginAmount: 0, subtotalWithMargin: 0, gstAmount: 0, total: 0 };
 
     const laborTotal = jobDetails.laborEntries.reduce((sum, entry) => {
-      return sum + (parseFloat(entry.hourlyRate) * parseFloat(entry.hoursLogged));
+      const currentRate = localLaborRates[entry.id] || entry.hourlyRate;
+      return sum + (parseFloat(currentRate) * parseFloat(entry.hoursLogged));
     }, 0);
 
     const materialsTotal = jobDetails.materials.reduce((sum, material) => {
@@ -254,12 +262,16 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   // Auto-save handlers for job settings
   const handleBuilderMarginChange = (value: string) => {
     setBuilderMargin(value);
-    debouncedUpdateJobSettings({ builderMargin: parseFloat(value) });
+    if (value && !isNaN(parseFloat(value))) {
+      debouncedUpdateJobSettings({ builderMargin: value });
+    }
   };
 
   const handleDefaultRateChange = (value: string) => {
     setDefaultHourlyRate(value);
-    debouncedUpdateJobSettings({ defaultHourlyRate: parseFloat(value) });
+    if (value && !isNaN(parseFloat(value))) {
+      debouncedUpdateJobSettings({ defaultHourlyRate: value });
+    }
   };
 
   const handleDownloadPDF = async () => {
@@ -381,8 +393,13 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                                 type="number"
                                 step="0.01"
                                 min="0"
-                                value={entry.hourlyRate}
+                                value={localLaborRates[entry.id] || entry.hourlyRate}
                                 onChange={(e) => {
+                                  // Update local state immediately for responsive UI
+                                  setLocalLaborRates(prev => ({
+                                    ...prev,
+                                    [entry.id]: e.target.value
+                                  }));
                                   // Debounced update - waits 1 second after user stops typing
                                   debouncedUpdateLaborRate(entry.id, e.target.value);
                                 }}
@@ -399,7 +416,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                           </td>
                           <td className="py-3">
                             <span className="font-semibold text-primary" data-testid={`text-labor-total-${entry.id}`}>
-                              ${(parseFloat(entry.hourlyRate) * parseFloat(entry.hoursLogged)).toFixed(2)}
+                              ${(parseFloat(localLaborRates[entry.id] || entry.hourlyRate) * parseFloat(entry.hoursLogged)).toFixed(2)}
                             </span>
                           </td>
                         </tr>
