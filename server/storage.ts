@@ -272,6 +272,35 @@ export class DatabaseStorage implements IStorage {
       );
   }
 
+  async addExtraHoursToLaborEntry(laborEntryId: string, extraHours: string): Promise<LaborEntry> {
+    // Get current labor entry
+    const [currentEntry] = await db
+      .select()
+      .from(laborEntries)
+      .where(eq(laborEntries.id, laborEntryId));
+
+    if (!currentEntry) {
+      throw new Error("Labor entry not found");
+    }
+
+    // Add extra hours to current hours
+    const currentHours = parseFloat(currentEntry.hoursLogged) || 0;
+    const additionalHours = parseFloat(extraHours);
+    const newTotalHours = (currentHours + additionalHours).toString();
+
+    // Update the labor entry with new total hours
+    const [updatedEntry] = await db
+      .update(laborEntries)
+      .set({ 
+        hoursLogged: newTotalHours, 
+        updatedAt: new Date() 
+      })
+      .where(eq(laborEntries.id, laborEntryId))
+      .returning();
+
+    return updatedEntry;
+  }
+
   // Material operations
   async getMaterialsForJob(jobId: string): Promise<Material[]> {
     return await db

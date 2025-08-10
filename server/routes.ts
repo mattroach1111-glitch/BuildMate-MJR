@@ -234,6 +234,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/labor-entries/:id/add-extra-hours", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { extraHours } = req.body;
+      if (!extraHours || isNaN(parseFloat(extraHours)) || parseFloat(extraHours) <= 0) {
+        return res.status(400).json({ message: "Valid extra hours amount required" });
+      }
+
+      const laborEntry = await storage.addExtraHoursToLaborEntry(req.params.id, extraHours);
+      res.json(laborEntry);
+    } catch (error) {
+      console.error("Error adding extra hours:", error);
+      res.status(500).json({ message: "Failed to add extra hours" });
+    }
+  });
+
   app.post("/api/jobs/:jobId/labor", isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);

@@ -43,6 +43,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const [newClientName, setNewClientName] = useState("");
   const [isAddingNewProjectManager, setIsAddingNewProjectManager] = useState(false);
   const [newProjectManagerName, setNewProjectManagerName] = useState("");
+  const [extraHours, setExtraHours] = useState<Record<string, string>>({});
 
   const { data: jobDetails, isLoading } = useQuery<JobDetails>({
     queryKey: ["/api/jobs", jobId],
@@ -174,6 +175,40 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
+    },
+  });
+
+  const addExtraHoursMutation = useMutation({
+    mutationFn: async ({ laborEntryId, extraHours }: { laborEntryId: string; extraHours: string }) => {
+      await apiRequest(`/api/labor-entries/${laborEntryId}/add-extra-hours`, {
+        method: "PATCH",
+        body: JSON.stringify({ extraHours }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
+      toast({
+        title: "Success",
+        description: "Extra hours added successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to add extra hours",
+        variant: "destructive",
+      });
     },
   });
 
@@ -456,6 +491,31 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     setIsEditing(false);
   };
 
+  const handleAddExtraHours = (laborEntryId: string) => {
+    const hoursToAdd = extraHours[laborEntryId];
+    if (!hoursToAdd || parseFloat(hoursToAdd) <= 0) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid number of hours",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    addExtraHoursMutation.mutate({ 
+      laborEntryId, 
+      extraHours: hoursToAdd 
+    }, {
+      onSuccess: () => {
+        // Clear the input after successful addition
+        setExtraHours(prev => ({
+          ...prev,
+          [laborEntryId]: ""
+        }));
+      }
+    });
+  };
+
   const totals = calculateTotals();
 
   if (!isOpen) return null;
@@ -725,6 +785,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                         <th className="pb-3">Staff Member</th>
                         <th className="pb-3">Hourly Rate</th>
                         <th className="pb-3">Hours Logged</th>
+                        <th className="pb-3">Add Extra Hours</th>
                         <th className="pb-3">Total</th>
                       </tr>
                     </thead>
@@ -771,6 +832,34 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                             <span className="text-sm text-gray-600 font-medium" data-testid={`text-labor-hours-${entry.id}`}>
                               {entry.hoursLogged} hrs
                             </span>
+                          </td>
+                          <td className="py-3">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="number"
+                                step="0.5"
+                                min="0"
+                                placeholder="0"
+                                value={extraHours[entry.id] || ""}
+                                onChange={(e) => {
+                                  setExtraHours(prev => ({
+                                    ...prev,
+                                    [entry.id]: e.target.value
+                                  }));
+                                }}
+                                className="w-16 text-sm border border-gray-300 rounded px-2 py-1"
+                                data-testid={`input-extra-hours-${entry.id}`}
+                              />
+                              <Button
+                                size="sm"
+                                onClick={() => handleAddExtraHours(entry.id)}
+                                disabled={!extraHours[entry.id] || parseFloat(extraHours[entry.id]) <= 0 || addExtraHoursMutation.isPending}
+                                className="h-8 px-2 text-xs"
+                                data-testid={`button-add-extra-hours-${entry.id}`}
+                              >
+                                {addExtraHoursMutation.isPending ? "..." : "Add"}
+                              </Button>
+                            </div>
                           </td>
                           <td className="py-3">
                             <span className="font-semibold text-primary" data-testid={`text-labor-total-${entry.id}`}>
