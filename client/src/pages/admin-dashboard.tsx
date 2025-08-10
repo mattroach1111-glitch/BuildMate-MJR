@@ -1591,14 +1591,7 @@ export default function AdminDashboard() {
                                   )}
                                 </div>
                               </div>
-                              <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
                             </CardHeader>
-                            <CardContent className="pt-0">
-                              <p className="text-sm text-muted-foreground mb-2">PM: {job.projectName}</p>
-                              <div className="text-xs text-muted-foreground">
-                                Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
-                              </div>
-                            </CardContent>
                           </Card>
                         ) : (
                           <Card 
@@ -1613,15 +1606,10 @@ export default function AdminDashboard() {
                                   <div className="flex items-center gap-4">
                                     <div>
                                       <h3 className="font-semibold text-lg">{job.jobAddress}</h3>
-                                      <p className="text-sm text-muted-foreground">{job.clientName} • PM: {job.projectName}</p>
                                     </div>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-3 shrink-0">
-                                  <div className="text-xs text-muted-foreground text-right">
-                                    <div>Rate: ${job.defaultHourlyRate}/hr</div>
-                                    <div>Margin: {job.builderMargin}%</div>
-                                  </div>
                                   <div onClick={(e) => e.stopPropagation()}>
                                     <Select 
                                       value={job.status} 
@@ -1831,14 +1819,7 @@ export default function AdminDashboard() {
                                   )}
                                 </div>
                               </div>
-                              <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
                             </CardHeader>
-                            <CardContent className="pt-0">
-                              <p className="text-sm text-muted-foreground mb-2">PM: {job.projectName}</p>
-                              <div className="text-xs text-muted-foreground">
-                                Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
-                              </div>
-                            </CardContent>
                             </Card>
                           ) : (
                             <Card 
@@ -1853,15 +1834,10 @@ export default function AdminDashboard() {
                                     <div className="flex items-center gap-4">
                                       <div>
                                         <h3 className="font-semibold text-lg">{job.jobAddress}</h3>
-                                        <p className="text-sm text-muted-foreground">{job.clientName} • PM: {job.projectName}</p>
                                       </div>
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-3 shrink-0">
-                                    <div className="text-xs text-muted-foreground text-right">
-                                      <div>Rate: ${job.defaultHourlyRate}/hr</div>
-                                      <div>Margin: {job.builderMargin}%</div>
-                                    </div>
                                     <div onClick={(e) => e.stopPropagation()}>
                                       <Select 
                                         value={job.status} 
