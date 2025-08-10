@@ -557,12 +557,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertTimesheetEntrySchema.parse(req.body);
       
+      console.log("Admin creating timesheet entry for staffId:", validatedData.staffId);
+      console.log("Admin user ID:", userId);
+      
       // Check if staffId is a valid user, if not, create a user record for the employee
       const existingUser = await storage.getUser(validatedData.staffId);
       if (!existingUser) {
         // Try to get employee data to create a user record
         const employee = await storage.getEmployee(validatedData.staffId);
         if (employee) {
+          console.log("Creating user record for employee:", employee.name);
           // Create a user record for this employee
           await storage.upsertUser({
             id: employee.id,
@@ -574,9 +578,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           return res.status(400).json({ message: "Invalid staff member selected" });
         }
+      } else {
+        console.log("Using existing user:", existingUser.firstName || existingUser.email);
       }
 
       const entry = await storage.createAdminTimesheetEntry(validatedData);
+      console.log("Created timesheet entry with staffId:", entry.staffId);
       res.status(201).json(entry);
     } catch (error) {
       if (error instanceof z.ZodError) {
