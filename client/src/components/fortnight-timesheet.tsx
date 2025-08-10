@@ -198,6 +198,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     Object.entries(timesheetData).forEach(([dateKey, dayEntries]) => {
       if (Array.isArray(dayEntries)) {
         dayEntries.forEach((entry, index) => {
+          console.log('Processing entry:', entry);
           if (entry.hours && parseFloat(entry.hours) > 0 && entry.jobId && entry.jobId !== 'no-job') {
             const entryData: any = {
               date: dateKey,
@@ -211,13 +212,16 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               entryData.staffId = selectedEmployee;
             }
             
+            console.log('Adding entry to save:', entryData);
             entriesToSave.push(entryData);
+          } else {
+            console.log('Skipping entry - missing required fields:', { hours: entry.hours, jobId: entry.jobId });
           }
         });
       }
     });
 
-    console.log('Entries to save:', entriesToSave);
+    console.log('Total entries to save:', entriesToSave.length, entriesToSave);
 
     if (entriesToSave.length === 0) {
       toast({
@@ -440,6 +444,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               variant="default"
               disabled={updateTimesheetMutation.isPending}
               className="bg-green-600 hover:bg-green-700"
+              data-testid="button-save-all-timesheet"
             >
               <Save className="h-4 w-4 mr-2" />
               {updateTimesheetMutation.isPending ? 'Saving...' : 'Save All'}
