@@ -706,18 +706,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getStaffUsers(): Promise<User[]> {
-    // Return all users except admins - this allows both staff role and users without role specified
+    // Return all assigned users (both staff and admin who are assigned to employees)
+    // This allows admins who work in the field to appear in staff lists
     return await db
       .select()
       .from(users)
-      .where(ne(users.role, 'admin'))
+      .where(eq(users.isAssigned, true))
       .orderBy(users.firstName);
   }
 
   // Get combined list of users and employees for timesheet assignment
   async getStaffForTimesheets(): Promise<Array<{ id: string; name: string; type: 'user' | 'employee' }>> {
     const [usersResult, employeesResult] = await Promise.all([
-      db.select().from(users).where(ne(users.role, 'admin')),
+      db.select().from(users).where(eq(users.isAssigned, true)), // Include assigned users regardless of admin/staff role
       db.select().from(employees)
     ]);
 
