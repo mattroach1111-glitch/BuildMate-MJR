@@ -9,12 +9,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { insertTimesheetEntrySchema } from "@shared/schema";
 import { z } from "zod";
 import type { Job, TimesheetEntry } from "@shared/schema";
+import { Calendar, Clock, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { format, addDays, startOfWeek, endOfWeek, isSameWeek, parseISO } from "date-fns";
 
 const timesheetFormSchema = insertTimesheetEntrySchema.extend({
   hours: z.string().min(1, "Hours is required"),
@@ -23,6 +26,22 @@ const timesheetFormSchema = insertTimesheetEntrySchema.extend({
 export default function StaffDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+  
+  // Current fortnight state
+  const [currentDate, setCurrentDate] = useState(new Date());
+  
+  // Get fortnight boundaries (2-week periods starting from Monday)
+  const getFortnightBoundaries = (date: Date) => {
+    const startOfCurrentWeek = startOfWeek(date, { weekStartsOn: 1 }); // Monday
+    // Find which fortnight we're in (even or odd week number)
+    const weeksSinceEpoch = Math.floor((startOfCurrentWeek.getTime() - new Date(2024, 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000));
+    const fortnightStart = weeksSinceEpoch % 2 === 0 ? startOfCurrentWeek : addDays(startOfCurrentWeek, -7);
+    const fortnightEnd = addDays(fortnightStart, 13);
+    
+    return { start: fortnightStart, end: fortnightEnd };
+  };
+  
+  const currentFortnight = getFortnightBoundaries(currentDate);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -141,19 +160,24 @@ export default function StaffDashboard() {
     return job ? `${job.projectName} - ${job.clientName}` : "Unknown Job";
   };
 
+  // Filter entries for current fortnight
+  const currentFortnightEntries = (timesheetEntries as TimesheetEntry[] || []).filter((entry: TimesheetEntry) => {
+    const entryDate = parseISO(entry.date);
+    return entryDate >= currentFortnight.start && entryDate <= currentFortnight.end;
+  });
+
   const calculateTotalHours = () => {
-    if (!timesheetEntries) return 0;
-    return (timesheetEntries as TimesheetEntry[]).reduce((total: number, entry: TimesheetEntry) => {
+    return currentFortnightEntries.reduce((total: number, entry: TimesheetEntry) => {
       return total + parseFloat(entry.hours);
     }, 0);
   };
 
   const getJobSummary = () => {
-    if (!timesheetEntries || !jobs) return [];
+    if (!jobs) return [];
     
     const summary: Record<string, { jobTitle: string; totalHours: number }> = {};
     
-    (timesheetEntries as TimesheetEntry[]).forEach((entry: TimesheetEntry) => {
+    currentFortnightEntries.forEach((entry: TimesheetEntry) => {
       if (!summary[entry.jobId]) {
         summary[entry.jobId] = {
           jobTitle: getJobTitle(entry.jobId),
@@ -164,6 +188,11 @@ export default function StaffDashboard() {
     });
     
     return Object.values(summary);
+  };
+
+  const navigateFortnight = (direction: 'prev' | 'next') => {
+    const newDate = addDays(currentDate, direction === 'next' ? 14 : -14);
+    setCurrentDate(newDate);
   };
 
   if (isLoading) {
@@ -178,231 +207,333 @@ export default function StaffDashboard() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center space-x-4">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4">
+          <div className="flex items-center space-x-3">
             <div className="bg-primary text-white rounded-lg w-10 h-10 flex items-center justify-center">
-              <i className="fas fa-hard-hat"></i>
+              <Clock className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-800" data-testid="text-app-name">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-800" data-testid="text-app-name">
                 BuildFlow Pro
               </h1>
-              <p className="text-sm text-gray-600" data-testid="text-dashboard-type">
+              <p className="text-xs sm:text-sm text-gray-600" data-testid="text-dashboard-type">
                 Staff Portal
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600" data-testid="text-user-info">
-              {(user as any)?.firstName || (user as any)?.email} (Staff)
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <span className="text-xs sm:text-sm text-gray-600 hidden sm:block" data-testid="text-user-info">
+              {(user as any)?.firstName || (user as any)?.email}
             </span>
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={handleLogout}
               data-testid="button-logout"
+              className="p-2"
             >
-              <i className="fas fa-sign-out-alt"></i>
+              <span className="sr-only">Logout</span>
+              ←
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto p-6">
-        <div className="space-y-6">
-          {/* Header */}
+      <main className="max-w-4xl mx-auto p-4 sm:p-6">
+        <div className="space-y-4 sm:space-y-6">
+          {/* Period Navigation */}
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-800" data-testid="text-page-title">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4" data-testid="text-page-title">
               My Timesheet
             </h2>
-            <p className="text-gray-600" data-testid="text-timesheet-period">
-              Current Period: {new Date().toLocaleDateString()} - Ongoing
-            </p>
+            <div className="flex items-center justify-center space-x-4 mb-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigateFortnight('prev')}
+                data-testid="button-prev-fortnight"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="hidden sm:inline ml-1">Previous</span>
+              </Button>
+              <div className="text-center">
+                <p className="font-semibold text-gray-800" data-testid="text-timesheet-period">
+                  {format(currentFortnight.start, 'MMM d')} - {format(currentFortnight.end, 'MMM d, yyyy')}
+                </p>
+                <p className="text-xs text-gray-500">Fortnight Period</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigateFortnight('next')}
+                data-testid="button-next-fortnight"
+              >
+                <span className="hidden sm:inline mr-1">Next</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Quick Hours Summary */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <Card className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-primary" data-testid="text-total-hours">
+                  {calculateTotalHours()}h
+                </p>
+                <p className="text-xs text-gray-600">Total Hours</p>
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-gray-800">
+                  {currentFortnightEntries.length}
+                </p>
+                <p className="text-xs text-gray-600">Entries</p>
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-gray-800">
+                  {getJobSummary().length}
+                </p>
+                <p className="text-xs text-gray-600">Jobs</p>
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-center">
+                <p className="text-lg font-bold text-gray-800">
+                  {(calculateTotalHours() / 10 * 100).toFixed(0)}%
+                </p>
+                <p className="text-xs text-gray-600">of 80h</p>
+              </div>
+            </Card>
           </div>
 
           {/* Timesheet Entry Form */}
           <Card>
-            <CardHeader>
-              <CardTitle data-testid="text-add-entry-title">Add Time Entry</CardTitle>
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2" data-testid="text-add-entry-title">
+                <Plus className="h-5 w-5" />
+                Add Time Entry
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Date</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="date" 
-                            {...field} 
-                            data-testid="input-date"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="jobId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Job</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Date</FormLabel>
                           <FormControl>
-                            <SelectTrigger data-testid="select-job">
-                              <SelectValue placeholder="Select Job" />
-                            </SelectTrigger>
+                            <Input 
+                              type="date" 
+                              {...field} 
+                              data-testid="input-date"
+                              className="text-base"
+                            />
                           </FormControl>
-                          <SelectContent>
-                            {jobsLoading ? (
-                              <SelectItem value="loading" disabled>Loading jobs...</SelectItem>
-                            ) : !jobs || (jobs as Job[]).length === 0 ? (
-                              <SelectItem value="no-jobs" disabled>No jobs available</SelectItem>
-                            ) : (
-                              (jobs as Job[]).map((job: Job) => (
-                                <SelectItem key={job.id} value={job.id}>
-                                  {job.projectName} - {job.clientName}
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="hours"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Hours</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            step="0.5" 
-                            min="0" 
-                            max="12" 
-                            placeholder="8.0" 
-                            {...field} 
-                            data-testid="input-hours"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="flex items-end">
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-primary hover:bg-blue-700"
-                      disabled={createEntryMutation.isPending}
-                      data-testid="button-add-entry"
-                    >
-                      <i className="fas fa-plus mr-2"></i>
-                      {createEntryMutation.isPending ? "Adding..." : "Add Entry"}
-                    </Button>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="jobId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Job</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-job" className="text-base">
+                                <SelectValue placeholder="Select Job" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {jobsLoading ? (
+                                <SelectItem value="loading" disabled>Loading jobs...</SelectItem>
+                              ) : !jobs || (jobs as Job[]).length === 0 ? (
+                                <SelectItem value="no-jobs" disabled>No jobs available</SelectItem>
+                              ) : (
+                                (jobs as Job[]).map((job: Job) => (
+                                  <SelectItem key={job.id} value={job.id}>
+                                    {job.projectName} - {job.clientName}
+                                  </SelectItem>
+                                ))
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="hours"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Hours</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              step="0.5" 
+                              min="0" 
+                              max="12" 
+                              placeholder="8.0" 
+                              {...field} 
+                              data-testid="input-hours"
+                              className="text-base"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex items-end">
+                      <Button 
+                        type="submit" 
+                        className="w-full bg-primary hover:bg-blue-700 h-10"
+                        disabled={createEntryMutation.isPending}
+                        data-testid="button-add-entry"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        {createEntryMutation.isPending ? "Adding..." : "Add"}
+                      </Button>
+                    </div>
                   </div>
                 </form>
               </Form>
             </CardContent>
           </Card>
 
-          {/* Current Period Summary */}
+          {/* Time Entries */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle data-testid="text-entries-title">Current Period Entries</CardTitle>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">Total Hours</p>
-                  <p className="text-2xl font-bold text-primary" data-testid="text-total-hours">
-                    {calculateTotalHours()}
-                  </p>
-                </div>
-              </div>
+              <CardTitle className="flex items-center gap-2" data-testid="text-entries-title">
+                <Calendar className="h-5 w-5" />
+                Time Entries
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {entriesLoading ? (
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
-              ) : !timesheetEntries || (timesheetEntries as TimesheetEntry[]).length === 0 ? (
+              ) : currentFortnightEntries.length === 0 ? (
                 <div className="text-center py-8 text-gray-500" data-testid="text-no-entries">
-                  No time entries found. Add your first entry to get started.
+                  <Clock className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                  <p>No time entries for this fortnight.</p>
+                  <p className="text-sm">Add your first entry above to get started.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
-                          Date
-                        </th>
-                        <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
-                          Job
-                        </th>
-                        <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
-                          Hours
-                        </th>
-                        <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {(timesheetEntries as TimesheetEntry[]).map((entry: TimesheetEntry) => (
-                        <tr key={entry.id}>
-                          <td className="px-6 py-4 text-sm text-gray-800" data-testid={`text-entry-date-${entry.id}`}>
-                            {new Date(entry.date).toLocaleDateString()}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-600" data-testid={`text-entry-job-${entry.id}`}>
-                            {getJobTitle(entry.jobId)}
-                          </td>
-                          <td className="px-6 py-4 text-sm font-semibold text-gray-800" data-testid={`text-entry-hours-${entry.id}`}>
-                            {entry.hours}
-                          </td>
-                          <td className="px-6 py-4">
+                <>
+                  {/* Mobile-friendly entry cards */}
+                  <div className="space-y-3 sm:hidden">
+                    {currentFortnightEntries.map((entry: TimesheetEntry) => (
+                      <div key={entry.id} className="bg-white border rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <p className="font-medium text-gray-800" data-testid={`text-entry-date-${entry.id}`}>
+                              {format(parseISO(entry.date), 'EEE, MMM d')}
+                            </p>
+                            <p className="text-sm text-gray-600" data-testid={`text-entry-job-${entry.id}`}>
+                              {getJobTitle(entry.jobId)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant="secondary" className="mb-2">
+                              {entry.hours}h
+                            </Badge>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDeleteEntry(entry.id)}
                               disabled={deleteEntryMutation.isPending}
                               data-testid={`button-delete-entry-${entry.id}`}
+                              className="p-1 h-8 w-8 text-red-500"
                             >
-                              <i className="fas fa-trash text-error"></i>
+                              <Trash2 className="h-4 w-4" />
                             </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Summary by Job */}
-              {timesheetEntries && (timesheetEntries as TimesheetEntry[]).length > 0 ? (
-                <div className="mt-6 p-6 bg-gray-50 rounded-lg">
-                  <h4 className="font-semibold text-gray-800 mb-3" data-testid="text-job-summary-title">
-                    Hours by Job
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {getJobSummary().map((summary, index) => (
-                      <div key={index} className="bg-white rounded-lg p-4" data-testid={`card-job-summary-${index}`}>
-                        <p className="text-sm text-gray-600" data-testid={`text-job-title-${index}`}>
-                          {summary.jobTitle}
-                        </p>
-                        <p className="text-xl font-bold text-primary" data-testid={`text-job-hours-${index}`}>
-                          {summary.totalHours} hrs
-                        </p>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
-                </div>
-              ) : null}
+
+                  {/* Desktop table */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                            Date
+                          </th>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                            Job
+                          </th>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                            Hours
+                          </th>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {currentFortnightEntries.map((entry: TimesheetEntry) => (
+                          <tr key={entry.id}>
+                            <td className="px-4 py-3 text-sm text-gray-800" data-testid={`text-entry-date-${entry.id}`}>
+                              {format(parseISO(entry.date), 'EEE, MMM d')}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600" data-testid={`text-entry-job-${entry.id}`}>
+                              {getJobTitle(entry.jobId)}
+                            </td>
+                            <td className="px-4 py-3" data-testid={`text-entry-hours-${entry.id}`}>
+                              <Badge variant="secondary">{entry.hours}h</Badge>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteEntry(entry.id)}
+                                disabled={deleteEntryMutation.isPending}
+                                data-testid={`button-delete-entry-${entry.id}`}
+                                className="p-1 h-8 w-8 text-red-500"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Job Summary */}
+                  {getJobSummary().length > 0 && (
+                    <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                      <h4 className="font-semibold text-gray-800 mb-3" data-testid="text-job-summary-title">
+                        Hours by Job
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {getJobSummary().map((summary, index) => (
+                          <div key={index} className="bg-white rounded-lg p-3" data-testid={`card-job-summary-${index}`}>
+                            <p className="text-sm text-gray-600 truncate" data-testid={`text-job-title-${index}`}>
+                              {summary.jobTitle}
+                            </p>
+                            <p className="text-lg font-bold text-primary" data-testid={`text-job-hours-${index}`}>
+                              {summary.totalHours}h
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
