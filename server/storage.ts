@@ -45,7 +45,6 @@ export interface IStorage {
   createJob(job: InsertJob): Promise<Job>;
   updateJob(id: string, job: Partial<InsertJob>): Promise<Job>;
   updateJobStatus(id: string, status: "new_job" | "job_in_progress" | "job_complete" | "ready_for_billing"): Promise<Job>;
-  updateJobOrder(jobIds: string[]): Promise<void>;
   deleteJob(id: string): Promise<void>;
   
   // Labor entry operations
@@ -191,18 +190,6 @@ export class DatabaseStorage implements IStorage {
       .where(eq(jobs.id, id))
       .returning();
     return updatedJob;
-  }
-
-  async updateJobOrder(jobIds: string[]): Promise<void> {
-    // Update sort order for each job
-    const updatePromises = jobIds.map((jobId, index) => 
-      db
-        .update(jobs)
-        .set({ sortOrder: index, updatedAt: new Date() })
-        .where(eq(jobs.id, jobId))
-    );
-
-    await Promise.all(updatePromises);
   }
 
   async deleteJob(id: string): Promise<void> {
