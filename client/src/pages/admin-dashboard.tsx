@@ -300,15 +300,26 @@ export default function AdminDashboard() {
     },
   });
 
-  const approveTimesheetMutation = useMutation({
-    mutationFn: async ({ id, approved }: { id: string; approved: boolean }) => {
-      await apiRequest("PATCH", `/api/admin/timesheet/${id}/approve`, { approved });
+  const approveFortnightMutation = useMutation({
+    mutationFn: async ({ staffId, fortnightStart, fortnightEnd, approved }: { 
+      staffId: string; 
+      fortnightStart: string; 
+      fortnightEnd: string; 
+      approved: boolean; 
+    }) => {
+      await apiRequest("PATCH", `/api/admin/timesheet/approve-fortnight`, { 
+        staffId, 
+        fortnightStart, 
+        fortnightEnd, 
+        approved 
+      });
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/timesheets"] });
+      const action = variables.approved ? "approved" : "unapproved";
       toast({
         title: "Success",
-        description: "Timesheet approval updated",
+        description: `Fortnight timesheet ${action} successfully`,
       });
     },
     onError: (error) => {
@@ -325,7 +336,7 @@ export default function AdminDashboard() {
       }
       toast({
         title: "Error",
-        description: "Failed to update timesheet approval",
+        description: "Failed to update fortnight approval",
         variant: "destructive",
       });
     },
@@ -1695,22 +1706,33 @@ export default function AdminDashboard() {
                           <Button
                             size="sm"
                             variant={entry.approved ? "outline" : "default"}
-                            onClick={() => approveTimesheetMutation.mutate({ 
-                              id: entry.id, 
-                              approved: !entry.approved 
-                            })}
-                            disabled={approveTimesheetMutation.isPending}
+                            onClick={() => {
+                              // Use fortnightly approval - calculate fortnight period from entry date
+                              const entryDate = new Date(entry.date);
+                              const fortnightStart = new Date(entryDate);
+                              fortnightStart.setDate(entryDate.getDate() - entryDate.getDay() + 1); // Start of fortnight (Monday)
+                              const fortnightEnd = new Date(fortnightStart);
+                              fortnightEnd.setDate(fortnightStart.getDate() + 13); // End of fortnight (Sunday)
+                              
+                              approveFortnightMutation.mutate({
+                                staffId: entry.staffId,
+                                fortnightStart: fortnightStart.toISOString().split('T')[0],
+                                fortnightEnd: fortnightEnd.toISOString().split('T')[0],
+                                approved: !entry.approved
+                              });
+                            }}
+                            disabled={approveFortnightMutation.isPending}
                             data-testid={`button-approve-timesheet-${entry.id}`}
                           >
                             {entry.approved ? (
                               <>
                                 <XCircle className="h-4 w-4 mr-2" />
-                                Unapprove
+                                Unapprove Fortnight
                               </>
                             ) : (
                               <>
                                 <CheckCircle className="h-4 w-4 mr-2" />
-                                Approve
+                                Approve Fortnight
                               </>
                             )}
                           </Button>

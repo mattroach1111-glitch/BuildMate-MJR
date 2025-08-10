@@ -375,7 +375,9 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     // Update labor hours for this staff/job combination
-    await this.updateLaborHoursFromTimesheet(entry.staffId, entry.jobId);
+    if (entry.jobId) {
+      await this.updateLaborHoursFromTimesheet(entry.staffId, entry.jobId);
+    }
 
     return createdEntry;
   }
@@ -390,7 +392,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(timesheetEntries).where(eq(timesheetEntries.id, id));
 
     // Update labor hours after deletion
-    if (entry) {
+    if (entry && entry.jobId) {
       await this.updateLaborHoursFromTimesheet(entry.staffId, entry.jobId);
     }
   }
@@ -423,6 +425,19 @@ export class DatabaseStorage implements IStorage {
       .update(timesheetEntries)
       .set({ approved })
       .where(eq(timesheetEntries.id, id));
+  }
+
+  async updateFortnightApproval(staffId: string, fortnightStart: string, fortnightEnd: string, approved: boolean): Promise<void> {
+    await db
+      .update(timesheetEntries)
+      .set({ approved })
+      .where(
+        and(
+          eq(timesheetEntries.staffId, staffId),
+          gte(timesheetEntries.date, fortnightStart),
+          lte(timesheetEntries.date, fortnightEnd)
+        )
+      );
   }
 
   async getStaffUsers(): Promise<User[]> {
@@ -511,8 +526,8 @@ export class DatabaseStorage implements IStorage {
       .orderBy(timesheetEntries.date);
   }
 
-  // Create/update timesheet entry
-  async createTimesheetEntry(data: any): Promise<any> {
+  // Admin method to create timesheet entry with flexible data
+  async createAdminTimesheetEntry(data: any): Promise<any> {
     // Check if entry already exists for this date and staff
     const existing = await db
       .select()

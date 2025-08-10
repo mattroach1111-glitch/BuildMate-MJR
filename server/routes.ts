@@ -475,6 +475,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Approve individual timesheet entry (legacy - kept for backwards compatibility)
   app.patch("/api/admin/timesheet/:id/approve", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -490,6 +491,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating timesheet approval:", error);
       res.status(500).json({ message: "Failed to update timesheet approval" });
+    }
+  });
+
+  // Approve all timesheet entries for a staff member's fortnight
+  app.patch("/api/admin/timesheet/approve-fortnight", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { staffId, fortnightStart, fortnightEnd, approved } = req.body;
+      
+      if (!staffId || !fortnightStart || !fortnightEnd) {
+        return res.status(400).json({ message: "staffId, fortnightStart, and fortnightEnd are required" });
+      }
+
+      await storage.updateFortnightApproval(staffId, fortnightStart, fortnightEnd, approved);
+      
+      const action = approved ? "approved" : "unapproved";
+      res.status(200).json({ 
+        message: `Fortnight timesheet ${action} successfully`,
+        staffId,
+        fortnightStart,
+        fortnightEnd,
+        approved
+      });
+    } catch (error) {
+      console.error("Error updating fortnight approval:", error);
+      res.status(500).json({ message: "Failed to update fortnight approval" });
     }
   });
 
