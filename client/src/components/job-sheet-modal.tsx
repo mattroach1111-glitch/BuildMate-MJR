@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { generateJobPDF } from "@/lib/pdfGenerator";
+import { debounce } from "lodash";
 import type { Job, LaborEntry, Material, SubTrade, OtherCost } from "@shared/schema";
 
 interface JobSheetModalProps {
@@ -112,6 +113,21 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
     },
   });
+
+  // Create debounced version of the mutation calls
+  const debouncedUpdateLaborRate = useCallback(
+    debounce((id: string, hourlyRate: string) => {
+      updateLaborMutation.mutate({ id, hourlyRate });
+    }, 1000), // Wait 1 second after user stops typing
+    [updateLaborMutation]
+  );
+
+  const debouncedUpdateJobSettings = useCallback(
+    debounce((data: Partial<Job>) => {
+      updateJobMutation.mutate(data);
+    }, 1000),
+    [updateJobMutation]
+  );
 
   const addMaterialMutation = useMutation({
     mutationFn: async (data: { description: string; supplier: string; amount: string; invoiceDate: string }) => {
@@ -235,11 +251,15 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     };
   };
 
-  const handleSave = () => {
-    updateJobMutation.mutate({
-      builderMargin: builderMargin,
-      defaultHourlyRate: defaultHourlyRate,
-    });
+  // Auto-save handlers for job settings
+  const handleBuilderMarginChange = (value: string) => {
+    setBuilderMargin(value);
+    debouncedUpdateJobSettings({ builderMargin: parseFloat(value) });
+  };
+
+  const handleDefaultRateChange = (value: string) => {
+    setDefaultHourlyRate(value);
+    debouncedUpdateJobSettings({ defaultHourlyRate: parseFloat(value) });
   };
 
   const handleDownloadPDF = async () => {
@@ -294,15 +314,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                 <i className="fas fa-download mr-2"></i>
                 Download PDF
               </Button>
-              <Button 
-                onClick={handleSave}
-                disabled={updateJobMutation.isPending}
-                className="w-full sm:w-auto"
-                size="sm"
-                data-testid="button-save-job"
-              >
-                {updateJobMutation.isPending ? "Saving..." : "Save Changes"}
-              </Button>
+
               <Button variant="ghost" onClick={onClose} className="w-full sm:w-auto" size="sm" data-testid="button-close-modal">
                 <i className="fas fa-times text-xl"></i>
               </Button>
@@ -371,11 +383,8 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                                 min="0"
                                 value={entry.hourlyRate}
                                 onChange={(e) => {
-                                  // Update hourly rate for this job sheet only
-                                  updateLaborMutation.mutate({
-                                    id: entry.id,
-                                    hourlyRate: e.target.value,
-                                  });
+                                  // Debounced update - waits 1 second after user stops typing
+                                  debouncedUpdateLaborRate(entry.id, e.target.value);
                                 }}
                                 className="w-16 text-sm border-0 bg-transparent focus:bg-white focus:border focus:border-primary rounded px-1"
                                 data-testid={`input-labor-rate-${entry.id}`}
@@ -601,7 +610,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                         id="defaultHourlyRate"
                         type="number"
                         value={defaultHourlyRate}
-                        onChange={(e) => setDefaultHourlyRate(e.target.value)}
+                        onChange={(e) => handleDefaultRateChange(e.target.value)}
                         className="text-lg"
                         data-testid="input-default-hourly-rate"
                       />
@@ -612,7 +621,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                         id="builderMargin"
                         type="number"
                         value={builderMargin}
-                        onChange={(e) => setBuilderMargin(e.target.value)}
+                        onChange={(e) => handleBuilderMarginChange(e.target.value)}
                         className="text-lg"
                         data-testid="input-builder-margin"
                       />
@@ -641,15 +650,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                         ${totals.total.toFixed(2)}
                       </span>
                     </div>
-                    <Button 
-                      onClick={handleSave}
-                      className="w-full bg-secondary hover:bg-green-700"
-                      disabled={updateJobMutation.isPending}
-                      data-testid="button-save-job"
-                    >
-                      <i className="fas fa-save mr-2"></i>
-                      {updateJobMutation.isPending ? "Saving..." : "Save Changes"}
-                    </Button>
+
                   </div>
                 </div>
               </CardContent>
