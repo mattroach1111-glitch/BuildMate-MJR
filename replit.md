@@ -22,6 +22,9 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 - ✅ **Status-Based Job Ordering**: Jobs within folders automatically sort by status priority (New Job → In Progress → Complete → Ready for Billing)
 - ✅ **Ready for Billing Folder**: Dedicated collapsible folder at top for jobs marked ready for billing with green color scheme
 - ✅ **Mobile-First Timesheet Redesign**: Complete overhaul with fortnight periods, responsive design, quick stats cards, and touch-friendly interface
+- ✅ **Admin Timesheet Management**: Added admin capability to create timesheet entries for any staff member with approval controls
+- ✅ **Staff Calendar View**: Enhanced staff dashboard with visual fortnight calendar showing daily hour breakdowns and missing entries
+- ✅ **Automatic Staff Integration**: New employees automatically appear in timesheet staff selection list with duplicate entry prevention
 
 # User Preferences
 

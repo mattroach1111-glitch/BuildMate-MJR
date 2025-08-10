@@ -441,19 +441,28 @@ export class DatabaseStorage implements IStorage {
       db.select().from(employees)
     ]);
 
-    const result = [
-      ...usersResult.map(user => ({
-        id: user.id,
-        name: user.firstName || user.email || 'Unknown',
-        type: 'user' as const
-      })),
-      ...employeesResult.map(employee => ({
+    // Create a map to track unique IDs and prioritize users over employees
+    const staffMap = new Map<string, { id: string; name: string; type: 'user' | 'employee' }>();
+
+    // Add employees first
+    employeesResult.forEach(employee => {
+      staffMap.set(employee.id, {
         id: employee.id,
         name: employee.name,
         type: 'employee' as const
-      }))
-    ];
+      });
+    });
 
+    // Add users, which will override employees if they have the same ID
+    usersResult.forEach(user => {
+      staffMap.set(user.id, {
+        id: user.id,
+        name: user.firstName || user.email || 'Unknown',
+        type: 'user' as const
+      });
+    });
+
+    const result = Array.from(staffMap.values());
     return result.sort((a, b) => a.name.localeCompare(b.name));
   }
 

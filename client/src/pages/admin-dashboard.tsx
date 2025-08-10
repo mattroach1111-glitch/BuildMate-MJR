@@ -126,6 +126,7 @@ export default function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/staff-users"] }); // Refresh staff list for timesheets
       setIsCreateEmployeeOpen(false);
       toast({
         title: "Success",
@@ -1179,7 +1180,7 @@ export default function AdminDashboard() {
                             </FormControl>
                             <SelectContent>
                               {staffForTimesheets?.map((staff) => (
-                                <SelectItem key={staff.id} value={staff.id}>
+                                <SelectItem key={`staff-${staff.id}-${staff.type}`} value={staff.id}>
                                   {staff.name} {staff.type === 'employee' ? '(Employee)' : '(User)'}
                                 </SelectItem>
                               ))}
