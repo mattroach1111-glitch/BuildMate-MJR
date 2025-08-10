@@ -53,6 +53,11 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>("all");
   const [dateRangeFilter, setDateRangeFilter] = useState<string>("all");
+  // Start with all fortnights collapsed by default for cleaner view
+  const [collapsedFortnights, setCollapsedFortnights] = useState<Set<string>>(() => {
+    // Initialize with all current fortnight entries collapsed
+    return new Set();
+  });
   const [isAddingNewProjectManager, setIsAddingNewProjectManager] = useState(false);
   const [newProjectManagerName, setNewProjectManagerName] = useState("");
   const [isAddingNewClient, setIsAddingNewClient] = useState(false);
@@ -1780,6 +1785,29 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          {/* Toggle Expand/Collapse Button */}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              const fortnightKey = `${fortnight.staffId}-${fortnight.fortnightStart.toISOString()}`;
+                              const newCollapsed = new Set(collapsedFortnights);
+                              if (newCollapsed.has(fortnightKey)) {
+                                newCollapsed.delete(fortnightKey);
+                              } else {
+                                newCollapsed.add(fortnightKey);
+                              }
+                              setCollapsedFortnights(newCollapsed);
+                            }}
+                            data-testid={`button-toggle-entries-${fortnight.staffId}-${fortnight.fortnightStart.toISOString().split('T')[0]}`}
+                            className="p-2"
+                          >
+                            {collapsedFortnights.has(`${fortnight.staffId}-${fortnight.fortnightStart.toISOString()}`) ? (
+                              <ChevronRight className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </Button>
                           <Button
                             size="default"
                             variant={fortnight.allApproved ? "outline" : "default"}
@@ -1810,31 +1838,33 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4">
-                      <div className="space-y-2">
-                        {fortnight.entries.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((entry: any) => (
-                          <div 
-                            key={entry.id} 
-                            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-                            data-testid={`entry-${entry.id}`}
-                          >
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <div className="text-sm font-medium">
-                                  {format(parseISO(entry.date), 'dd/MM/yyyy (EEEE)')}
+                    {!collapsedFortnights.has(`${fortnight.staffId}-${fortnight.fortnightStart.toISOString()}`) && (
+                      <CardContent className="p-4">
+                        <div className="space-y-2">
+                          {fortnight.entries.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((entry: any) => (
+                            <div 
+                              key={entry.id} 
+                              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+                              data-testid={`entry-${entry.id}`}
+                            >
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <div className="text-sm font-medium">
+                                    {format(parseISO(entry.date), 'dd/MM/yyyy (EEEE)')}
+                                  </div>
+                                  <Badge variant={entry.approved ? "default" : "secondary"} className="text-xs">
+                                    {entry.approved ? "✓" : "○"}
+                                  </Badge>
                                 </div>
-                                <Badge variant={entry.approved ? "default" : "secondary"} className="text-xs">
-                                  {entry.approved ? "✓" : "○"}
-                                </Badge>
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                {entry.jobAddress || 'Unknown Job'} • {entry.clientName} • {parseFloat(entry.hours || 0)}h
+                                <div className="text-sm text-muted-foreground">
+                                  {entry.jobAddress || 'Unknown Job'} • {entry.clientName} • {parseFloat(entry.hours || 0)}h
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
+                          ))}
+                        </div>
+                      </CardContent>
+                    )}
                   </Card>
                 ))}
                 

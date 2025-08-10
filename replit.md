@@ -39,6 +39,7 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 - ✅ **Admin Extra Hours Management**: Added admin-only functionality to manually add extra hours to job sheets outside of timesheet entries for additional work, overtime, and adjustments. Includes dedicated "Add Extra Hours" column in labor section with input fields and buttons for each staff member.
 - ✅ **Modern UI/UX Redesign (January 2025)**: Complete interface overhaul with professional navigation system, consistent PageLayout component, BuildFlow Pro branding, and improved mobile responsiveness for better user experience.
 - ✅ **Enhanced Navigation**: Added back navigation from timesheet view to dashboard, making it easier for admins and staff to move between sections without getting lost.
+- ✅ **Collapsible Timesheet Approvals**: Added expand/collapse functionality to timesheet approvals, grouping all entries under each staff member's name with toggle buttons for cleaner admin interface management.
 
 # User Preferences
 
