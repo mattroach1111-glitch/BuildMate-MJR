@@ -724,10 +724,11 @@ export class DatabaseStorage implements IStorage {
       });
     });
 
-    // Add users, which will override employees if they have the same ID
+    // Add users - use employeeId if assigned, otherwise use user.id
     usersResult.forEach(user => {
-      staffMap.set(user.id, {
-        id: user.id,
+      const idToUse = user.employeeId || user.id;
+      staffMap.set(idToUse, {
+        id: idToUse,
         name: user.firstName || user.email || 'Unknown',
         type: 'user' as const
       });
