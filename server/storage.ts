@@ -25,7 +25,7 @@ import {
   type InsertTimesheetEntry,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sum } from "drizzle-orm";
+import { eq, and, desc, sum, ne } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -423,6 +423,15 @@ export class DatabaseStorage implements IStorage {
       .update(timesheetEntries)
       .set({ approved })
       .where(eq(timesheetEntries.id, id));
+  }
+
+  async getStaffUsers(): Promise<User[]> {
+    // Return all users except admins - this allows both staff role and users without role specified
+    return await db
+      .select()
+      .from(users)
+      .where(ne(users.role, 'admin'))
+      .orderBy(users.firstName);
   }
 
   async getJobsForStaff(): Promise<Job[]> {

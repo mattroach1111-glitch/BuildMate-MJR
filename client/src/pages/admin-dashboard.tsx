@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { insertJobSchema, insertEmployeeSchema } from "@shared/schema";
+import { insertJobSchema, insertEmployeeSchema, insertTimesheetEntrySchema } from "@shared/schema";
 import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle } from "lucide-react";
@@ -34,12 +34,17 @@ const jobFormSchema = insertJobSchema.extend({
 
 const employeeFormSchema = insertEmployeeSchema;
 
+const adminTimesheetFormSchema = insertTimesheetEntrySchema.extend({
+  hours: z.string().min(1, "Hours is required"),
+});
+
 export default function AdminDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
   const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
   const [isCreateEmployeeOpen, setIsCreateEmployeeOpen] = useState(false);
+  const [isCreateTimesheetOpen, setIsCreateTimesheetOpen] = useState(false);
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
   const [expandedManagers, setExpandedManagers] = useState<Set<string>>(new Set());
   const [groupBy, setGroupBy] = useState<'client' | 'manager' | 'none'>('client');
@@ -69,8 +74,14 @@ export default function AdminDashboard() {
     retry: false,
   });
 
-  const { data: allTimesheets, isLoading: timesheetsLoading } = useQuery({
+  const { data: allTimesheets, isLoading: timesheetsLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/timesheets"],
+    retry: false,
+  });
+
+  // Get all users who can be staff (have role 'staff' or no role specified)
+  const { data: staffUsers, isLoading: staffUsersLoading } = useQuery<any[]>({
+    queryKey: ["/api/staff-users"],
     retry: false,
   });
 
@@ -271,6 +282,43 @@ export default function AdminDashboard() {
     },
   });
 
+  const createTimesheetMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof adminTimesheetFormSchema>) => {
+      const response = await apiRequest("POST", "/api/admin/timesheet", {
+        ...data,
+        hours: parseFloat(data.hours),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/timesheets"] });
+      setIsCreateTimesheetOpen(false);
+      toast({
+        title: "Success",
+        description: "Timesheet entry created successfully",
+      });
+      timesheetForm.reset();
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to create timesheet entry",
+        variant: "destructive",
+      });
+    },
+  });
+
   const jobForm = useForm<z.infer<typeof jobFormSchema>>({
     resolver: zodResolver(jobFormSchema),
     defaultValues: {
@@ -441,12 +489,26 @@ export default function AdminDashboard() {
     },
   });
 
+  const timesheetForm = useForm<z.infer<typeof adminTimesheetFormSchema>>({
+    resolver: zodResolver(adminTimesheetFormSchema),
+    defaultValues: {
+      staffId: "",
+      jobId: "",
+      date: new Date().toISOString().split('T')[0],
+      hours: "",
+    },
+  });
+
   const onJobSubmit = (data: z.infer<typeof jobFormSchema>) => {
     createJobMutation.mutate(data);
   };
 
   const onEmployeeSubmit = (data: z.infer<typeof employeeFormSchema>) => {
     createEmployeeMutation.mutate(data);
+  };
+
+  const onTimesheetSubmit = (data: z.infer<typeof adminTimesheetFormSchema>) => {
+    createTimesheetMutation.mutate(data);
   };
 
   const getStatusColor = (status: string) => {
@@ -1087,6 +1149,130 @@ export default function AdminDashboard() {
         <TabsContent value="timesheets" className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h2 className="text-xl font-semibold">Timesheet Management</h2>
+            <Dialog open={isCreateTimesheetOpen} onOpenChange={setIsCreateTimesheetOpen}>
+              <DialogTrigger asChild>
+                <Button className="w-full sm:w-auto" data-testid="button-create-timesheet">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Timesheet Entry
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md mx-4 sm:max-w-lg" aria-describedby="create-timesheet-description">
+                <DialogHeader>
+                  <DialogTitle>Add Timesheet Entry</DialogTitle>
+                  <p id="create-timesheet-description" className="text-sm text-muted-foreground">
+                    Create a timesheet entry for a staff member on a specific job.
+                  </p>
+                </DialogHeader>
+                <Form {...timesheetForm}>
+                  <form onSubmit={timesheetForm.handleSubmit(onTimesheetSubmit)} className="space-y-4">
+                    <FormField
+                      control={timesheetForm.control}
+                      name="staffId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Staff Member</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-staff-member">
+                                <SelectValue placeholder="Select staff member" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {staffUsers?.map((staff) => (
+                                <SelectItem key={staff.id} value={staff.id}>
+                                  {staff.firstName || staff.email}
+                                </SelectItem>
+                              ))}
+                              {(!staffUsers || staffUsers.length === 0) && employees?.map((employee) => (
+                                <SelectItem key={employee.id} value={employee.id}>
+                                  {employee.name} (Employee)
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={timesheetForm.control}
+                      name="jobId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Job</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-job">
+                                <SelectValue placeholder="Select job" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {jobs?.map((job) => (
+                                <SelectItem key={job.id} value={job.id}>
+                                  {job.jobAddress}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={timesheetForm.control}
+                      name="date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Date</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} data-testid="input-timesheet-date" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={timesheetForm.control}
+                      name="hours"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Hours</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              step="0.25" 
+                              min="0" 
+                              max="24" 
+                              placeholder="e.g. 8.5" 
+                              {...field} 
+                              data-testid="input-timesheet-hours" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex justify-end gap-2 pt-4">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setIsCreateTimesheetOpen(false)}
+                        data-testid="button-cancel-timesheet"
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        disabled={createTimesheetMutation.isPending}
+                        data-testid="button-submit-timesheet"
+                      >
+                        {createTimesheetMutation.isPending ? "Creating..." : "Create Entry"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {timesheetsLoading ? (

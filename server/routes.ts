@@ -493,6 +493,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/admin/timesheet", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const validatedData = insertTimesheetEntrySchema.parse(req.body);
+      const entry = await storage.createTimesheetEntry(validatedData);
+      res.status(201).json(entry);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: fromZodError(error).toString() });
+      }
+      console.error("Error creating admin timesheet entry:", error);
+      res.status(500).json({ message: "Failed to create timesheet entry" });
+    }
+  });
+
+  // Get staff users for admin timesheet creation
+  app.get("/api/staff-users", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const staffUsers = await storage.getStaffUsers();
+      res.json(staffUsers);
+    } catch (error) {
+      console.error("Error fetching staff users:", error);
+      res.status(500).json({ message: "Failed to fetch staff users" });
+    }
+  });
+
   app.post("/api/timesheet", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
