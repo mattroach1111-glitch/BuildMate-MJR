@@ -438,7 +438,7 @@ export class DatabaseStorage implements IStorage {
         materials: timesheetEntries.materials,
         approved: timesheetEntries.approved,
         createdAt: timesheetEntries.createdAt,
-        staffName: sql`COALESCE(${users.firstName}, CASE WHEN ${users.email} IS NOT NULL THEN SPLIT_PART(${users.email}, '@', 1) ELSE 'Unknown Staff' END, 'Unknown Staff')`.as('staffName'),
+        staffName: sql`COALESCE(${users.firstName}, ${employees.name}, CASE WHEN ${users.email} IS NOT NULL THEN SPLIT_PART(${users.email}, '@', 1) ELSE 'Unknown Staff' END, 'Unknown Staff')`.as('staffName'),
         staffEmail: users.email,
         jobAddress: jobs.jobAddress,
         clientName: jobs.clientName,
@@ -446,6 +446,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(timesheetEntries)
       .leftJoin(users, eq(timesheetEntries.staffId, users.id))
+      .leftJoin(employees, eq(timesheetEntries.staffId, employees.id))
       .leftJoin(jobs, eq(timesheetEntries.jobId, jobs.id))
       .orderBy(desc(timesheetEntries.date));
   }
