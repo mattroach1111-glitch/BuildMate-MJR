@@ -27,6 +27,7 @@ import PageLayout from "@/components/page-layout";
 import { GoogleDriveIntegration } from "@/components/google-drive-integration";
 import { OnboardingTour, WelcomeAnimation } from "@/components/onboarding-tour";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { UserManagement } from "@/components/user-management";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -2819,8 +2820,9 @@ export default function AdminDashboard() {
             </div>
           </div>
           
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-1">
             <GoogleDriveIntegration />
+            <UserManagement />
             
             {/* Placeholder for future integrations */}
             <Card>

@@ -32,6 +32,8 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserGoogleDriveTokens(id: string, tokens: string | null): Promise<void>;
+  getAllUsers(): Promise<User[]>;
+  updateUserRole(id: string, role: "admin" | "staff"): Promise<void>;
   
   // Employee operations
   getEmployees(): Promise<Employee[]>;
@@ -130,6 +132,20 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set({ 
         googleDriveTokens: tokens,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id));
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async updateUserRole(id: string, role: "admin" | "staff"): Promise<void> {
+    await db
+      .update(users)
+      .set({ 
+        role,
         updatedAt: new Date(),
       })
       .where(eq(users.id, id));
