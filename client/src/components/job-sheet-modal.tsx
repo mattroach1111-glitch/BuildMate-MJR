@@ -889,7 +889,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       const description = prompt("Enter material description:");
                       const supplier = prompt("Enter supplier:");
                       const amount = prompt("Enter amount:");
-                      const invoiceDate = prompt("Enter invoice date (e.g., 8th Aug):");
+                      const invoiceDate = prompt("Enter invoice date (e.g., 8/08):");
                       if (description && supplier && amount && invoiceDate) {
                         addMaterialMutation.mutate({ description, supplier, amount, invoiceDate });
                       }
@@ -951,7 +951,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       const trade = prompt("Enter trade type:");
                       const contractor = prompt("Enter contractor:");
                       const amount = prompt("Enter amount:");
-                      const invoiceDate = prompt("Enter invoice date (e.g., 8th Aug):");
+                      const invoiceDate = prompt("Enter invoice date (e.g., 8/08):");
                       if (trade && contractor && amount && invoiceDate) {
                         addSubTradeMutation.mutate({ trade, contractor, amount, invoiceDate });
                       }

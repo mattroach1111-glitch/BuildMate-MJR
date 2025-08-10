@@ -21,14 +21,14 @@ type JobWithRelations = {
     description: string;
     supplier: string;
     amount: string;
-    invoiceDate: string;
+    invoiceDate: string | null;
   }>;
   subTrades: Array<{
     id: string;
     trade: string;
     contractor: string;
     amount: string;
-    invoiceDate: string;
+    invoiceDate: string | null;
   }>;
   otherCosts: Array<{
     id: string;

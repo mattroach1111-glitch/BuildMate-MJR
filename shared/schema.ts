@@ -80,7 +80,7 @@ export const materials = pgTable("materials", {
   description: text("description").notNull(),
   supplier: varchar("supplier").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  invoiceDate: date("invoice_date").notNull(),
+  invoiceDate: varchar("invoice_date"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -90,7 +90,7 @@ export const subTrades = pgTable("sub_trades", {
   trade: varchar("trade").notNull(),
   contractor: varchar("contractor").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  invoiceDate: date("invoice_date").notNull(),
+  invoiceDate: varchar("invoice_date"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
