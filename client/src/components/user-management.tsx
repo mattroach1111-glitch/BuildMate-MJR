@@ -21,22 +21,17 @@ export function UserManagement() {
     queryFn: async () => {
       try {
         const response = await apiRequest("GET", "/api/users");
-        console.log("User management API response:", response);
+        const userData = await response.json(); // Convert Response to JSON
+        console.log("User management API response:", userData);
+        console.log("Is userData an array?", Array.isArray(userData));
+        console.log("userData length:", userData?.length);
         
-        // Handle different response formats
-        let userData: User[] = [];
-        if (Array.isArray(response)) {
-          userData = response;
-        } else if (response && typeof response === 'object' && 'data' in response && Array.isArray((response as any).data)) {
-          userData = (response as any).data;
-        } else {
-          console.warn("Unexpected API response format:", response);
-          userData = [];
+        // Ensure we have an array
+        if (!Array.isArray(userData)) {
+          console.warn("API response is not an array:", userData);
+          return [];
         }
         
-        console.log("Processed user data:", userData);
-        console.log("Is userData an array?", Array.isArray(userData));
-        console.log("userData length:", userData.length);
         return userData as User[];
       } catch (err: any) {
         console.error("User management API error:", err);

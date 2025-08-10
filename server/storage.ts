@@ -188,6 +188,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteEmployee(id: string): Promise<void> {
+    // First delete all labor entries for this employee
+    await db.delete(laborEntries).where(eq(laborEntries.staffId, id));
+    
+    // Then delete all timesheet entries for this employee (they reference users.id, not employees.id)
+    const employee = await this.getEmployee(id);
+    if (employee) {
+      // Find the user account for this employee by name matching
+      const allUsers = await this.getAllUsers();
+      const matchingUser = allUsers.find(user => 
+        user.firstName?.toLowerCase() === employee.name.toLowerCase() ||
+        user.email?.includes(employee.name.toLowerCase())
+      );
+      
+      if (matchingUser) {
+        await db.delete(timesheetEntries).where(eq(timesheetEntries.staffId, matchingUser.id));
+        // Also delete the user account
+        await db.delete(users).where(eq(users.id, matchingUser.id));
+      }
+    }
+    
+    // Finally delete the employee
     await db.delete(employees).where(eq(employees.id, id));
   }
 
