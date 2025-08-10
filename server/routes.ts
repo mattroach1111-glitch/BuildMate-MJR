@@ -33,6 +33,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Google Drive authentication routes
+  app.get('/api/google-drive/auth-url', isAuthenticated, async (req: any, res) => {
+    try {
+      const googleDriveService = new GoogleDriveService();
+      const authUrl = googleDriveService.getAuthUrl();
+      res.json({ authUrl });
+    } catch (error) {
+      console.error("Error generating Google Drive auth URL:", error);
+      res.status(500).json({ message: "Failed to generate auth URL" });
+    }
+  });
+
+  app.get('/api/auth/google/callback', async (req, res) => {
+    try {
+      const { code } = req.query;
+      if (!code) {
+        return res.status(400).json({ message: "Authorization code required" });
+      }
+
+      const googleDriveService = new GoogleDriveService();
+      const tokens = await googleDriveService.authorize(code as string);
+      
+      // Store tokens in user's session or database
+      // For now, we'll redirect with a success message
+      res.redirect('/?google_drive_connected=true');
+    } catch (error) {
+      console.error("Error handling Google Drive callback:", error);
+      res.redirect('/?google_drive_error=true');
+    }
+  });
+
+  app.post('/api/google-drive/connect', isAuthenticated, async (req: any, res) => {
+    try {
+      const { code } = req.body;
+      const userId = req.user.claims.sub;
+      
+      const googleDriveService = new GoogleDriveService();
+      const tokens = await googleDriveService.authorize(code);
+      
+      // Store tokens in user record
+      await storage.updateUserGoogleDriveTokens(userId, JSON.stringify(tokens));
+      
+      res.json({ message: "Google Drive connected successfully" });
+    } catch (error) {
+      console.error("Error connecting Google Drive:", error);
+      res.status(500).json({ message: "Failed to connect Google Drive" });
+    }
+  });
+
+  app.get('/api/google-drive/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      const isConnected = !!(user?.googleDriveTokens);
+      res.json({ connected: isConnected });
+    } catch (error) {
+      console.error("Error checking Google Drive status:", error);
+      res.status(500).json({ message: "Failed to check Google Drive status" });
+    }
+  });
+
+  app.delete('/api/google-drive/disconnect', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      await storage.updateUserGoogleDriveTokens(userId, null);
+      res.json({ message: "Google Drive disconnected successfully" });
+    } catch (error) {
+      console.error("Error disconnecting Google Drive:", error);
+      res.status(500).json({ message: "Failed to disconnect Google Drive" });
+    }
+  });
+
   // Employee routes
   app.get("/api/employees", isAuthenticated, async (req: any, res) => {
     try {
@@ -822,14 +894,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get timesheet entries for the fortnight
       const entries = await storage.getTimesheetEntriesByPeriod(staffId, fortnightStart, fortnightEnd);
       
-      // Generate and save PDF to Google Drive
+      let driveLink = null;
+      let googleDriveConnected = false;
+      
+      // Generate and save PDF to Google Drive if user has connected their account
       try {
         if (!userEmployee) {
           throw new Error('Employee not found');
         }
         
         const pdfGenerator = new TimesheetPDFGenerator();
-        const googleDriveService = new GoogleDriveService();
         
         const employeeData = {
           id: userEmployee.id,
@@ -844,29 +918,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
           fortnightEnd
         );
         
-        const fileName = `timesheet-${userEmployee.name}-${fortnightStart}-${fortnightEnd}.pdf`;
-        
-        // Create or find BuildFlow Pro folder in Google Drive
-        const buildFlowFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro Timesheets');
-        
-        // Upload PDF to Google Drive
-        const driveLink = await googleDriveService.uploadPDF(fileName, pdfBuffer, buildFlowFolderId || undefined);
-        
-        if (driveLink) {
-          console.log(`PDF saved to Google Drive: ${driveLink}`);
-        } else {
-          console.log('PDF generation successful, but Google Drive upload failed. Check Google Drive credentials.');
+        // Try to upload to Google Drive if user has connected their account
+        if (user.googleDriveTokens) {
+          try {
+            const googleDriveService = new GoogleDriveService();
+            const tokens = JSON.parse(user.googleDriveTokens);
+            googleDriveService.setUserTokens(tokens);
+            
+            const fileName = `timesheet-${userEmployee.name}-${fortnightStart}-${fortnightEnd}.pdf`;
+            
+            // Create or find BuildFlow Pro folder in Google Drive
+            const buildFlowFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro Timesheets');
+            
+            // Upload PDF to Google Drive
+            driveLink = await googleDriveService.uploadPDF(fileName, pdfBuffer, buildFlowFolderId || undefined);
+            googleDriveConnected = true;
+            
+            if (driveLink) {
+              console.log(`PDF saved to Google Drive: ${driveLink}`);
+            }
+          } catch (driveError) {
+            console.error('Google Drive upload failed:', driveError);
+            // Don't fail the whole request if Google Drive upload fails
+          }
         }
       } catch (pdfError) {
-        console.error('Error generating/saving PDF:', pdfError);
+        console.error('Error generating PDF:', pdfError);
         // Don't fail the whole request if PDF generation fails
       }
       
       res.json({ 
-        message: "Timesheet confirmed successfully. PDF generated and saved to your Google Drive in 'BuildFlow Pro Timesheets' folder.",
+        message: googleDriveConnected && driveLink 
+          ? "Timesheet confirmed successfully. PDF generated and saved to your Google Drive in 'BuildFlow Pro Timesheets' folder."
+          : googleDriveConnected 
+            ? "Timesheet confirmed successfully. PDF generated but Google Drive upload failed."
+            : "Timesheet confirmed successfully. PDF generated. Connect Google Drive to automatically save PDFs.",
         fortnightStart,
         fortnightEnd,
-        confirmedAt: new Date().toISOString()
+        confirmedAt: new Date().toISOString(),
+        driveLink: driveLink || null,
+        googleDriveConnected
       });
     } catch (error) {
       console.error("Error confirming timesheet:", error);

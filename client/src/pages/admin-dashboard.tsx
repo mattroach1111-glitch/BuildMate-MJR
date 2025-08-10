@@ -19,11 +19,12 @@ import { insertJobSchema, insertEmployeeSchema, insertTimesheetEntrySchema } fro
 import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw, Grid3X3, List } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw, Grid3X3, List, Settings } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
 import PageLayout from "@/components/page-layout";
+import { GoogleDriveIntegration } from "@/components/google-drive-integration";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -1122,7 +1123,7 @@ export default function AdminDashboard() {
       <div className="space-y-6">
         {/* Mobile-First Tabs */}
         <Tabs defaultValue="jobs" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
           <TabsTrigger value="jobs" className="flex items-center gap-2">
             <Briefcase className="h-4 w-4" />
             <span className="hidden sm:inline">Jobs</span>
@@ -1138,6 +1139,10 @@ export default function AdminDashboard() {
           <TabsTrigger value="staff-view" className="flex items-center gap-2" data-testid="tab-staff-view">
             <Eye className="h-4 w-4" />
             <span className="hidden sm:inline">Staff View</span>
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Settings</span>
           </TabsTrigger>
         </TabsList>
 
@@ -2792,6 +2797,38 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-lg p-4">
               <StaffDashboard isAdminView={false} />
             </div>
+          </div>
+        </TabsContent>
+
+        {/* Settings Tab */}
+        <TabsContent value="settings" className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div>
+              <h2 className="text-xl font-semibold">Application Settings</h2>
+              <p className="text-sm text-muted-foreground">Configure integrations and application preferences</p>
+            </div>
+          </div>
+          
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <GoogleDriveIntegration />
+            
+            {/* Placeholder for future integrations */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-muted-foreground" />
+                  PDF Settings
+                </CardTitle>
+                <CardDescription>
+                  Configure PDF generation preferences
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  PDF customization options coming soon.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
         </Tabs>

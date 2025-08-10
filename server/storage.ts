@@ -31,6 +31,7 @@ export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  updateUserGoogleDriveTokens(id: string, tokens: string | null): Promise<void>;
   
   // Employee operations
   getEmployees(): Promise<Employee[]>;
@@ -122,6 +123,16 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async updateUserGoogleDriveTokens(id: string, tokens: string | null): Promise<void> {
+    await db
+      .update(users)
+      .set({ 
+        googleDriveTokens: tokens,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id));
   }
 
   // Employee operations

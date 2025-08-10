@@ -1,29 +1,39 @@
 import { google } from 'googleapis';
 import { Readable } from 'stream';
+import { GoogleDriveAuth } from './googleAuth';
 
 export class GoogleDriveService {
   private drive: any;
+  private googleAuth: GoogleDriveAuth;
 
   constructor() {
-    // Initialize Google Drive with service account credentials
-    // The user needs to provide these as environment variables
-    if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY) {
-      console.warn('Google Drive service not configured. Missing GOOGLE_SERVICE_ACCOUNT_EMAIL or GOOGLE_PRIVATE_KEY');
-      return;
-    }
+    this.googleAuth = new GoogleDriveAuth();
+  }
 
-    const auth = new google.auth.JWT({
-      email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      scopes: ['https://www.googleapis.com/auth/drive.file']
-    });
+  // Set user tokens for authenticated requests
+  setUserTokens(tokens: any) {
+    this.googleAuth.setTokens(tokens);
+    this.drive = this.googleAuth.getDriveClient();
+  }
 
-    this.drive = google.drive({ version: 'v3', auth });
+  // Check if service is ready to use
+  isReady(): boolean {
+    return this.googleAuth.isAuthenticated();
+  }
+
+  // Get auth URL for user authorization
+  getAuthUrl(): string {
+    return this.googleAuth.getAuthUrl();
+  }
+
+  // Exchange code for tokens
+  async authorize(code: string) {
+    return await this.googleAuth.getTokens(code);
   }
 
   async uploadPDF(fileName: string, pdfBuffer: Buffer, folderId?: string): Promise<string | null> {
-    if (!this.drive) {
-      console.error('Google Drive service not initialized');
+    if (!this.isReady()) {
+      console.error('Google Drive not authenticated. User needs to connect their Google Drive account.');
       return null;
     }
 
@@ -58,8 +68,8 @@ export class GoogleDriveService {
   }
 
   async createFolder(folderName: string, parentFolderId?: string): Promise<string | null> {
-    if (!this.drive) {
-      console.error('Google Drive service not initialized');
+    if (!this.isReady()) {
+      console.error('Google Drive not authenticated. User needs to connect their Google Drive account.');
       return null;
     }
 
@@ -84,7 +94,7 @@ export class GoogleDriveService {
   }
 
   async findOrCreateFolder(folderName: string, parentFolderId?: string): Promise<string | null> {
-    if (!this.drive) {
+    if (!this.isReady()) {
       return null;
     }
 
