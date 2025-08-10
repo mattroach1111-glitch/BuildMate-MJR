@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Users, Crown, UserCheck, Shield } from "lucide-react";
+import { Users, Crown, UserCheck, Shield, AlertTriangle } from "lucide-react";
 import type { User } from "@shared/schema";
 
 export function UserManagement() {
@@ -16,12 +16,20 @@ export function UserManagement() {
   const [selectedRole, setSelectedRole] = useState<"admin" | "staff">("staff");
 
   // Fetch all users
-  const { data: users, isLoading } = useQuery({
+  const { data: users, isLoading, error } = useQuery({
     queryKey: ["/api/users"],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/users");
-      return response as User[];
+      try {
+        const response = await apiRequest("GET", "/api/users");
+        return response as User[];
+      } catch (err: any) {
+        if (err.message?.includes("Unauthorized") || err.status === 401) {
+          throw new Error("Admin access required to manage users");
+        }
+        throw err;
+      }
     },
+    retry: false,
   });
 
   // Update user role mutation
@@ -57,6 +65,7 @@ export function UserManagement() {
     return users?.find(user => user.id === selectedUserId);
   };
 
+  // Handle loading state
   if (isLoading) {
     return (
       <Card>
@@ -69,6 +78,34 @@ export function UserManagement() {
         <CardContent>
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Handle error state (unauthorized or other errors)
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-muted-foreground" />
+            User Management
+          </CardTitle>
+          <CardDescription>
+            Promote staff members to admin or manage user roles
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
+            <AlertTriangle className="h-12 w-12 text-muted-foreground" />
+            <div>
+              <h3 className="font-medium text-foreground">Access Restricted</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                {error instanceof Error ? error.message : "Only administrators can manage user roles"}
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
