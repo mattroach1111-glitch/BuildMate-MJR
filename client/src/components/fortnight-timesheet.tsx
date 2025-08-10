@@ -306,6 +306,20 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     doc.save(`timesheet-${format(currentFortnight.start, 'yyyy-MM-dd')}-to-${format(currentFortnight.end, 'yyyy-MM-dd')}.pdf`);
   };
 
+  const clearTimesheet = () => {
+    if (window.confirm('Are you sure you want to clear all timesheet entries for this fortnight? This action cannot be undone.')) {
+      // Clear local timesheet data
+      setTimesheetData({});
+      
+      // Show success message
+      toast({
+        title: "Timesheet Cleared",
+        description: "All unsaved timesheet entries have been cleared.",
+        variant: "default",
+      });
+    }
+  };
+
   return (
     <div className="p-4 max-w-7xl mx-auto">
       <div className="mb-6">
@@ -331,6 +345,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             <Button onClick={exportToPDF} variant="outline">
               <Download className="h-4 w-4 mr-2" />
               Export PDF
+            </Button>
+            <Button onClick={clearTimesheet} variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear Timesheet
             </Button>
             <div className="flex items-center gap-2">
               <Button

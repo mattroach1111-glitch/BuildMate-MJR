@@ -52,6 +52,59 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
     window.location.href = '/timesheet';
   };
 
+  // Clear all timesheet entries for current fortnight
+  const clearCurrentFortnightEntries = useMutation({
+    mutationFn: async () => {
+      // Get current fortnight entries to delete
+      if (Array.isArray(currentFortnightEntries) && currentFortnightEntries.length > 0) {
+        for (const entry of currentFortnightEntries) {
+          await apiRequest("DELETE", `/api/timesheet/${entry.id}`);
+        }
+      }
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/timesheet"] });
+      toast({
+        title: "Timesheet Cleared",
+        description: "All timesheet entries for the current fortnight have been deleted.",
+        variant: "default",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to clear timesheet entries. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleClearTimesheet = () => {
+    if (Array.isArray(currentFortnightEntries) && currentFortnightEntries.length > 0) {
+      if (window.confirm(`Are you sure you want to delete all ${currentFortnightEntries.length} timesheet entries for this fortnight? This action cannot be undone.`)) {
+        clearCurrentFortnightEntries.mutate();
+      }
+    } else {
+      toast({
+        title: "No Entries",
+        description: "There are no timesheet entries to clear for this fortnight.",
+        variant: "default",
+      });
+    }
+  };
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
@@ -252,7 +305,7 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
     >
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Quick Actions */}
-        <div className="flex justify-center">
+        <div className="flex flex-col sm:flex-row justify-center gap-2">
           <Button 
             onClick={handleViewFortnightTimesheet}
             data-testid="button-fortnight-timesheet"
@@ -260,6 +313,16 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
           >
             <Calendar className="h-4 w-4" />
             Open Full Timesheet
+          </Button>
+          <Button 
+            onClick={handleClearTimesheet}
+            variant="outline"
+            disabled={clearCurrentFortnightEntries.isPending}
+            data-testid="button-clear-timesheet"
+            className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+          >
+            <Trash2 className="h-4 w-4" />
+            {clearCurrentFortnightEntries.isPending ? "Clearing..." : "Clear Timesheet"}
           </Button>
         </div>
         {/* Period Navigation */}
