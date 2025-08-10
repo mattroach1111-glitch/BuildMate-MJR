@@ -19,7 +19,7 @@ import { insertJobSchema, insertEmployeeSchema, insertTimesheetEntrySchema } fro
 import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw, Grid3X3, List } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
@@ -68,9 +68,6 @@ export default function AdminDashboard() {
   const [folderColors, setFolderColors] = useState<Record<string, number>>({});
   const [colorPickerOpen, setColorPickerOpen] = useState<string | null>(null);
   const [isDeletedFolderExpanded, setIsDeletedFolderExpanded] = useState(false);
-  const [viewMode, setViewMode] = useState<'cards' | 'list'>(() => {
-    return localStorage.getItem('jobViewMode') as 'cards' | 'list' || 'cards';
-  });
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -570,31 +567,7 @@ export default function AdminDashboard() {
   };
 
   const sortJobsByStatus = (jobs: Job[]): Job[] => {
-    return [...jobs].sort((a, b) => {
-      // First sort by status priority
-      const statusDiff = getStatusPriority(a.status) - getStatusPriority(b.status);
-      if (statusDiff !== 0) return statusDiff;
-      
-      // Then sort numerically by job address
-      const extractNumber = (address: string): number => {
-        const match = address.match(/^(\d+)/);
-        return match ? parseInt(match[1], 10) : 0;
-      };
-      
-      const aNum = extractNumber(a.jobAddress);
-      const bNum = extractNumber(b.jobAddress);
-      
-      if (aNum !== bNum) return aNum - bNum;
-      
-      // If numbers are the same or no numbers, fall back to alphabetical
-      return a.jobAddress.localeCompare(b.jobAddress);
-    });
-  };
-
-  // Handle view mode changes
-  const handleViewModeChange = (mode: 'cards' | 'list') => {
-    setViewMode(mode);
-    localStorage.setItem('jobViewMode', mode);
+    return [...jobs].sort((a, b) => getStatusPriority(a.status) - getStatusPriority(b.status));
   };
 
   // Filter jobs based on search query
@@ -1306,71 +1279,45 @@ export default function AdminDashboard() {
           </div>
 
           {/* Search and Group Controls */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-6 sm:items-center sm:justify-between">
-            <div className="flex flex-col sm:flex-row gap-3 sm:items-center flex-1">
-              <div className="relative flex-1 min-w-[250px] max-w-[350px]">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search jobs by address, client, manager, or status..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                  data-testid="input-search-jobs"
-                />
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                <Button 
-                  variant={groupBy === 'client' ? 'default' : 'outline'} 
-                  size="sm"
-                  onClick={() => setGroupBy('client')}
-                  data-testid="button-group-by-client"
-                >
-                  <Folder className="h-4 w-4 mr-1" />
-                  Group by Client
-                </Button>
-                <Button 
-                  variant={groupBy === 'manager' ? 'default' : 'outline'} 
-                  size="sm"
-                  onClick={() => setGroupBy('manager')}
-                  data-testid="button-group-by-manager"
-                >
-                  <Folder className="h-4 w-4 mr-1" />
-                  Group by Manager
-                </Button>
-                <Button 
-                  variant={groupBy === 'none' ? 'default' : 'outline'} 
-                  size="sm"
-                  onClick={() => setGroupBy('none')}
-                  data-testid="button-group-by-none"
-                >
-                  No Grouping
-                </Button>
-              </div>
+          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+            <div className="flex-1">
+              <Input
+                placeholder="Search jobs by address, client, manager, or status..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full"
+                data-testid="input-search-jobs"
+              />
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <Button 
+                variant={groupBy === 'client' ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setGroupBy('client')}
+                data-testid="button-group-by-client"
+              >
+                <Folder className="h-4 w-4 mr-1" />
+                Group by Client
+              </Button>
+              <Button 
+                variant={groupBy === 'manager' ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setGroupBy('manager')}
+                data-testid="button-group-by-manager"
+              >
+                <Folder className="h-4 w-4 mr-1" />
+                Group by Manager
+              </Button>
+              <Button 
+                variant={groupBy === 'none' ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setGroupBy('none')}
+                data-testid="button-group-by-none"
+              >
+                No Grouping
+              </Button>
             </div>
 
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 border rounded-lg p-1">
-              <Button
-                variant={viewMode === 'cards' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => handleViewModeChange('cards')}
-                className="h-8 w-8 p-0"
-                data-testid="button-cards-view"
-                title="Card View"
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => handleViewModeChange('list')}
-                className="h-8 w-8 p-0"
-                data-testid="button-list-view"
-                title="List View"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
           </div>
 
           {/* Jobs Grid */}
@@ -1401,1149 +1348,88 @@ export default function AdminDashboard() {
                 
                 // Show individual jobs if no grouping or only one group
                 if (groupBy === 'none' || Object.keys(groupedJobs).length === 1) {
-                  if (viewMode === 'list') {
-                    return (
-                      <div key={groupName} className="space-y-2">
-                        {groupJobs.map((job) => (
-                          <Card 
-                            key={job.id} 
-                            className="cursor-pointer hover:shadow-md transition-shadow"
-                            onClick={() => setSelectedJob(job.id)}
-                            data-testid={`list-job-${job.id}`}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-center justify-between">
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="font-semibold text-lg truncate">{job.jobAddress}</h3>
-                                  <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                                    <span>Client: {job.clientName}</span>
-                                    <span>Manager: {job.projectName}</span>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-3 shrink-0">
-                                  <div onClick={(e) => e.stopPropagation()}>
-                                    <Select 
-                                      value={job.status} 
-                                      onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
+                  return (
+                    <div key={groupName} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {groupJobs.map((job) => (
+                        <Card 
+                          key={job.id} 
+                          className="cursor-pointer hover:shadow-md transition-shadow relative"
+                          onClick={() => setSelectedJob(job.id)}
+                          data-testid={`card-job-${job.id}`}
+                        >
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                              <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <div onClick={(e) => e.stopPropagation()}>
+                                  <Select 
+                                    value={job.status} 
+                                    onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
+                                  >
+                                    <SelectTrigger 
+                                      className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
+                                      data-testid={`select-status-${job.id}`}
                                     >
-                                      <SelectTrigger 
-                                        className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
-                                        data-testid={`select-status-${job.id}`}
-                                      >
-                                        <Badge className={`${getStatusColor(job.status)} text-xs`}>
-                                          {formatStatus(job.status)}
-                                        </Badge>
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="new_job">New Job</SelectItem>
-                                        <SelectItem value="job_in_progress">Job In Progress</SelectItem>
-                                        <SelectItem value="job_complete">Job Complete</SelectItem>
-                                        <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  {job.status === 'ready_for_billing' && (
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <Button 
-                                          variant="ghost" 
-                                          size="sm" 
-                                          className="h-7 w-7 p-0"
-                                          onClick={(e) => e.stopPropagation()}
-                                          data-testid={`menu-${job.id}`}
-                                        >
-                                          <MoreVertical className="h-3 w-3" />
-                                        </Button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent align="end">
-                                        <DropdownMenuItem 
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            deleteJobMutation.mutate(job.id);
-                                          }}
-                                          className="text-red-600"
-                                          data-testid={`menu-item-delete-${job.id}`}
-                                        >
-                                          <Trash2 className="h-4 w-4 mr-2" />
-                                          Archive Job
-                                        </DropdownMenuItem>
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
-                                  )}
+                                      <Badge className={`${getStatusColor(job.status)} text-xs`}>
+                                        {formatStatus(job.status)}
+                                      </Badge>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="new_job">New Job</SelectItem>
+                                      <SelectItem value="job_in_progress">Job In Progress</SelectItem>
+                                      <SelectItem value="job_complete">Job Complete</SelectItem>
+                                      <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
+                                    </SelectContent>
+                                  </Select>
                                 </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    );
-                  } else {
-                    return (
-                      <div key={groupName} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {groupJobs.map((job) => (
-                          <Card 
-                            key={job.id} 
-                            className="cursor-pointer hover:shadow-md transition-shadow relative"
-                            onClick={() => setSelectedJob(job.id)}
-                            data-testid={`card-job-${job.id}`}
-                          >
-                            <CardHeader className="pb-3">
-                              <div className="flex items-start justify-between">
-                                <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <div onClick={(e) => e.stopPropagation()}>
-                                    <Select 
-                                      value={job.status} 
-                                      onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
-                                    >
-                                      <SelectTrigger 
-                                        className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
-                                        data-testid={`select-status-${job.id}`}
+                                {job.status === 'ready_for_billing' && (
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="h-7 w-7 p-0"
+                                        onClick={(e) => e.stopPropagation()}
+                                        data-testid={`menu-${job.id}`}
                                       >
-                                        <Badge className={`${getStatusColor(job.status)} text-xs`}>
-                                          {formatStatus(job.status)}
-                                        </Badge>
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="new_job">New Job</SelectItem>
-                                        <SelectItem value="job_in_progress">Job In Progress</SelectItem>
-                                        <SelectItem value="job_complete">Job Complete</SelectItem>
-                                        <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  {job.status === 'ready_for_billing' && (
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <Button 
-                                          variant="ghost" 
-                                          size="sm" 
-                                          className="h-7 w-7 p-0"
-                                          onClick={(e) => e.stopPropagation()}
-                                          data-testid={`menu-${job.id}`}
-                                        >
-                                          <MoreVertical className="h-3 w-3" />
-                                        </Button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent align="end">
-                                        <DropdownMenuItem 
-                                          onClick={(e) => {
-                                            e.stopPropagation();
+                                        <MoreVertical className="h-3 w-3" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
                                             deleteJobMutation.mutate(job.id);
-                                          }}
-                                          className="text-red-600"
-                                          data-testid={`menu-item-delete-${job.id}`}
-                                        >
-                                          <Trash2 className="h-4 w-4 mr-2" />
-                                          Archive Job
-                                        </DropdownMenuItem>
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
-                                  )}
-                                </div>
+                                          }
+                                        }}
+                                        className="text-red-600 focus:text-red-600"
+                                        data-testid={`delete-job-${job.id}`}
+                                      >
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Delete Job
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                )}
                               </div>
-                              <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
-                            </CardHeader>
-                            <CardContent className="pt-0">
-                              <p className="text-sm text-muted-foreground mb-2">PM: {job.projectName}</p>
-                              <div className="text-xs text-muted-foreground">
-                                Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                            </div>
+                            <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <p className="text-sm text-muted-foreground mb-2">PM: {job.projectName}</p>
+                            <div className="text-xs text-muted-foreground">
+                              Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
                   );
                 }
 
                 // Show grouped folders
                 const colors = getFolderColors(groupName, groupBy);
-                return (
-                  <div 
-                    key={groupName} 
-                    className={`border rounded-lg p-4 transition-colors ${colors.bg}`}
-                  >
-                    <div 
-                      className={`flex items-center gap-2 p-2 rounded transition-colors ${colors.folderBg}`}
-                    >
-                      <div 
-                        className="flex items-center gap-2 flex-1 cursor-pointer"
-                        onClick={toggleExpanded}
-                        data-testid={`folder-${groupName}`}
-                      >
-                        {isExpanded ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
-                        {isExpanded ? (
-                          <FolderOpen className={`h-5 w-5 ${colors.folderIcon}`} />
-                        ) : (
-                          <Folder className={`h-5 w-5 ${colors.folderIcon}`} />
-                        )}
-                        <span className={`font-medium ${colors.folderText}`}>{groupName}</span>
-                        <Badge 
-                          variant="secondary" 
-                          className={`ml-2 ${colors.badge}`}
-                        >
-                          {groupJobs.length} job{groupJobs.length !== 1 ? 's' : ''}
-                        </Badge>
-                      </div>
-                      
-                      {/* Color Picker Button */}
-                      <DropdownMenu 
-                        open={colorPickerOpen === groupName} 
-                        onOpenChange={(open) => setColorPickerOpen(open ? groupName : null)}
-                      >
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 hover:bg-white/20"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setColorPickerOpen(colorPickerOpen === groupName ? null : groupName);
-                            }}
-                            data-testid={`color-picker-${groupName}`}
-                          >
-                            <Palette className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent 
-                          align="end" 
-                          className="w-56 p-2"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="text-sm font-medium mb-2 px-2">Choose Folder Color</div>
-                          <div className="grid grid-cols-4 gap-2">
-                            {allColorThemes.map((theme, index) => (
-                              <button
-                                key={theme.name}
-                                className={`w-10 h-10 rounded-lg border-2 transition-all hover:scale-110 ${theme.preview} ${
-                                  folderColors[groupName] === index 
-                                    ? 'ring-2 ring-offset-2 ring-blue-500' 
-                                    : 'border-gray-200 hover:border-gray-300'
-                                }`}
-                                onClick={() => handleColorChange(groupName, index)}
-                                title={theme.name}
-                                data-testid={`color-option-${theme.name.toLowerCase()}`}
-                              />
-                            ))}
-                          </div>
-                          <div className="text-xs text-muted-foreground mt-2 px-2">
-                            Click a color to customize this folder
-                          </div>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    
-                    {isExpanded && (
-                      <div className={viewMode === 'list' ? "space-y-2 mt-4" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4"}>
-                        {groupJobs.map((job) => (
-                          viewMode === 'list' ? (
-                            <Card 
-                              key={job.id} 
-                              className="cursor-pointer hover:shadow-md transition-shadow bg-white"
-                              onClick={() => setSelectedJob(job.id)}
-                              data-testid={`list-job-${job.id}`}
-                            >
-                              <CardContent className="p-4">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex-1 min-w-0">
-                                    <h3 className="font-semibold text-lg truncate">{job.jobAddress}</h3>
-                                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                                      <span>Client: {job.clientName}</span>
-                                      <span>Manager: {job.projectName}</span>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-3 shrink-0">
-                                    <div onClick={(e) => e.stopPropagation()}>
-                                      <Select 
-                                        value={job.status} 
-                                        onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
-                                      >
-                                        <SelectTrigger 
-                                          className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
-                                          data-testid={`select-status-${job.id}`}
-                                        >
-                                          <Badge className={`${getStatusColor(job.status)} text-xs`}>
-                                            {formatStatus(job.status)}
-                                          </Badge>
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="new_job">New Job</SelectItem>
-                                          <SelectItem value="job_in_progress">Job In Progress</SelectItem>
-                                          <SelectItem value="job_complete">Job Complete</SelectItem>
-                                          <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                    {job.status === 'ready_for_billing' && (
-                                      <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                          <Button 
-                                            variant="ghost" 
-                                            size="sm" 
-                                            className="h-7 w-7 p-0"
-                                            onClick={(e) => e.stopPropagation()}
-                                            data-testid={`menu-${job.id}`}
-                                          >
-                                            <MoreVertical className="h-3 w-3" />
-                                          </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                          <DropdownMenuItem 
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              deleteJobMutation.mutate(job.id);
-                                            }}
-                                            className="text-red-600"
-                                            data-testid={`menu-item-delete-${job.id}`}
-                                          >
-                                            <Trash2 className="h-4 w-4 mr-2" />
-                                            Archive Job
-                                          </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                      </DropdownMenu>
-                                    )}
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ) : (
-                            <Card 
-                              key={job.id} 
-                              className="cursor-pointer hover:shadow-md transition-shadow bg-white relative"
-                              onClick={() => setSelectedJob(job.id)}
-                              data-testid={`card-job-${job.id}`}
-                            >
-                              <CardHeader className="pb-3">
-                                <div className="flex items-start justify-between">
-                                  <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
-                                  <div className="flex items-center gap-2 shrink-0">
-                                    <div onClick={(e) => e.stopPropagation()}>
-                                      <Select 
-                                        value={job.status} 
-                                        onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
-                                      >
-                                        <SelectTrigger 
-                                          className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
-                                          data-testid={`select-status-${job.id}`}
-                                        >
-                                          <Badge className={`${getStatusColor(job.status)} text-xs`}>
-                                            {formatStatus(job.status)}
-                                          </Badge>
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="new_job">New Job</SelectItem>
-                                          <SelectItem value="job_in_progress">Job In Progress</SelectItem>
-                                          <SelectItem value="job_complete">Job Complete</SelectItem>
-                                          <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                    {job.status === 'ready_for_billing' && (
-                                      <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                          <Button 
-                                            variant="ghost" 
-                                            size="sm" 
-                                            className="h-7 w-7 p-0"
-                                            onClick={(e) => e.stopPropagation()}
-                                            data-testid={`menu-${job.id}`}
-                                          >
-                                            <MoreVertical className="h-3 w-3" />
-                                          </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                          <DropdownMenuItem 
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              deleteJobMutation.mutate(job.id);
-                                            }}
-                                            className="text-red-600"
-                                            data-testid={`menu-item-delete-${job.id}`}
-                                          >
-                                            <Trash2 className="h-4 w-4 mr-2" />
-                                            Archive Job
-                                          </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                      </DropdownMenu>
-                                    )}
-                                  </div>
-                                </div>
-                                <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
-                              </CardHeader>
-                              <CardContent className="pt-0">
-                                <p className="text-sm text-muted-foreground mb-2">PM: {job.projectName}</p>
-                                <div className="text-xs text-muted-foreground">
-                                  Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      );
-                    }
-
-                // Show grouped folders
-                const colors = getFolderColors(groupName, groupBy);
-                return (
-                  <div 
-                    key={groupName} 
-                    className={`border rounded-lg p-4 transition-colors ${colors.bg}`}
-                  >
-                    <div 
-                      className={`flex items-center gap-2 p-2 rounded transition-colors ${colors.folderBg}`}
-                    >
-                      <div 
-                        className="flex items-center gap-2 flex-1 cursor-pointer"
-                        onClick={toggleExpanded}
-                        data-testid={`folder-${groupName}`}
-                      >
-                        {isExpanded ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
-                        {isExpanded ? (
-                          <FolderOpen className={`h-5 w-5 ${colors.folderIcon}`} />
-                        ) : (
-                          <Folder className={`h-5 w-5 ${colors.folderIcon}`} />
-                        )}
-                        <span className={`font-medium ${colors.folderText}`}>{groupName}</span>
-                        <Badge 
-                          variant="secondary" 
-                          className={`ml-2 ${colors.badge}`}
-                        >
-                          {groupJobs.length} job{groupJobs.length !== 1 ? 's' : ''}
-                        </Badge>
-                      </div>
-                      
-                      {/* Folder Color Picker */}
-                      <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-7 w-7 p-0 hover:bg-white/20"
-                              title="Change folder color"
-                            >
-                              <Palette className="h-3 w-3" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent className="p-2">
-                            <div className="grid grid-cols-6 gap-1">
-                              {folderColors[groupBy === 'client' ? 'client' : 'manager'].map((color, index) => (
-                                <button
-                                  key={index}
-                                  className={`w-6 h-6 rounded border-2 ${color.bg} ${color.border} hover:scale-110 transition-transform`}
-                                  onClick={() => handleFolderColorChange(groupName, index)}
-                                  title={`Color ${index + 1}`}
-                                />
-                              ))}
-                            </div>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                    
-                    {isExpanded && (
-                      <div className="mt-4">
-                        {viewMode === 'list' ? (
-                          <div className="space-y-2">
-                            {groupJobs.map((job) => (
-                              <Card 
-                                key={job.id} 
-                                className="cursor-pointer hover:shadow-md transition-shadow"
-                                onClick={() => setSelectedJob(job.id)}
-                                data-testid={`list-job-${job.id}`}
-                              >
-                                <CardContent className="p-4">
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex-1 min-w-0">
-                                      <h3 className="font-semibold text-lg truncate">{job.jobAddress}</h3>
-                                      <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                                        <span>Client: {job.clientName}</span>
-                                        <span>Manager: {job.projectName}</span>
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-3 shrink-0">
-                                      <div onClick={(e) => e.stopPropagation()}>
-                                        <Select 
-                                          value={job.status} 
-                                          onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
-                                        >
-                                          <SelectTrigger 
-                                            className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
-                                            data-testid={`select-status-${job.id}`}
-                                          >
-                                            <Badge className={`${getStatusColor(job.status)} text-xs`}>
-                                              {formatStatus(job.status)}
-                                            </Badge>
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="new_job">New Job</SelectItem>
-                                            <SelectItem value="job_in_progress">Job In Progress</SelectItem>
-                                            <SelectItem value="job_complete">Job Complete</SelectItem>
-                                            <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                      {job.status === 'ready_for_billing' && (
-                                        <DropdownMenu>
-                                          <DropdownMenuTrigger asChild>
-                                            <Button 
-                                              variant="ghost" 
-                                              size="sm" 
-                                              className="h-7 w-7 p-0"
-                                              onClick={(e) => e.stopPropagation()}
-                                              data-testid={`menu-${job.id}`}
-                                            >
-                                              <MoreVertical className="h-3 w-3" />
-                                            </Button>
-                                          </DropdownMenuTrigger>
-                                          <DropdownMenuContent align="end">
-                                            <DropdownMenuItem 
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                deleteJobMutation.mutate(job.id);
-                                              }}
-                                              className="text-red-600"
-                                              data-testid={`menu-item-delete-${job.id}`}
-                                            >
-                                              <Trash2 className="h-4 w-4 mr-2" />
-                                              Archive Job
-                                            </DropdownMenuItem>
-                                          </DropdownMenuContent>
-                                        </DropdownMenu>
-                                      )}
-                                    </div>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {groupJobs.map((job) => (
-                              <Card 
-                                key={job.id} 
-                                className="cursor-pointer hover:shadow-md transition-shadow relative"
-                                onClick={() => setSelectedJob(job.id)}
-                                data-testid={`card-job-${job.id}`}
-                              >
-                                <CardHeader className="pb-3">
-                                  <div className="flex items-start justify-between">
-                                    <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                      <div onClick={(e) => e.stopPropagation()}>
-                                        <Select 
-                                          value={job.status} 
-                                          onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
-                                        >
-                                          <SelectTrigger 
-                                            className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
-                                            data-testid={`select-status-${job.id}`}
-                                          >
-                                            <Badge className={`${getStatusColor(job.status)} text-xs`}>
-                                              {formatStatus(job.status)}
-                                            </Badge>
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="new_job">New Job</SelectItem>
-                                            <SelectItem value="job_in_progress">Job In Progress</SelectItem>
-                                            <SelectItem value="job_complete">Job Complete</SelectItem>
-                                            <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                      {job.status === 'ready_for_billing' && (
-                                        <DropdownMenu>
-                                          <DropdownMenuTrigger asChild>
-                                            <Button 
-                                              variant="ghost" 
-                                              size="sm" 
-                                              className="h-7 w-7 p-0"
-                                              onClick={(e) => e.stopPropagation()}
-                                              data-testid={`menu-${job.id}`}
-                                            >
-                                              <MoreVertical className="h-3 w-3" />
-                                            </Button>
-                                          </DropdownMenuTrigger>
-                                          <DropdownMenuContent align="end">
-                                            <DropdownMenuItem 
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                deleteJobMutation.mutate(job.id);
-                                              }}
-                                              className="text-red-600"
-                                              data-testid={`menu-item-delete-${job.id}`}
-                                            >
-                                              <Trash2 className="h-4 w-4 mr-2" />
-                                              Archive Job
-                                            </DropdownMenuItem>
-                                          </DropdownMenuContent>
-                                        </DropdownMenu>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
-                                </CardHeader>
-                                <CardContent className="pt-0">
-                                  <p className="text-sm text-muted-foreground mb-2">PM: {job.projectName}</p>
-                                  <div className="text-xs text-muted-foreground">
-                                    Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              No jobs found matching your search criteria.
-            </div>
-          )}
-        </TabsContent>
-
-        {/* Employee Management Tab */}
-        <TabsContent value="employees" className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h2 className="text-xl font-semibold">Employee Management</h2>
-            <Dialog open={isCreateEmployeeOpen} onOpenChange={setIsCreateEmployeeOpen}>
-              <DialogTrigger asChild>
-                <Button data-testid="button-add-employee">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Employee
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md mx-4 sm:max-w-lg" aria-describedby="add-employee-description">
-                <DialogHeader>
-                  <DialogTitle>Add New Employee</DialogTitle>
-                  <p id="add-employee-description" className="text-sm text-muted-foreground">
-                    Add a new staff member to your team.
-                  </p>
-                </DialogHeader>
-                <Form {...employeeForm}>
-                  <form onSubmit={employeeForm.handleSubmit(onEmployeeSubmit)} className="space-y-4">
-                    <FormField
-                      control={employeeForm.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter employee name" {...field} data-testid="input-employee-name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="flex gap-2 pt-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsCreateEmployeeOpen(false)}
-                        className="flex-1"
-                        data-testid="button-cancel-employee"
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        disabled={createEmployeeMutation.isPending}
-                        className="flex-1"
-                        data-testid="button-submit-employee"
-                      >
-                        {createEmployeeMutation.isPending ? "Adding..." : "Add Employee"}
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {/* Employee List */}
-          {employeesLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardHeader>
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : employees && employees.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {employees.map((employee) => (
-                <Card key={employee.id} data-testid={`card-employee-${employee.id}`}>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-base font-medium">{employee.name}</CardTitle>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeEmployeeMutation.mutate(employee.id)}
-                      disabled={removeEmployeeMutation.isPending}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      data-testid={`button-remove-employee-${employee.id}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      Employee ID: {employee.id}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="text-center py-8">
-                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">No employees yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Add your first employee to get started with timesheet management.
-                </p>
-                <Button onClick={() => setIsCreateEmployeeOpen(true)} data-testid="button-add-first-employee">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add First Employee
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* Timesheets Tab */}
-        <TabsContent value="timesheets" className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h2 className="text-xl font-semibold">Timesheet Management</h2>
-            <Button 
-              onClick={() => setTimesheetView(timesheetView === 'admin' ? 'staff' : 'admin')}
-              variant="outline"
-              data-testid="button-toggle-timesheet-view"
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              {timesheetView === 'admin' ? 'View as Staff' : 'View as Admin'}
-            </Button>
-          </div>
-
-          {timesheetView === 'admin' ? (
-            <AdminTimesheetView />
-          ) : (
-            <StaffDashboard />
-          )}
-        </TabsContent>
-
-        {/* Previous completed job sheets */}
-        {deletedJobs && deletedJobs.length > 0 && (
-          <div className="mt-8 pt-6 border-t">
-            <Card className="bg-gray-50 border-gray-200">
-              <CardContent className="p-4">
-                <button
-                  onClick={() => setIsDeletedFolderExpanded(!isDeletedFolderExpanded)}
-                  className="flex items-center gap-2 w-full text-left p-2 rounded transition-colors hover:bg-gray-100"
-                  data-testid="folder-deleted-jobs"
-                >
-                  {isDeletedFolderExpanded ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                  {isDeletedFolderExpanded ? (
-                    <FolderOpen className="h-5 w-5 text-gray-600" />
-                  ) : (
-                    <Folder className="h-5 w-5 text-gray-600" />
-                  )}
-                  <span className="font-medium text-gray-800">Previous completed job sheets</span>
-                  <Badge variant="secondary" className="ml-2 bg-gray-200 text-gray-800 border-gray-300">
-                    {deletedJobs.length} job{deletedJobs.length !== 1 ? 's' : ''}
-                  </Badge>
-                </button>
-                
-                {isDeletedFolderExpanded && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                    {deletedJobs.map((job) => (
-                      <Card 
-                        key={job.id} 
-                        className="cursor-pointer hover:shadow-md transition-shadow bg-white relative opacity-80"
-                        onClick={() => setSelectedJob(job.id)}
-                        data-testid={`card-deleted-job-${job.id}`}
-                      >
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between">
-                            <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="h-7 text-xs"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                restoreJobMutation.mutate(job.id);
-                              }}
-                              data-testid={`button-restore-${job.id}`}
-                            >
-                              <RotateCcw className="h-3 w-3 mr-1" />
-                              Restore
-                            </Button>
-                          </div>
-                          <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <p className="text-sm text-muted-foreground mb-2">PM: {job.projectName}</p>
-                          <div className="text-xs text-muted-foreground">
-                            Archived: {job.deletedAt ? format(parseISO(job.deletedAt), 'MMM d, yyyy') : 'Unknown'}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-      </Tabs>
-
-      {/* Job Sheet Modal */}
-      {selectedJob && (
-        <JobSheetModal
-          jobId={selectedJob}
-          isOpen={!!selectedJob}
-          onClose={() => setSelectedJob(null)}
-        />
-      )}
-    </PageLayout>
-  );
-
-  function AdminTimesheetView() {
-    const { data: timesheets = [], isLoading: timesheetsLoading } = useQuery({
-      queryKey: ['/api/admin/timesheets'],
-      enabled: activeTab === 'timesheets' && timesheetView === 'admin'
-    });
-
-    const { data: staffUsers = [] } = useQuery({
-      queryKey: ['/api/staff-users'],
-      enabled: activeTab === 'timesheets' && timesheetView === 'admin'
-    });
-
-    const [selectedStaff, setSelectedStaff] = useState<string>('');
-    const [approvedExpanded, setApprovedExpanded] = useState(false);
-    const [pendingExpanded, setPendingExpanded] = useState(true);
-    
-    // Group timesheets by staff and approval status
-    const groupedTimesheets = useMemo(() => {
-      const pending: Record<string, TimesheetEntry[]> = {};
-      const approved: Record<string, TimesheetEntry[]> = {};
-      
-      (timesheets as TimesheetEntry[]).forEach((entry) => {
-        const staffName = getStaffName(entry.staffId);
-        if (entry.approved) {
-          if (!approved[staffName]) approved[staffName] = [];
-          approved[staffName].push(entry);
-        } else {
-          if (!pending[staffName]) pending[staffName] = [];
-          pending[staffName].push(entry);
-        }
-      });
-      
-      return { pending, approved };
-    }, [timesheets]);
-
-    // Filter by selected staff member
-    const filteredTimesheets = useMemo(() => {
-      if (!selectedStaff) return groupedTimesheets;
-      
-      const staffName = staffUsers.find(staff => staff.id === selectedStaff)?.name || '';
-      return {
-        pending: groupedTimesheets.pending[staffName] ? { [staffName]: groupedTimesheets.pending[staffName] } : {},
-        approved: groupedTimesheets.approved[staffName] ? { [staffName]: groupedTimesheets.approved[staffName] } : {}
-      };
-    }, [groupedTimesheets, selectedStaff, staffUsers]);
-
-    const approveTimesheetMutation = useMutation({
-      mutationFn: async (entryId: string) => {
-        const response = await fetch(`/api/admin/timesheets/${entryId}/approve`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ approved: true })
-        });
-        if (!response.ok) throw new Error('Failed to approve timesheet');
-        return response.json();
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/timesheets'] });
-      }
-    });
-
-    const rejectTimesheetMutation = useMutation({
-      mutationFn: async (entryId: string) => {
-        const response = await fetch(`/api/admin/timesheets/${entryId}`, {
-          method: 'DELETE'
-        });
-        if (!response.ok) throw new Error('Failed to reject timesheet');
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/timesheets'] });
-      }
-    });
-
-    // Calculate staff statistics for dropdown
-    const getStaffStats = (staffId: string) => {
-      const allStaffEntries = (timesheets as TimesheetEntry[]).filter(entry => entry.staffId === staffId);
-      const totalHours = allStaffEntries.reduce((sum, entry) => sum + parseFloat(entry.hours || '0'), 0);
-      const approvedCount = allStaffEntries.filter(entry => entry.approved).length;
-      const totalCount = allStaffEntries.length;
-      const approvalRatio = totalCount > 0 ? Math.round((approvedCount / totalCount) * 100) : 0;
-      
-      return {
-        totalHours: totalHours.toFixed(1),
-        entryCount: totalCount,
-        approvalRatio
-      };
-    };
-
-    return (
-      <div className="space-y-6">
-        {/* Staff Filter */}
-        <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
-          <div className="flex-1">
-            <Select value={selectedStaff} onValueChange={setSelectedStaff}>
-              <SelectTrigger className="w-full sm:max-w-[300px]" data-testid="select-staff-filter">
-                <SelectValue placeholder="Filter by staff member (optional)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Staff Members</SelectItem>
-                {staffUsers.map((staff) => {
-                  const stats = getStaffStats(staff.id);
-                  return (
-                    <SelectItem key={staff.id} value={staff.id}>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{staff.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {stats.totalHours}h • {stats.entryCount} entries • {stats.approvalRatio}% approved
-                        </span>
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <Button 
-            onClick={() => setSelectedStaff('')} 
-            variant="outline" 
-            disabled={!selectedStaff}
-            data-testid="button-clear-staff-filter"
-          >
-            Clear Filter
-          </Button>
-        </div>
-
-        {timesheetsLoading ? (
-          <Card>
-            <CardContent className="p-6">
-              <div className="animate-pulse space-y-4">
-                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                <div className="space-y-2">
-                  <div className="h-3 bg-gray-200 rounded"></div>
-                  <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {/* Pending Timesheets */}
-            {Object.keys(filteredTimesheets.pending).length > 0 && (
-              <Card className="border-amber-200 bg-amber-50">
-                <CardContent className="p-4">
-                  <button
-                    onClick={() => setPendingExpanded(!pendingExpanded)}
-                    className="flex items-center gap-2 w-full text-left p-2 rounded transition-colors hover:bg-amber-100"
-                    data-testid="folder-pending-timesheets"
-                  >
-                    {pendingExpanded ? (
-                      <ChevronDown className="h-4 w-4" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4" />
-                    )}
-                    <Clock className="h-5 w-5 text-amber-600" />
-                    <span className="font-medium text-amber-800">Pending Timesheets</span>
-                    <Badge variant="secondary" className="ml-2 bg-amber-200 text-amber-800 border-amber-300">
-                      {Object.values(filteredTimesheets.pending).flat().length} pending
-                    </Badge>
-                  </button>
-                  
-                  {pendingExpanded && (
-                    <div className="space-y-4 mt-4">
-                      {Object.entries(filteredTimesheets.pending).map(([staffName, entries]) => (
-                        <div key={staffName} className="bg-white rounded-lg p-4 border border-amber-200">
-                          <div className="flex items-center gap-2 mb-3">
-                            <Users className="h-4 w-4 text-amber-600" />
-                            <h4 className="font-medium text-amber-800">{staffName}</h4>
-                            <Badge variant="outline" className="border-amber-300 text-amber-700">
-                              {entries.length} entries
-                            </Badge>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            {entries.map((entry) => (
-                              <div 
-                                key={entry.id} 
-                                className="flex items-center justify-between p-3 bg-amber-25 rounded border border-amber-100"
-                                data-testid={`timesheet-entry-${entry.id}`}
-                              >
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-4">
-                                    <span className="font-medium">{format(parseISO(entry.date), 'MMM d, yyyy')}</span>
-                                    <span className="text-lg font-semibold text-amber-700">{entry.hours} hours</span>
-                                    <span className="text-sm text-muted-foreground">
-                                      Job: {getJobTitle(entry.jobId)}
-                                    </span>
-                                  </div>
-                                  {entry.materials && (
-                                    <p className="text-sm text-muted-foreground mt-1">Materials: {entry.materials}</p>
-                                  )}
-                                </div>
-                                <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    onClick={() => approveTimesheetMutation.mutate(entry.id)}
-                                    disabled={approveTimesheetMutation.isPending}
-                                    className="bg-green-600 hover:bg-green-700"
-                                    data-testid={`button-approve-${entry.id}`}
-                                  >
-                                    <CheckCircle className="h-4 w-4 mr-1" />
-                                    Approve
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => rejectTimesheetMutation.mutate(entry.id)}
-                                    disabled={rejectTimesheetMutation.isPending}
-                                    data-testid={`button-reject-${entry.id}`}
-                                  >
-                                    <XCircle className="h-4 w-4 mr-1" />
-                                    Reject
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Approved Timesheets */}
-            {Object.keys(filteredTimesheets.approved).length > 0 && (
-              <Card className="border-green-200 bg-green-50">
-                <CardContent className="p-4">
-                  <button
-                    onClick={() => setApprovedExpanded(!approvedExpanded)}
-                    className="flex items-center gap-2 w-full text-left p-2 rounded transition-colors hover:bg-green-100"
-                    data-testid="folder-approved-timesheets"
-                  >
-                    {approvedExpanded ? (
-                      <ChevronDown className="h-4 w-4" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4" />
-                    )}
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <span className="font-medium text-green-800">Approved Timesheets</span>
-                    <Badge variant="secondary" className="ml-2 bg-green-200 text-green-800 border-green-300">
-                      {Object.values(filteredTimesheets.approved).flat().length} approved
-                    </Badge>
-                  </button>
-                  
-                  {approvedExpanded && (
-                    <div className="space-y-4 mt-4">
-                      {Object.entries(filteredTimesheets.approved).map(([staffName, entries]) => (
-                        <div key={staffName} className="bg-white rounded-lg p-4 border border-green-200">
-                          <div className="flex items-center gap-2 mb-3">
-                            <Users className="h-4 w-4 text-green-600" />
-                            <h4 className="font-medium text-green-800">{staffName}</h4>
-                            <Badge variant="outline" className="border-green-300 text-green-700">
-                              {entries.length} entries
-                            </Badge>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            {entries.map((entry) => (
-                              <div 
-                                key={entry.id} 
-                                className="flex items-center justify-between p-3 bg-green-25 rounded border border-green-100"
-                                data-testid={`approved-entry-${entry.id}`}
-                              >
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-4">
-                                    <span className="font-medium">{format(parseISO(entry.date), 'MMM d, yyyy')}</span>
-                                    <span className="text-lg font-semibold text-green-700">{entry.hours} hours</span>
-                                    <span className="text-sm text-muted-foreground">
-                                      Job: {getJobTitle(entry.jobId)}
-                                    </span>
-                                  </div>
-                                  {entry.materials && (
-                                    <p className="text-sm text-muted-foreground mt-1">Materials: {entry.materials}</p>
-                                  )}
-                                </div>
-                                <Badge className="bg-green-100 text-green-800 border-green-300">
-                                  <CheckCircle className="h-3 w-3 mr-1" />
-                                  Approved
-                                </Badge>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* No timesheets message */}
-            {Object.keys(filteredTimesheets.pending).length === 0 && Object.keys(filteredTimesheets.approved).length === 0 && (
-              <Card>
-                <CardContent className="text-center py-8">
-                  <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">
-                    {selectedStaff ? 'No timesheets for selected staff member' : 'No timesheets submitted yet'}
-                  </h3>
-                  <p className="text-muted-foreground">
-                    {selectedStaff 
-                      ? 'This staff member has not submitted any timesheets.' 
-                      : 'Staff members will submit their timesheets here for approval.'
-                    }
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  }
-}
                 return (
                   <div 
                     key={groupName} 
@@ -2705,7 +1591,6 @@ export default function AdminDashboard() {
                 );
               })}
             </div>
-          ) : (
           ) : searchQuery ? (
             <div className="text-center py-12">
               <div className="text-gray-500 mb-4">No jobs found matching "{searchQuery}"</div>
