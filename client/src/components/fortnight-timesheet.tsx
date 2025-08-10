@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft, Users } from "lucide-react";
 import { format, addDays, startOfWeek, parseISO } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -13,9 +14,15 @@ import jsPDF from "jspdf";
 
 const FORTNIGHT_START_DATE = new Date(2025, 7, 11); // August 11, 2025
 
-export function FortnightTimesheet() {
+interface FortnightTimesheetProps {
+  selectedEmployeeId?: string;
+  isAdminView?: boolean;
+}
+
+export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: FortnightTimesheetProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [selectedEmployee, setSelectedEmployee] = useState<string>(selectedEmployeeId || "");
   const [currentFortnightIndex, setCurrentFortnightIndex] = useState(0);
   const [timesheetData, setTimesheetData] = useState<any>({});
 
@@ -33,21 +40,41 @@ export function FortnightTimesheet() {
     addDays(currentFortnight.start, i)
   );
 
+  // Get staff members for admin view
+  const { data: staffMembers } = useQuery({
+    queryKey: ["/api/staff-users"],
+    retry: false,
+    enabled: isAdminView,
+  });
+
   const { data: jobs } = useQuery({
-    queryKey: ["/api/jobs-for-staff"],
+    queryKey: isAdminView ? ["/api/jobs"] : ["/api/jobs-for-staff"],
     retry: false,
   });
 
   const { data: timesheetEntries } = useQuery({
-    queryKey: ["/api/timesheet"],
+    queryKey: isAdminView && selectedEmployee ? ["/api/admin/timesheets"] : ["/api/timesheet"],
     retry: false,
   });
 
-  // Filter entries for current fortnight
-  const currentFortnightEntries = timesheetEntries?.filter((entry: any) => {
+  // Update selected employee when prop changes
+  useEffect(() => {
+    if (selectedEmployeeId) {
+      setSelectedEmployee(selectedEmployeeId);
+    }
+  }, [selectedEmployeeId]);
+
+  // Filter entries for current fortnight and selected employee (if admin view)
+  const currentFortnightEntries = (timesheetEntries || []).filter((entry: any) => {
     const entryDate = parseISO(entry.date);
-    return entryDate >= currentFortnight.start && entryDate <= currentFortnight.end;
-  }) || [];
+    const isInFortnight = entryDate >= currentFortnight.start && entryDate <= currentFortnight.end;
+    
+    if (isAdminView && selectedEmployee) {
+      return isInFortnight && entry.staffId === selectedEmployee;
+    }
+    
+    return isInFortnight;
+  });
 
   const updateTimesheetMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -71,7 +98,7 @@ export function FortnightTimesheet() {
 
   const handleCellChange = (date: Date, field: string, value: string) => {
     const dateKey = format(date, 'yyyy-MM-dd');
-    setTimesheetData(prev => ({
+    setTimesheetData((prev: any) => ({
       ...prev,
       [dateKey]: {
         ...prev[dateKey],
@@ -122,7 +149,7 @@ export function FortnightTimesheet() {
     doc.text('Fortnight Timesheet', 20, 20);
     doc.setFontSize(12);
     doc.text(`${format(currentFortnight.start, 'MMM dd, yyyy')} - ${format(currentFortnight.end, 'MMM dd, yyyy')}`, 20, 30);
-    doc.text(`Employee: ${user?.firstName} ${user?.lastName || ''}`, 20, 40);
+    doc.text(`Employee: ${(user as any)?.firstName || ''} ${(user as any)?.lastName || ''}`, 20, 40);
     
     // Table headers
     let yPos = 60;
@@ -182,6 +209,11 @@ export function FortnightTimesheet() {
               <p className="text-muted-foreground">
                 {format(currentFortnight.start, 'MMM dd, yyyy')} - {format(currentFortnight.end, 'MMM dd, yyyy')}
               </p>
+              {isAdminView && selectedEmployee && (
+                <p className="text-sm text-primary font-medium">
+                  Viewing: {(staffMembers || []).find((s: any) => s.id === selectedEmployee)?.firstName || ''} {(staffMembers || []).find((s: any) => s.id === selectedEmployee)?.lastName || ''}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex gap-2">
@@ -211,6 +243,37 @@ export function FortnightTimesheet() {
             </div>
           </div>
         </div>
+
+        {/* Admin Employee Selection */}
+        {isAdminView && (
+          <Card className="mb-6">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Staff Member Selection
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="employee-select" className="text-sm font-medium">Select Staff Member</Label>
+                  <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                    <SelectTrigger data-testid="select-employee-timesheet" className="mt-1">
+                      <SelectValue placeholder="Choose a staff member..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(staffMembers || []).filter((staff: any) => staff.id && staff.id.trim() !== '').map((staff: any) => (
+                        <SelectItem key={staff.id} value={staff.id}>
+                          {staff.firstName} {staff.lastName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -311,7 +374,7 @@ export function FortnightTimesheet() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="no-job">No job</SelectItem>
-                              {jobs?.filter((job: any) => job.id && job.id.trim() !== '').map((job: any) => (
+                              {(jobs || []).filter((job: any) => job.id && job.id.trim() !== '').map((job: any) => (
                                 <SelectItem key={job.id} value={job.id}>
                                   {job.jobAddress}
                                 </SelectItem>

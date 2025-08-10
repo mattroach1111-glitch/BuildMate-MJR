@@ -19,7 +19,7 @@ import { insertJobSchema, insertEmployeeSchema, insertTimesheetEntrySchema } fro
 import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
@@ -1569,6 +1569,16 @@ export default function AdminDashboard() {
                 >
                   Clear All Filters
                 </Button>
+                {selectedEmployeeFilter && selectedEmployeeFilter !== "all" && (
+                  <Button 
+                    size="sm"
+                    onClick={() => window.location.href = `/timesheet?employee=${selectedEmployeeFilter}&admin=true`}
+                    data-testid="button-view-employee-timesheet"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    View Timesheet
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
