@@ -42,6 +42,7 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 - ✅ **Collapsible Timesheet Approvals**: Added expand/collapse functionality to timesheet approvals, grouping all entries under each staff member's name with toggle buttons for cleaner admin interface management.
 - ✅ **Approved Timesheets Folder**: Separated approved timesheets into dedicated collapsible folder with green color scheme, keeping main view focused on pending approvals for better workflow organization.
 - ✅ **RDO and Leave Types**: Added RDO (Rest Day Off) option to job selection dropdown and converted materials field to job description dropdown with sick leave, personal leave, and annual leave options at the bottom.
+- ✅ **Simplified Timesheet Interface**: Removed job description column and permanently added sick leave, personal leave, and annual leave directly to job selection dropdown for streamlined data entry.
 
 # User Preferences
 
