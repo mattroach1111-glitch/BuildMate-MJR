@@ -226,7 +226,7 @@ export default function StaffTimesheet() {
                     }
                     
                     return entriesToShow.map((entry: any, entryIndex: number) => (
-                      <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'bg-blue-600 border-blue-700' : ''}`}>
+                      <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'bg-blue-800 border-blue-900' : ''}`}>
                         <td className="p-3">
                           {entryIndex === 0 && (
                             <div className={`font-medium ${isWeekend ? 'text-white' : ''}`}>
