@@ -46,6 +46,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   // Debug effect to track dialog state changes
   useEffect(() => {
     console.log('🏠 DIALOG STATE CHANGED:', showAddressDialog, 'Data:', addressDialogData);
+    if (showAddressDialog) {
+      console.log('🏠 DIALOG SHOULD BE VISIBLE NOW!');
+      // Try to find the dialog element in DOM
+      setTimeout(() => {
+        const dialogElement = document.querySelector('[data-testid="address-dialog"]');
+        console.log('🏠 DIALOG ELEMENT IN DOM:', dialogElement);
+      }, 100);
+    }
   }, [showAddressDialog, addressDialogData]);
 
   // Function to unlock weekend for editing
@@ -1004,6 +1012,37 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   return (
     <>
+      {/* EMERGENCY DIALOG TEST - Place at very top */}
+      {showAddressDialog && (
+        <div 
+          data-testid="emergency-dialog"
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 99999,
+            backgroundColor: 'red',
+            color: 'white',
+            padding: '20px',
+            border: '5px solid yellow',
+            fontSize: '20px',
+            fontWeight: 'bold'
+          }}
+          onClick={() => {
+            console.log('🏠 EMERGENCY DIALOG CLICKED!');
+            setShowAddressDialog(false);
+            setAddressDialogData({dayIndex: -1, entryIndex: -1});
+          }}
+        >
+          🚨 EMERGENCY DIALOG TEST 🚨
+          <br />
+          Click me to close!
+          <br />
+          This proves dialogs can render!
+        </div>
+      )}
+      
       <SuccessAnimation />
       <div className="p-4 max-w-7xl mx-auto">
         <div className="mb-6">
@@ -1570,14 +1609,38 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         {/* Address Input Dialog - Fixed positioning */}
         {showAddressDialog && (
           <div 
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50"
-            style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999}}
+            data-testid="address-dialog"
+            className="fixed inset-0 z-[9999] flex items-center justify-center"
+            style={{
+              position: 'fixed', 
+              top: 0, 
+              left: 0, 
+              right: 0, 
+              bottom: 0, 
+              zIndex: 9999,
+              backgroundColor: 'rgba(255, 0, 0, 0.8)',
+              backdropFilter: 'blur(4px)'
+            }}
+            onClick={(e) => {
+              console.log('🏠 DIALOG BACKDROP CLICKED');
+              e.stopPropagation();
+            }}
           >
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl border-2 border-red-500">
+            <div 
+              className="bg-yellow-400 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl border-4 border-red-500"
+              style={{backgroundColor: 'yellow', border: '4px solid red'}}
+              onClick={(e) => {
+                console.log('🏠 DIALOG CONTENT CLICKED');
+                e.stopPropagation();
+              }}
+            >
               <div className="mb-4">
-                <h2 className="text-lg font-semibold">Enter Job Address</h2>
-                <p className="text-sm text-gray-600 mt-1">
+                <h2 className="text-lg font-semibold text-black">🏠 TEST DIALOG - Enter Job Address</h2>
+                <p className="text-sm text-black mt-1">
                   Please provide the house number and street address for this job location.
+                </p>
+                <p className="text-xs text-black mt-2 font-bold">
+                  If you can see this yellow dialog with red border, the dialog system works!
                 </p>
               </div>
               <div className="space-y-4">
