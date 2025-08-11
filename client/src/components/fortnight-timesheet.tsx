@@ -601,8 +601,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           }
           
           // Validation 2: If hours > 0, must have a job selected (not "no-job") 
-          // Exception: Special leave types (RDO, sick leave, etc.) are allowed even with no actual job
-          const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay'];
+          // Exception: Special leave types (RDO, sick leave, etc.) and Tafe are allowed even with no actual job
+          const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'];
           if (hours > 0 && (!jobId || jobId === 'no-job') && !leaveTypes.includes(jobId)) {
             errors.push(`${format(parseISO(dateKey), 'MMM dd')}: Cannot have hours without selecting a job`);
           }
@@ -680,7 +680,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           const hours = parseFloat(entry.hours || '0');
           
           // Include entries with hours > 0 OR any leave type (even with 0 hours) OR custom addresses with hours > 0
-          const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay'];
+          const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'];
           const isLeaveType = leaveTypes.includes(entry.jobId);
           const isCustomAddress = entry.jobId && entry.jobId.startsWith('custom-');
           

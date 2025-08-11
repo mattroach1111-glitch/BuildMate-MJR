@@ -1137,9 +1137,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Handle special leave types by storing them in materials field and setting jobId to null
+      // Handle special leave types and Tafe by storing them in materials field and setting jobId to null
       const { jobId, materials, description, ...otherData } = req.body;
-      const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'rdo', 'leave-without-pay'];
+      const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'rdo', 'leave-without-pay', 'tafe'];
       let finalJobId = jobId;
       let finalMaterials = materials || '';
       let finalDescription = description || null;
@@ -1147,7 +1147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (leaveTypes.includes(jobId)) {
         finalJobId = null;
-        finalMaterials = jobId; // Store leave type in materials field
+        finalMaterials = jobId; // Store leave type or tafe in materials field
       } else if (jobId === 'no-job') {
         finalJobId = null;
       } else if (jobId === 'custom-address') {
@@ -1517,15 +1517,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Handle special leave types by storing them in materials field and setting jobId to null
+      // Handle special leave types and Tafe by storing them in materials field and setting jobId to null
       const { jobId, materials, ...otherData } = updates;
-      const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'rdo'];
+      const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'rdo', 'tafe'];
       let finalJobId = jobId;
       let finalMaterials = materials || '';
       
       if (leaveTypes.includes(jobId)) {
         finalJobId = null;
-        finalMaterials = jobId; // Store leave type in materials field
+        finalMaterials = jobId; // Store leave type or tafe in materials field
       } else if (jobId === 'no-job') {
         finalJobId = null;
       }
