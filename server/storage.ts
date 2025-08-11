@@ -412,7 +412,7 @@ export class DatabaseStorage implements IStorage {
     const user = await db.select().from(users).where(eq(users.id, staffId)).limit(1);
     const employeeId = user[0]?.employeeId || staffId; // Use employeeId if available, otherwise use staffId directly
     
-    console.log(`Updating labor hours: staffId=${staffId}, employeeId=${employeeId}, jobId=${jobId}`);
+    console.log(`[LABOR_UPDATE] Starting: staffId=${staffId}, employeeId=${employeeId}, jobId=${jobId}`);
 
     // Get total hours from timesheet for this staff and job (only approved entries)
     const result = await db
@@ -427,7 +427,26 @@ export class DatabaseStorage implements IStorage {
       );
 
     const totalHours = result[0]?.totalHours || 0;
-    console.log(`Total hours from timesheet: ${totalHours}`);
+    console.log(`[LABOR_UPDATE] Calculated hours from timesheet: ${totalHours}`);
+
+    // Check if labor entry exists first
+    const existingEntry = await db
+      .select()
+      .from(laborEntries)
+      .where(
+        and(
+          eq(laborEntries.staffId, employeeId),
+          eq(laborEntries.jobId, jobId)
+        )
+      )
+      .limit(1);
+
+    if (existingEntry.length === 0) {
+      console.log(`[LABOR_UPDATE] No labor entry found for employeeId=${employeeId}, jobId=${jobId} - skipping update`);
+      return;
+    }
+
+    console.log(`[LABOR_UPDATE] Existing entry hours: ${existingEntry[0].hoursLogged}, updating to: ${totalHours}`);
 
     // Update labor entry hours using the employee ID (not user ID)
     const updateResult = await db
@@ -440,7 +459,7 @@ export class DatabaseStorage implements IStorage {
         )
       );
     
-    console.log(`Labor entry update completed for employeeId=${employeeId}, jobId=${jobId}, hours=${totalHours}`);
+    console.log(`[LABOR_UPDATE] Completed for employeeId=${employeeId}, jobId=${jobId}, hours=${totalHours}`);
   }
 
   async addExtraHoursToLaborEntry(laborEntryId: string, extraHours: string): Promise<LaborEntry> {
