@@ -1010,11 +1010,16 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           </div>
         )}
 
-        {/* Timesheet Table - Only show when employee is selected in admin view */}
+        {/* Timesheet Table - Always show for staff, show for admin when employee selected */}
         {(() => {
           const shouldShow = (!isAdminView || selectedEmployee);
-          console.log(`TABLE RENDER CHECK: isAdminView=${isAdminView}, selectedEmployee=${selectedEmployee}, shouldShow=${shouldShow}`);
-          console.log(`FORTNIGHT DAYS LENGTH: ${fortnightDays.length}, Current fortnight:`, currentFortnight);
+          console.log(`🏗️ TABLE RENDER: isAdminView=${isAdminView}, selectedEmployee=${selectedEmployee}, shouldShow=${shouldShow}`);
+          console.log(`📊 FORTNIGHT DAYS: ${fortnightDays.length} days, Current fortnight:`, currentFortnight);
+          if (shouldShow) {
+            console.log(`✅ TABLE WILL RENDER - Weekend detection should start now`);
+          } else {
+            console.log(`❌ TABLE BLOCKED - Admin view requires employee selection`);
+          }
           return shouldShow;
         })() && (
           <>
@@ -1044,13 +1049,22 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0 = Sunday, 6 = Saturday
                         const isWeekendLocked = isWeekend && !isWeekendUnlocked(dateKey);
                         
-                        // Always log ALL days for debugging
-                        console.log(`📅 DAY CHECK: ${format(day, 'EEE, MMM dd')} - Day: ${dayOfWeek}, IsWeekend: ${isWeekend}, Date: ${dateKey}`);
+                        // Force weekend detection first
+                        console.log(`📅 PROCESSING DAY: ${format(day, 'EEE, MMM dd')} - Day: ${dayOfWeek}, Date: ${dateKey}`);
                         
-                        // Always log weekend detection for debugging
+                        // Check if this is actually a weekend (Saturday=6, Sunday=0)
+                        if (dayOfWeek === 6) {
+                          console.log(`🔵 SATURDAY DETECTED: ${format(day, 'EEE, MMM dd')} - Day ${dayOfWeek}`);
+                        }
+                        if (dayOfWeek === 0) {
+                          console.log(`🔵 SUNDAY DETECTED: ${format(day, 'EEE, MMM dd')} - Day ${dayOfWeek}`);
+                        }
+                        
+                        // Weekend detection with detailed logging
                         if (isWeekend) {
-                          console.log(`🔴 WEEKEND DETECTED: ${format(day, 'EEE, MMM dd')} - Day: ${dayOfWeek} (${dayOfWeek === 0 ? 'Sunday' : 'Saturday'}), IsWeekend: ${isWeekend}, Unlocked: ${isWeekendUnlocked(dateKey)}, Locked: ${isWeekendLocked}`);
-                          console.log(`🔐 WEEKEND LOCK STATUS: ${dateKey} - UnlockedSet contains ${dateKey}:`, unlockedWeekends.has(dateKey), 'Full set:', Array.from(unlockedWeekends));
+                          console.log(`🔴 WEEKEND CONFIRMED: ${format(day, 'EEE, MMM dd')} - Day: ${dayOfWeek} (${dayOfWeek === 0 ? 'Sunday' : 'Saturday'})`);
+                          console.log(`🔐 LOCK CHECK: Unlocked=${isWeekendUnlocked(dateKey)}, Locked=${isWeekendLocked}`);
+                          console.log(`🗂️ UNLOCKED SET:`, Array.from(unlockedWeekends));
                         }
                         const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
                         const existingEntries = Array.isArray(currentFortnightEntries) ? currentFortnightEntries.filter((entry: any) => 

@@ -961,6 +961,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
+      // Check if the date is a weekend (Saturday = 6, Sunday = 0)
+      const entryDate = new Date(req.body.date);
+      const dayOfWeek = entryDate.getDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      
+      if (isWeekend) {
+        const dayName = dayOfWeek === 0 ? 'Sunday' : 'Saturday';
+        console.log(`🚫 WEEKEND ENTRY BLOCKED: User ${user.email} attempted to create entry on ${dayName} ${req.body.date}`);
+        return res.status(400).json({ 
+          message: `Weekend entries are locked. Cannot create timesheet entry for ${dayName}. Please contact admin if you worked on the weekend.`,
+          isWeekend: true,
+          dayName
+        });
+      }
+      
       // The staff_id in timesheet_entries must reference a user ID (not employee ID)
       // This is because of the foreign key constraint: timesheet_entries.staff_id -> users.id
       const staffId = userId; // Always use the authenticated user's ID
