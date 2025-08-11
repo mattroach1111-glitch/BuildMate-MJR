@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { generateJobPDF } from "@/lib/pdfGenerator";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { debounce } from "lodash";
-import { Upload, Download, Trash2, FileText } from "lucide-react";
+import { Upload, Download, Trash2, FileText, Clock } from "lucide-react";
 import type { Job, LaborEntry, Material, SubTrade, OtherCost, JobFile } from "@shared/schema";
 
 interface JobSheetModalProps {
@@ -56,6 +56,13 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   // Get job files
   const { data: jobFiles = [] } = useQuery<JobFile[]>({
     queryKey: ["/api/jobs", jobId, "files"],
+    enabled: isOpen && !!jobId,
+    retry: false,
+  });
+
+  // Get job timesheets
+  const { data: jobTimesheets = [] } = useQuery<any[]>({
+    queryKey: ["/api/jobs", jobId, "timesheets"],
     enabled: isOpen && !!jobId,
     retry: false,
   });
@@ -1155,6 +1162,87 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     Other Costs Total: ${totals.otherCostsTotal.toFixed(2)}
                   </span>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Timesheets Section */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2" data-testid="text-timesheets-title">
+                    <Clock className="h-5 w-5" />
+                    Timesheet Entries
+                  </CardTitle>
+                  <div className="text-sm text-muted-foreground">
+                    {jobTimesheets.length} entries found
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {jobTimesheets.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b text-left">
+                            <th className="pb-2 font-medium">Date</th>
+                            <th className="pb-2 font-medium">Staff Member</th>
+                            <th className="pb-2 font-medium">Hours</th>
+                            <th className="pb-2 font-medium">Materials/Notes</th>
+                            <th className="pb-2 font-medium">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {jobTimesheets
+                            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                            .map((entry) => (
+                            <tr key={entry.id} className="border-b">
+                              <td className="py-2" data-testid={`timesheet-date-${entry.id}`}>
+                                {new Date(entry.date).toLocaleDateString()}
+                              </td>
+                              <td className="py-2" data-testid={`timesheet-staff-${entry.id}`}>
+                                {entry.staffName || entry.staffEmail || 'Unknown Staff'}
+                              </td>
+                              <td className="py-2 font-medium" data-testid={`timesheet-hours-${entry.id}`}>
+                                {parseFloat(entry.hours).toFixed(1)}h
+                              </td>
+                              <td className="py-2" data-testid={`timesheet-materials-${entry.id}`}>
+                                {entry.materials || entry.description || '-'}
+                              </td>
+                              <td className="py-2" data-testid={`timesheet-status-${entry.id}`}>
+                                <span className={`px-2 py-1 rounded-full text-xs ${
+                                  entry.approved 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                  {entry.approved ? 'Approved' : 'Pending'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="flex justify-between items-center pt-4 border-t">
+                      <span className="text-gray-700">Total Hours Logged:</span>
+                      <span className="font-semibold text-lg" data-testid="text-total-timesheet-hours">
+                        {jobTimesheets.reduce((total, entry) => total + parseFloat(entry.hours), 0).toFixed(1)}h
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-700">Approved Hours:</span>
+                      <span className="font-semibold" data-testid="text-approved-timesheet-hours">
+                        {jobTimesheets.filter(entry => entry.approved).reduce((total, entry) => total + parseFloat(entry.hours), 0).toFixed(1)}h
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>No timesheet entries found for this job</p>
+                    <p className="text-sm mt-1">Staff can log hours for this job in their timesheet</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

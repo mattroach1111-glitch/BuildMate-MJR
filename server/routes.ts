@@ -446,6 +446,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get timesheet data for a specific job
+  app.get("/api/jobs/:id/timesheets", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const jobTimesheets = await storage.getJobTimesheets(req.params.id);
+      res.json(jobTimesheets);
+    } catch (error) {
+      console.error("Error fetching job timesheets:", error);
+      res.status(500).json({ message: "Failed to fetch job timesheets" });
+    }
+  });
+
   // Labor entry routes
   app.patch("/api/labor-entries/:id", isAuthenticated, async (req: any, res) => {
     try {

@@ -87,6 +87,7 @@ export interface IStorage {
   deleteTimesheetEntry(id: string): Promise<void>;
   getJobsForStaff(): Promise<Job[]>;
   searchTimesheetEntries(filters: any): Promise<any[]>;
+  getJobTimesheets(jobId: string): Promise<any[]>;
   
   // Admin timesheet operations
   getAllTimesheetEntries(): Promise<any[]>;
@@ -655,6 +656,29 @@ export class DatabaseStorage implements IStorage {
     if (entry && entry.jobId && entry.approved) {
       await this.updateLaborHoursFromTimesheet(entry.staffId, entry.jobId);
     }
+  }
+
+  async getJobTimesheets(jobId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: timesheetEntries.id,
+        staffId: timesheetEntries.staffId,
+        jobId: timesheetEntries.jobId,
+        date: timesheetEntries.date,
+        hours: timesheetEntries.hours,
+        materials: timesheetEntries.materials,
+        description: timesheetEntries.description,
+        approved: timesheetEntries.approved,
+        createdAt: timesheetEntries.createdAt,
+        updatedAt: timesheetEntries.updatedAt,
+        staffName: sql`COALESCE(${users.firstName}, ${employees.name}, CASE WHEN ${users.email} IS NOT NULL THEN SPLIT_PART(${users.email}, '@', 1) ELSE 'Unknown Staff' END, 'Unknown Staff')`.as('staffName'),
+        staffEmail: users.email,
+      })
+      .from(timesheetEntries)
+      .leftJoin(users, eq(timesheetEntries.staffId, users.id))
+      .leftJoin(employees, eq(users.employeeId, employees.id))
+      .where(eq(timesheetEntries.jobId, jobId))
+      .orderBy(desc(timesheetEntries.date));
   }
 
   // Admin timesheet methods
