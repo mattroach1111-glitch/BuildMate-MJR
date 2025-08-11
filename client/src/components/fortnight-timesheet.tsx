@@ -682,17 +682,30 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           console.log('Processing entry:', entry);
           const hours = parseFloat(entry.hours || '0');
           
-          // Include entries with hours > 0 OR any leave type (even with 0 hours)
+          // Include entries with hours > 0 OR any leave type (even with 0 hours) OR custom addresses
           const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay'];
           const isLeaveType = leaveTypes.includes(entry.jobId);
+          const isCustomAddress = entry.jobId && entry.jobId.startsWith('custom-');
           
-          if (hours > 0 || (isLeaveType && hours >= 0)) {
-            const entryData: any = {
+          if (hours > 0 || (isLeaveType && hours >= 0) || (isCustomAddress && hours > 0)) {
+            let entryData: any = {
               date: dateKey,
               hours: hours,
               materials: entry.materials || '',
               jobId: entry.jobId === 'no-job' || isLeaveType ? entry.jobId : entry.jobId || null,
             };
+            
+            // Handle custom addresses specially - set jobId to null and store address in description
+            if (isCustomAddress) {
+              const fullAddress = entry.materials || 'Custom Address';
+              entryData.jobId = null;
+              entryData.description = `CUSTOM_ADDRESS: ${fullAddress}`;
+              console.log('🏠 PROCESSING CUSTOM ADDRESS:', {
+                originalJobId: entry.jobId,
+                fullAddress,
+                finalData: entryData
+              });
+            }
             
             // Check if this is a weekend date and add confirmation flag
             const entryDate = parseISO(dateKey);
