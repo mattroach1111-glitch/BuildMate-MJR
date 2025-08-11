@@ -1,0 +1,46 @@
+🏠 CREATING ADDRESS INPUT DIALOG...
+Console.js:61 🏠 ADDRESS DIALOG CREATED SUCCESSFULLY
+Console.js:61 🏠 REACT PORTAL DIALOG IN DOM: null
+Console.js:61 🏠 DIRECT DOM DIALOG IN DOM: null
+Console.js:61 🏠 SAVING CUSTOM ADDRESS: 10 Sheold
+Console.js:61 🏠 SAVING CUSTOM ADDRESS: Object
+Console.js:61 🏠 CUSTOM ADDRESS SAVED - Cell changes completed
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Staff filter: Object
+Console.js:61 Current fortnight entries: Array(0)
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-22 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-23 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-24 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-25 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-26 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-27 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-28 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-29 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-30 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-10-01 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-10-02 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-10-03 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-10-04 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-10-05 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🏠 DIALOG STATE CHANGED: false Data: Object
