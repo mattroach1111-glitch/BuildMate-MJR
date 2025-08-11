@@ -278,6 +278,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       return;
     }
 
+    // Clear local data first to avoid display conflicts
+    setTimesheetData({});
+    
     // Final refresh to ensure all data is up to date
     await refetchTimesheetEntries();
 
@@ -286,9 +289,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       description: `Successfully saved ${entriesToSave.length} entries! They should now appear in the timesheet.`,
       variant: "default",
     });
-
-    // Clear local data after successful save
-    setTimesheetData({});
   };
 
   // Functions for editing and deleting saved entries
@@ -644,11 +644,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
                         ) : [];
                         
-                        // Show only existing entries from database OR local unsaved entries, not both
-                        // If we have local entries, show those (user is editing)
-                        // If no local entries, show existing entries from database
-                        // Always show at least one entry row per day for new input
-                        const entriesToShow = dayEntries.length > 0 ? dayEntries : (existingEntries.length > 0 ? existingEntries : [{}]);
+                        // Combine saved entries with local unsaved entries, but prioritize showing saved entries
+                        // Merge saved entries with any local edits
+                        const entriesToShow = existingEntries.length > 0 ? existingEntries : (dayEntries.length > 0 ? dayEntries : [{}]);
                         
                         return entriesToShow.map((entry: any, entryIndex: number) => (
                           <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'bg-gray-50' : ''}`}>
