@@ -661,7 +661,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   };
 
   const saveAllEntries = async () => {
-    console.log('Save All clicked, timesheetData:', timesheetData);
+    console.log('🚨 SAVE ALL ENTRIES CALLED! timesheetData:', timesheetData);
+    console.trace('Call stack for saveAllEntries');
     
     // Validate entries before saving
     const validationErrors = validateEntries(timesheetData);
@@ -686,6 +687,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay'];
           const isLeaveType = leaveTypes.includes(entry.jobId);
           const isCustomAddress = entry.jobId && entry.jobId.startsWith('custom-');
+          
+          console.log('🐛 SAVE DEBUG:', {
+            jobId: entry.jobId,
+            hours,
+            isCustomAddress,
+            isLeaveType,
+            shouldSave: hours > 0 || (isLeaveType && hours >= 0) || (isCustomAddress && hours > 0)
+          });
           
           if (hours > 0 || (isLeaveType && hours >= 0) || (isCustomAddress && hours > 0)) {
             let entryData: any = {
