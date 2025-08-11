@@ -87,25 +87,7 @@ export default function AdminDashboard() {
   const [isDeletedFolderExpanded, setIsDeletedFolderExpanded] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'address' | 'client' | 'manager' | 'status'>('address');
-  // Set initial tab based on route
-  const getInitialTab = () => {
-    if (location === "/timesheet") return "timesheets";
-    return "jobs"; // Default for dashboard "/"
-  };
-  
-  const [activeTab, setActiveTab] = useState(getInitialTab);
-
-  // Update activeTab when route changes
-  useEffect(() => {
-    const newTab = getInitialTab();
-    console.log("Route changed to:", location, "Setting tab to:", newTab);
-    setActiveTab(newTab);
-  }, [location]);
-
-  // Debug activeTab changes
-  useEffect(() => {
-    console.log("ActiveTab changed to:", activeTab);
-  }, [activeTab]);
+  const [activeTab, setActiveTab] = useState("jobs");
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -1236,11 +1218,7 @@ export default function AdminDashboard() {
             <Button
               variant={activeTab === "timesheets" ? "default" : "outline"}
               size="sm"
-              onClick={() => {
-                console.log("Timesheets tab clicked, current activeTab:", activeTab);
-                setActiveTab("timesheets");
-                console.log("setActiveTab called with 'timesheets'");
-              }}
+              onClick={() => setActiveTab("timesheets")}
               className="flex items-center gap-2"
               data-testid="tab-timesheets"
             >
@@ -1290,16 +1268,10 @@ export default function AdminDashboard() {
           </DropdownMenu>
         </div>
 
-        {/* Debug indicator */}
-        <div className="text-sm text-muted-foreground mb-4 p-2 bg-yellow-100 border border-yellow-300 rounded">
-          Current active tab: <span className="font-mono font-bold">{activeTab}</span>
-        </div>
+
 
         {/* Content Sections */}
-        <Tabs value={activeTab} onValueChange={(value) => {
-          console.log("Tabs onValueChange called with:", value);
-          setActiveTab(value);
-        }} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsContent value="jobs" className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h2 className="text-xl font-semibold">Job Management</h2>
