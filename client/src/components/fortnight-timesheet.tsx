@@ -682,7 +682,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           console.log('Processing entry:', entry);
           const hours = parseFloat(entry.hours || '0');
           
-          // Include entries with hours > 0 OR any leave type (even with 0 hours) OR custom addresses
+          // Include entries with hours > 0 OR any leave type (even with 0 hours) OR custom addresses with hours > 0
           const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay'];
           const isLeaveType = leaveTypes.includes(entry.jobId);
           const isCustomAddress = entry.jobId && entry.jobId.startsWith('custom-');
@@ -2171,9 +2171,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   
                   // Set the custom address as the job
                   if (entry?.id && !entry?.approved) {
-                    // Edit saved entry directly
+                    // Edit saved entry directly and clear hours
                     editSavedEntry(entry.id, 'jobId', customAddressKey);
                     editSavedEntry(entry.id, 'materials', fullAddress);
+                    editSavedEntry(entry.id, 'hours', '0');
                   } else {
                     // Handle unsaved entry - reset hours to empty when custom address is set
                     handleCellChange(day, entryIndex, 'jobId', customAddressKey);
