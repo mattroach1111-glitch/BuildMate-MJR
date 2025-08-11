@@ -466,6 +466,185 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     };
   }, []);
 
+  // For staff users, show minimal interface with just the table
+  if (!isAdminView) {
+    return (
+      <div className="p-4 max-w-7xl mx-auto">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Daily Timesheet Entries
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-3 font-medium">Date</th>
+                    <th className="text-left p-3 font-medium">Hours</th>
+                    <th className="text-left p-3 font-medium">Job</th>
+                    <th className="text-left p-3 font-medium">Materials/Notes</th>
+                    <th className="text-left p-3 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fortnightDays.map((day, dayIndex) => {
+                    const dateKey = format(day, 'yyyy-MM-dd');
+                    const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+                    const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
+                    const existingEntries = Array.isArray(currentFortnightEntries) ? currentFortnightEntries.filter((entry: any) => 
+                      format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
+                    ) : [];
+                    
+                    let entriesToShow;
+                    const approvedEntries = existingEntries.filter((entry: any) => entry.approved);
+                    const unapprovedEntries = existingEntries.filter((entry: any) => !entry.approved);
+                    
+                    if (approvedEntries.length > 0) {
+                      entriesToShow = approvedEntries;
+                    } else if (unapprovedEntries.length > 0) {
+                      entriesToShow = unapprovedEntries;
+                    } else if (dayEntries.length > 0) {
+                      entriesToShow = dayEntries;
+                    } else {
+                      entriesToShow = [{}];
+                    }
+                    
+                    return entriesToShow.map((entry: any, entryIndex: number) => (
+                      <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'bg-gray-50' : ''}`}>
+                        <td className="p-3">
+                          {entryIndex === 0 && (
+                            <div className="font-medium">
+                              {format(day, 'EEE, MMM dd')}
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-3">
+                          <Input
+                            type="number"
+                            step="0.5"
+                            placeholder="0"
+                            value={entry?.hours || ''}
+                            onChange={(e) => {
+                              if (entry?.id && !entry?.approved) {
+                                editSavedEntry(entry.id, 'hours', e.target.value);
+                              } else {
+                                handleCellChange(day, entryIndex, 'hours', e.target.value);
+                              }
+                            }}
+                            className="w-20"
+                            disabled={entry?.approved}
+                          />
+                        </td>
+                        <td className="p-3">
+                          <Select
+                            value={entry?.jobId || 'no-job'}
+                            onValueChange={(value) => {
+                              if (entry?.id && !entry?.approved) {
+                                editSavedEntry(entry.id, 'jobId', value);
+                              } else {
+                                handleCellChange(day, entryIndex, 'jobId', value);
+                              }
+                            }}
+                            disabled={entry?.approved}
+                          >
+                            <SelectTrigger className="min-w-40">
+                              <SelectValue placeholder="Select job" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="no-job">No job</SelectItem>
+                              <SelectItem value="rdo">RDO (Rest Day Off)</SelectItem>
+                              <SelectItem value="sick-leave">Sick Leave</SelectItem>
+                              <SelectItem value="personal-leave">Personal Leave</SelectItem>
+                              <SelectItem value="annual-leave">Annual Leave</SelectItem>
+                              {jobsLoading ? (
+                                <SelectItem value="loading" disabled>Loading jobs...</SelectItem>
+                              ) : jobsError ? (
+                                <SelectItem value="error" disabled>Error loading jobs</SelectItem>
+                              ) : Array.isArray(jobs) && jobs.length > 0 ? (
+                                jobs.filter((job: any) => job.id && job.id.trim() !== '').map((job: any) => (
+                                  <SelectItem key={job.id} value={job.id}>
+                                    {job.jobAddress || job.address || job.jobName || job.name || `Job ${job.id}`}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="no-jobs" disabled>No jobs available</SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </td>
+                        <td className="p-3">
+                          <Input
+                            type="text"
+                            placeholder="Materials or notes"
+                            value={entry?.materials || ''}
+                            onChange={(e) => {
+                              if (entry?.id && !entry?.approved) {
+                                editSavedEntry(entry.id, 'materials', e.target.value);
+                              } else {
+                                handleCellChange(day, entryIndex, 'materials', e.target.value);
+                              }
+                            }}
+                            className="min-w-32"
+                            disabled={entry?.approved}
+                          />
+                        </td>
+                        <td className="p-3">
+                          <div className="flex gap-2">
+                            {entryIndex === 0 && !isFortnightConfirmed() && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => addJobEntry(day)}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {entryIndex > 0 && !isFortnightConfirmed() && (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => removeJobEntry(day, entryIndex)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {entry?.id && !entry?.approved && (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => deleteSavedEntry(entry.id)}
+                                className="ml-1"
+                                data-testid={`button-delete-entry-${entry.id}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {entry?.id ? (
+                              <span className="text-xs text-green-600 flex items-center">
+                                ✓ Saved
+                              </span>
+                            ) : entry?.hours && parseFloat(entry?.hours) > 0 ? (
+                              <span className="text-xs text-yellow-600 flex items-center">
+                                ⏳ Unsaved
+                              </span>
+                            ) : null}
+                          </div>
+                        </td>
+                      </tr>
+                    ));
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 max-w-7xl mx-auto">
       <div className="mb-6">

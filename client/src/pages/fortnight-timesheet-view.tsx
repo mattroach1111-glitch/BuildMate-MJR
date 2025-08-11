@@ -70,12 +70,20 @@ export default function FortnightTimesheetView() {
           </div>
         )}
 
-        {/* Timesheet Component */}
+        {/* For staff users (non-admin), show only the timesheet entries table */}
         <div className="max-w-6xl mx-auto">
-          <FortnightTimesheet 
-            selectedEmployeeId={employeeId}
-            isAdminView={isAdminView}
-          />
+          {(user as any)?.role === "admin" ? (
+            <FortnightTimesheet 
+              selectedEmployeeId={employeeId}
+              isAdminView={isAdminView}
+            />
+          ) : (
+            /* Staff users get the minimal table view from the timesheet tab */
+            <FortnightTimesheet 
+              selectedEmployeeId=""
+              isAdminView={false}
+            />
+          )}
         </div>
       </div>
     </PageLayout>
