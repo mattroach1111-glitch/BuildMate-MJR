@@ -1014,6 +1014,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         {(() => {
           const shouldShow = (!isAdminView || selectedEmployee);
           console.log(`TABLE RENDER CHECK: isAdminView=${isAdminView}, selectedEmployee=${selectedEmployee}, shouldShow=${shouldShow}`);
+          console.log(`FORTNIGHT DAYS LENGTH: ${fortnightDays.length}, Current fortnight:`, currentFortnight);
           return shouldShow;
         })() && (
           <>
@@ -1092,7 +1093,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             console.log(`🎨 APPLYING WEEKEND STYLING: ${format(day, 'EEE, MMM dd')} - Classes: border-b weekend-row`);
                           }
                           return (
-                          <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'weekend-row' : ''}`} style={isWeekend ? { backgroundColor: '#1e40af', color: 'white' } : {}}>
+                          <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'weekend-row bg-blue-600 text-white' : ''}`} style={isWeekend ? { backgroundColor: '#1e40af !important', color: 'white !important' } : {}}>
                             <td className="p-3">
                               {entryIndex === 0 && (
                                 <div className={`font-medium ${isWeekend ? 'text-white' : ''} flex items-center justify-between`}>
@@ -1162,12 +1163,17 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 }}
                                 className={`w-20 ${isWeekend ? 'text-white placeholder:text-blue-200 bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}
                                 disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))} // Disable for approved entries or locked weekends
+                                readOnly={isWeekend && !isWeekendUnlocked(dateKey)} // Make readonly for locked weekends
                               />
                             </td>
                             <td className="p-3">
                               <Select
                                 value={entry?.jobId || 'no-job'}
                                 onValueChange={(value) => {
+                                  if (isWeekend && !isWeekendUnlocked(dateKey)) {
+                                    console.log(`🚫 WEEKEND SELECT BLOCKED: ${dateKey} - Weekend is locked!`);
+                                    return; // Prevent any selection on locked weekends
+                                  }
                                   if (entry?.id && !entry?.approved) {
                                     // Edit saved entry directly
                                     editSavedEntry(entry.id, 'jobId', value);
@@ -1223,6 +1229,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 }}
                                 className={`min-w-32 ${isWeekend ? 'text-white placeholder:text-blue-200 bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}
                                 disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))} // Disable for approved entries or locked weekends
+                                readOnly={isWeekend && !isWeekendUnlocked(dateKey)} // Make readonly for locked weekends
                               />
                             </td>
                             <td className="p-3">
