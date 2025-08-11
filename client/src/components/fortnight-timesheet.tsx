@@ -159,16 +159,20 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const confirmTimesheetMutation = useMutation({
     mutationFn: async () => {
       // Mark timesheet as confirmed and advance to next fortnight
-      return await apiRequest("POST", "/api/timesheet/confirm", {
+      const response = await apiRequest("POST", "/api/timesheet/confirm", {
         fortnightStart: format(currentFortnight.start, 'yyyy-MM-dd'),
         fortnightEnd: format(currentFortnight.end, 'yyyy-MM-dd')
       });
+      return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
       // Refresh timesheet data to reflect confirmed status
-      refetchTimesheetEntries();
+      await refetchTimesheetEntries();
       
       // Advance to next fortnight
+      const nextFortnightIndex = currentFortnightIndex + 1;
+      setCurrentFortnightIndex(nextFortnightIndex);
+      
       const nextFortnightStart = addDays(currentFortnight.end, 1);
       setCurrentFortnight({
         start: nextFortnightStart,
@@ -180,13 +184,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       
       toast({
         title: "Success",
-        description: "Timesheet confirmed and advanced to next fortnight",
+        description: data?.message || "Timesheet confirmed and advanced to next fortnight",
       });
     },
     onError: (error) => {
+      console.error("Confirmation error:", error);
       toast({
         title: "Error", 
-        description: "Failed to confirm timesheet",
+        description: error?.message || "Failed to confirm timesheet",
         variant: "destructive",
       });
     },
