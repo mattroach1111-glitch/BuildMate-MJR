@@ -347,7 +347,7 @@ export default function StaffTimesheet() {
                             disabled={entry?.approved || isWeekendLocked}
                           >
                             <SelectTrigger className={`w-40 ${isWeekend ? 'text-black border-blue-400' : ''}`}>
-                              <SelectValue placeholder="Select job" />
+                              <SelectValue placeholder="Choose job or leave type" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="no-job">No job</SelectItem>
@@ -355,13 +355,16 @@ export default function StaffTimesheet() {
                               <SelectItem value="sick-leave">Sick Leave</SelectItem>
                               <SelectItem value="personal-leave">Personal Leave</SelectItem>
                               <SelectItem value="annual-leave">Annual Leave</SelectItem>
-                              <SelectItem value="leave-without-pay">Leave without pay</SelectItem>
-                              <SelectItem value="other-address">Other Address (Enter manually)</SelectItem>
-                              {Array.isArray(jobs) && jobs.map((job: any) => (
+                              <SelectItem value="leave-without-pay">🆕 Leave without pay</SelectItem>
+                              <SelectItem value="other-address">🆕 Other Address (Enter manually)</SelectItem>
+                              <SelectItem value="test-option">🔥 TEST - NEW OPTIONS LOADED</SelectItem>
+                              {Array.isArray(jobs) && jobs.length > 0 ? jobs.map((job: any) => (
                                 <SelectItem key={job.id} value={job.id}>
                                   {job.jobAddress}
                                 </SelectItem>
-                              ))}
+                              )) : (
+                                <SelectItem value="no-jobs-found" disabled>No jobs available</SelectItem>
+                              )}
                             </SelectContent>
                           </Select>
                         </td>

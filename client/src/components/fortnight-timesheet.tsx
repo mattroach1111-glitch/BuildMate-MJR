@@ -795,6 +795,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               <SelectItem value="sick-leave">Sick Leave</SelectItem>
                               <SelectItem value="personal-leave">Personal Leave</SelectItem>
                               <SelectItem value="annual-leave">Annual Leave</SelectItem>
+                              <SelectItem value="leave-without-pay">Leave without pay</SelectItem>
+                              <SelectItem value="other-address">Other Address (Enter manually)</SelectItem>
                               {jobsLoading ? (
                                 <SelectItem value="loading" disabled>Loading jobs...</SelectItem>
                               ) : jobsError ? (
