@@ -33,8 +33,8 @@ function Router() {
         </>
       ) : (
         <>
-          <Route path="/" component={FortnightTimesheetView} />
-          <Route path="/staff" component={FortnightTimesheetView} />
+          <Route path="/" component={() => <StaffDashboard isAdminView={false} />} />
+          <Route path="/staff" component={() => <StaffDashboard isAdminView={false} />} />
           <Route path="/timesheet" component={FortnightTimesheetView} />
         </>
       )}
