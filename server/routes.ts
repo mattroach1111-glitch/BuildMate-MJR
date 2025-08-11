@@ -1042,54 +1042,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let driveLink = null;
       let googleDriveConnected = false;
       
-      // Generate and save PDF to Google Drive if user has connected their account
-      try {
-        if (!userEmployee) {
-          throw new Error('Employee not found');
-        }
-        
-        const pdfGenerator = new TimesheetPDFGenerator();
-        
-        const employeeData = {
-          id: userEmployee.id,
-          name: userEmployee.name,
-          hourlyRate: parseFloat(userEmployee.defaultHourlyRate) || 50
-        };
-        
-        const pdfBuffer = pdfGenerator.generateTimesheetPDF(
-          employeeData,
-          entries,
-          fortnightStart,
-          fortnightEnd
-        );
-        
-        // Try to upload to Google Drive if user has connected their account
-        if (user.googleDriveTokens) {
-          try {
-            const googleDriveService = new GoogleDriveService();
-            const tokens = JSON.parse(user.googleDriveTokens);
-            googleDriveService.setUserTokens(tokens);
-            
-            const fileName = `timesheet-${userEmployee.name}-${fortnightStart}-${fortnightEnd}.pdf`;
-            
-            // Create or find BuildFlow Pro folder in Google Drive
-            const buildFlowFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro Timesheets');
-            
-            // Upload PDF to Google Drive
-            driveLink = await googleDriveService.uploadPDF(fileName, pdfBuffer, buildFlowFolderId || undefined);
-            googleDriveConnected = true;
-            
-            if (driveLink) {
-              console.log(`PDF saved to Google Drive: ${driveLink}`);
-            }
-          } catch (driveError) {
-            console.error('Google Drive upload failed:', driveError);
-            // Don't fail the whole request if Google Drive upload fails
+      // Only generate PDF to Google Drive when admin approves hours
+      // For staff submissions, just confirm the timesheet without PDF generation
+      const isAdmin = user && user.role === 'admin';
+      
+      if (isAdmin) {
+        // Generate and save PDF to Google Drive if admin has connected their account
+        try {
+          if (!userEmployee) {
+            throw new Error('Employee not found');
           }
+          
+          const pdfGenerator = new TimesheetPDFGenerator();
+          
+          const employeeData = {
+            id: userEmployee.id,
+            name: userEmployee.name,
+            hourlyRate: parseFloat(userEmployee.defaultHourlyRate) || 50
+          };
+          
+          const pdfBuffer = pdfGenerator.generateTimesheetPDF(
+            employeeData,
+            entries,
+            fortnightStart,
+            fortnightEnd
+          );
+          
+          // Try to upload to Google Drive if admin has connected their account
+          if (user.googleDriveTokens) {
+            try {
+              const googleDriveService = new GoogleDriveService();
+              const tokens = JSON.parse(user.googleDriveTokens);
+              googleDriveService.setUserTokens(tokens);
+              
+              const fileName = `timesheet-${userEmployee.name}-${fortnightStart}-${fortnightEnd}.pdf`;
+              
+              // Create or find BuildFlow Pro folder in Google Drive
+              const buildFlowFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro Timesheets');
+              
+              // Upload PDF to Google Drive
+              driveLink = await googleDriveService.uploadPDF(fileName, pdfBuffer, buildFlowFolderId || undefined);
+              googleDriveConnected = true;
+              
+              if (driveLink) {
+                console.log(`PDF saved to Google Drive: ${driveLink}`);
+              }
+            } catch (driveError) {
+              console.error('Google Drive upload failed:', driveError);
+              // Don't fail the whole request if Google Drive upload fails
+            }
+          }
+        } catch (pdfError) {
+          console.error('Error generating PDF:', pdfError);
+          // Don't fail the whole request if PDF generation fails
         }
-      } catch (pdfError) {
-        console.error('Error generating PDF:', pdfError);
-        // Don't fail the whole request if PDF generation fails
       }
       
       // Mark all timesheet entries for this period as confirmed/approved
@@ -1097,11 +1103,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Marked timesheet entries as confirmed for user ${userId} from ${fortnightStart} to ${fortnightEnd}`);
       
       res.json({ 
-        message: googleDriveConnected && driveLink 
-          ? "Timesheet confirmed successfully. PDF generated and saved to your Google Drive in 'BuildFlow Pro Timesheets' folder."
-          : googleDriveConnected 
-            ? "Timesheet confirmed successfully. PDF generated but Google Drive upload failed."
-            : "Timesheet confirmed successfully. PDF generated. Connect Google Drive to automatically save PDFs.",
+        message: isAdmin 
+          ? (googleDriveConnected && driveLink 
+              ? "Timesheet approved successfully. PDF generated and saved to your Google Drive in 'BuildFlow Pro Timesheets' folder."
+              : googleDriveConnected 
+                ? "Timesheet approved successfully. PDF generated but Google Drive upload failed."
+                : "Timesheet approved successfully. Connect Google Drive to automatically save PDFs.")
+          : "Timesheet submitted successfully.",
         fortnightStart,
         fortnightEnd,
         confirmedAt: new Date().toISOString(),

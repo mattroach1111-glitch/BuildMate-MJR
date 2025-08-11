@@ -822,7 +822,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             </div>
           </CardContent>
         </Card>
-      </div>
+        </div>
+      </>
     );
   }
 
@@ -1261,12 +1262,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     );
   }
 
-  // Admin view with success animation (placeholder)
+  // Admin view (simplified for now)
   return (
     <>
       <SuccessAnimation />
       <div className="p-4 max-w-7xl mx-auto">
-        <p>Admin timesheet view under construction</p>
+        <p>Admin timesheet view</p>
       </div>
     </>
   );
