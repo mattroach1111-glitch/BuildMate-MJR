@@ -1041,10 +1041,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         const dateKey = format(day, 'yyyy-MM-dd');
                         const isWeekend = day.getDay() === 0 || day.getDay() === 6;
                         const isWeekendLocked = isWeekend && !isWeekendUnlocked(dateKey);
-                        console.log(`PROCESSING DAY: ${format(day, 'EEE, MMM dd')}, DateKey: ${dateKey}, Day: ${day.getDay()}, IsWeekend: ${isWeekend}, IsLocked: ${isWeekendLocked}`);
-                        if (isWeekend) {
-                          console.log(`⚠️ WEEKEND DETECTED: ${format(day, 'EEE, MMM dd')} - Should be locked!`);
-                        }
+                        console.log(`🔵 WEEKEND CHECK: ${format(day, 'EEE, MMM dd')} - Day: ${day.getDay()}, IsWeekend: ${isWeekend}, Unlocked: ${isWeekendUnlocked(dateKey)}, Locked: ${isWeekendLocked}`);
                         const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
                         const existingEntries = Array.isArray(currentFortnightEntries) ? currentFortnightEntries.filter((entry: any) => 
                           format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
@@ -1059,9 +1056,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         const approvedEntries = existingEntries.filter((entry: any) => entry.approved);
                         const unapprovedEntries = existingEntries.filter((entry: any) => !entry.approved);
                         
-                        // For locked weekends, always show an empty row unless explicitly unlocked
-                        if (isWeekendLocked && approvedEntries.length === 0 && unapprovedEntries.length === 0 && dayEntries.length === 0) {
-                          entriesToShow = [{}]; // Empty locked row
+                        // Weekend locking logic - if weekend is locked, only show approved entries or empty locked row
+                        if (isWeekendLocked) {
+                          // For locked weekends, only show approved entries or empty locked row
+                          if (approvedEntries.length > 0) {
+                            entriesToShow = approvedEntries; // Show only approved entries on locked weekends
+                          } else {
+                            entriesToShow = [{}]; // Show empty locked row for new weekends
+                          }
                         } else if (approvedEntries.length > 0) {
                           // Always prioritize approved entries - they're confirmed and locked
                           entriesToShow = approvedEntries;
