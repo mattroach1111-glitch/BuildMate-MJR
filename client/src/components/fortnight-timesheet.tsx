@@ -106,17 +106,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   console.log('Current fortnight entries:', currentFortnightEntries);
 
-  // Clear local form data if fortnight is confirmed to prevent display conflicts
-  useEffect(() => {
-    const isConfirmed = Array.isArray(currentFortnightEntries) && 
-                       currentFortnightEntries.length > 0 && 
-                       currentFortnightEntries.every((entry: any) => entry.approved === true);
-    
-    if (isConfirmed) {
-      setTimesheetData({});
-      console.log('Cleared local timesheet data - fortnight is confirmed');
-    }
-  }, [currentFortnightEntries]);
+  // Allow editing of empty days even after fortnight confirmation
+  // This enables users to add entries to previously empty days in confirmed fortnights
 
   // Mutations for editing and deleting saved entries
   const editTimesheetMutation = useMutation({
@@ -343,10 +334,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   // Check if current fortnight is confirmed (all entries approved)
   const isFortnightConfirmed = () => {
-    if (!Array.isArray(currentFortnightEntries) || currentFortnightEntries.length === 0) {
-      return false;
-    }
-    return currentFortnightEntries.every((entry: any) => entry.approved === true);
+    // Always allow editing - users should be able to add entries to empty days
+    // even after fortnight confirmation/approval
+    return false;
   };
 
   const addJobEntry = (date: Date) => {
@@ -501,7 +491,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             <Button 
               onClick={saveAllEntries}
               variant="default"
-              disabled={updateTimesheetMutation.isPending || isFortnightConfirmed()}
+              disabled={updateTimesheetMutation.isPending}
               className="bg-green-600 hover:bg-green-700"
               data-testid="button-save-all-timesheet"
             >
@@ -516,7 +506,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               onClick={clearTimesheet} 
               variant="outline" 
               className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              disabled={isFortnightConfirmed()}
+              disabled={false}
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Clear Timesheet
