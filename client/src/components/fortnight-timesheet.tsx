@@ -172,11 +172,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         // Get the updated entry from local state
         const dateKey = format(targetDate, 'yyyy-MM-dd');
         const dayEntries = timesheetData[dateKey] || [];
-        const entry = dayEntries[entryIndex] || {};
+        const entry = dayEntries[entryIndex] || { hours: '1', materials: '' };
         
         // Save to database immediately - use null jobId for custom addresses to avoid foreign key constraint
         const entryData = {
-          staffId: isAdminView ? selectedEmployee : user?.id,
+          staffId: isAdminView ? selectedEmployee : (user?.id || ''),
           date: dateKey,
           jobId: null, // Use null to avoid foreign key constraint
           description: `CUSTOM_ADDRESS: ${fullAddress}`, // Prefix to identify custom addresses
@@ -1020,6 +1020,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 : entry?.jobId || 'no-job'
                             }
                             onValueChange={(value) => {
+                              const dateKey = format(day, 'yyyy-MM-dd');
                               if (isWeekend && !isWeekendUnlocked(dateKey)) {
                                 console.log(`🚫 STAFF WEEKEND JOB BLOCKED: ${dateKey} - Weekend is locked!`);
                                 return; // Prevent job selection on locked weekends
@@ -1037,7 +1038,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               }
                               
                               // Validate job selection with current hours
-                              const dateKey = format(day, 'yyyy-MM-dd');
                               const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
                               const currentEntry = dayEntries[entryIndex] || {};
                               const currentHours = parseFloat(currentEntry.hours || entry?.hours || '0');

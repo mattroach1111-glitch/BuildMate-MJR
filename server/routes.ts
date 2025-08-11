@@ -1082,6 +1082,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         finalMaterials = jobId; // Store leave type in materials field
       } else if (jobId === 'no-job') {
         finalJobId = null;
+      } else if (jobId === 'custom-address') {
+        // Handle custom address case - set jobId to null and process description
+        finalJobId = null;
+        if (description && description.startsWith('CUSTOM_ADDRESS:')) {
+          // Check for job sheet match for custom addresses
+          const customAddress = description.replace('CUSTOM_ADDRESS: ', '');
+          const jobMatch = await findBestJobMatch(customAddress, 80);
+          
+          if (jobMatch) {
+            console.log(`✅ Found matching job sheet for custom address "${customAddress}": ${jobMatch.job.jobAddress} (${jobMatch.score}% match)`);
+            finalJobId = jobMatch.job.id;
+            finalDescription = null; // Clear custom address description since we have a real job
+          } else {
+            console.log(`⚠️  No job sheet found for custom address "${customAddress}" - entry will need manual approval`);
+            finalDescription = description;
+            needsJobSheetMatch = true;
+          }
+        }
       } else if (description && description.startsWith('CUSTOM_ADDRESS:')) {
         // This is a custom address entry - check for job sheet match
         const customAddress = description.replace('CUSTOM_ADDRESS: ', '');
