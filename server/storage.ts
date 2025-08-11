@@ -876,8 +876,24 @@ export class DatabaseStorage implements IStorage {
   // Get timesheet entries for a specific period
   async getTimesheetEntriesByPeriod(staffId: string, startDate: string, endDate: string): Promise<any[]> {
     return await db
-      .select()
+      .select({
+        id: timesheetEntries.id,
+        staffId: timesheetEntries.staffId,
+        jobId: timesheetEntries.jobId,
+        date: timesheetEntries.date,
+        hours: timesheetEntries.hours,
+        description: timesheetEntries.description,
+        materials: timesheetEntries.materials,
+        approved: timesheetEntries.approved,
+        job: {
+          id: jobs.id,
+          jobAddress: jobs.jobAddress,
+          clientName: jobs.clientName,
+          projectName: jobs.projectName,
+        }
+      })
       .from(timesheetEntries)
+      .leftJoin(jobs, eq(timesheetEntries.jobId, jobs.id))
       .where(
         and(
           eq(timesheetEntries.staffId, staffId),

@@ -29,6 +29,11 @@ export class TimesheetPDFGenerator {
     fortnightStart: string,
     fortnightEnd: string
   ): Buffer {
+    // Debug logging to understand the data structure
+    console.log('PDF Generator - Employee:', employee);
+    console.log('PDF Generator - Total entries received:', entries.length);
+    console.log('PDF Generator - Sample entry:', entries[0] || 'No entries');
+    console.log('PDF Generator - Period:', fortnightStart, 'to', fortnightEnd);
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
@@ -74,8 +79,17 @@ export class TimesheetPDFGenerator {
       
       const dateStr = format(parseISO(entry.date), 'dd/MM/yyyy');
       const hoursStr = entry.hours.toString();
-      const jobStr = entry.job ? `${entry.job.jobNumber} - ${entry.job.address}` : 'No Job';
-      const materialsStr = entry.materials || '-';
+      
+      // Handle job information properly
+      let jobStr = 'No Job';
+      if (entry.job && entry.job.projectName && entry.job.clientName) {
+        jobStr = `${entry.job.projectName} - ${entry.job.clientName}`;
+      } else if (entry.jobId) {
+        jobStr = `Job ${entry.jobId.substring(0, 8)}...`;
+      }
+      
+      // Handle materials and leave types
+      const materialsStr = entry.materials || (entry.description || '-');
       
       doc.text(dateStr, 20, yPos);
       doc.text(hoursStr, 60, yPos);
