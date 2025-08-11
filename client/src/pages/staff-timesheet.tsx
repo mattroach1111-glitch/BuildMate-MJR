@@ -376,6 +376,33 @@ export default function StaffTimesheet() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3 mt-4">
+          <Button
+            onClick={saveAllEntries}
+            disabled={updateTimesheetMutation.isPending}
+            className="bg-green-600 hover:bg-green-700 text-white"
+            data-testid="save-timesheet"
+          >
+            {updateTimesheetMutation.isPending ? "Saving..." : "Save Timesheet"}
+          </Button>
+          
+          <Button
+            onClick={() => {
+              saveAllEntries();
+              toast({
+                title: "Timesheet Confirmed",
+                description: "Your timesheet has been submitted successfully",
+              });
+            }}
+            disabled={updateTimesheetMutation.isPending}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            data-testid="confirm-timesheet"
+          >
+            Confirm Timesheet
+          </Button>
+        </div>
       </div>
     </PageLayout>
   );
