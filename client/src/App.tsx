@@ -29,7 +29,8 @@ function Router() {
         <>
           <Route path="/" component={AdminDashboard} />
           <Route path="/admin" component={AdminDashboard} />
-          <Route path="/timesheet" component={FortnightTimesheetView} />
+          <Route path="/timesheet" component={AdminDashboard} />
+          <Route path="/staff" component={AdminDashboard} />
         </>
       ) : (
         <>
