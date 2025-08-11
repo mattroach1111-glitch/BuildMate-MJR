@@ -155,8 +155,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         const { dayIndex, entryIndex } = addressDialogData;
         const targetDate = addDays(currentFortnight.start, dayIndex);
         
-        // Keep jobId as "other-address" and store address in description
-        handleCellChange(targetDate, entryIndex, 'jobId', 'other-address');
+        // Create unique jobId for custom address and store address in description
+        const customJobId = `custom-address-${Date.now()}`;
+        handleCellChange(targetDate, entryIndex, 'jobId', customJobId);
         handleCellChange(targetDate, entryIndex, 'description', fullAddress);
         
         dialog.remove();
@@ -1529,7 +1530,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                       
                                       if (leaveTypes[entry.jobId]) {
                                         return leaveTypes[entry.jobId];
-                                      } else if (entry.jobId === 'other-address' && entry.description) {
+                                      } else if (entry.jobId && entry.jobId.startsWith('custom-address') && entry.description) {
                                         return entry.description;
                                       } else {
                                         const job = Array.isArray(jobs) ? jobs.find((j: any) => j.id === entry.jobId) : null;
