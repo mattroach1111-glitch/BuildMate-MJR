@@ -1539,6 +1539,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                         'no-job': 'No job'
                                       };
                                       
+                                      console.log('🔍 CHECKING ENTRY:', {jobId: entry.jobId, description: entry.description, isCustom: entry.jobId && entry.jobId.startsWith('custom-address')});
+                                      
                                       if (leaveTypes[entry.jobId]) {
                                         return leaveTypes[entry.jobId];
                                       } else if (entry.jobId && entry.jobId.startsWith('custom-address') && entry.description) {
