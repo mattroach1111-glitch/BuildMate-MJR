@@ -1115,6 +1115,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin endpoint to delete pending staff user
+  // Timesheet search endpoint for admins
+  app.get("/api/timesheet-search", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const filters = {
+        query: req.query.q as string,
+        employeeName: req.query.employeeName as string,
+        jobAddress: req.query.jobAddress as string,
+        client: req.query.client as string,
+        dateFrom: req.query.dateFrom as string,
+        dateTo: req.query.dateTo as string,
+        approvalStatus: req.query.approvalStatus as string,
+        minHours: req.query.minHours as string,
+        maxHours: req.query.maxHours as string
+      };
+
+      // Remove empty filters
+      Object.keys(filters).forEach(key => {
+        if (!filters[key as keyof typeof filters]) {
+          delete filters[key as keyof typeof filters];
+        }
+      });
+
+      const results = await storage.searchTimesheetEntries(filters);
+      
+      res.json({ 
+        results,
+        totalCount: results.length,
+        searchCriteria: filters
+      });
+    } catch (error) {
+      console.error("Error searching timesheet entries:", error);
+      res.status(500).json({ message: "Failed to search timesheet entries" });
+    }
+  });
+
   app.delete("/api/users/:userId", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;

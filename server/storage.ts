@@ -28,7 +28,7 @@ import {
   type InsertJobFile,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sum, ne, gte, lte, sql, isNull, or } from "drizzle-orm";
+import { eq, and, desc, sum, ne, gte, lte, sql, isNull, or, ilike } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -86,6 +86,7 @@ export interface IStorage {
   upsertTimesheetEntry(entry: InsertTimesheetEntry): Promise<TimesheetEntry>;
   deleteTimesheetEntry(id: string): Promise<void>;
   getJobsForStaff(): Promise<Job[]>;
+  searchTimesheetEntries(filters: any): Promise<any[]>;
   
   // Admin timesheet operations
   getAllTimesheetEntries(): Promise<any[]>;
@@ -849,6 +850,103 @@ export class DatabaseStorage implements IStorage {
       .from(jobs)
       .where(or(eq(jobs.isDeleted, false), isNull(jobs.isDeleted)))
       .orderBy(jobs.jobAddress);
+  }
+
+  async searchTimesheetEntries(filters: {
+    query?: string;
+    employeeName?: string;
+    jobAddress?: string;
+    client?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    approvalStatus?: string;
+    minHours?: string;
+    maxHours?: string;
+  }): Promise<any[]> {
+    let query = db
+      .select({
+        id: timesheetEntries.id,
+        staffId: timesheetEntries.staffId,
+        employeeName: sql`COALESCE(${users.firstName}, ${employees.name}, CASE WHEN ${users.email} IS NOT NULL THEN SPLIT_PART(${users.email}, '@', 1) ELSE 'Unknown Staff' END, 'Unknown Staff')`.as('employeeName'),
+        date: timesheetEntries.date,
+        hours: timesheetEntries.hours,
+        jobId: timesheetEntries.jobId,
+        jobAddress: jobs.jobAddress,
+        jobClient: jobs.client,
+        materials: timesheetEntries.materials,
+        approved: timesheetEntries.approved,
+        createdAt: timesheetEntries.createdAt
+      })
+      .from(timesheetEntries)
+      .leftJoin(users, eq(timesheetEntries.staffId, users.id))
+      .leftJoin(employees, eq(users.employeeId, employees.id))
+      .leftJoin(jobs, eq(timesheetEntries.jobId, jobs.id));
+
+    // Apply filters
+    const conditions: any[] = [];
+
+    if (filters.query) {
+      conditions.push(
+        or(
+          ilike(users.firstName, `%${filters.query}%`),
+          ilike(employees.name, `%${filters.query}%`),
+          ilike(users.email, `%${filters.query}%`),
+          ilike(jobs.jobAddress, `%${filters.query}%`),
+          ilike(jobs.client, `%${filters.query}%`),
+          ilike(timesheetEntries.materials, `%${filters.query}%`)
+        )
+      );
+    }
+
+    if (filters.employeeName) {
+      conditions.push(
+        or(
+          ilike(users.firstName, `%${filters.employeeName}%`),
+          ilike(employees.name, `%${filters.employeeName}%`),
+          ilike(users.email, `%${filters.employeeName}%`)
+        )
+      );
+    }
+
+    if (filters.jobAddress) {
+      conditions.push(ilike(jobs.jobAddress, `%${filters.jobAddress}%`));
+    }
+
+    if (filters.client) {
+      conditions.push(ilike(jobs.client, `%${filters.client}%`));
+    }
+
+    if (filters.dateFrom) {
+      conditions.push(gte(timesheetEntries.date, filters.dateFrom));
+    }
+
+    if (filters.dateTo) {
+      conditions.push(lte(timesheetEntries.date, filters.dateTo));
+    }
+
+    if (filters.approvalStatus === 'approved') {
+      conditions.push(eq(timesheetEntries.approved, true));
+    } else if (filters.approvalStatus === 'pending') {
+      conditions.push(eq(timesheetEntries.approved, false));
+    }
+
+    if (filters.minHours) {
+      conditions.push(gte(sql`CAST(${timesheetEntries.hours} AS DECIMAL)`, parseFloat(filters.minHours)));
+    }
+
+    if (filters.maxHours) {
+      conditions.push(lte(sql`CAST(${timesheetEntries.hours} AS DECIMAL)`, parseFloat(filters.maxHours)));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const results = await query
+      .orderBy(desc(timesheetEntries.date), desc(timesheetEntries.createdAt))
+      .limit(500); // Limit results for performance
+
+    return results;
   }
 
   // Sync all employees to a specific job
