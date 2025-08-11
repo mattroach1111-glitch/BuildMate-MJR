@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { db } from "./db";
+import { timesheetEntries, laborEntries } from "@shared/schema";
 import { ObjectStorageService } from "./objectStorage";
 import { TimesheetPDFGenerator } from "./pdfGenerator";
 import { GoogleDriveService } from "./googleDriveService";
@@ -18,6 +20,26 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
+
+// Admin middleware
+const isAdmin = async (req: any, res: any, next: any) => {
+  try {
+    const userId = req.user?.claims?.sub;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    const user = await storage.getUser(userId);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    
+    next();
+  } catch (error) {
+    console.error("Error checking admin status:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -1088,6 +1110,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error confirming timesheet:", error);
       res.status(500).json({ message: "Failed to confirm timesheet" });
+    }
+  });
+
+  // Admin-only endpoint to reset database for testing
+  app.post("/api/admin/reset-database", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      // Clear all timesheet entries
+      await db.delete(timesheetEntries);
+      
+      // Reset all labor entries to 0 hours
+      await db.update(laborEntries).set({ hoursLogged: "0" });
+      
+      res.json({ 
+        message: "Database reset successfully. All timesheet entries cleared and labor hours reset to 0.",
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error resetting database:", error);
+      res.status(500).json({ message: "Failed to reset database" });
     }
   });
 

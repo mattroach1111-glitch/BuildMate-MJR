@@ -639,6 +639,40 @@ export default function AdminDashboard() {
     },
   });
 
+  const resetDatabaseMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/admin/reset-database", {});
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/timesheets"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/timesheet"] });
+      toast({
+        title: "Success",
+        description: "Database reset successfully. All timesheet entries cleared and labor hours reset.",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to reset database",
+        variant: "destructive",
+      });
+    },
+  });
+
   const jobForm = useForm<z.infer<typeof jobFormSchema>>({
     resolver: zodResolver(jobFormSchema),
     defaultValues: {
@@ -2889,6 +2923,44 @@ export default function AdminDashboard() {
             <GoogleDriveIntegration />
             <UserManagement />
             
+            {/* Database Management */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <RotateCcw className="h-5 w-5 text-muted-foreground" />
+                  Database Management
+                </CardTitle>
+                <CardDescription>
+                  Testing and maintenance tools for the application database
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-amber-100 rounded-full p-2">
+                      <RotateCcw className="h-4 w-4 text-amber-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-amber-800 mb-1">Reset Database for Testing</h4>
+                      <p className="text-sm text-amber-700 mb-3">
+                        This will permanently delete all timesheet entries and reset job labor hours to zero. 
+                        Use this for testing purposes only.
+                      </p>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => resetDatabaseMutation.mutate()}
+                        disabled={resetDatabaseMutation.isPending}
+                        data-testid="button-reset-database"
+                      >
+                        {resetDatabaseMutation.isPending ? "Resetting..." : "Reset Database"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Placeholder for future integrations */}
             <Card>
               <CardHeader>
