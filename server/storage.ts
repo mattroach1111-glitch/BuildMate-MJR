@@ -691,12 +691,29 @@ export class DatabaseStorage implements IStorage {
         date: timesheetEntries.date,
         hours: timesheetEntries.hours,
         materials: timesheetEntries.materials,
+        description: timesheetEntries.description,
         approved: timesheetEntries.approved,
         createdAt: timesheetEntries.createdAt,
         updatedAt: timesheetEntries.updatedAt,
         staffName: sql`COALESCE(${users.firstName}, ${employees.name}, CASE WHEN ${users.email} IS NOT NULL THEN SPLIT_PART(${users.email}, '@', 1) ELSE 'Unknown Staff' END, 'Unknown Staff')`.as('staffName'),
         staffEmail: users.email,
-        jobAddress: jobs.jobAddress,
+        // Enhanced job address to handle custom addresses and leave types
+        jobAddress: sql`
+          CASE 
+            WHEN ${timesheetEntries.description} IS NOT NULL AND ${timesheetEntries.description} LIKE 'CUSTOM_ADDRESS:%' 
+            THEN REPLACE(${timesheetEntries.description}, 'CUSTOM_ADDRESS: ', '')
+            WHEN ${timesheetEntries.materials} IN ('sick-leave', 'personal-leave', 'annual-leave', 'rdo', 'leave-without-pay')
+            THEN CASE 
+              WHEN ${timesheetEntries.materials} = 'sick-leave' THEN 'Sick Leave'
+              WHEN ${timesheetEntries.materials} = 'personal-leave' THEN 'Personal Leave'
+              WHEN ${timesheetEntries.materials} = 'annual-leave' THEN 'Annual Leave'
+              WHEN ${timesheetEntries.materials} = 'rdo' THEN 'RDO (Rostered Day Off)'
+              WHEN ${timesheetEntries.materials} = 'leave-without-pay' THEN 'Leave Without Pay'
+            END
+            WHEN ${jobs.jobAddress} IS NOT NULL THEN ${jobs.jobAddress}
+            ELSE 'Unknown Job'
+          END
+        `.as('jobAddress'),
         clientName: jobs.clientName,
         projectName: jobs.projectName,
       })
