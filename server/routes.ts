@@ -945,28 +945,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Find the employee record for this user
-      // For now, we'll use a simple mapping - in the future this could be more sophisticated
-      let staffId = userId;
+      // The staff_id in timesheet_entries must reference a user ID (not employee ID)
+      // This is because of the foreign key constraint: timesheet_entries.staff_id -> users.id
+      const staffId = userId; // Always use the authenticated user's ID
       
-      // Check if this user corresponds to a specific employee
-      // Match user to employee by finding an employee with the same ID as the user
+      // Optional: Log which employee this corresponds to for debugging
       const employees = await storage.getEmployees();
       const userEmployee = employees.find((emp: any) => {
-        // First try to match by user ID (for users created from employees)
-        if (emp.id === userId) {
-          return true;
-        }
-        // Fallback: match by name patterns for backwards compatibility
         const userName = (user.firstName + ' ' + (user.lastName || '')).trim();
         return emp.name.toLowerCase() === userName.toLowerCase();
       });
       
       if (userEmployee) {
-        staffId = userEmployee.id;
-        console.log(`Mapping user ${user.email} to employee ${userEmployee.name} (${userEmployee.id})`);
+        console.log(`Creating timesheet entry for staff: ${staffId} (user: ${user.email}) corresponding to employee ${userEmployee.name} (${userEmployee.id})`);
       } else {
-        console.log(`No employee mapping found for user ${user.email}, using user ID as staff ID`);
+        console.log(`Creating timesheet entry for staff: ${staffId} (user: ${user.email}) - no corresponding employee found`);
       }
       
       // Handle special leave types by storing them in materials field and setting jobId to null
