@@ -1244,11 +1244,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="no-job">No job</SelectItem>
-                              <SelectItem value="rdo">RDO (Rest Day Off)</SelectItem>
-                              <SelectItem value="sick-leave">Sick Leave</SelectItem>
-                              <SelectItem value="personal-leave">Personal Leave</SelectItem>
-                              <SelectItem value="annual-leave">Annual Leave</SelectItem>
-                              <SelectItem value="leave-without-pay">Leave without pay</SelectItem>
                               <SelectItem value="other-address">Other Address (Enter manually)</SelectItem>
                               {/* Show custom address if it exists */}
                               {(entry?.jobId === 'custom-address' || (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:'))) && (
@@ -1273,9 +1268,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 <SelectItem value="no-jobs" disabled>No jobs available</SelectItem>
                               )}
                               
-                              {/* Tafe pinned at bottom */}
+                              {/* Tafe and Leave Types pinned at bottom */}
                               <Separator className="my-2" />
                               <SelectItem value="tafe">Tafe</SelectItem>
+                              <SelectItem value="rdo">RDO (Rest Day Off)</SelectItem>
+                              <SelectItem value="sick-leave">Sick Leave</SelectItem>
+                              <SelectItem value="personal-leave">Personal Leave</SelectItem>
+                              <SelectItem value="annual-leave">Annual Leave</SelectItem>
+                              <SelectItem value="leave-without-pay">Leave without pay</SelectItem>
                             </SelectContent>
                           </Select>
                         </td>
@@ -1910,22 +1910,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   
                                   <SelectItem value="other-address">Other Address (Enter manually)</SelectItem>
 
-                                  {/* Separator for Leave Types */}
+                                  {/* Tafe and Leave Types at Bottom */}
                                   <Separator className="my-2" />
-                                  <div className="px-2 py-1.5 text-xs text-muted-foreground font-medium">
-                                    Leave Types
-                                  </div>
-                                  
-                                  {/* Leave Types Pinned at Bottom */}
+                                  <SelectItem value="tafe">Tafe</SelectItem>
+                                  <SelectItem value="rdo">RDO (Rest Day Off)</SelectItem>
                                   <SelectItem value="sick-leave">Sick Leave</SelectItem>
                                   <SelectItem value="personal-leave">Personal Leave</SelectItem>
                                   <SelectItem value="annual-leave">Annual Leave</SelectItem>
                                   <SelectItem value="leave-without-pay">Leave without pay</SelectItem>
-                                  <SelectItem value="rdo">RDO (Rest Day Off)</SelectItem>
-                                  
-                                  {/* Tafe pinned at bottom */}
-                                  <Separator className="my-2" />
-                                  <SelectItem value="tafe">Tafe</SelectItem>
                                 </SelectContent>
                               </Select>
                             </td>
