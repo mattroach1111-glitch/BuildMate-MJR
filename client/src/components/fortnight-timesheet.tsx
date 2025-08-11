@@ -632,7 +632,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     Object.entries(timesheetData).forEach(([dateKey, dayEntries]) => {
       if (Array.isArray(dayEntries)) {
         dayEntries.forEach((entry, index) => {
-          console.log('Processing entry:', {dateKey, index, entry, hours: entry.hours, jobId: entry.jobId});
+          // Processing entry for save
           const hours = parseFloat(entry.hours || '0');
           
           // Include entries with hours > 0 OR any leave type (even with 0 hours) OR custom addresses with hours > 0
@@ -676,9 +676,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             
             if (isWeekend && isWeekendUnlocked(dateKey)) {
               entryData.weekendConfirmed = true;
-              console.log(`✅ Including weekend confirmation for ${dateKey} - Entry ${index}`);
-            } else if (isWeekend) {
-              console.log(`⚠️  Weekend entry ${dateKey} not unlocked - Entry ${index} will be skipped`);
+              // Weekend confirmation added for unlocked weekend
             }
             
             // For admin view, add the selected employee's staffId
@@ -1912,10 +1910,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => {
-                                      console.log(`➕ ADDING ENTRY FOR: ${dateKey} - isWeekend=${isWeekend}, unlocked=${isWeekendUnlocked(dateKey)}`);
-                                      addJobEntry(day);
-                                    }}
+                                    onClick={() => addJobEntry(day)}
                                     data-testid={`button-add-entry-${dateKey}`}
                                   >
                                     <Plus className="h-4 w-4" />
@@ -1925,10 +1920,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   <Button
                                     size="sm"
                                     variant="destructive"
-                                    onClick={() => {
-                                      console.log(`➖ REMOVING ENTRY FOR: ${dateKey} - entryIndex=${entryIndex}`);
-                                      removeJobEntry(day, entryIndex);
-                                    }}
+                                    onClick={() => removeJobEntry(day, entryIndex)}
                                     data-testid={`button-remove-entry-${dateKey}-${entryIndex}`}
                                   >
                                     <Trash2 className="h-4 w-4" />

@@ -2,6 +2,10 @@
 
 BuildFlow Pro is a mobile-first construction management system designed to streamline job costing, billing, and workforce management. It provides role-based access for administrators and staff, enabling comprehensive tracking of labor costs, materials, sub-trades, and project expenses for construction project oversight. The system's vision is to enhance efficiency in construction project management, offering a user-friendly interface for both on-site staff and administrative personnel, and consolidating critical project data for better decision-making.
 
+## Recent Changes
+- **August 11, 2025**: RESOLVED - Fixed weekend timesheet multiple entry issue. Second and subsequent entries on weekend days were not saving properly due to Add Entry button being disabled for locked weekends. Added proper weekend unlock checking to allow multiple entries on unlocked weekend days. Multiple weekend entries now save successfully with proper weekend confirmation flags.
+- **August 11, 2025**: RESOLVED - Fixed custom address display bug in admin dashboard. Custom addresses were showing as generic "Custom Address" text instead of actual entered addresses. Root cause was in the "Save All" processing logic that defaulted to fallback text when materials field was empty. Fixed address extraction logic to properly get address data from both materials and description fields. Custom addresses now correctly display the actual entered address (e.g., "123 Main Street") in admin pending approvals.
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
