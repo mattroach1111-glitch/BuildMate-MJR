@@ -845,6 +845,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "staffId, fortnightStart, and fortnightEnd are required" });
       }
 
+      // If approving, check for custom addresses without job sheet matches
+      if (approved) {
+        const fortnightEntries = await storage.getTimesheetEntriesByPeriod(staffId, fortnightStart, fortnightEnd);
+        const unmatchedCustomAddresses = [];
+        
+        for (const entry of fortnightEntries) {
+          if (entry.description && entry.description.startsWith('CUSTOM_ADDRESS:')) {
+            const customAddress = entry.description.replace('CUSTOM_ADDRESS: ', '');
+            const jobMatch = await findBestJobMatch(customAddress, 80);
+            
+            if (!jobMatch) {
+              unmatchedCustomAddresses.push(customAddress);
+            } else {
+              // Auto-match and update the entry
+              console.log(`✅ Auto-matching custom address "${customAddress}" to job: ${jobMatch.job.jobName} (${jobMatch.score}% match)`);
+              await storage.updateTimesheetEntry(entry.id, { 
+                jobId: jobMatch.job.id, 
+                description: null 
+              });
+            }
+          }
+        }
+        
+        // If there are unmatched custom addresses, prevent approval
+        if (unmatchedCustomAddresses.length > 0) {
+          return res.status(400).json({ 
+            message: `Cannot approve fortnight - the following custom addresses have no matching job sheets: ${unmatchedCustomAddresses.join(', ')}. Please create job sheets that closely match these addresses first.`,
+            requiresJobSheets: true,
+            unmatchedAddresses: unmatchedCustomAddresses
+          });
+        }
+      }
+
       await storage.updateFortnightApproval(staffId, fortnightStart, fortnightEnd, approved);
       
       const action = approved ? "approved" : "unapproved";
