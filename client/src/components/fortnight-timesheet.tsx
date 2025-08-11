@@ -188,11 +188,43 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         updateTimesheetMutation.mutate(entryData, {
           onSuccess: (data) => {
             console.log('🏠 DATABASE SAVE SUCCESS:', data);
-            // Force refresh of timesheet data
+            // Update local state with the saved entry to prevent deletion
+            const savedDateKey = format(targetDate, 'yyyy-MM-dd');
+            setTimesheetData((prev: any) => {
+              const dayEntries = Array.isArray(prev[savedDateKey]) ? prev[savedDateKey] : [];
+              const updatedEntries = [...dayEntries];
+              
+              // Update the entry with the saved data
+              if (updatedEntries[entryIndex]) {
+                updatedEntries[entryIndex] = {
+                  ...updatedEntries[entryIndex],
+                  id: data.id,
+                  saved: true,
+                  jobId: null, // Ensure jobId is null for custom addresses
+                  description: `CUSTOM_ADDRESS: ${fullAddress}`
+                };
+              }
+              
+              return {
+                ...prev,
+                [savedDateKey]: updatedEntries
+              };
+            });
+            
+            // Refresh to sync with server
             refetchTimesheetEntries();
+            toast({
+              title: "Success",
+              description: "Custom address saved successfully",
+            });
           },
           onError: (error) => {
             console.error('🏠 DATABASE SAVE ERROR:', error);
+            toast({
+              title: "Error",
+              description: "Failed to save custom address",
+              variant: "destructive",
+            });
           }
         });
         console.log('🏠 CUSTOM ADDRESS SAVED - Database save triggered');
@@ -616,9 +648,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       return;
     }
 
-    // Clear local data and refresh to ensure all data is up to date
-    setTimesheetData({});
+    // Refresh to ensure all data is up to date, but don't clear local data yet
     await refetchTimesheetEntries();
+    // Only clear local data after successful refresh
+    setTimesheetData({});
     
     console.log('Successfully saved and cleared local data');
 
