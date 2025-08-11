@@ -614,11 +614,9 @@ export class DatabaseStorage implements IStorage {
       result = newEntry;
     }
 
-    // Update labor hours for this staff/job combination
-    if (entry.jobId) {
-      await this.updateLaborHoursFromTimesheet(entry.staffId, entry.jobId);
-    }
-
+    // NOTE: Labor hours will only be updated when admin approves the timesheet
+    // No automatic labor hour updates on entry creation
+    
     return result;
   }
 
@@ -631,8 +629,9 @@ export class DatabaseStorage implements IStorage {
 
     await db.delete(timesheetEntries).where(eq(timesheetEntries.id, id));
 
-    // Update labor hours after deletion
-    if (entry && entry.jobId) {
+    // Only update labor hours if the deleted entry was approved
+    // This maintains consistency with the new approval workflow
+    if (entry && entry.jobId && entry.approved) {
       await this.updateLaborHoursFromTimesheet(entry.staffId, entry.jobId);
     }
   }
@@ -671,6 +670,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateFortnightApproval(staffId: string, fortnightStart: string, fortnightEnd: string, approved: boolean): Promise<void> {
+    // Get all affected entries before updating
+    const affectedEntries = await db
+      .select()
+      .from(timesheetEntries)
+      .where(
+        and(
+          eq(timesheetEntries.staffId, staffId),
+          gte(timesheetEntries.date, fortnightStart),
+          lte(timesheetEntries.date, fortnightEnd)
+        )
+      );
+
+    // Update approval status
     await db
       .update(timesheetEntries)
       .set({ approved })
@@ -681,6 +693,24 @@ export class DatabaseStorage implements IStorage {
           lte(timesheetEntries.date, fortnightEnd)
         )
       );
+
+    // Update labor hours only when approving (not when unapproving)
+    if (approved) {
+      const jobIds = affectedEntries.map(entry => entry.jobId).filter(Boolean) as string[];
+      const uniqueJobIds = Array.from(new Set(jobIds));
+      
+      for (const jobId of uniqueJobIds) {
+        await this.updateLaborHoursFromTimesheet(staffId, jobId);
+      }
+    } else {
+      // When unapproving, recalculate labor hours based on remaining approved entries
+      const jobIds = affectedEntries.map(entry => entry.jobId).filter(Boolean) as string[];
+      const uniqueJobIds = Array.from(new Set(jobIds));
+      
+      for (const jobId of uniqueJobIds) {
+        await this.updateLaborHoursFromTimesheet(staffId, jobId);
+      }
+    }
   }
 
   async clearFortnightTimesheet(staffId: string, fortnightStart: string, fortnightEnd: string): Promise<void> {
@@ -917,39 +947,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async markTimesheetEntriesConfirmed(staffId: string, startDate: string, endDate: string): Promise<void> {
-    // First get all the entries we're about to confirm so we can update labor hours
-    const entriesToConfirm = await db
-      .select()
-      .from(timesheetEntries)
-      .where(
-        and(
-          eq(timesheetEntries.staffId, staffId),
-          gte(timesheetEntries.date, startDate),
-          lte(timesheetEntries.date, endDate)
-        )
-      );
-
-    // Mark entries as approved
-    await db
-      .update(timesheetEntries)
-      .set({ approved: true })
-      .where(
-        and(
-          eq(timesheetEntries.staffId, staffId),
-          gte(timesheetEntries.date, startDate),
-          lte(timesheetEntries.date, endDate)
-        )
-      );
-
-    // Update labor hours for each job that has timesheet entries
-    const jobIds = [...new Set(entriesToConfirm.filter(entry => entry.jobId).map(entry => entry.jobId))];
+    // Staff confirmation no longer auto-approves entries
+    // Entries will remain unapproved until admin manually approves them
+    // This allows admin review before hours are transferred to job sheets
     
-    for (const jobId of jobIds) {
-      if (jobId) {
-        console.log(`Updating labor hours for staffId: ${staffId}, jobId: ${jobId}`);
-        await this.updateLaborHoursFromTimesheet(staffId, jobId);
-      }
-    }
+    console.log(`Marked timesheet entries as confirmed for user ${staffId} from ${startDate} to ${endDate}`);
+    
+    // No approval status change - entries stay as approved=false until admin approval
+    // No labor hour updates - these happen only when admin approves
   }
 }
 
