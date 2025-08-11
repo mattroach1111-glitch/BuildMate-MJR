@@ -505,7 +505,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       <>
         <SuccessAnimation />
         <div className="p-4 max-w-7xl mx-auto">
-        <Card>
+          <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-4">
@@ -821,7 +821,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               )}
             </div>
           </CardContent>
-        </Card>
+          </Card>
         </div>
       </>
     );
@@ -831,8 +831,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     <>
       <SuccessAnimation />
       <div className="p-4 max-w-7xl mx-auto">
-      <div className="mb-6">
-        {/* Header */}
+        <div className="mb-6">
+          {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold mb-2">Fortnight Timesheet</h1>
@@ -1241,6 +1241,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                 </div>
               </CardContent>
             </Card>
+          </>
+        )}
         
         {/* Show message when no employee selected in admin view */}
         {isAdminView && !selectedEmployee && (
@@ -1258,16 +1260,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           </Card>
         )}
         </div>
-      </>
-    );
-  }
-
-  // Admin view (simplified for now)
-  return (
-    <>
-      <SuccessAnimation />
-      <div className="p-4 max-w-7xl mx-auto">
-        <p>Admin timesheet view</p>
       </div>
     </>
   );
