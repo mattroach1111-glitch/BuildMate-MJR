@@ -829,6 +829,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         return total + (isNaN(hours) ? 0 : hours);
       }, 0) : 0;
     
+    console.log('🔍 TOTAL HOURS DEBUG:', {
+      entriesCount: currentFortnightEntries?.length || 0,
+      totalHours: savedHours,
+      lessThan76: savedHours < 76,
+      entries: currentFortnightEntries?.map(e => ({ hours: e.hours, date: e.date })) || []
+    });
 
     return isNaN(savedHours) ? 0 : savedHours;
   };
@@ -1402,14 +1408,17 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     onClick={() => {
                       // Check for low hours warning
                       const totalHours = getTotalHours();
+                      console.log('🚨 STAFF SUBMIT - totalHours:', totalHours, 'will show dialog:', totalHours < 76);
+                      
                       if (totalHours < 76) {
-
+                        console.log('🚨 SHOWING LOW HOURS DIALOG');
                         setLowHoursTotal(totalHours);
                         setPendingSubmission(() => () => confirmTimesheetMutation.mutate());
                         setShowLowHoursDialog(true);
                         return;
                       }
 
+                      console.log('🚨 SUBMITTING DIRECTLY - NO DIALOG');
                       confirmTimesheetMutation.mutate();
                     }}
                     className="bg-blue-600 hover:bg-blue-700"
@@ -2088,14 +2097,17 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           
                           // Check for low hours warning
                           const totalHours = getTotalHours();
+                          console.log('🚨 ADMIN SUBMIT - totalHours:', totalHours, 'will show dialog:', totalHours < 76);
+                          
                           if (totalHours < 76) {
-
+                            console.log('🚨 SHOWING LOW HOURS DIALOG (admin)');
                             setLowHoursTotal(totalHours);
                             setPendingSubmission(() => () => confirmTimesheetMutation.mutate());
                             setShowLowHoursDialog(true);
                             return;
                           }
 
+                          console.log('🚨 SUBMITTING DIRECTLY - NO DIALOG (admin)');
                           confirmTimesheetMutation.mutate();
                         }}
                         disabled={confirmTimesheetMutation.isPending || getTotalHours() === 0}
