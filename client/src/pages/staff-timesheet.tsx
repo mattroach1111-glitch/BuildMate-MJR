@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Trash2, Lock, Unlock } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { format, addDays, parseISO } from "date-fns";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -29,6 +31,9 @@ export default function StaffTimesheet() {
   const [timesheetData, setTimesheetData] = useState<any>({});
   const [unlockedWeekends, setUnlockedWeekends] = useState<Set<string>>(new Set());
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [customAddresses, setCustomAddresses] = useState<{[key: string]: {houseNumber: string, streetAddress: string}}>({});
+  const [showAddressDialog, setShowAddressDialog] = useState<{show: boolean, dayIndex: number, entryIndex: number}>({show: false, dayIndex: -1, entryIndex: -1});
+  const [currentAddress, setCurrentAddress] = useState({houseNumber: '', streetAddress: ''});
   const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Function to unlock weekend for editing
@@ -326,6 +331,13 @@ export default function StaffTimesheet() {
                           <Select
                             value={entry?.jobId || 'no-job'}
                             onValueChange={(value) => {
+                              if (value === 'other-address') {
+                                // Show address input dialog
+                                setShowAddressDialog({show: true, dayIndex, entryIndex});
+                                setCurrentAddress({houseNumber: '', streetAddress: ''});
+                                return;
+                              }
+                              
                               if (entry?.id && !entry?.approved) {
                                 editSavedEntry(entry.id, 'jobId', value);
                               } else {
@@ -338,7 +350,13 @@ export default function StaffTimesheet() {
                               <SelectValue placeholder="Select job" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="no-job">Select a job</SelectItem>
+                              <SelectItem value="no-job">No job</SelectItem>
+                              <SelectItem value="rdo">RDO (Rest Day Off)</SelectItem>
+                              <SelectItem value="sick-leave">Sick Leave</SelectItem>
+                              <SelectItem value="personal-leave">Personal Leave</SelectItem>
+                              <SelectItem value="annual-leave">Annual Leave</SelectItem>
+                              <SelectItem value="leave-without-pay">Leave without pay</SelectItem>
+                              <SelectItem value="other-address">Other Address (Enter manually)</SelectItem>
                               {Array.isArray(jobs) && jobs.map((job: any) => (
                                 <SelectItem key={job.id} value={job.id}>
                                   {job.jobAddress}
@@ -433,6 +451,89 @@ export default function StaffTimesheet() {
             </div>
           </div>
         )}
+        
+        {/* Address Input Dialog */}
+        <Dialog open={showAddressDialog.show} onOpenChange={(open) => setShowAddressDialog({show: open, dayIndex: -1, entryIndex: -1})}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Enter Job Address</DialogTitle>
+              <DialogDescription>
+                Please provide the house number and street address for this job location.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="houseNumber">House Number *</Label>
+                <Input
+                  id="houseNumber"
+                  placeholder="e.g., 123"
+                  value={currentAddress.houseNumber}
+                  onChange={(e) => setCurrentAddress(prev => ({...prev, houseNumber: e.target.value}))}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="streetAddress">Street Address *</Label>
+                <Input
+                  id="streetAddress"
+                  placeholder="e.g., Main Street, Suburb, City"
+                  value={currentAddress.streetAddress}
+                  onChange={(e) => setCurrentAddress(prev => ({...prev, streetAddress: e.target.value}))}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAddressDialog({show: false, dayIndex: -1, entryIndex: -1})}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => {
+                  // Validate required fields
+                  if (!currentAddress.houseNumber.trim() || !currentAddress.streetAddress.trim()) {
+                    toast({
+                      title: "Required Fields Missing",
+                      description: "Please enter both house number and street address.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  
+                  // Create custom address key and save
+                  const customAddressKey = `custom-${Date.now()}`;
+                  const fullAddress = `${currentAddress.houseNumber} ${currentAddress.streetAddress}`;
+                  
+                  setCustomAddresses(prev => ({
+                    ...prev,
+                    [customAddressKey]: currentAddress
+                  }));
+                  
+                  // Get the current day for the dialog
+                  const day = fortnightDays[showAddressDialog.dayIndex];
+                  const entryIndex = showAddressDialog.entryIndex;
+                  
+                  // Handle the entry update
+                  if (day && entryIndex >= 0) {
+                    handleCellChange(day, entryIndex, 'jobId', customAddressKey);
+                    handleCellChange(day, entryIndex, 'materials', fullAddress);
+                  }
+                  
+                  toast({
+                    title: "Address Added",
+                    description: `Job address set to: ${fullAddress}`,
+                  });
+                  
+                  // Close dialog
+                  setShowAddressDialog({show: false, dayIndex: -1, entryIndex: -1});
+                  setCurrentAddress({houseNumber: '', streetAddress: ''});
+                }}
+                disabled={!currentAddress.houseNumber.trim() || !currentAddress.streetAddress.trim()}
+              >
+                Add Address
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </PageLayout>
   );
