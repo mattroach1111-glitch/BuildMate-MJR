@@ -1069,6 +1069,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Don't fail the whole request if PDF generation fails
       }
       
+      // Mark all timesheet entries for this period as confirmed/approved
+      await storage.markTimesheetEntriesConfirmed(userId, fortnightStart, fortnightEnd);
+      console.log(`Marked timesheet entries as confirmed for user ${userId} from ${fortnightStart} to ${fortnightEnd}`);
+      
       res.json({ 
         message: googleDriveConnected && driveLink 
           ? "Timesheet confirmed successfully. PDF generated and saved to your Google Drive in 'BuildFlow Pro Timesheets' folder."
