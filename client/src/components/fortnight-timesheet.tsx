@@ -498,18 +498,58 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     }
   };
 
+  const validateEntries = (timesheetData: any) => {
+    const errors: string[] = [];
+    
+    Object.entries(timesheetData).forEach(([dateKey, dayEntries]) => {
+      if (Array.isArray(dayEntries)) {
+        dayEntries.forEach((entry, index) => {
+          const hours = parseFloat(entry.hours || '0');
+          const jobId = entry.jobId;
+          
+          // Validation 1: Leave without pay must have 0 hours
+          if (jobId === 'leave-without-pay' && hours > 0) {
+            errors.push(`${format(parseISO(dateKey), 'MMM dd')}: Leave without pay must have 0 hours`);
+          }
+          
+          // Validation 2: If hours > 0, must have a job selected (not "no-job")
+          if (hours > 0 && (!jobId || jobId === 'no-job')) {
+            errors.push(`${format(parseISO(dateKey), 'MMM dd')}: Cannot have hours without selecting a job`);
+          }
+        });
+      }
+    });
+    
+    return errors;
+  };
+
   const saveAllEntries = async () => {
     console.log('Save All clicked, timesheetData:', timesheetData);
+    
+    // Validate entries before saving
+    const validationErrors = validateEntries(timesheetData);
+    if (validationErrors.length > 0) {
+      toast({
+        title: "Validation Error",
+        description: validationErrors[0], // Show first error
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const entriesToSave: any[] = [];
     
     Object.entries(timesheetData).forEach(([dateKey, dayEntries]) => {
       if (Array.isArray(dayEntries)) {
         dayEntries.forEach((entry, index) => {
           console.log('Processing entry:', entry);
-          if (entry.hours && parseFloat(entry.hours) > 0) {
+          const hours = parseFloat(entry.hours || '0');
+          
+          // Include entries with hours > 0 OR leave-without-pay with 0 hours
+          if (hours > 0 || (entry.jobId === 'leave-without-pay' && hours === 0)) {
             const entryData: any = {
               date: dateKey,
-              hours: parseFloat(entry.hours),
+              hours: hours,
               materials: entry.materials || '',
               jobId: entry.jobId === 'no-job' ? null : entry.jobId || null,
             };
@@ -941,6 +981,20 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 console.log(`🚫 STAFF WEEKEND INPUT BLOCKED: ${dateKey} - Weekend is locked!`);
                                 return; // Prevent any input on locked weekends
                               }
+                              
+                              const newHours = e.target.value;
+                              const currentJobId = entry?.jobId;
+                              
+                              // Validate leave-without-pay + hours > 0
+                              if (currentJobId === 'leave-without-pay' && parseFloat(newHours) > 0) {
+                                toast({
+                                  title: "Invalid Entry",
+                                  description: "Leave without pay must have 0 hours",
+                                  variant: "destructive",
+                                });
+                                return;
+                              }
+                              
                               if (entry?.id && !entry?.approved) {
                                 editSavedEntry(entry.id, 'hours', e.target.value);
                               } else {
@@ -975,6 +1029,27 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 setShowAddressDialog(true);
                                 console.log('🏠 AFTER setState call - should show dialog now');
                                 return;
+                              }
+                              
+                              // Validate job selection with current hours
+                              const dateKey = format(day, 'yyyy-MM-dd');
+                              const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
+                              const currentEntry = dayEntries[entryIndex] || {};
+                              const currentHours = parseFloat(currentEntry.hours || entry?.hours || '0');
+                              
+                              // If selecting leave-without-pay and hours > 0, show warning
+                              if (value === 'leave-without-pay' && currentHours > 0) {
+                                toast({
+                                  title: "Hours Cleared",
+                                  description: "Leave without pay requires 0 hours. Hours have been reset to 0.",
+                                  variant: "default",
+                                });
+                                // Clear hours when selecting leave-without-pay
+                                if (entry?.id && !entry?.approved) {
+                                  editSavedEntry(entry.id, 'hours', '0');
+                                } else {
+                                  handleCellChange(day, entryIndex, 'hours', '0');
+                                }
                               }
                               
                               if (entry?.id && !entry?.approved) {
