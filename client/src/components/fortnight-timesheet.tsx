@@ -1776,28 +1776,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "0"}
                                 value={entry?.hours || ''}
                                 onChange={(e) => {
-                                  console.log('🔢 HOURS INPUT CHANGE:', {
-                                    dateKey,
-                                    entryIndex,
-                                    newValue: e.target.value,
-                                    entryId: entry?.id,
-                                    isApproved: entry?.approved,
-                                    isCustomAddress: entry?.jobId === null && entry?.description?.startsWith('CUSTOM_ADDRESS:'),
-                                    entryJobId: entry?.jobId,
-                                    entryDescription: entry?.description
-                                  });
-                                  
                                   if (isWeekend && !isWeekendUnlocked(dateKey)) {
                                     console.log(`🚫 WEEKEND INPUT BLOCKED: ${dateKey} - Weekend is locked!`);
                                     return; // Prevent any input on locked weekends
                                   }
                                   if (entry?.id && !entry?.approved) {
                                     // Edit saved entry directly
-                                    console.log('🔢 EDITING SAVED ENTRY:', entry.id, 'hours', e.target.value);
                                     editSavedEntry(entry.id, 'hours', e.target.value);
                                   } else {
                                     // Handle unsaved entry
-                                    console.log('🔢 HANDLING UNSAVED ENTRY:', day, entryIndex, 'hours', e.target.value);
                                     handleCellChange(day, entryIndex, 'hours', e.target.value);
                                   }
                                 }}

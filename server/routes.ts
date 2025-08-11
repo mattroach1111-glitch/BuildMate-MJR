@@ -1119,6 +1119,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Creating timesheet entry for staff: ${staffId} (user: ${user.email}) - no corresponding employee found`);
       }
       
+      // Validate and clean numeric fields
+      if (req.body.hours !== undefined) {
+        const hoursStr = String(req.body.hours).trim();
+        if (hoursStr === '' || hoursStr === null) {
+          req.body.hours = '0';
+        } else {
+          const hoursNum = parseFloat(hoursStr);
+          if (isNaN(hoursNum)) {
+            return res.status(400).json({ error: "Invalid hours value" });
+          }
+          // Ensure hours are within valid range for database (precision 5, scale 2 = max 999.99)
+          if (hoursNum < 0 || hoursNum > 999.99) {
+            return res.status(400).json({ error: "Hours must be between 0 and 999.99" });
+          }
+          req.body.hours = hoursNum.toString();
+        }
+      }
+      
       // Handle special leave types by storing them in materials field and setting jobId to null
       const { jobId, materials, description, ...otherData } = req.body;
       const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'rdo', 'leave-without-pay'];
@@ -1480,6 +1498,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const entryId = req.params.id;
       const updates = req.body;
+      
+      // Validate and clean numeric fields
+      if (updates.hours !== undefined) {
+        const hoursStr = String(updates.hours).trim();
+        if (hoursStr === '' || hoursStr === null) {
+          updates.hours = '0';
+        } else {
+          const hoursNum = parseFloat(hoursStr);
+          if (isNaN(hoursNum)) {
+            return res.status(400).json({ error: "Invalid hours value" });
+          }
+          // Ensure hours are within valid range for database (precision 5, scale 2 = max 999.99)
+          if (hoursNum < 0 || hoursNum > 999.99) {
+            return res.status(400).json({ error: "Hours must be between 0 and 999.99" });
+          }
+          updates.hours = hoursNum.toString();
+        }
+      }
       
       // Handle special leave types by storing them in materials field and setting jobId to null
       const { jobId, materials, ...otherData } = updates;
