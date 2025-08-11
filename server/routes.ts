@@ -966,14 +966,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const dayOfWeek = entryDate.getDay();
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
       
-      if (isWeekend) {
+      if (isWeekend && !req.body.weekendConfirmed) {
         const dayName = dayOfWeek === 0 ? 'Sunday' : 'Saturday';
-        console.log(`🚫 WEEKEND ENTRY BLOCKED: User ${user.email} attempted to create entry on ${dayName} ${req.body.date}`);
+        console.log(`🚫 WEEKEND ENTRY BLOCKED: User ${user.email} attempted to create entry on ${dayName} ${req.body.date} without confirmation`);
         return res.status(400).json({ 
-          message: `Weekend entries are locked. Cannot create timesheet entry for ${dayName}. Please contact admin if you worked on the weekend.`,
+          message: `Weekend entries require confirmation. Click "Yes, I worked this weekend" to proceed.`,
           isWeekend: true,
-          dayName
+          dayName,
+          requiresConfirmation: true
         });
+      }
+      
+      if (isWeekend && req.body.weekendConfirmed) {
+        const dayName = dayOfWeek === 0 ? 'Sunday' : 'Saturday';
+        console.log(`✅ WEEKEND ENTRY CONFIRMED: User ${user.email} confirmed weekend work on ${dayName} ${req.body.date}`);
       }
       
       // The staff_id in timesheet_entries must reference a user ID (not employee ID)

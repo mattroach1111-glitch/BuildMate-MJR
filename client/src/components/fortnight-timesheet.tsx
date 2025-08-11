@@ -241,13 +241,22 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const saveEntry = (date: Date, entryIndex: number, data: any) => {
     if (data && data.hours && parseFloat(data.hours) > 0) {
       const dateStr = format(date, 'yyyy-MM-dd');
+      const dayOfWeek = date.getDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
       
-      updateTimesheetMutation.mutate({
+      const entryData: any = {
         date: dateStr,
         hours: parseFloat(data.hours),
         materials: data.materials || '',
         jobId: data.jobId === 'no-job' ? null : data.jobId || null,
-      });
+      };
+      
+      // Add weekend confirmation if this date is unlocked
+      if (isWeekend && isWeekendUnlocked(dateStr)) {
+        entryData.weekendConfirmed = true;
+      }
+      
+      updateTimesheetMutation.mutate(entryData);
     }
   };
 
@@ -266,6 +275,16 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               materials: entry.materials || '',
               jobId: entry.jobId === 'no-job' ? null : entry.jobId || null,
             };
+            
+            // Check if this is a weekend date and add confirmation flag
+            const entryDate = parseISO(dateKey);
+            const dayOfWeek = entryDate.getDay();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            
+            if (isWeekend && isWeekendUnlocked(dateKey)) {
+              entryData.weekendConfirmed = true;
+              console.log(`✅ Including weekend confirmation for ${dateKey}`);
+            }
             
             // For admin view, add the selected employee's staffId
             if (isAdminView && selectedEmployee) {
