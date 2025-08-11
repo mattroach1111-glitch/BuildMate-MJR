@@ -1267,10 +1267,8 @@ export default function AdminDashboard() {
         </div>
 
         {/* Content Sections */}
-        <div className="w-full">
-
-          {activeTab === "jobs" && (
-          <div className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsContent value="jobs" className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h2 className="text-xl font-semibold">Job Management</h2>
             <Dialog open={isCreateJobOpen} onOpenChange={setIsCreateJobOpen}>
@@ -2168,121 +2166,7 @@ export default function AdminDashboard() {
           )}
           </TabsContent>
 
-          <TabsContent value="employees" className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h2 className="text-xl font-semibold">Staff Management</h2>
-            <Dialog open={isCreateEmployeeOpen} onOpenChange={setIsCreateEmployeeOpen}>
-              <DialogTrigger asChild>
-                <Button className="w-full sm:w-auto" data-testid="button-add-employee">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Staff
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md mx-4" aria-describedby="add-employee-description">
-                <DialogHeader>
-                  <DialogTitle>Add New Staff Member</DialogTitle>
-                  <p id="add-employee-description" className="text-sm text-muted-foreground">
-                    Add a new employee to your staff list for timesheet management.
-                  </p>
-                </DialogHeader>
-                <Form {...employeeForm}>
-                  <form onSubmit={employeeForm.handleSubmit(onEmployeeSubmit)} className="space-y-4">
-                    <FormField
-                      control={employeeForm.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter employee name" {...field} data-testid="input-employee-name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="flex gap-2 pt-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsCreateEmployeeOpen(false)}
-                        className="flex-1"
-                        data-testid="button-cancel-employee"
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        disabled={createEmployeeMutation.isPending}
-                        className="flex-1"
-                        data-testid="button-submit-employee"
-                      >
-                        {createEmployeeMutation.isPending ? "Adding..." : "Add Staff"}
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {/* Employees List */}
-          {employeesLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-4">
-                    <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {employees?.map((employee) => (
-                <Card key={employee.id} data-testid={`card-employee-${employee.id}`}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Users className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <div className="font-medium">{employee.name}</div>
-                          <div className="text-sm text-gray-500 mt-1">
-                            Staff Member
-                          </div>
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => deleteEmployeeMutation.mutate(employee.id)}
-                        disabled={deleteEmployeeMutation.isPending}
-                        data-testid={`button-delete-employee-${employee.id}`}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {employees && employees.length === 0 && !employeesLoading && (
-            <Card className="p-8 text-center">
-              <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">No staff members yet</h3>
-              <p className="text-muted-foreground mb-4">Add your first staff member to get started</p>
-              <Button onClick={() => setIsCreateEmployeeOpen(true)} data-testid="button-add-first-employee">
-                <Plus className="h-4 w-4 mr-2" />
-                Add First Staff Member
-              </Button>
-            </Card>
-          )}
-
-          {activeTab === "timesheets" && (
-          <div className="space-y-6">
+          <TabsContent value="timesheets" className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h2 className="text-xl font-semibold">Fortnight Timesheet Management</h2>
             <Dialog open={isCreateTimesheetOpen} onOpenChange={setIsCreateTimesheetOpen}>
@@ -2927,9 +2811,9 @@ export default function AdminDashboard() {
               </p>
             </Card>
           )}
+          </TabsContent>
 
-          {activeTab === "employees" && (
-          <div className="space-y-6">
+          <TabsContent value="employees" className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h2 className="text-xl font-semibold">Staff Management</h2>
               <Dialog open={isCreateEmployeeOpen} onOpenChange={setIsCreateEmployeeOpen}>
@@ -2958,19 +2842,7 @@ export default function AdminDashboard() {
                           </FormItem>
                         )}
                       />
-                      <FormField
-                        control={employeeForm.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input type="email" placeholder="Enter email address" {...field} data-testid="input-employee-email" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+
                       <div className="flex gap-2 pt-4">
                         <Button type="submit" disabled={createEmployeeMutation.isPending} data-testid="button-save-employee">
                           {createEmployeeMutation.isPending ? "Adding..." : "Add Staff Member"}
@@ -3006,7 +2878,7 @@ export default function AdminDashboard() {
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="font-medium">{employee.name}</h3>
-                          <p className="text-sm text-muted-foreground">{employee.email}</p>
+                          <p className="text-sm text-muted-foreground">Rate: ${employee.defaultHourlyRate}/hr</p>
                         </div>
                         <Button
                           size="sm"
@@ -3033,10 +2905,9 @@ export default function AdminDashboard() {
                 </Button>
               </Card>
             )}
-          )}
+          </TabsContent>
 
-          {activeTab === "staff-view" && (
-          <div className="space-y-6" data-testid="content-staff-view">
+          <TabsContent value="staff-view" className="space-y-6" data-testid="content-staff-view">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <div>
               <h2 className="text-xl font-semibold" data-testid="text-staff-preview-title">Staff Dashboard Preview</h2>
@@ -3048,7 +2919,7 @@ export default function AdminDashboard() {
               <StaffDashboard isAdminView={false} />
             </div>
           </div>
-        </TabsContent>
+          </TabsContent>
 
         {/* Pending Users Tab */}
         <TabsContent value="pending-users" className="space-y-6">
