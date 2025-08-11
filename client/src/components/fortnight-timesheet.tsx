@@ -1785,8 +1785,17 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     const isAlreadyCustom = (entry?.jobId === null && entry?.description && entry.description.startsWith('CUSTOM_ADDRESS:')) ||
                                                            (entry?.jobId && entry.jobId.startsWith('custom-address'));
                                     
+                                    console.log('🏠 OTHER ADDRESS SELECTED - DEBUG:', {
+                                      dayIndex, entryIndex, entry,
+                                      isAlreadyCustom,
+                                      jobIdCheck: entry?.jobId,
+                                      descriptionCheck: entry?.description,
+                                      jobIdStartsWithCustom: entry?.jobId && entry.jobId.startsWith('custom-address'),
+                                      descriptionStartsWithCustom: entry?.jobId === null && entry?.description && entry.description.startsWith('CUSTOM_ADDRESS:')
+                                    });
+                                    
                                     if (isAlreadyCustom) {
-                                      // Don't open dialog, it's already a custom address
+                                      console.log('🏠 DIALOG BLOCKED - Entry is already custom address');
                                       return;
                                     }
                                     // Show address input dialog for new custom address
