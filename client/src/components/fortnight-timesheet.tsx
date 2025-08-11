@@ -184,41 +184,83 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   const confirmTimesheetMutation = useMutation({
     mutationFn: async () => {
+      console.log('🚀 Starting timesheet confirmation...');
       // Mark timesheet as confirmed and advance to next fortnight
-      const response = await apiRequest("POST", "/api/timesheet/confirm", {
-        fortnightStart: format(currentFortnight.start, 'yyyy-MM-dd'),
-        fortnightEnd: format(currentFortnight.end, 'yyyy-MM-dd')
-      });
-      return await response.json();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        console.log('⏰ Confirmation timeout - aborting request');
+        controller.abort();
+      }, 30000); // 30 second timeout
+      
+      try {
+        const response = await apiRequest("POST", "/api/timesheet/confirm", {
+          fortnightStart: format(currentFortnight.start, 'yyyy-MM-dd'),
+          fortnightEnd: format(currentFortnight.end, 'yyyy-MM-dd')
+        }, {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        console.log('✅ Confirmation response received');
+        return await response.json();
+      } catch (error) {
+        clearTimeout(timeoutId);
+        console.error('❌ Confirmation failed:', error);
+        throw error;
+      }
     },
     onSuccess: async (data) => {
-      // Refresh timesheet data to reflect confirmed status
-      await refetchTimesheetEntries();
+      console.log('🎉 Confirmation successful:', data);
       
-      // Show success animation for timesheet completion
-      setShowSuccessAnimation(true);
-      setTimeout(() => setShowSuccessAnimation(false), 3000);
-      
-      // Advance to next fortnight
-      const nextFortnightIndex = currentFortnightIndex + 1;
-      setCurrentFortnightIndex(nextFortnightIndex);
-      
-      // The fortnight is automatically calculated from currentFortnightIndex
-      // so no need to manually set fortnight dates
-      
-      // Clear any local edits since we're moving to new fortnight
-      setTimesheetData({});
-      
-      toast({
-        title: "Success",
-        description: data?.message || "Timesheet confirmed and advanced to next fortnight",
-      });
+      try {
+        // Refresh timesheet data to reflect confirmed status
+        console.log('🔄 Refreshing timesheet data...');
+        await refetchTimesheetEntries();
+        
+        // Show success animation for timesheet completion
+        console.log('✨ Showing success animation...');
+        setShowSuccessAnimation(true);
+        setTimeout(() => setShowSuccessAnimation(false), 3000);
+        
+        // Advance to next fortnight
+        console.log('⏭️ Advancing to next fortnight...');
+        const nextFortnightIndex = currentFortnightIndex + 1;
+        setCurrentFortnightIndex(nextFortnightIndex);
+        
+        // Clear any local edits since we're moving to new fortnight
+        console.log('🧹 Clearing local timesheet data...');
+        setTimesheetData({});
+        
+        toast({
+          title: "Success",
+          description: data?.message || "Timesheet confirmed and advanced to next fortnight",
+        });
+        
+        console.log('✅ Confirmation process completed successfully');
+      } catch (error) {
+        console.error('❌ Error in success handler:', error);
+        toast({
+          title: "Warning",
+          description: "Timesheet was confirmed but there was an issue refreshing the data. Please refresh the page.",
+          variant: "destructive",
+        });
+      }
     },
-    onError: (error) => {
-      console.error("Confirmation error:", error);
+    onError: (error: any) => {
+      console.error("❌ Confirmation error:", error);
+      
+      let errorMessage = "Failed to confirm timesheet";
+      
+      if (error?.name === 'AbortError') {
+        errorMessage = "Confirmation timed out. Please try again.";
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       toast({
         title: "Error", 
-        description: error?.message || "Failed to confirm timesheet",
+        description: errorMessage,
         variant: "destructive",
       });
     },
