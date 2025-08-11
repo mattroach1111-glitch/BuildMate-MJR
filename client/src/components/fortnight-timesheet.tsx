@@ -1795,7 +1795,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             </td>
                             <td className="p-3">
                               <Select
-                                value={entry?.jobId && entry.jobId.startsWith('custom-address') ? 'other-address' : (entry?.jobId || 'no-job')}
+                                value={
+                                  (entry?.jobId === null && entry?.description && entry.description.startsWith('CUSTOM_ADDRESS:')) ? 'other-address' :
+                                  (entry?.jobId && entry.jobId.startsWith('custom-address')) ? 'other-address' : 
+                                  (entry?.jobId || 'no-job')
+                                }
                                 onValueChange={(value) => {
                                   if (isWeekend && !isWeekendUnlocked(dateKey)) {
                                     console.log(`🚫 WEEKEND SELECT BLOCKED: ${dateKey} - Weekend is locked!`);
@@ -1803,8 +1807,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   }
                                   
                                   if (value === 'other-address') {
-                                    // Check if this is already a custom address entry
-                                    if (entry?.jobId && entry.jobId.startsWith('custom-address')) {
+                                    // Check if this is already a custom address entry (either format)
+                                    const isAlreadyCustom = (entry?.jobId === null && entry?.description && entry.description.startsWith('CUSTOM_ADDRESS:')) ||
+                                                           (entry?.jobId && entry.jobId.startsWith('custom-address'));
+                                    
+                                    if (isAlreadyCustom) {
                                       // Don't open dialog, it's already a custom address
                                       return;
                                     }
@@ -1841,9 +1848,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                       
                                       if (leaveTypes[entry.jobId]) {
                                         return leaveTypes[entry.jobId];
-                                      } else if (entry.jobId && entry.jobId.startsWith('custom-address') && entry.description) {
-                                        console.log('🏠 DISPLAY CUSTOM ADDRESS:', {jobId: entry.jobId, description: entry.description});
-                                        return entry.description;
+                                      } else if (entry.jobId === null && entry.description && entry.description.startsWith('CUSTOM_ADDRESS:')) {
+                                        const address = entry.description.replace('CUSTOM_ADDRESS: ', '');
+                                        console.log('🏠 DISPLAY CUSTOM ADDRESS:', {description: entry.description, address});
+                                        return address;
+                                      } else if (entry.jobId && entry.jobId.startsWith('custom-address')) {
+                                        const address = entry.materials || 'Custom Address';
+                                        console.log('🏠 DISPLAY CUSTOM ADDRESS FALLBACK:', {jobId: entry.jobId, address});
+                                        return address;
                                       } else {
                                         const job = Array.isArray(jobs) ? jobs.find((j: any) => j.id === entry.jobId) : null;
                                         return job?.jobAddress || job?.address || job?.jobName || job?.name || `Job ${entry.jobId}`;
