@@ -33,7 +33,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     return Math.max(0, Math.floor(daysDiff / 14));
   };
 
-  const [currentFortnightIndex, setCurrentFortnightIndex] = useState(getCurrentFortnightIndex());
+  const [currentFortnightIndex, setCurrentFortnightIndex] = useState(0); // Start with current fortnight (Aug 11-24)
   const [timesheetData, setTimesheetData] = useState<any>({});
   const [unlockedWeekends, setUnlockedWeekends] = useState<Set<string>>(new Set());
   const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null); // Single timeout for all auto-saves
@@ -1039,11 +1039,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     <tbody>
                       {fortnightDays.map((day, dayIndex) => {
                         const dateKey = format(day, 'yyyy-MM-dd');
-                        const isWeekend = day.getDay() === 0 || day.getDay() === 6; // 0 = Sunday, 6 = Saturday
+                        const dayOfWeek = day.getDay();
+                        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0 = Sunday, 6 = Saturday
                         const isWeekendLocked = isWeekend && !isWeekendUnlocked(dateKey);
+                        
+                        // Always log weekend detection for debugging
                         if (isWeekend) {
-                          console.log(`🔴 WEEKEND DETECTED: ${format(day, 'EEE, MMM dd')} - Day: ${day.getDay()}, IsWeekend: ${isWeekend}, Unlocked: ${isWeekendUnlocked(dateKey)}, Locked: ${isWeekendLocked}`);
-                          console.log(`🔐 WEEKEND LOCK STATUS: ${dateKey} - Locked: ${isWeekendLocked}, UnlockedSet:`, Array.from(unlockedWeekends));
+                          console.log(`🔴 WEEKEND DETECTED: ${format(day, 'EEE, MMM dd')} - Day: ${dayOfWeek} (${dayOfWeek === 0 ? 'Sunday' : 'Saturday'}), IsWeekend: ${isWeekend}, Unlocked: ${isWeekendUnlocked(dateKey)}, Locked: ${isWeekendLocked}`);
+                          console.log(`🔐 WEEKEND LOCK STATUS: ${dateKey} - UnlockedSet contains ${dateKey}:`, unlockedWeekends.has(dateKey), 'Full set:', Array.from(unlockedWeekends));
                         }
                         const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
                         const existingEntries = Array.isArray(currentFortnightEntries) ? currentFortnightEntries.filter((entry: any) => 
