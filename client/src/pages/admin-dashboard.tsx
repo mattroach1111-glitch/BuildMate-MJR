@@ -86,11 +86,6 @@ export default function AdminDashboard() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'address' | 'client' | 'manager' | 'status'>('address');
   const [activeTab, setActiveTab] = useState("jobs");
-  
-  // Debug logging for activeTab changes
-  useEffect(() => {
-    console.log("ActiveTab changed to:", activeTab);
-  }, [activeTab]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -1221,11 +1216,7 @@ export default function AdminDashboard() {
             <Button
               variant={activeTab === "timesheets" ? "default" : "outline"}
               size="sm"
-              onClick={() => {
-                console.log("Timesheets tab clicked, current activeTab:", activeTab);
-                setActiveTab("timesheets");
-                console.log("setActiveTab called with 'timesheets'");
-              }}
+              onClick={() => setActiveTab("timesheets")}
               className="flex items-center gap-2"
               data-testid="tab-timesheets"
             >
@@ -1276,18 +1267,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Content Sections */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div style={{ display: 'none' }}>
-            <TabsList>
-              <TabsTrigger value="jobs">Jobs</TabsTrigger>
-              <TabsTrigger value="employees">Employees</TabsTrigger>
-              <TabsTrigger value="timesheets">Timesheets</TabsTrigger>
-              <TabsTrigger value="staff-view">Staff View</TabsTrigger>
-              <TabsTrigger value="pending-users">Pending Users</TabsTrigger>
-              <TabsTrigger value="search">Search</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
-            </TabsList>
-          </div>
+        <Tabs value={activeTab} className="w-full">
 
           <TabsContent value="jobs" className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
