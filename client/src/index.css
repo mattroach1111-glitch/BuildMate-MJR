@@ -77,13 +77,16 @@
 }
 
 /* Weekend highlighting for timesheets - Royal Blue */
-.weekend-row {
+tr.weekend-row {
   background-color: #2563eb !important;
   border: 2px solid #1d4ed8 !important;
+  border-left: 4px solid #1d4ed8 !important;
 }
 
-.weekend-row td {
+tr.weekend-row td {
+  background-color: #2563eb !important;
   color: white !important;
+  border-color: #1d4ed8 !important;
 }
 
   /* Mobile-first optimizations */

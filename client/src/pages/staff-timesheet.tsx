@@ -192,6 +192,8 @@ export default function StaffTimesheet() {
     }
   };
 
+  console.log("🚀 STAFF TIMESHEET PAGE LOADED - Weekend locking enabled");
+
   return (
     <PageLayout title="Daily Timesheet Entries">
       <div className="max-w-6xl mx-auto p-4">
@@ -219,7 +221,9 @@ export default function StaffTimesheet() {
                     const dateKey = format(day, 'yyyy-MM-dd');
                     const isWeekend = day.getDay() === 0 || day.getDay() === 6;
                     const isWeekendLocked = isWeekend && !isWeekendUnlocked(dateKey);
-                    console.log(`STAFF PAGE - ${format(day, 'EEE MMM dd')}: Weekend=${isWeekend}, Locked=${isWeekendLocked}`);
+                    if (isWeekend) {
+                      console.log(`🔵 WEEKEND DETECTED: ${format(day, 'EEE MMM dd')} (${dateKey}) - Day: ${day.getDay()}, Locked: ${isWeekendLocked}`);
+                    }
                     const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
                     const existingEntries = Array.isArray(currentFortnightEntries) ? currentFortnightEntries.filter((entry: any) => 
                       format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
