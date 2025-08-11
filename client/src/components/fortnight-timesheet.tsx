@@ -1558,44 +1558,46 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           </Card>
         )}
         
-        {/* Address Input Dialog */}
-        <Dialog open={showAddressDialog.show} onOpenChange={(open) => {
-          console.log('🔄 DIALOG STATE CHANGE:', open ? 'OPENING' : 'CLOSING');
-          setShowAddressDialog({show: open, dayIndex: -1, entryIndex: -1});
-        }}>
-          <DialogContent className="sm:max-w-md z-50 bg-white border shadow-lg">
-            <DialogHeader>
-              <DialogTitle>Enter Job Address</DialogTitle>
-              <DialogDescription>
-                Please provide the house number and street address for this job location.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="houseNumber">House Number *</Label>
-                <Input
-                  id="houseNumber"
-                  placeholder="e.g., 123"
-                  value={currentAddress.houseNumber}
-                  onChange={(e) => setCurrentAddress(prev => ({...prev, houseNumber: e.target.value}))}
-                  className="mt-1"
-                />
+        {/* Address Input Dialog - Fixed positioning */}
+        {showAddressDialog.show && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold">Enter Job Address</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Please provide the house number and street address for this job location.
+                </p>
               </div>
-              <div>
-                <Label htmlFor="streetAddress">Street Address *</Label>
-                <Input
-                  id="streetAddress"
-                  placeholder="e.g., Main Street, Suburb, City"
-                  value={currentAddress.streetAddress}
-                  onChange={(e) => setCurrentAddress(prev => ({...prev, streetAddress: e.target.value}))}
-                  className="mt-1"
-                />
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="houseNumber">House Number *</Label>
+                  <Input
+                    id="houseNumber"
+                    placeholder="e.g., 123"
+                    value={currentAddress.houseNumber}
+                    onChange={(e) => setCurrentAddress(prev => ({...prev, houseNumber: e.target.value}))}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="streetAddress">Street Address *</Label>
+                  <Input
+                    id="streetAddress"
+                    placeholder="e.g., Main Street, Suburb, City"
+                    value={currentAddress.streetAddress}
+                    onChange={(e) => setCurrentAddress(prev => ({...prev, streetAddress: e.target.value}))}
+                    className="mt-1"
+                  />
+                </div>
               </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAddressDialog({show: false, dayIndex: -1, entryIndex: -1})}>
-                Cancel
-              </Button>
+              <div className="flex gap-2 mt-6">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowAddressDialog({show: false, dayIndex: -1, entryIndex: -1})}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
               <Button 
                 onClick={() => {
                   // Validate required fields
@@ -1665,12 +1667,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   setCurrentAddress({houseNumber: '', streetAddress: ''});
                 }}
                 disabled={!currentAddress.houseNumber.trim() || !currentAddress.streetAddress.trim()}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
               >
                 Add Address
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              </div>
+            </div>
+          </div>
+        )}
         </div>
       </div>
     </>
