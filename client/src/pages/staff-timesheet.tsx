@@ -82,6 +82,7 @@ export default function StaffTimesheet() {
     },
     onSuccess: () => {
       refetchTimesheetEntries();
+      setTimesheetData({}); // Clear data only after successful save
       toast({
         title: "Success",
         description: "Timesheet entries saved successfully",
@@ -189,7 +190,7 @@ export default function StaffTimesheet() {
 
     if (entriesToSave.length > 0) {
       updateTimesheetMutation.mutate({ entries: entriesToSave });
-      setTimesheetData({});
+      // Don't clear timesheet data immediately - let it clear after successful save
     }
   };
 
