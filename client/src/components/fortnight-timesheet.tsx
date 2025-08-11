@@ -175,7 +175,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         const entry = dayEntries[entryIndex] || { hours: '1', materials: '' };
         
         // Save to database immediately - use null jobId for custom addresses to avoid foreign key constraint
-        const entryData = {
+        const entryData: any = {
           staffId: isAdminView ? selectedEmployee : (user?.id || ''),
           date: dateKey,
           jobId: null, // Use null to avoid foreign key constraint
@@ -183,6 +183,16 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           hours: entry.hours || '1', // Default to 1 hour so entry is valid
           materials: entry.materials || ''
         };
+
+        // Check if this is a weekend date and add confirmation flag
+        const entryDate = parseISO(dateKey);
+        const dayOfWeek = entryDate.getDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        
+        if (isWeekend && isWeekendUnlocked(dateKey)) {
+          entryData.weekendConfirmed = true;
+          console.log(`✅ Including weekend confirmation for custom address on ${dateKey}`);
+        }
         
         console.log('🏠 SAVING TO DATABASE:', entryData);
         updateTimesheetMutation.mutate(entryData, {
