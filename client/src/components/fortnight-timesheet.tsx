@@ -781,6 +781,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               
                               if (value === 'other-address') {
                                 // Show address input dialog
+                                console.log('🏠 OTHER ADDRESS SELECTED - Opening dialog for dayIndex:', dayIndex, 'entryIndex:', entryIndex);
                                 setShowAddressDialog({show: true, dayIndex, entryIndex});
                                 setCurrentAddress({houseNumber: '', streetAddress: ''});
                                 return;
