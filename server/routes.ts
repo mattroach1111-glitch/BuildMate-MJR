@@ -21,6 +21,7 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
+import * as fuzz from "fuzzball";
 
 // Admin middleware
 const isAdmin = async (req: any, res: any, next: any) => {
@@ -39,6 +40,43 @@ const isAdmin = async (req: any, res: any, next: any) => {
   } catch (error) {
     console.error("Error checking admin status:", error);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Fuzzy job matching function
+const findBestJobMatch = async (timesheetJobDescription: string, threshold: number = 80): Promise<{ job: any, score: number } | null> => {
+  try {
+    const allJobs = await storage.getJobs();
+    if (!allJobs || allJobs.length === 0) {
+      return null;
+    }
+    
+    let bestMatch = null;
+    let bestScore = 0;
+    
+    for (const job of allJobs) {
+      const jobIdentifiers = [
+        job.jobName,
+        job.address,
+        job.clientName,
+        job.projectManager,
+        `${job.jobName} ${job.address}`,
+        `${job.clientName} ${job.address}`
+      ].filter(Boolean);
+      
+      for (const identifier of jobIdentifiers) {
+        const score = fuzz.ratio(timesheetJobDescription.toLowerCase(), identifier.toLowerCase());
+        if (score > bestScore && score >= threshold) {
+          bestScore = score;
+          bestMatch = job;
+        }
+      }
+    }
+    
+    return bestMatch ? { job: bestMatch, score: bestScore } : null;
+  } catch (error) {
+    console.error("Error in fuzzy job matching:", error);
+    return null;
   }
 };
 
@@ -1000,16 +1038,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Handle special leave types by storing them in materials field and setting jobId to null
-      const { jobId, materials, ...otherData } = req.body;
+      const { jobId, materials, description, ...otherData } = req.body;
       const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'rdo', 'leave-without-pay'];
       let finalJobId = jobId;
       let finalMaterials = materials || '';
+      let finalDescription = description || null;
+      let needsJobSheetMatch = false;
       
       if (leaveTypes.includes(jobId)) {
         finalJobId = null;
         finalMaterials = jobId; // Store leave type in materials field
       } else if (jobId === 'no-job') {
         finalJobId = null;
+      } else if (description && description.startsWith('CUSTOM_ADDRESS:')) {
+        // This is a custom address entry - check for job sheet match
+        const customAddress = description.replace('CUSTOM_ADDRESS: ', '');
+        const jobMatch = await findBestJobMatch(customAddress, 80);
+        
+        if (jobMatch) {
+          console.log(`✅ Found matching job sheet for custom address "${customAddress}": ${jobMatch.job.jobName} (${jobMatch.score}% match)`);
+          // Use the matched job ID instead of null
+          finalJobId = jobMatch.job.id;
+          finalDescription = null; // Clear custom address description since we have a real job
+        } else {
+          console.log(`⚠️  No job sheet found for custom address "${customAddress}" - entry will need manual approval`);
+          finalJobId = null;
+          finalDescription = description;
+          needsJobSheetMatch = true;
+        }
       }
       
       const validatedData = insertTimesheetEntrySchema.parse({
@@ -1017,6 +1073,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         staffId: staffId,
         jobId: finalJobId,
         materials: finalMaterials,
+        description: finalDescription,
+        // Mark as needing approval if no job sheet match found
+        approved: needsJobSheetMatch ? false : otherData.approved,
       });
       const entry = await storage.upsertTimesheetEntry(validatedData);
       res.status(201).json(entry);
@@ -1361,6 +1420,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting timesheet entry:", error);
       res.status(500).json({ error: "Failed to delete timesheet entry" });
+    }
+  });
+
+  // Admin endpoint to approve timesheet entry with job sheet matching check
+  app.patch("/api/timesheet/:id/approve", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { approved, hours } = req.body;
+      
+      // Get the timesheet entry first
+      const entry = await storage.getTimesheetEntry(id);
+      if (!entry) {
+        return res.status(404).json({ message: "Timesheet entry not found" });
+      }
+      
+      // Check if this entry has a custom address without job sheet match
+      if (approved && entry.description && entry.description.startsWith('CUSTOM_ADDRESS:')) {
+        const customAddress = entry.description.replace('CUSTOM_ADDRESS: ', '');
+        const jobMatch = await findBestJobMatch(customAddress, 80);
+        
+        if (!jobMatch) {
+          return res.status(400).json({ 
+            message: `Cannot approve timesheet entry for "${customAddress}" - no matching job sheet found. Please create a job sheet that closely matches this address first.`,
+            requiresJobSheet: true,
+            customAddress: customAddress
+          });
+        } else {
+          console.log(`✅ Job sheet match found during approval for "${customAddress}": ${jobMatch.job.jobName} (${jobMatch.score}% match)`);
+          // Update the entry to use the matched job ID
+          await storage.updateTimesheetEntry(id, { 
+            approved, 
+            hours, 
+            jobId: jobMatch.job.id, 
+            description: null 
+          });
+          
+          // Update labor hours in the matched job
+          if (entry.jobId) {
+            await storage.updateLaborHoursFromTimesheet(jobMatch.job.id, entry.staffId, parseFloat(hours));
+            console.log(`Updated labor hours for matched job ${jobMatch.job.id} with ${hours} hours from timesheet entry ${id}`);
+          }
+          
+          return res.json({ 
+            success: true, 
+            matchedJob: jobMatch.job,
+            matchScore: jobMatch.score 
+          });
+        }
+      }
+      
+      // Normal approval process for entries with existing job IDs
+      await storage.updateTimesheetEntry(id, { approved, hours });
+      
+      if (approved && entry.jobId) {
+        // Update labor hours in the corresponding job
+        await storage.updateLaborHoursFromTimesheet(entry.jobId, entry.staffId, parseFloat(hours));
+        console.log(`Updated labor hours for job ${entry.jobId} with ${hours} hours from timesheet entry ${id}`);
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error approving timesheet entry:", error);
+      res.status(500).json({ message: "Failed to approve timesheet entry" });
+    }
+  });
+
+  // Test endpoint for fuzzy job matching (admin only)
+  app.post("/api/admin/test-job-match", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { customAddress } = req.body;
+      if (!customAddress) {
+        return res.status(400).json({ message: "Custom address is required" });
+      }
+      
+      const jobMatch = await findBestJobMatch(customAddress, 80);
+      
+      if (jobMatch) {
+        res.json({
+          match: true,
+          job: jobMatch.job,
+          score: jobMatch.score,
+          message: `Found matching job: ${jobMatch.job.jobName} at ${jobMatch.job.address} (${jobMatch.score}% match)`
+        });
+      } else {
+        res.json({
+          match: false,
+          message: `No job sheet found matching "${customAddress}" with 80% or higher similarity`
+        });
+      }
+    } catch (error) {
+      console.error("Error testing job match:", error);
+      res.status(500).json({ message: "Failed to test job match" });
     }
   });
 

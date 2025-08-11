@@ -896,7 +896,7 @@ export class DatabaseStorage implements IStorage {
         hours: timesheetEntries.hours,
         jobId: timesheetEntries.jobId,
         jobAddress: jobs.jobAddress,
-        jobClient: jobs.client,
+        jobClient: jobs.clientName,
         materials: timesheetEntries.materials,
         approved: timesheetEntries.approved,
         createdAt: timesheetEntries.createdAt
@@ -916,7 +916,7 @@ export class DatabaseStorage implements IStorage {
           ilike(employees.name, `%${filters.query}%`),
           ilike(users.email, `%${filters.query}%`),
           ilike(jobs.jobAddress, `%${filters.query}%`),
-          ilike(jobs.client, `%${filters.query}%`),
+          ilike(jobs.clientName, `%${filters.query}%`),
           ilike(timesheetEntries.materials, `%${filters.query}%`)
         )
       );
@@ -937,7 +937,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (filters.client) {
-      conditions.push(ilike(jobs.client, `%${filters.client}%`));
+      conditions.push(ilike(jobs.clientName, `%${filters.client}%`));
     }
 
     if (filters.dateFrom) {
@@ -963,7 +963,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      query = query.where(and(...conditions)) as any;
     }
 
     const results = await query
@@ -1080,6 +1080,17 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  // Get single timesheet entry
+  async getTimesheetEntry(id: string): Promise<any> {
+    const result = await db
+      .select()
+      .from(timesheetEntries)
+      .where(eq(timesheetEntries.id, id))
+      .limit(1);
+    
+    return result[0] || null;
+  }
+
   // Update timesheet entry
   async updateTimesheetEntry(id: string, data: any): Promise<void> {
     await db
@@ -1088,6 +1099,7 @@ export class DatabaseStorage implements IStorage {
         hours: data.hours,
         jobId: data.jobId,
         materials: data.materials,
+        description: data.description,
         approved: data.approved,
         updatedAt: new Date(),
       })
