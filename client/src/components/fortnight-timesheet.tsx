@@ -662,12 +662,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               
               entryData.jobId = null;
               entryData.description = `CUSTOM_ADDRESS: ${fullAddress}`;
+              // Debug logging can be removed in production
               console.log('🏠 PROCESSING CUSTOM ADDRESS:', {
                 originalJobId: entry.jobId,
-                entryMaterials: entry.materials,
-                entryDescription: entry.description,
-                extractedAddress: fullAddress,
-                finalData: entryData
+                extractedAddress: fullAddress
               });
             }
             
@@ -1794,17 +1792,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     const isAlreadyCustom = (entry?.jobId === null && entry?.description && entry.description.startsWith('CUSTOM_ADDRESS:')) ||
                                                            (entry?.jobId && entry.jobId.startsWith('custom-address'));
                                     
-                                    console.log('🏠 OTHER ADDRESS SELECTED - DEBUG:', {
-                                      dayIndex, entryIndex, entry,
-                                      isAlreadyCustom,
-                                      jobIdCheck: entry?.jobId,
-                                      descriptionCheck: entry?.description,
-                                      jobIdStartsWithCustom: entry?.jobId && entry.jobId.startsWith('custom-address'),
-                                      descriptionStartsWithCustom: entry?.jobId === null && entry?.description && entry.description.startsWith('CUSTOM_ADDRESS:')
-                                    });
-                                    
                                     if (isAlreadyCustom) {
-                                      console.log('🏠 DIALOG BLOCKED - Entry is already custom address');
+                                      // Don't open dialog, it's already a custom address
                                       return;
                                     }
                                     // Show address input dialog for new custom address
@@ -2124,12 +2113,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   
                   // Create custom address key and save
                   const fullAddress = `${currentAddress.houseNumber} ${currentAddress.streetAddress}`;
-                  console.log('🏠 CREATING CUSTOM ADDRESS:', {
-                    houseNumber: currentAddress.houseNumber,
-                    streetAddress: currentAddress.streetAddress,
-                    fullAddress: fullAddress,
-                    dialogData: addressDialogData
-                  });
+                  // Custom address creation logging
+                  console.log('🏠 CREATING CUSTOM ADDRESS:', fullAddress);
                   
                   // Store the address for job dropdown display
                   setCustomAddresses(prev => ({
@@ -2163,14 +2148,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   }
                   
                   const entry = entriesToShow[entryIndex];
-                  console.log('🏠 SETTING CUSTOM ADDRESS ON ENTRY:', {
-                    dateKey,
-                    entryIndex,
-                    entry,
-                    fullAddress,
-                    materials: fullAddress,
-                    description: `CUSTOM_ADDRESS: ${fullAddress}`
-                  });
+                  // Setting custom address on entry
+                  console.log('🏠 SETTING CUSTOM ADDRESS:', fullAddress);
                   
                   // Set the custom address as the job - but don't auto-save, let user save manually
                   handleCellChange(day, entryIndex, 'jobId', 'custom-address');

@@ -2,28 +2,6 @@
 
 BuildFlow Pro is a mobile-first construction management system designed to streamline job costing, billing, and workforce management. It provides role-based access for administrators and staff, enabling comprehensive tracking of labor costs, materials, sub-trades, and project expenses for construction project oversight. The system's vision is to enhance efficiency in construction project management, offering a user-friendly interface for both on-site staff and administrative personnel, and consolidating critical project data for better decision-making.
 
-## Recent Changes
-- **August 11, 2025**: Successfully resolved critical custom address auto-saving bug that was automatically assigning 1.00 hours to custom addresses. Identified and removed legacy code that was auto-saving custom addresses to database with default hours. Custom addresses now behave like regular jobs - they start with 0 hours, only update local state when created, and require explicit "Save All" action for database persistence. Enhanced user feedback with reminder messages about manual saving requirement.
-- **August 11, 2025**: Reorganized timesheet job dropdown for improved usability. Regular jobs now appear first in the dropdown list, followed by custom address options, then a visual separator with leave types (Sick leave, Personal leave, Annual leave, Leave without pay, RDO) pinned at the bottom. Applied to both staff and admin timesheet interfaces for consistent user experience across all timesheet entry points.
-- **August 11, 2025**: Implemented employee folder organization for approved timesheets. Each employee now has their own expandable folder within the approved timesheets section, showing total hours, fortnight count, and entry count. Employee folders are sorted alphabetically and maintain all existing functionality including expand/collapse, unapprove actions, and detailed entry views.
-- **August 11, 2025**: Implemented admin edit functionality for custom addresses. Admins can now edit custom address entries before approval by clicking the edit button (pencil icon) in the Actions column. Edit dialog allows modification of house number and street address fields with immediate database updates. Only available for unapproved custom address entries in admin view, ensuring data integrity while providing flexibility for address corrections.
-- **August 11, 2025**: Fixed weekend timesheet entry deletion issue. Resolved foreign key constraint violations when entering custom addresses on weekends by properly handling "custom-address" job IDs in backend routes. Updated custom address saving logic to preserve entries in local state after database save and prevent unwanted deletion during refresh operations. Weekend entries with custom addresses now persist correctly.
-- **August 11, 2025**: Fixed main navigation tab functionality for admin users. Resolved routing issue where both "Dashboard" and "Timesheet" navigation tabs were pointing to the same AdminDashboard component. Now "Dashboard" shows admin job management interface while "Timesheet" correctly navigates to personal timesheet entry form (FortnightTimesheetView), allowing admins to enter their own hours separately from managing staff approvals.
-- **August 11, 2025**: Successfully implemented comprehensive fuzzy job matching system with 80% similarity threshold using fuzzball library. System automatically matches custom addresses to existing job sheets during timesheet entry creation. If no match found, entries are held for manual admin approval until matching job sheet exists. Admin approval process includes intelligent job matching and prevents approval without job sheet matches. Added test endpoint for verifying job matching functionality.
-- **August 11, 2025**: Successfully implemented comprehensive timesheet validation system with real-time feedback. "Leave without pay" entries now require 0 hours with automatic hour clearing when selected. All leave types (RDO, sick leave, personal leave, annual leave, leave without pay) properly save to database using null jobId approach. Timesheet submission is prevented when hours > 0 but no job is selected, with immediate validation errors displayed to users. System provides both real-time validation during data entry and comprehensive validation during submission.
-- **August 11, 2025**: Successfully implemented custom address entry functionality with full database persistence. Resolved foreign key constraint issues by using null jobId for custom addresses and storing address data with "CUSTOM_ADDRESS:" prefix in description field. Custom addresses can be entered via dedicated dialog with house number and street address fields, are properly displayed in job dropdowns, and persist correctly across page refreshes and fortnight navigation. System maintains all existing features while bypassing database constraints through smart data handling.
-- **August 11, 2025**: Successfully implemented comprehensive weekend work protection system with unlock functionality. Weekend dates (Saturdays and Sundays) are highlighted in royal blue (bg-blue-600) with white text and "(Weekend)" labels. All input fields are locked with "🔒 LOCKED" placeholders until unlocked. Staff can click lock icons to get confirmation dialogs with "Yes, I worked this weekend" option. System includes server-side validation, weekend confirmation parameters, timeout protection for submit operations, and comprehensive error handling. Weekend unlock functionality works in both staff and admin views while preserving all existing features like multiple job entries and fortnight navigation.
-- **August 11, 2025**: Fixed timesheet submission functionality to properly confirm timesheets without unwanted PDF downloads. Submit Timesheet button now calls confirmation mutation instead of PDF export, displays loading states, and triggers the green checkmark success animation. PDF export remains available as separate manual action. Enhanced user experience with proper visual feedback for successful timesheet submissions.
-- **August 11, 2025**: Added comprehensive job-timesheet integration with API endpoint `/api/jobs/:id/timesheets` for fetching all timesheet data related to specific jobs. Updated job sheet modal to display timesheet entries in dedicated section showing staff details, hours worked, materials used, and approval status. Enhanced PDF generation to include timesheet entries on separate page after job costs and totals, featuring detailed timesheet table and summary statistics for total and approved hours.
-- **August 11, 2025**: Modified PDF generation workflow for better control. Staff timesheet submissions no longer automatically generate PDFs - PDFs are only created and saved to Google Drive when admins approve timesheet hours. This prevents unwanted PDF downloads during staff submissions while maintaining automated PDF generation for approved timesheets.
-- **August 11, 2025**: Added visual success feedback with big green checkmark animation for timesheet submissions. When staff save timesheet entries or confirm completed timesheets, a large animated green circle with checkmark appears for 3 seconds with bounce and pulse effects. Animation works for both staff and admin views to provide clear confirmation of successful submissions.
-- **August 11, 2025**: Implemented compressed admin navigation menu for better UX. Primary tabs (Jobs, Timesheets, Search) are prominently displayed, while secondary functions (Staff Management, Staff View, Pending Users, Settings) are organized in a "More" dropdown menu for cleaner interface design.
-- **August 11, 2025**: Added comprehensive admin timesheet search functionality with advanced filtering capabilities. Admins can now search all timesheets by employee name, job details, client information, date ranges, approval status, and hour ranges. Features include quick date filters, real-time search with up to 500 results, total hours calculation, CSV export, and visual status indicators. Search functionality integrated as new tab in admin dashboard with collapsible advanced filters and clear/reset options.
-- **August 11, 2025**: Implemented minimal staff timesheet interface with smart prompting system. Staff users see only the Daily Timesheet Entries table without navigation headers or dashboard elements. Added 5-stage progress prompts that guide through 10-day fortnight completion with milestone celebrations, contextual messaging, and submission guidance. Includes fortnight navigation buttons for viewing previous submitted timesheets and essential action buttons (Save, Export PDF, Clear).
-- **August 11, 2025**: Enhanced staff management system with comprehensive role assignment and user-employee mapping. Admins can now assign staff/admin roles, link user accounts to employee records for proper timesheet tracking, and view assignment status with visual badges. Added database reset functionality for testing purposes.
-- **August 11, 2025**: Fixed critical timesheet-to-job sheet synchronization issue affecting labor hour calculations. Resolved database field mapping problem in `updateLaborHoursFromTimesheet` function that prevented approved timesheet entries from properly updating labor costs in job sheets. System now correctly reflects staff hours across all job cost reports and billing documents.
-- **August 11, 2025**: Enhanced timesheet PDF generation to show actual detailed entries instead of empty templates. Updated `getTimesheetEntriesByPeriod` to include job information via left join, modified PDF generator to filter out zero-hour entries, and improved job detail display format. Cleared all test data (57 timesheet entries, reset 98 labor entries) to provide clean testing environment.
-
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -34,13 +12,14 @@ Preferred communication style: Simple, everyday language.
 - **Framework**: React with TypeScript (Vite)
 - **UI Library**: Radix UI components with shadcn/ui styling
 - **Styling**: Tailwind CSS with CSS variables
-- **State Management**: TanStack Query (React Query) for server state
+- **State Management**: TanStack Query (React Query) for server state; React hooks and component state for client state; React Hook Form for form state.
 - **Routing**: Wouter
 - **Forms**: React Hook Form with Zod validation
 - **Design Philosophy**: Component-based architecture with reusable UI components and role-based routing. Modern UI/UX redesign focusing on mobile responsiveness, touch-friendly controls, and enhanced navigation. Features include a dedicated "Ready for Billing" folder, collapsible sections, smart job sorting, and adaptable grid/list views. Vibrant, customizable folder colors are used for visual organization.
 - **Key Features**: Mobile-first redesign, comprehensive job management (creation, editing, soft delete), integrated Australian GST, automated staff assignment to jobs, independent job sheet rates, folder grouping (client/project manager) with auto-expansion, real-time search, status-based job ordering, and admin staff view access.
-- **Timesheet System**: Mobile-first redesign supporting multiple job entries per day, auto-saving with debounce, fortnight periods, quick stats cards, and admin capabilities for entry creation and approval. Includes support for RDO, sick leave, personal leave, and annual leave. Individual timesheet entry clearing is supported.
+- **Timesheet System**: Mobile-first redesign supporting multiple job entries per day, auto-saving with debounce, fortnight periods, quick stats cards, and admin capabilities for entry creation and approval. Includes support for RDO, sick leave, personal leave, and annual leave. Individual timesheet entry clearing is supported. Supports custom address entry with persistence, weekend work protection with unlock functionality, and robust validation. Includes fuzzy job matching for timesheet entries.
 - **Onboarding**: Animated welcome screen and interactive guided tours (role-specific).
+- **Admin Features**: Compressed navigation menu, comprehensive timesheet search with advanced filtering (employee name, job, client, date, approval status, hours), employee folder organization for approved timesheets, and admin edit functionality for custom addresses.
 
 ## Backend Architecture
 - **Runtime**: Node.js with Express.js
@@ -61,12 +40,7 @@ Preferred communication style: Simple, everyday language.
 - **Role System**: Two-tier (admin/staff) with route-level protection.
 - **Session Storage**: PostgreSQL-backed sessions.
 - **Security**: HTTP-only cookies with secure flags.
-- **User Management**: Admins can promote staff to admin status. Automatic user account creation for employees and cascade cleanup on employee deletion.
-
-## State Management
-- **Client State**: React hooks and component state.
-- **Server State**: TanStack Query for caching, synchronization, and optimistic updates.
-- **Form State**: React Hook Form for validation.
+- **User Management**: Admins can assign staff/admin roles, link user accounts to employee records, and view assignment status. Automatic user account creation for employees and cascade cleanup on employee deletion.
 
 # External Dependencies
 
@@ -87,13 +61,14 @@ Preferred communication style: Simple, everyday language.
 - **Vite**: Build tool.
 - **Drizzle Kit**: Database migration and schema management.
 - **Zod**: Schema validation.
+- **fuzzball**: For fuzzy string matching.
 
 ## PDF Generation
 - **jsPDF**: Client-side PDF generation.
 
 ## Cloud Integrations
-- **Google Drive Integration**: OAuth flow for personal Google Drive connections, allowing timesheet PDFs to auto-save.
-- **Object Storage**: Replit Object Storage integration for job document management with upload, download, and delete capabilities.
+- **Google Drive Integration**: OAuth flow for personal Google Drive connections, allowing timesheet PDFs to auto-save upon admin approval.
+- **Replit Object Storage**: For job document management with upload, download, and delete capabilities.
 
 ## Utilities
 - **date-fns**: Date manipulation.
