@@ -74,6 +74,7 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>("all");
   const [dateRangeFilter, setDateRangeFilter] = useState<string>("all");
+  const [selectedFortnightFilter, setSelectedFortnightFilter] = useState<string>("all");
   // Start with all fortnights collapsed by default for cleaner view
   const [collapsedFortnights, setCollapsedFortnights] = useState<Set<string>>(new Set());
   // Separate state for approved timesheets folder
@@ -169,10 +170,45 @@ export default function AdminDashboard() {
     return end;
   };
 
+  // Get available fortnights from timesheet data
+  const availableFortnights = useMemo(() => {
+    if (!allTimesheets) return [];
+    
+    const fortnightSet = new Set<string>();
+    allTimesheets.forEach((entry: any) => {
+      const entryDate = new Date(entry.date);
+      const fortnightStart = getFortnightStart(entryDate);
+      const fortnightEnd = getFortnightEnd(fortnightStart);
+      const fortnightKey = `${format(fortnightStart, 'yyyy-MM-dd')}_${format(fortnightEnd, 'yyyy-MM-dd')}`;
+      fortnightSet.add(fortnightKey);
+    });
+    
+    return Array.from(fortnightSet)
+      .map(key => {
+        const [startStr, endStr] = key.split('_');
+        return {
+          key,
+          start: new Date(startStr),
+          end: new Date(endStr),
+          label: `${format(new Date(startStr), 'dd MMM')} - ${format(new Date(endStr), 'dd MMM yyyy')}`
+        };
+      })
+      .sort((a, b) => b.start.getTime() - a.start.getTime()); // Most recent first
+  }, [allTimesheets]);
+
   // Group timesheets by staff and fortnight
   const groupedTimesheets = useMemo(() => {
     const filtered = allTimesheets?.filter((entry: any) => {
       const employeeMatch = selectedEmployeeFilter === "all" || entry.staffId === selectedEmployeeFilter;
+      
+      // Fortnight filter
+      if (selectedFortnightFilter !== "all") {
+        const entryDate = new Date(entry.date);
+        const fortnightStart = getFortnightStart(entryDate);
+        const fortnightEnd = getFortnightEnd(fortnightStart);
+        const fortnightKey = `${format(fortnightStart, 'yyyy-MM-dd')}_${format(fortnightEnd, 'yyyy-MM-dd')}`;
+        if (fortnightKey !== selectedFortnightFilter) return false;
+      }
       
       if (!employeeMatch) return false;
       
@@ -2346,7 +2382,7 @@ export default function AdminDashboard() {
               </p>
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="employee-filter" className="text-sm font-medium">Select Staff Member</Label>
                   <Select value={selectedEmployeeFilter} onValueChange={setSelectedEmployeeFilter}>
@@ -2387,6 +2423,22 @@ export default function AdminDashboard() {
                   </Select>
                 </div>
                 <div>
+                  <Label htmlFor="fortnight-filter" className="text-sm font-medium">Fortnight Period</Label>
+                  <Select value={selectedFortnightFilter} onValueChange={setSelectedFortnightFilter}>
+                    <SelectTrigger data-testid="select-fortnight-filter" className="mt-1">
+                      <SelectValue placeholder="All fortnights" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">📋 All Fortnights</SelectItem>
+                      {availableFortnights.map((fortnight) => (
+                        <SelectItem key={fortnight.key} value={fortnight.key}>
+                          📅 {fortnight.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label htmlFor="date-range-filter" className="text-sm font-medium">Time Period</Label>
                   <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
                     <SelectTrigger data-testid="select-date-range-filter" className="mt-1">
@@ -2407,6 +2459,7 @@ export default function AdminDashboard() {
                   size="sm" 
                   onClick={() => {
                     setSelectedEmployeeFilter("all");
+                    setSelectedFortnightFilter("all");
                     setDateRangeFilter("all");
                   }}
                   data-testid="button-clear-all-filters"
