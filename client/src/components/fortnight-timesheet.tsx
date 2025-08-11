@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -50,8 +51,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       console.log('🏠 DIALOG SHOULD BE VISIBLE NOW!');
       // Try to find the dialog element in DOM
       setTimeout(() => {
-        const dialogElement = document.querySelector('[data-testid="address-dialog"]');
-        console.log('🏠 DIALOG ELEMENT IN DOM:', dialogElement);
+        const dialogElement = document.querySelector('[data-testid="emergency-dialog-portal"]');
+        const regularDialog = document.querySelector('[data-testid="address-dialog"]');
+        console.log('🏠 PORTAL DIALOG ELEMENT IN DOM:', dialogElement);
+        console.log('🏠 REGULAR DIALOG ELEMENT IN DOM:', regularDialog);
       }, 100);
     }
   }, [showAddressDialog, addressDialogData]);
@@ -1012,10 +1015,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   return (
     <>
-      {/* EMERGENCY DIALOG TEST - Place at very top */}
-      {showAddressDialog && (
+      {/* EMERGENCY DIALOG TEST - Using React Portal */}
+      {showAddressDialog && createPortal(
         <div 
-          data-testid="emergency-dialog"
+          data-testid="emergency-dialog-portal"
           style={{
             position: 'fixed',
             top: '50%',
@@ -1030,17 +1033,18 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             fontWeight: 'bold'
           }}
           onClick={() => {
-            console.log('🏠 EMERGENCY DIALOG CLICKED!');
+            console.log('🏠 PORTAL DIALOG CLICKED!');
             setShowAddressDialog(false);
             setAddressDialogData({dayIndex: -1, entryIndex: -1});
           }}
         >
-          🚨 EMERGENCY DIALOG TEST 🚨
+          🚨 PORTAL DIALOG TEST 🚨
           <br />
           Click me to close!
           <br />
-          This proves dialogs can render!
-        </div>
+          This uses React Portal!
+        </div>,
+        document.body
       )}
       
       <SuccessAnimation />
