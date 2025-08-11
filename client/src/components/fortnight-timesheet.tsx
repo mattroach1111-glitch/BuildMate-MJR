@@ -1043,6 +1043,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0 = Sunday, 6 = Saturday
                         const isWeekendLocked = isWeekend && !isWeekendUnlocked(dateKey);
                         
+                        // Always log ALL days for debugging
+                        console.log(`📅 DAY CHECK: ${format(day, 'EEE, MMM dd')} - Day: ${dayOfWeek}, IsWeekend: ${isWeekend}, Date: ${dateKey}`);
+                        
                         // Always log weekend detection for debugging
                         if (isWeekend) {
                           console.log(`🔴 WEEKEND DETECTED: ${format(day, 'EEE, MMM dd')} - Day: ${dayOfWeek} (${dayOfWeek === 0 ? 'Sunday' : 'Saturday'}), IsWeekend: ${isWeekend}, Unlocked: ${isWeekendUnlocked(dateKey)}, Locked: ${isWeekendLocked}`);
