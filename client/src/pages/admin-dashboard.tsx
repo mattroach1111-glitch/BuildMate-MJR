@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -2349,7 +2350,8 @@ export default function AdminDashboard() {
                               ))}
                               
                               {/* Separator for Leave Types */}
-                              <div className="px-2 py-1.5 text-xs text-muted-foreground font-medium border-t border-gray-200 mt-1">
+                              <Separator className="my-2" />
+                              <div className="px-2 py-1.5 text-xs text-muted-foreground font-medium">
                                 Leave Types
                               </div>
                               
