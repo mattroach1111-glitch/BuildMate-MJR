@@ -1559,8 +1559,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         )}
         
         {/* Address Input Dialog */}
-        <Dialog open={showAddressDialog.show} onOpenChange={(open) => setShowAddressDialog({show: open, dayIndex: -1, entryIndex: -1})}>
-          <DialogContent className="sm:max-w-md">
+        <Dialog open={showAddressDialog.show} onOpenChange={(open) => {
+          console.log('🔄 DIALOG STATE CHANGE:', open ? 'OPENING' : 'CLOSING');
+          setShowAddressDialog({show: open, dayIndex: -1, entryIndex: -1});
+        }}>
+          <DialogContent className="sm:max-w-md z-50 bg-white border shadow-lg">
             <DialogHeader>
               <DialogTitle>Enter Job Address</DialogTitle>
               <DialogDescription>
