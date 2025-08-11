@@ -120,8 +120,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     mutationFn: async (id: string) => {
       return apiRequest('DELETE', `/api/timesheet/${id}`);
     },
-    onSuccess: () => {
-      refetchTimesheetEntries();
+    onSuccess: async () => {
+      // Ensure data refresh completes before showing success
+      await refetchTimesheetEntries();
       toast({
         title: "Entry Deleted",
         description: "Timesheet entry has been removed.",
@@ -644,9 +645,21 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
                         ) : [];
                         
-                        // Combine saved entries with local unsaved entries, but prioritize showing saved entries
-                        // Merge saved entries with any local edits
-                        const entriesToShow = existingEntries.length > 0 ? existingEntries : (dayEntries.length > 0 ? dayEntries : [{}]);
+                        // Smart entry display logic:
+                        // 1. If user is actively editing (has local entries), show those
+                        // 2. Otherwise show saved entries from database
+                        // 3. Always show at least one empty row for new input
+                        let entriesToShow;
+                        if (dayEntries.length > 0) {
+                          // User has local unsaved entries - show those
+                          entriesToShow = dayEntries;
+                        } else if (existingEntries.length > 0) {
+                          // Show saved entries from database
+                          entriesToShow = existingEntries;
+                        } else {
+                          // No entries at all - show empty row for input
+                          entriesToShow = [{}];
+                        }
                         
                         return entriesToShow.map((entry: any, entryIndex: number) => (
                           <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'bg-gray-50' : ''}`}>
