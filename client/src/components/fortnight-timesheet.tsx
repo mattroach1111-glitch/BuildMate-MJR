@@ -738,12 +738,13 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                 </div>
                 {completionPercentage >= 100 && (
                   <Button 
-                    onClick={exportToPDF}
+                    onClick={() => confirmTimesheetMutation.mutate()}
                     className="bg-blue-600 hover:bg-blue-700"
+                    disabled={confirmTimesheetMutation.isPending}
                     data-testid="button-submit-timesheet"
                   >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Submit Timesheet
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    {confirmTimesheetMutation.isPending ? 'Submitting...' : 'Submit Timesheet'}
                   </Button>
                 )}
               </div>
