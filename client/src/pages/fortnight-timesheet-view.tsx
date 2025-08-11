@@ -49,6 +49,20 @@ export default function FortnightTimesheetView() {
     return "Track your hours and submit timesheet entries";
   };
 
+  // For staff users, skip the PageLayout wrapper and show timesheet directly
+  if ((user as any)?.role !== "admin") {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <FortnightTimesheet 
+            selectedEmployeeId=""
+            isAdminView={false}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <PageLayout 
       title={getTitle()}
@@ -70,20 +84,12 @@ export default function FortnightTimesheetView() {
           </div>
         )}
 
-        {/* For staff users (non-admin), show only the timesheet entries table */}
+        {/* Admin users get full interface */}
         <div className="max-w-6xl mx-auto">
-          {(user as any)?.role === "admin" ? (
-            <FortnightTimesheet 
-              selectedEmployeeId={employeeId}
-              isAdminView={isAdminView}
-            />
-          ) : (
-            /* Staff users get the minimal table view from the timesheet tab */
-            <FortnightTimesheet 
-              selectedEmployeeId=""
-              isAdminView={false}
-            />
-          )}
+          <FortnightTimesheet 
+            selectedEmployeeId={employeeId}
+            isAdminView={isAdminView}
+          />
         </div>
       </div>
     </PageLayout>
