@@ -1039,10 +1039,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     <tbody>
                       {fortnightDays.map((day, dayIndex) => {
                         const dateKey = format(day, 'yyyy-MM-dd');
-                        const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+                        const isWeekend = day.getDay() === 0 || day.getDay() === 6; // 0 = Sunday, 6 = Saturday
                         const isWeekendLocked = isWeekend && !isWeekendUnlocked(dateKey);
                         if (isWeekend) {
                           console.log(`🔴 WEEKEND DETECTED: ${format(day, 'EEE, MMM dd')} - Day: ${day.getDay()}, IsWeekend: ${isWeekend}, Unlocked: ${isWeekendUnlocked(dateKey)}, Locked: ${isWeekendLocked}`);
+                          console.log(`🔐 WEEKEND LOCK STATUS: ${dateKey} - Locked: ${isWeekendLocked}, UnlockedSet:`, Array.from(unlockedWeekends));
                         }
                         const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
                         const existingEntries = Array.isArray(currentFortnightEntries) ? currentFortnightEntries.filter((entry: any) => 
@@ -1085,7 +1086,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             console.log(`🎨 APPLYING WEEKEND STYLING: ${format(day, 'EEE, MMM dd')} - Classes: border-b weekend-row`);
                           }
                           return (
-                          <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'weekend-row' : ''}`} style={isWeekend ? { backgroundColor: '#1e40af' } : {}}>
+                          <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'weekend-row' : ''}`} style={isWeekend ? { backgroundColor: '#1e40af', color: 'white' } : {}}>
                             <td className="p-3">
                               {entryIndex === 0 && (
                                 <div className={`font-medium ${isWeekend ? 'text-white' : ''} flex items-center justify-between`}>
@@ -1138,9 +1139,13 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               <Input
                                 type="number"
                                 step="0.5"
-                                placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "Locked" : "0"}
+                                placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "0"}
                                 value={entry?.hours || ''}
                                 onChange={(e) => {
+                                  if (isWeekend && !isWeekendUnlocked(dateKey)) {
+                                    console.log(`🚫 WEEKEND INPUT BLOCKED: ${dateKey} - Weekend is locked!`);
+                                    return; // Prevent any input on locked weekends
+                                  }
                                   if (entry?.id && !entry?.approved) {
                                     // Edit saved entry directly
                                     editSavedEntry(entry.id, 'hours', e.target.value);
@@ -1149,7 +1154,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     handleCellChange(day, entryIndex, 'hours', e.target.value);
                                   }
                                 }}
-                                className={`w-20 ${isWeekend ? 'text-white placeholder:text-blue-200' : ''}`}
+                                className={`w-20 ${isWeekend ? 'text-white placeholder:text-blue-200 bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}
                                 disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))} // Disable for approved entries or locked weekends
                               />
                             </td>
@@ -1167,8 +1172,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 }}
                                 disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))} // Disable for approved entries or locked weekends
                               >
-                                <SelectTrigger className={`min-w-40 ${isWeekend ? 'text-white border-blue-400' : ''}`}>
-                                  <SelectValue placeholder="Select job" />
+                                <SelectTrigger className={`min-w-40 ${isWeekend ? 'text-white border-blue-400 bg-blue-800' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}>
+                                  <SelectValue placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "Select job"} />
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="no-job">No job</SelectItem>
@@ -1195,9 +1200,13 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             <td className="p-3">
                               <Input
                                 type="text"
-                                placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "Locked" : "Materials or notes"}
+                                placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "Materials or notes"}
                                 value={entry?.materials || ''}
                                 onChange={(e) => {
+                                  if (isWeekend && !isWeekendUnlocked(dateKey)) {
+                                    console.log(`🚫 WEEKEND MATERIALS INPUT BLOCKED: ${dateKey} - Weekend is locked!`);
+                                    return; // Prevent any input on locked weekends
+                                  }
                                   if (entry?.id && !entry?.approved) {
                                     // Edit saved entry directly
                                     editSavedEntry(entry.id, 'materials', e.target.value);
@@ -1206,7 +1215,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     handleCellChange(day, entryIndex, 'materials', e.target.value);
                                   }
                                 }}
-                                className={`min-w-32 ${isWeekend ? 'text-white placeholder:text-blue-200' : ''}`}
+                                className={`min-w-32 ${isWeekend ? 'text-white placeholder:text-blue-200 bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}
                                 disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))} // Disable for approved entries or locked weekends
                               />
                             </td>
