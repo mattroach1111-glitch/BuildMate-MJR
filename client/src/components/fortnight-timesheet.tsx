@@ -152,7 +152,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         }
         
         const fullAddress = houseNumber.trim() + ' ' + streetAddress.trim();
-        console.log('🏠 SAVING CUSTOM ADDRESS:', fullAddress);
+        console.log('Setting custom address:', fullAddress);
         
         // Update the address in the timesheet entry
         const { dayIndex, entryIndex } = addressDialogData;
@@ -160,13 +160,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         
         // Use special marker for custom addresses and store address in description
         const customAddressMarker = 'custom-address';
-        console.log('🏠 SAVING CUSTOM ADDRESS:', {
-          fullAddress,
-          customAddressMarker,
-          targetDate: targetDate.toISOString(),
-          dayIndex,
-          entryIndex
-        });
         
         // Update local state first - use custom marker for local tracking
         handleCellChange(targetDate, entryIndex, 'jobId', customAddressMarker);
@@ -175,72 +168,32 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         // Get the updated entry from local state
         const dateKey = format(targetDate, 'yyyy-MM-dd');
         const dayEntries = timesheetData[dateKey] || [];
-        const entry = dayEntries[entryIndex] || { hours: '1', materials: '' };
+        const entry = dayEntries[entryIndex] || { hours: '0', materials: '' };
         
-        // Save to database immediately - use null jobId for custom addresses to avoid foreign key constraint
-        const entryData: any = {
-          staffId: isAdminView ? selectedEmployee : (user?.id || ''),
-          date: dateKey,
-          jobId: null, // Use null to avoid foreign key constraint
-          description: `CUSTOM_ADDRESS: ${fullAddress}`, // Prefix to identify custom addresses
-          hours: entry.hours || '1', // Default to 1 hour so entry is valid
+        // DON'T auto-save to database - let user save manually with Save All button
+        // Just update local state for now
+        const localEntry = {
+          jobId: 'custom-address',
+          description: `CUSTOM_ADDRESS: ${fullAddress}`,
+          hours: entry.hours || '0', // Default to 0 hours - let user set hours manually
           materials: entry.materials || ''
         };
-
-        // Check if this is a weekend date and add confirmation flag
-        const entryDate = parseISO(dateKey);
-        const dayOfWeek = entryDate.getDay();
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
         
-        if (isWeekend && isWeekendUnlocked(dateKey)) {
-          entryData.weekendConfirmed = true;
-          console.log(`✅ Including weekend confirmation for custom address on ${dateKey}`);
-        }
-        
-        console.log('🏠 SAVING TO DATABASE:', entryData);
-        updateTimesheetMutation.mutate(entryData, {
-          onSuccess: (data) => {
-            console.log('🏠 DATABASE SAVE SUCCESS:', data);
-            // Update local state with the saved entry to prevent deletion
-            const savedDateKey = format(targetDate, 'yyyy-MM-dd');
-            setTimesheetData((prev: any) => {
-              const dayEntries = Array.isArray(prev[savedDateKey]) ? prev[savedDateKey] : [];
-              const updatedEntries = [...dayEntries];
-              
-              // Update the entry with the saved data
-              if (updatedEntries[entryIndex]) {
-                updatedEntries[entryIndex] = {
-                  ...updatedEntries[entryIndex],
-                  id: data.id,
-                  saved: true,
-                  jobId: null, // Ensure jobId is null for custom addresses
-                  description: `CUSTOM_ADDRESS: ${fullAddress}`
-                };
-              }
-              
-              return {
-                ...prev,
-                [savedDateKey]: updatedEntries
-              };
-            });
-            
-            // Refresh to sync with server
-            refetchTimesheetEntries();
-            toast({
-              title: "Success",
-              description: "Custom address saved successfully",
-            });
-          },
-          onError: (error) => {
-            console.error('🏠 DATABASE SAVE ERROR:', error);
-            toast({
-              title: "Error",
-              description: "Failed to save custom address",
-              variant: "destructive",
-            });
-          }
+        // Update local state only
+        setTimesheetData((prev: any) => {
+          const dayEntries = Array.isArray(prev[dateKey]) ? prev[dateKey] : [];
+          const updatedEntries = [...dayEntries];
+          updatedEntries[entryIndex] = { ...updatedEntries[entryIndex], ...localEntry };
+          return { ...prev, [dateKey]: updatedEntries };
         });
-        console.log('🏠 CUSTOM ADDRESS SAVED - Database save triggered');
+
+        // Show success message without auto-saving
+        toast({
+          title: "Address Added",
+          description: `Custom address set to: ${fullAddress}. Remember to click "Save All" to save to database.`,
+        });
+        
+        console.log('Custom address set in local state - no auto-save');
         
         dialog.remove();
         setShowAddressDialog(false);
