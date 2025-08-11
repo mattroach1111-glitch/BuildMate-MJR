@@ -173,11 +173,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       const nextFortnightIndex = currentFortnightIndex + 1;
       setCurrentFortnightIndex(nextFortnightIndex);
       
-      const nextFortnightStart = addDays(currentFortnight.end, 1);
-      setCurrentFortnight({
-        start: nextFortnightStart,
-        end: addDays(nextFortnightStart, 13)
-      });
+      // The fortnight is automatically calculated from currentFortnightIndex
+      // so no need to manually set fortnight dates
       
       // Clear any local edits since we're moving to new fortnight
       setTimesheetData({});
