@@ -512,8 +512,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             errors.push(`${format(parseISO(dateKey), 'MMM dd')}: Leave without pay must have 0 hours`);
           }
           
-          // Validation 2: If hours > 0, must have a job selected (not "no-job")
-          if (hours > 0 && (!jobId || jobId === 'no-job')) {
+          // Validation 2: If hours > 0, must have a job selected (not "no-job") 
+          // Exception: leave-without-pay is allowed even with no actual job
+          if (hours > 0 && (!jobId || jobId === 'no-job') && jobId !== 'leave-without-pay') {
             errors.push(`${format(parseISO(dateKey), 'MMM dd')}: Cannot have hours without selecting a job`);
           }
         });
@@ -551,7 +552,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               date: dateKey,
               hours: hours,
               materials: entry.materials || '',
-              jobId: entry.jobId === 'no-job' ? null : entry.jobId || null,
+              jobId: entry.jobId === 'no-job' || entry.jobId === 'leave-without-pay' ? entry.jobId : entry.jobId || null,
             };
             
             // Check if this is a weekend date and add confirmation flag

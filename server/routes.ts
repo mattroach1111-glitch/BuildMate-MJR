@@ -1001,7 +1001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Handle special leave types by storing them in materials field and setting jobId to null
       const { jobId, materials, ...otherData } = req.body;
-      const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'rdo'];
+      const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'rdo', 'leave-without-pay'];
       let finalJobId = jobId;
       let finalMaterials = materials || '';
       
