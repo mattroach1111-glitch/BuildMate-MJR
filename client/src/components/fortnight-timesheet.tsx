@@ -482,10 +482,32 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Daily Timesheet Entries
-              </CardTitle>
+              <div className="flex items-center gap-4">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Daily Timesheet Entries
+                </CardTitle>
+                {/* Fortnight Navigation for Staff */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentFortnightIndex(Math.max(0, currentFortnightIndex - 1))}
+                    disabled={currentFortnightIndex === 0}
+                    data-testid="button-previous-fortnight"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentFortnightIndex(currentFortnightIndex + 1)}
+                    data-testid="button-next-fortnight"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button 
                   onClick={saveAllEntries}
@@ -765,7 +787,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                       <h4 className="font-medium text-blue-900">Fortnight Complete! 🎉</h4>
                       <p className="text-sm text-blue-700 mt-1">
                         Excellent! You've completed all 10 workdays ({savedHours} hours total). 
-                        Your timesheet is ready for submission. Click "Submit Timesheet" to generate your PDF.
+                        Your timesheet is ready for submission.
                       </p>
                     </div>
                   </div>
