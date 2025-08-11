@@ -28,6 +28,7 @@ export default function StaffTimesheet() {
   const [currentFortnightIndex, setCurrentFortnightIndex] = useState(getCurrentFortnightIndex());
   const [timesheetData, setTimesheetData] = useState<any>({});
   const [unlockedWeekends, setUnlockedWeekends] = useState<Set<string>>(new Set());
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Function to unlock weekend for editing
@@ -352,7 +353,7 @@ export default function StaffTimesheet() {
                         </td>
                         <td className="p-3">
                           <div className="flex items-center gap-2">
-                            {entry?.id && (
+                            {entry?.id && !isWeekendLocked && (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -365,6 +366,9 @@ export default function StaffTimesheet() {
                             )}
                             {entry?.approved && (
                               <span className="text-xs text-green-600 font-medium">✓ Saved</span>
+                            )}
+                            {entry?.id && !entry?.approved && (
+                              <span className="text-xs text-orange-600 font-medium">Unsaved</span>
                             )}
                           </div>
                         </td>
@@ -391,6 +395,8 @@ export default function StaffTimesheet() {
           <Button
             onClick={() => {
               saveAllEntries();
+              setShowSuccessAnimation(true);
+              setTimeout(() => setShowSuccessAnimation(false), 3000);
               toast({
                 title: "Timesheet Confirmed",
                 description: "Your timesheet has been submitted successfully",
@@ -403,6 +409,19 @@ export default function StaffTimesheet() {
             Confirm Timesheet
           </Button>
         </div>
+
+        {/* Success Animation */}
+        {showSuccessAnimation && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white rounded-full p-8 animate-bounce">
+              <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center animate-pulse">
+                <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </PageLayout>
   );
