@@ -158,16 +158,29 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   const confirmTimesheetMutation = useMutation({
     mutationFn: async () => {
-      // This would be an API call to mark timesheet as confirmed
+      // Mark timesheet as confirmed and advance to next fortnight
       return await apiRequest("POST", "/api/timesheet/confirm", {
         fortnightStart: format(currentFortnight.start, 'yyyy-MM-dd'),
         fortnightEnd: format(currentFortnight.end, 'yyyy-MM-dd')
       });
     },
     onSuccess: () => {
+      // Refresh timesheet data to reflect confirmed status
+      refetchTimesheetEntries();
+      
+      // Advance to next fortnight
+      const nextFortnightStart = addDays(currentFortnight.end, 1);
+      setCurrentFortnight({
+        start: nextFortnightStart,
+        end: addDays(nextFortnightStart, 13)
+      });
+      
+      // Clear any local edits since we're moving to new fortnight
+      setTimesheetData({});
+      
       toast({
         title: "Success",
-        description: "Timesheet confirmed and uploaded to job sheets",
+        description: "Timesheet confirmed and advanced to next fortnight",
       });
     },
     onError: (error) => {
@@ -324,6 +337,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     return isNaN(totalHours) ? 0 : totalHours;
   };
 
+  // Check if current fortnight is confirmed (all entries approved)
+  const isFortnightConfirmed = () => {
+    if (!Array.isArray(currentFortnightEntries) || currentFortnightEntries.length === 0) {
+      return false;
+    }
+    return currentFortnightEntries.every((entry: any) => entry.approved === true);
+  };
+
   const addJobEntry = (date: Date) => {
     const dateKey = format(date, 'yyyy-MM-dd');
     setTimesheetData((prev: any) => {
@@ -476,7 +497,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             <Button 
               onClick={saveAllEntries}
               variant="default"
-              disabled={updateTimesheetMutation.isPending}
+              disabled={updateTimesheetMutation.isPending || isFortnightConfirmed()}
               className="bg-green-600 hover:bg-green-700"
               data-testid="button-save-all-timesheet"
             >
@@ -487,7 +508,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               <Download className="h-4 w-4 mr-2" />
               Export PDF
             </Button>
-            <Button onClick={clearTimesheet} variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+            <Button 
+              onClick={clearTimesheet} 
+              variant="outline" 
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              disabled={isFortnightConfirmed()}
+            >
               <Trash2 className="h-4 w-4 mr-2" />
               Clear Timesheet
             </Button>
@@ -748,7 +774,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             </td>
                             <td className="p-3">
                               <div className="flex gap-2">
-                                {entryIndex === 0 && (
+                                {entryIndex === 0 && !isFortnightConfirmed() && (
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -757,7 +783,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     <Plus className="h-4 w-4" />
                                   </Button>
                                 )}
-                                {entryIndex > 0 && (
+                                {entryIndex > 0 && !isFortnightConfirmed() && (
                                   <Button
                                     size="sm"
                                     variant="destructive"
@@ -833,13 +859,20 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         ⚠️ You cannot edit entries after confirmation
                       </p>
                     </div>
-                    <Button
-                      onClick={() => confirmTimesheetMutation.mutate()}
-                      disabled={confirmTimesheetMutation.isPending || getTotalHours() === 0}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      {confirmTimesheetMutation.isPending ? "Confirming..." : "Confirm Timesheet"}
-                    </Button>
+                    {isFortnightConfirmed() ? (
+                      <div className="flex items-center gap-2 text-green-600">
+                        <span className="text-sm font-medium">✓ Timesheet Confirmed</span>
+                        <span className="text-xs opacity-75">(Locked for editing)</span>
+                      </div>
+                    ) : (
+                      <Button
+                        onClick={() => confirmTimesheetMutation.mutate()}
+                        disabled={confirmTimesheetMutation.isPending || getTotalHours() === 0}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        {confirmTimesheetMutation.isPending ? "Confirming..." : "Confirm Timesheet"}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
