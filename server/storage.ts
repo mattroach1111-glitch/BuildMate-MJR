@@ -414,14 +414,15 @@ export class DatabaseStorage implements IStorage {
     
     console.log(`Updating labor hours: staffId=${staffId}, employeeId=${employeeId}, jobId=${jobId}`);
 
-    // Get total hours from timesheet for this staff and job
+    // Get total hours from timesheet for this staff and job (only approved entries)
     const result = await db
       .select({ totalHours: sql`COALESCE(SUM(CAST(${timesheetEntries.hours} AS NUMERIC)), 0)`.as('totalHours') })
       .from(timesheetEntries)
       .where(
         and(
           eq(timesheetEntries.staffId, staffId),
-          eq(timesheetEntries.jobId, jobId)
+          eq(timesheetEntries.jobId, jobId),
+          eq(timesheetEntries.approved, true)  // Only count approved entries
         )
       );
 
