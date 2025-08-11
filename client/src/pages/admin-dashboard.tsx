@@ -20,7 +20,7 @@ import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 import StaffDashboard from "@/pages/staff-dashboard";
 import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw, Grid3X3, List, Settings, UserPlus, Download } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
 import PageLayout from "@/components/page-layout";
@@ -85,6 +85,7 @@ export default function AdminDashboard() {
   const [isDeletedFolderExpanded, setIsDeletedFolderExpanded] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'address' | 'client' | 'manager' | 'status'>('address');
+  const [activeTab, setActiveTab] = useState("jobs");
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -1194,43 +1195,90 @@ export default function AdminDashboard() {
       subtitle={`Welcome back, ${(user as any)?.firstName || 'Admin'}`}
     >
       <div className="space-y-6">
-        {/* Mobile-First Tabs */}
-        <Tabs defaultValue="jobs" className="w-full">
-          <TabsList className="grid w-full grid-cols-7 mb-6">
-          <TabsTrigger value="jobs" className="flex items-center gap-2" data-testid="tab-jobs">
-            <Briefcase className="h-4 w-4" />
-            <span className="hidden sm:inline">Jobs</span>
-          </TabsTrigger>
-          <TabsTrigger value="employees" className="flex items-center gap-2" data-testid="tab-employees">
-            <Users className="h-4 w-4" />
-            <span className="hidden sm:inline">Staff</span>
-          </TabsTrigger>
-          <TabsTrigger value="timesheets" className="flex items-center gap-2" data-testid="tab-timesheets">
-            <Clock className="h-4 w-4" />
-            <span className="hidden sm:inline">Timesheets</span>
-          </TabsTrigger>
-          <TabsTrigger value="staff-view" className="flex items-center gap-2" data-testid="tab-staff-view">
-            <Eye className="h-4 w-4" />
-            <span className="hidden sm:inline">Staff View</span>
-          </TabsTrigger>
-          <TabsTrigger value="pending-users" className="flex items-center gap-2" data-testid="tab-pending-users">
-            <Users className="h-4 w-4" />
-            <span className="hidden sm:inline">Pending</span>
-          </TabsTrigger>
-          <TabsTrigger value="search" className="flex items-center gap-2" data-testid="tab-search">
-            <Search className="h-4 w-4" />
-            <span className="hidden sm:inline">Search</span>
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2" data-testid="tab-settings">
-            <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">Settings</span>
-          </TabsTrigger>
-        </TabsList>
+        {/* Compact Navigation */}
+        <div className="flex items-center justify-between mb-6">
+          {/* Primary Navigation - Most Used */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant={activeTab === "jobs" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveTab("jobs")}
+              className="flex items-center gap-2"
+              data-testid="tab-jobs"
+            >
+              <Briefcase className="h-4 w-4" />
+              <span className="hidden sm:inline">Jobs</span>
+            </Button>
+            <Button
+              variant={activeTab === "timesheets" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveTab("timesheets")}
+              className="flex items-center gap-2"
+              data-testid="tab-timesheets"
+            >
+              <Clock className="h-4 w-4" />
+              <span className="hidden sm:inline">Timesheets</span>
+            </Button>
+            <Button
+              variant={activeTab === "search" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveTab("search")}
+              className="flex items-center gap-2"
+              data-testid="tab-search"
+            >
+              <Search className="h-4 w-4" />
+              <span className="hidden sm:inline">Search</span>
+            </Button>
+          </div>
 
-        {/* Jobs Tab */}
-        <TabsContent value="jobs" className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h2 className="text-xl font-semibold">Job Management</h2>
+          {/* More Menu - Less Frequently Used */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">More</span>
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => setActiveTab("employees")} data-testid="menu-employees">
+                <Users className="h-4 w-4 mr-2" />
+                Staff Management
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveTab("staff-view")} data-testid="menu-staff-view">
+                <Eye className="h-4 w-4 mr-2" />
+                Staff View
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setActiveTab("pending-users")} data-testid="menu-pending-users">
+                <Users className="h-4 w-4 mr-2" />
+                Pending Users
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveTab("settings")} data-testid="menu-settings">
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Content Sections */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div style={{ display: 'none' }}>
+            <TabsList>
+              <TabsTrigger value="jobs">Jobs</TabsTrigger>
+              <TabsTrigger value="employees">Employees</TabsTrigger>
+              <TabsTrigger value="timesheets">Timesheets</TabsTrigger>
+              <TabsTrigger value="staff-view">Staff View</TabsTrigger>
+              <TabsTrigger value="pending-users">Pending Users</TabsTrigger>
+              <TabsTrigger value="search">Search</TabsTrigger>
+              <TabsTrigger value="settings">Settings</TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="jobs" className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <h2 className="text-xl font-semibold">Job Management</h2>
             <Dialog open={isCreateJobOpen} onOpenChange={setIsCreateJobOpen}>
               <DialogTrigger asChild>
                 <Button className="w-full sm:w-auto" data-testid="button-create-job">
@@ -2124,10 +2172,9 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
-        </TabsContent>
+          </TabsContent>
 
-        {/* Employees Tab */}
-        <TabsContent value="employees" className="space-y-6">
+          <TabsContent value="employees" className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h2 className="text-xl font-semibold">Staff Management</h2>
             <Dialog open={isCreateEmployeeOpen} onOpenChange={setIsCreateEmployeeOpen}>
@@ -2996,7 +3043,7 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
+          </TabsContent>
         </Tabs>
 
         {/* Job Sheet Modal */}
