@@ -40,8 +40,7 @@ export default function Navigation({ title, subtitle }: NavigationProps) {
     { icon: LayoutDashboard, label: "Dashboard", path: "/", active: location === "/" },
     { icon: FileText, label: "Timesheet", path: "/timesheet", active: location === "/timesheet" },
   ] : [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/", active: location === "/" },
-    { icon: FileText, label: "Timesheet", path: "/timesheet", active: location === "/timesheet" },
+    { icon: FileText, label: "Daily Timesheet", path: "/", active: location === "/" || location === "/timesheet" },
   ];
 
   const handleLogout = () => {
