@@ -33,9 +33,9 @@ function Router() {
         </>
       ) : (
         <>
-          <Route path="/" component={StaffTimesheet} />
-          <Route path="/staff" component={StaffTimesheet} />
-          <Route path="/timesheet" component={StaffTimesheet} />
+          <Route path="/" component={FortnightTimesheetView} />
+          <Route path="/staff" component={FortnightTimesheetView} />
+          <Route path="/timesheet" component={FortnightTimesheetView} />
         </>
       )}
       <Route component={NotFound} />
