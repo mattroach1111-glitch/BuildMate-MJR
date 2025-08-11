@@ -16,7 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { insertTimesheetEntrySchema } from "@shared/schema";
 import { z } from "zod";
 import type { Job, TimesheetEntry } from "@shared/schema";
-import { Calendar, Clock, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, Clock, Plus, Trash2, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, Info, Target } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek, isSameWeek, parseISO } from "date-fns";
 import PageLayout from "@/components/page-layout";
 import { OnboardingTour, WelcomeAnimation } from "@/components/onboarding-tour";
@@ -151,10 +151,14 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/timesheet"] });
       form.reset();
-      toast({
-        title: "Success",
-        description: "Time entry added successfully",
-      });
+      
+      // Use enhanced success message after cache is invalidated
+      setTimeout(() => {
+        toast({
+          title: "Success",
+          description: handleSuccessfulSave(),
+        });
+      }, 100);
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -218,6 +222,24 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
 
   const onSubmit = (data: z.infer<typeof timesheetFormSchema>) => {
     createEntryMutation.mutate(data);
+  };
+
+  // Enhanced auto-save success message with smart prompts
+  const handleSuccessfulSave = () => {
+    const status = getCompletionStatus();
+    let message = "Entry saved successfully";
+    
+    if (status.completedDays === 1) {
+      message += ". Great start! Remember to log hours daily.";
+    } else if (status.completedDays === 5) {
+      message += ". Halfway through your fortnight!";
+    } else if (status.completedDays === 9) {
+      message += ". Almost ready for submission - just 1 more day!";
+    } else if (status.completedDays >= 10) {
+      message += ". Your fortnight is complete and ready for submission!";
+    }
+    
+    return message;
   };
 
   const handleLogout = () => {
@@ -298,6 +320,75 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
   // Get total hours for a specific date
   const getHoursForDate = (date: Date) => {
     return getEntriesForDate(date).reduce((total, entry) => total + parseFloat(entry.hours), 0);
+  };
+
+  // Calculate completion status for the fortnight
+  const getCompletionStatus = () => {
+    const fortnightDays = getFortnightDays();
+    const workdays = fortnightDays.filter(day => day.getDay() !== 0 && day.getDay() !== 6); // Exclude weekends
+    const completedDays = workdays.filter(day => hasEntriesForDate(day));
+    
+    return {
+      totalWorkdays: workdays.length,
+      completedDays: completedDays.length,
+      remainingDays: workdays.length - completedDays.length,
+      isReadyForSubmission: completedDays.length >= 10, // 10 working days in a fortnight
+      completionPercentage: Math.round((completedDays.length / workdays.length) * 100)
+    };
+  };
+
+  // Get smart prompt messages based on completion status
+  const getSmartPrompts = () => {
+    const status = getCompletionStatus();
+    const totalHours = calculateTotalHours();
+    const hasUnsavedChanges = false; // We auto-save, but could track manual edits
+    
+    if (status.completedDays === 0) {
+      return {
+        type: 'info',
+        title: 'Start Your Timesheet',
+        message: 'Begin logging your hours for this fortnight. Add entries as you complete work each day.',
+        action: null
+      };
+    }
+    
+    if (status.completedDays >= 1 && status.completedDays < 5) {
+      return {
+        type: 'reminder',
+        title: 'Keep Logging Hours',
+        message: `You've completed ${status.completedDays} of ${status.totalWorkdays} workdays (${status.completionPercentage}%). Remember to log hours daily to stay on track.`,
+        action: null
+      };
+    }
+    
+    if (status.completedDays >= 5 && status.completedDays < 8) {
+      return {
+        type: 'progress',
+        title: 'Great Progress!',
+        message: `Halfway there! ${status.completedDays} of ${status.totalWorkdays} days completed (${status.completionPercentage}%). Keep up the good work.`,
+        action: null
+      };
+    }
+    
+    if (status.completedDays >= 8 && status.completedDays < 10) {
+      return {
+        type: 'almost',
+        title: 'Almost Ready for Submission',
+        message: `${status.completedDays} of ${status.totalWorkdays} days completed (${status.completionPercentage}%). Just ${status.remainingDays} more days to complete your fortnight.`,
+        action: null
+      };
+    }
+    
+    if (status.isReadyForSubmission) {
+      return {
+        type: 'ready',
+        title: 'Ready for Submission!',
+        message: `Excellent! All ${status.completedDays} workdays completed (${totalHours} total hours). Your timesheet is ready for review and submission.`,
+        action: 'submit'
+      };
+    }
+    
+    return null;
   };
 
   if (isLoading) {
@@ -394,12 +485,110 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
             <Card className="p-4">
               <div className="text-center">
                 <p className="text-lg font-bold text-gray-800">
-                  {(calculateTotalHours() / 80 * 100).toFixed(0)}%
+                  {getCompletionStatus().completedDays}/10
                 </p>
-                <p className="text-xs text-gray-600">of 80h</p>
+                <p className="text-xs text-gray-600">Days Complete</p>
+                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                  <div 
+                    className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                    style={{
+                      width: `${(getCompletionStatus().completedDays / 10) * 100}%`
+                    }}
+                  ></div>
+                </div>
               </div>
             </Card>
           </div>
+
+          {/* Smart Progress Prompts */}
+          {(() => {
+            const prompt = getSmartPrompts();
+            if (!prompt) return null;
+            
+            const getPromptStyles = (type: string) => {
+              switch (type) {
+                case 'info':
+                  return {
+                    cardClass: 'bg-blue-50 border-blue-200',
+                    iconColor: 'text-blue-600',
+                    titleColor: 'text-blue-800',
+                    messageColor: 'text-blue-700',
+                    icon: Info
+                  };
+                case 'reminder':
+                  return {
+                    cardClass: 'bg-amber-50 border-amber-200',
+                    iconColor: 'text-amber-600',
+                    titleColor: 'text-amber-800',
+                    messageColor: 'text-amber-700',
+                    icon: AlertCircle
+                  };
+                case 'progress':
+                  return {
+                    cardClass: 'bg-purple-50 border-purple-200',
+                    iconColor: 'text-purple-600',
+                    titleColor: 'text-purple-800',
+                    messageColor: 'text-purple-700',
+                    icon: Target
+                  };
+                case 'almost':
+                  return {
+                    cardClass: 'bg-orange-50 border-orange-200',
+                    iconColor: 'text-orange-600',
+                    titleColor: 'text-orange-800',
+                    messageColor: 'text-orange-700',
+                    icon: Target
+                  };
+                case 'ready':
+                  return {
+                    cardClass: 'bg-green-50 border-green-200',
+                    iconColor: 'text-green-600',
+                    titleColor: 'text-green-800',
+                    messageColor: 'text-green-700',
+                    icon: CheckCircle
+                  };
+                default:
+                  return {
+                    cardClass: 'bg-gray-50 border-gray-200',
+                    iconColor: 'text-gray-600',
+                    titleColor: 'text-gray-800',
+                    messageColor: 'text-gray-700',
+                    icon: Info
+                  };
+              }
+            };
+            
+            const styles = getPromptStyles(prompt.type);
+            const IconComponent = styles.icon;
+            
+            return (
+              <Card className={`${styles.cardClass} p-4`} data-testid="card-smart-prompt">
+                <div className="flex items-start gap-3">
+                  <div className={`mt-0.5 ${styles.iconColor}`}>
+                    <IconComponent className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className={`font-semibold ${styles.titleColor} mb-1`}>
+                      {prompt.title}
+                    </h4>
+                    <p className={`text-sm ${styles.messageColor} mb-3`}>
+                      {prompt.message}
+                    </p>
+                    {prompt.action === 'submit' && (
+                      <Button 
+                        onClick={handleViewFortnightTimesheet}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        size="sm"
+                        data-testid="button-view-timesheet"
+                      >
+                        View Complete Timesheet
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            );
+          })()}
 
           {/* Fortnight Calendar */}
           <Card>
