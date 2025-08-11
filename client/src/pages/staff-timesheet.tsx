@@ -247,10 +247,10 @@ export default function StaffTimesheet() {
                       <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'weekend-row' : ''}`}>
                         <td className="p-3">
                           {entryIndex === 0 && (
-                            <div className={`font-medium ${isWeekend ? 'text-white' : ''} flex items-center justify-between`}>
+                            <div className={`font-medium ${isWeekend ? 'text-black' : ''} flex items-center justify-between`}>
                               <div>
                                 {format(day, 'EEE, MMM dd')}
-                                {isWeekend && <span className="text-xs text-white ml-2 font-semibold">(Weekend)</span>}
+                                {isWeekend && <span className="text-xs text-black ml-2 font-semibold">(Weekend)</span>}
                               </div>
                               {isWeekend && !isWeekendUnlocked(dateKey) && (
                                 <AlertDialog>
@@ -258,7 +258,7 @@ export default function StaffTimesheet() {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="h-6 w-6 p-0 text-white hover:bg-blue-700"
+                                      className="h-6 w-6 p-0 text-black hover:bg-blue-700"
                                       data-testid={`unlock-weekend-${dateKey}`}
                                     >
                                       <Lock className="h-3 w-3" />
@@ -285,7 +285,7 @@ export default function StaffTimesheet() {
                                 </AlertDialog>
                               )}
                               {isWeekend && isWeekendUnlocked(dateKey) && (
-                                <div className="flex items-center text-xs text-white">
+                                <div className="flex items-center text-xs text-black">
                                   <Unlock className="h-3 w-3 mr-1" />
                                   Unlocked
                                 </div>
@@ -306,7 +306,7 @@ export default function StaffTimesheet() {
                                 handleCellChange(day, entryIndex, 'hours', e.target.value);
                               }
                             }}
-                            className={`w-20 ${isWeekend ? 'text-white placeholder:text-blue-200' : ''}`}
+                            className={`w-20 ${isWeekend ? 'text-black placeholder:text-gray-600' : ''}`}
                             disabled={entry?.approved || isWeekendLocked}
                           />
                         </td>
@@ -322,7 +322,7 @@ export default function StaffTimesheet() {
                             }}
                             disabled={entry?.approved || isWeekendLocked}
                           >
-                            <SelectTrigger className={`w-40 ${isWeekend ? 'text-white border-blue-400' : ''}`}>
+                            <SelectTrigger className={`w-40 ${isWeekend ? 'text-black border-blue-400' : ''}`}>
                               <SelectValue placeholder="Select job" />
                             </SelectTrigger>
                             <SelectContent>
@@ -346,7 +346,7 @@ export default function StaffTimesheet() {
                                 handleCellChange(day, entryIndex, 'materials', e.target.value);
                               }
                             }}
-                            className={`min-w-40 ${isWeekend ? 'text-white placeholder:text-blue-200' : ''}`}
+                            className={`min-w-40 ${isWeekend ? 'text-black placeholder:text-gray-600' : ''}`}
                             disabled={entry?.approved || isWeekendLocked}
                           />
                         </td>
