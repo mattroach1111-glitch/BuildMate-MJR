@@ -32,9 +32,17 @@ export default function Navigation({ title, subtitle }: NavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (!isAuthenticated) return null;
+  
+  // For staff users, don't show navigation at all
+  if ((user as any)?.role !== "admin") {
+    console.log("Navigation - hiding for staff user");
+    return null;
+  }
 
   const isAdmin = (user as any)?.role === "admin";
   const userDisplayName = (user as any)?.firstName || (user as any)?.email?.split("@")[0] || "User";
+  
+  console.log("Navigation - user role:", (user as any)?.role, "isAdmin:", isAdmin);
 
   const navigationItems = isAdmin ? [
     { icon: LayoutDashboard, label: "Dashboard", path: "/", active: location === "/" },
