@@ -649,7 +649,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(timesheetEntries)
       .leftJoin(users, eq(timesheetEntries.staffId, users.id))
-      .leftJoin(employees, eq(timesheetEntries.staffId, employees.id))
+      .leftJoin(employees, eq(users.employeeId, employees.id))  // Join through users.employeeId instead of direct join
       .leftJoin(jobs, eq(timesheetEntries.jobId, jobs.id))
       .orderBy(desc(timesheetEntries.date));
   }
