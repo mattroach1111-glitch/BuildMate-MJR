@@ -513,8 +513,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           }
           
           // Validation 2: If hours > 0, must have a job selected (not "no-job") 
-          // Exception: leave-without-pay is allowed even with no actual job
-          if (hours > 0 && (!jobId || jobId === 'no-job') && jobId !== 'leave-without-pay') {
+          // Exception: Special leave types (RDO, sick leave, etc.) are allowed even with no actual job
+          const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay'];
+          if (hours > 0 && (!jobId || jobId === 'no-job') && !leaveTypes.includes(jobId)) {
             errors.push(`${format(parseISO(dateKey), 'MMM dd')}: Cannot have hours without selecting a job`);
           }
         });
@@ -546,13 +547,16 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           console.log('Processing entry:', entry);
           const hours = parseFloat(entry.hours || '0');
           
-          // Include entries with hours > 0 OR leave-without-pay with 0 hours
-          if (hours > 0 || (entry.jobId === 'leave-without-pay' && hours === 0)) {
+          // Include entries with hours > 0 OR any leave type (even with 0 hours)
+          const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay'];
+          const isLeaveType = leaveTypes.includes(entry.jobId);
+          
+          if (hours > 0 || (isLeaveType && hours >= 0)) {
             const entryData: any = {
               date: dateKey,
               hours: hours,
               materials: entry.materials || '',
-              jobId: entry.jobId === 'no-job' || entry.jobId === 'leave-without-pay' ? entry.jobId : entry.jobId || null,
+              jobId: entry.jobId === 'no-job' || isLeaveType ? entry.jobId : entry.jobId || null,
             };
             
             // Check if this is a weekend date and add confirmation flag
