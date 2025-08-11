@@ -1144,7 +1144,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     {format(day, 'EEE, MMM dd')}
                                     {isWeekend && <span className="text-xs text-white ml-2 font-semibold">(Weekend)</span>}
                                   </div>
-                                  {isWeekend && !isWeekendUnlocked(dateKey) && (
+                                  {(() => {
+                                    const shouldShowButton = isWeekend && !isWeekendUnlocked(dateKey);
+                                    console.log(`🔧 UNLOCK BUTTON DEBUG: ${dateKey} - isWeekend=${isWeekend}, unlocked=${isWeekendUnlocked(dateKey)}, shouldShow=${shouldShowButton}, entryIndex=${entryIndex}`);
+                                    return shouldShowButton;
+                                  })() && (
                                     <AlertDialog>
                                       <AlertDialogTrigger asChild>
                                         <Button
