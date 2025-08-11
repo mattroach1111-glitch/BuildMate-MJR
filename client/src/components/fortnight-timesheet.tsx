@@ -164,9 +164,29 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           dayIndex,
           entryIndex
         });
+        
+        // Update local state first
         handleCellChange(targetDate, entryIndex, 'jobId', customJobId);
         handleCellChange(targetDate, entryIndex, 'description', fullAddress);
-        console.log('🏠 CUSTOM ADDRESS SAVED - Cell changes completed');
+        
+        // Get the updated entry from local state
+        const dateKey = format(targetDate, 'yyyy-MM-dd');
+        const dayEntries = timesheetData[dateKey] || [];
+        const entry = dayEntries[entryIndex] || {};
+        
+        // Save to database immediately
+        const entryData = {
+          staffId: isAdminView ? selectedEmployee : user?.id,
+          date: dateKey,
+          jobId: customJobId,
+          description: fullAddress,
+          hours: entry.hours || '0',
+          materials: entry.materials || ''
+        };
+        
+        console.log('🏠 SAVING TO DATABASE:', entryData);
+        updateTimesheetMutation.mutate(entryData);
+        console.log('🏠 CUSTOM ADDRESS SAVED - Database save triggered');
         
         dialog.remove();
         setShowAddressDialog(false);
