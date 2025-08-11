@@ -79,6 +79,8 @@ export default function AdminDashboard() {
   const [collapsedFortnights, setCollapsedFortnights] = useState<Set<string>>(new Set());
   // Separate state for approved timesheets folder
   const [isApprovedFolderCollapsed, setIsApprovedFolderCollapsed] = useState(true);
+  // State for individual employee folders within approved section
+  const [collapsedEmployeeFolders, setCollapsedEmployeeFolders] = useState<Set<string>>(new Set());
   const [isAddingNewProjectManager, setIsAddingNewProjectManager] = useState(false);
   const [newProjectManagerName, setNewProjectManagerName] = useState("");
   const [isAddingNewClient, setIsAddingNewClient] = useState(false);
@@ -279,6 +281,30 @@ export default function AdminDashboard() {
   const approvedTimesheets = useMemo(() => {
     return groupedTimesheets?.filter(fortnight => fortnight.allApproved) || [];
   }, [groupedTimesheets]);
+
+  // Group approved timesheets by employee
+  const approvedByEmployee = useMemo(() => {
+    const employeeGroups: { [key: string]: any } = {};
+    
+    approvedTimesheets.forEach(fortnight => {
+      const employeeKey = fortnight.staffId;
+      if (!employeeGroups[employeeKey]) {
+        employeeGroups[employeeKey] = {
+          staffId: fortnight.staffId,
+          staffName: fortnight.staffName,
+          fortnights: [],
+          totalHours: 0,
+          totalEntries: 0
+        };
+      }
+      
+      employeeGroups[employeeKey].fortnights.push(fortnight);
+      employeeGroups[employeeKey].totalHours += fortnight.totalHours;
+      employeeGroups[employeeKey].totalEntries += fortnight.totalCount;
+    });
+    
+    return Object.values(employeeGroups).sort((a: any, b: any) => a.staffName.localeCompare(b.staffName));
+  }, [approvedTimesheets]);
 
   // Auto-collapse all fortnights by default when groupedTimesheets changes
   useEffect(() => {
@@ -751,6 +777,19 @@ export default function AdminDashboard() {
   const editCustomAddress = (entryId: string, currentAddress: string) => {
     setEditAddressData({ entryId, currentAddress });
     setShowEditAddressDialog(true);
+  };
+
+  // Helper function to toggle employee folder collapse state
+  const toggleEmployeeFolder = (employeeId: string) => {
+    setCollapsedEmployeeFolders(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(employeeId)) {
+        newSet.delete(employeeId);
+      } else {
+        newSet.add(employeeId);
+      }
+      return newSet;
+    });
   };
 
   const jobForm = useForm<z.infer<typeof jobFormSchema>>({
@@ -2764,8 +2803,8 @@ export default function AdminDashboard() {
                   </Card>
                 )}
 
-                {/* Approved Timesheets Folder */}
-                {approvedTimesheets.length > 0 && (
+                {/* Approved Timesheets Folder - Grouped by Employee */}
+                {approvedByEmployee.length > 0 && (
                   <div className="mt-8">
                     <Card className="overflow-hidden border-green-200 bg-green-50/50">
                       <CardHeader 
@@ -2777,10 +2816,10 @@ export default function AdminDashboard() {
                             <CheckCircle className="h-5 w-5 text-green-600" />
                             <div>
                               <h3 className="text-lg font-semibold text-green-800">
-                                Approved Timesheets ({approvedTimesheets.length})
+                                Approved Timesheets ({approvedByEmployee.length} employees)
                               </h3>
                               <p className="text-sm text-green-600">
-                                {approvedTimesheets.reduce((total, ft) => total + ft.totalHours, 0).toFixed(1)} hours approved
+                                {approvedByEmployee.reduce((total, emp) => total + emp.totalHours, 0).toFixed(1)} hours approved across {approvedByEmployee.reduce((total, emp) => total + emp.fortnights.length, 0)} fortnights
                               </p>
                             </div>
                           </div>
@@ -2801,97 +2840,151 @@ export default function AdminDashboard() {
                       
                       {!isApprovedFolderCollapsed && (
                         <CardContent className="p-4">
-                          <div className="space-y-3">
-                            {approvedTimesheets.map((fortnight) => (
-                              <Card key={`approved-${fortnight.staffId}-${fortnight.fortnightStart.toISOString()}`} className="border-green-200">
-                                <CardHeader className="pb-3 bg-green-50/50">
-                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                    <div className="space-y-1">
-                                      <div className="flex items-center gap-3">
-                                        <div className="font-semibold text-lg text-green-800">{fortnight.staffName || 'Unknown Staff'}</div>
-                                        <Badge variant="default" className="bg-green-600 px-3 py-1">
-                                          ✓ Approved
-                                        </Badge>
-                                      </div>
-                                      <div className="text-sm text-green-600 font-medium">
-                                        Fortnight: {format(fortnight.fortnightStart, 'dd/MM/yyyy')} - {format(fortnight.fortnightEnd, 'dd/MM/yyyy')}
-                                      </div>
-                                      <div className="text-sm text-green-600">
-                                        Total Hours: {fortnight.totalHours.toFixed(1)}h • {fortnight.totalCount} entries
+                          <div className="space-y-4">
+                            {approvedByEmployee.map((employee: any) => (
+                              <Card key={`employee-${employee.staffId}`} className="border-green-200">
+                                <CardHeader 
+                                  className="pb-3 bg-green-50/30 cursor-pointer hover:bg-green-50/50 transition-colors"
+                                  onClick={() => toggleEmployeeFolder(employee.staffId)}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                      <Users className="h-4 w-4 text-green-600" />
+                                      <div>
+                                        <h4 className="font-semibold text-green-800">{employee.staffName}</h4>
+                                        <p className="text-sm text-green-600">
+                                          {employee.totalHours.toFixed(1)} hours • {employee.fortnights.length} fortnights • {employee.totalEntries} entries
+                                        </p>
                                       </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => {
-                                          const fortnightKey = `${fortnight.staffId}-${fortnight.fortnightStart.toISOString()}`;
-                                          const newCollapsed = new Set(collapsedFortnights);
-                                          if (newCollapsed.has(fortnightKey)) {
-                                            newCollapsed.delete(fortnightKey);
-                                          } else {
-                                            newCollapsed.add(fortnightKey);
-                                          }
-                                          setCollapsedFortnights(newCollapsed);
-                                        }}
-                                        data-testid={`button-toggle-approved-entries-${fortnight.staffId}-${fortnight.fortnightStart.toISOString().split('T')[0]}`}
-                                        className="text-green-700 hover:text-green-800 hover:bg-green-100 p-2"
-                                      >
-                                        {collapsedFortnights.has(`${fortnight.staffId}-${fortnight.fortnightStart.toISOString()}`) ? (
-                                          <ChevronRight className="h-4 w-4" />
-                                        ) : (
-                                          <ChevronDown className="h-4 w-4" />
-                                        )}
-                                      </Button>
-                                      <Button
-                                        size="default"
-                                        variant="outline"
-                                        onClick={() => {
-                                          approveFortnightMutation.mutate({
-                                            staffId: fortnight.staffId,
-                                            fortnightStart: fortnight.fortnightStart.toISOString().split('T')[0],
-                                            fortnightEnd: fortnight.fortnightEnd.toISOString().split('T')[0],
-                                            approved: false
-                                          });
-                                        }}
-                                        disabled={approveFortnightMutation.isPending}
-                                        data-testid={`button-unapprove-fortnight-${fortnight.staffId}-${fortnight.fortnightStart.toISOString().split('T')[0]}`}
-                                        className="border-green-300 text-green-700 hover:bg-green-100 min-w-32"
-                                      >
-                                        <XCircle className="h-4 w-4 mr-2" />
-                                        Unapprove
-                                      </Button>
-                                    </div>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="text-green-700 hover:text-green-800 hover:bg-green-100"
+                                      data-testid={`button-toggle-employee-${employee.staffId}`}
+                                    >
+                                      {collapsedEmployeeFolders.has(employee.staffId) ? (
+                                        <ChevronRight className="h-4 w-4" />
+                                      ) : (
+                                        <ChevronDown className="h-4 w-4" />
+                                      )}
+                                    </Button>
                                   </div>
                                 </CardHeader>
-                                {!collapsedFortnights.has(`${fortnight.staffId}-${fortnight.fortnightStart.toISOString()}`) && (
-                                  <CardContent className="p-4">
-                                    <div className="space-y-2">
-                                      {fortnight.entries.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((entry: any) => (
-                                        <div 
-                                          key={entry.id} 
-                                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg bg-green-50"
-                                          data-testid={`approved-entry-${entry.id}`}
-                                        >
-                                          <div className="space-y-1">
-                                            <div className="flex items-center gap-2">
-                                              <div className="text-sm font-medium text-green-800">
-                                                {format(parseISO(entry.date), 'dd/MM/yyyy (EEEE)')}
+                                
+                                {!collapsedEmployeeFolders.has(employee.staffId) && (
+                                  <CardContent className="p-4 pt-0">
+                                    <div className="space-y-3">
+                                      {employee.fortnights.map((fortnight: any) => (
+                                        <Card key={`approved-${fortnight.staffId}-${fortnight.fortnightStart.toISOString()}`} className="border-green-100 bg-green-25">
+                                          <CardHeader className="pb-3 bg-green-25/50">
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                              <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                  <Calendar className="h-4 w-4 text-green-600" />
+                                                  <div className="text-sm font-medium text-green-800">
+                                                    Fortnight: {format(fortnight.fortnightStart, 'dd MMM')} - {format(fortnight.fortnightEnd, 'dd MMM yyyy')}
+                                                  </div>
+                                                  <Badge variant="default" className="bg-green-600 text-xs px-2 py-0.5">
+                                                    ✓ Approved
+                                                  </Badge>
+                                                </div>
+                                                <div className="text-sm text-green-600">
+                                                  {fortnight.totalHours.toFixed(1)} hours • {fortnight.totalCount} entries
+                                                </div>
                                               </div>
-                                              <Badge variant="default" className="text-xs bg-green-600">
-                                                ✓
-                                              </Badge>
-                                            </div>
-                                            <div className="text-sm text-green-600">
-                                              {entry.jobAddress || 'Unknown Job'} • {entry.clientName} • {parseFloat(entry.hours || 0)}h
-                                            </div>
-                                            {entry.updatedAt && entry.updatedAt !== entry.createdAt && (
-                                              <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                                                Last updated: {format(parseISO(entry.updatedAt), 'dd/MM/yyyy HH:mm')}
+                                              <div className="flex items-center gap-2">
+                                                <Button
+                                                  size="sm"
+                                                  variant="ghost"
+                                                  onClick={() => {
+                                                    const fortnightKey = `${fortnight.staffId}-${fortnight.fortnightStart.toISOString()}`;
+                                                    const newCollapsed = new Set(collapsedFortnights);
+                                                    if (newCollapsed.has(fortnightKey)) {
+                                                      newCollapsed.delete(fortnightKey);
+                                                    } else {
+                                                      newCollapsed.add(fortnightKey);
+                                                    }
+                                                    setCollapsedFortnights(newCollapsed);
+                                                  }}
+                                                  data-testid={`button-toggle-approved-entries-${fortnight.staffId}-${fortnight.fortnightStart.toISOString().split('T')[0]}`}
+                                                  className="text-green-700 hover:text-green-800 hover:bg-green-100 p-2"
+                                                >
+                                                  {collapsedFortnights.has(`${fortnight.staffId}-${fortnight.fortnightStart.toISOString()}`) ? (
+                                                    <ChevronRight className="h-4 w-4" />
+                                                  ) : (
+                                                    <ChevronDown className="h-4 w-4" />
+                                                  )}
+                                                </Button>
+                                                <Button
+                                                  size="sm"
+                                                  variant="outline"
+                                                  onClick={() => approveFortnightMutation.mutate({
+                                                    staffId: fortnight.staffId,
+                                                    fortnightStart: format(fortnight.fortnightStart, 'yyyy-MM-dd'),
+                                                    fortnightEnd: format(fortnight.fortnightEnd, 'yyyy-MM-dd'),
+                                                    approved: false
+                                                  })}
+                                                  disabled={approveFortnightMutation.isPending}
+                                                  className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                                                  data-testid={`button-unapprove-fortnight-${fortnight.staffId}`}
+                                                >
+                                                  <XCircle className="h-3 w-3 mr-1" />
+                                                  Unapprove
+                                                </Button>
                                               </div>
-                                            )}
-                                          </div>
-                                        </div>
+                                            </div>
+                                          </CardHeader>
+                                          {!collapsedFortnights.has(`${fortnight.staffId}-${fortnight.fortnightStart.toISOString()}`) && (
+                                            <CardContent className="p-4">
+                                              <div className="space-y-2">
+                                                {fortnight.entries.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((entry: any) => (
+                                                  <div 
+                                                    key={entry.id} 
+                                                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg bg-green-50"
+                                                    data-testid={`approved-entry-${entry.id}`}
+                                                  >
+                                                    <div className="space-y-1">
+                                                      <div className="flex items-center gap-2">
+                                                        <div className="text-sm font-medium text-green-800">
+                                                          {format(parseISO(entry.date), 'dd/MM/yyyy (EEEE)')}
+                                                        </div>
+                                                        <Badge variant="default" className="text-xs bg-green-600">
+                                                          ✓
+                                                        </Badge>
+                                                      </div>
+                                                      <div className="text-sm text-green-600">
+                                                        {(() => {
+                                                          // Handle custom addresses - display with CUSTOM_ADDRESS: prefix
+                                                          if (entry.description && entry.description.startsWith('CUSTOM_ADDRESS:')) {
+                                                            return entry.description.replace('CUSTOM_ADDRESS: ', 'Custom Address: ');
+                                                          }
+                                                          // Handle leave types stored in materials field
+                                                          if (!entry.jobAddress && entry.materials) {
+                                                            const leaveTypes: { [key: string]: string } = {
+                                                              'sick-leave': 'Sick Leave',
+                                                              'personal-leave': 'Personal Leave', 
+                                                              'annual-leave': 'Annual Leave',
+                                                              'rdo': 'RDO (Rest Day Off)',
+                                                              'leave-without-pay': 'Leave Without Pay'
+                                                            };
+                                                            return leaveTypes[entry.materials] || entry.materials;
+                                                          }
+                                                          return entry.jobAddress || 'Unknown Job';
+                                                        })()} • {entry.clientName} • {parseFloat(entry.hours || 0)}h
+                                                      </div>
+                                                      {entry.updatedAt && entry.updatedAt !== entry.createdAt && (
+                                                        <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                                                          Last updated: {format(parseISO(entry.updatedAt), 'dd/MM/yyyy HH:mm')}
+                                                        </div>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            </CardContent>
+                                          )}
+                                        </Card>
                                       ))}
                                     </div>
                                   </CardContent>
