@@ -40,7 +40,17 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   // Function to unlock weekend for editing
   const unlockWeekend = (dateKey: string) => {
-    setUnlockedWeekends(prev => new Set([...Array.from(prev), dateKey]));
+    console.log(`🔓 UNLOCKING WEEKEND: ${dateKey}`);
+    setUnlockedWeekends(prev => {
+      const newSet = new Set([...Array.from(prev), dateKey]);
+      console.log(`🗂️ UPDATED UNLOCKED WEEKENDS:`, Array.from(newSet));
+      return newSet;
+    });
+    toast({
+      title: "Weekend Unlocked",
+      description: `You can now enter hours for ${dateKey}`,
+      variant: "default",
+    });
   };
 
   // Function to check if weekend is unlocked
