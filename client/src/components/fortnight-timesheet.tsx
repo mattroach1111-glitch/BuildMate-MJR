@@ -661,8 +661,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   };
 
   const saveAllEntries = async () => {
-    console.log('🚨 SAVE ALL ENTRIES CALLED! timesheetData:', timesheetData);
-    console.trace('Call stack for saveAllEntries');
+    console.log('Save All clicked, timesheetData:', timesheetData);
     
     // Validate entries before saving
     const validationErrors = validateEntries(timesheetData);
@@ -688,13 +687,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           const isLeaveType = leaveTypes.includes(entry.jobId);
           const isCustomAddress = entry.jobId && entry.jobId.startsWith('custom-');
           
-          console.log('🐛 SAVE DEBUG:', {
-            jobId: entry.jobId,
-            hours,
-            isCustomAddress,
-            isLeaveType,
-            shouldSave: hours > 0 || (isLeaveType && hours >= 0) || (isCustomAddress && hours > 0)
-          });
+
           
           if (hours > 0 || (isLeaveType && hours >= 0) || (isCustomAddress && hours > 0)) {
             let entryData: any = {
@@ -1164,7 +1157,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 return;
                               }
                               
-                              if (entry?.id && !entry?.approved) {
+                              // Don't auto-save custom addresses - let user save manually
+                              const isCustomAddress = entry?.jobId === 'custom-address' || 
+                                                     (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:'));
+                              
+                              if (entry?.id && !entry?.approved && !isCustomAddress) {
                                 editSavedEntry(entry.id, 'hours', e.target.value);
                               } else {
                                 handleCellChange(day, entryIndex, 'hours', e.target.value);
@@ -1284,7 +1281,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 console.log(`🚫 STAFF WEEKEND MATERIALS BLOCKED: ${dateKey} - Weekend is locked!`);
                                 return; // Prevent materials input on locked weekends
                               }
-                              if (entry?.id && !entry?.approved) {
+                              // Don't auto-save custom addresses - let user save manually
+                              const isCustomAddress = entry?.jobId === 'custom-address' || 
+                                                     (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:'));
+                              
+                              if (entry?.id && !entry?.approved && !isCustomAddress) {
                                 editSavedEntry(entry.id, 'materials', e.target.value);
                               } else {
                                 handleCellChange(day, entryIndex, 'materials', e.target.value);
@@ -1796,7 +1797,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     console.log(`🚫 WEEKEND INPUT BLOCKED: ${dateKey} - Weekend is locked!`);
                                     return; // Prevent any input on locked weekends
                                   }
-                                  if (entry?.id && !entry?.approved) {
+                                  // Don't auto-save custom addresses - let user save manually
+                                  const isCustomAddress = entry?.jobId === 'custom-address' || 
+                                                         (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:'));
+                                  
+                                  if (entry?.id && !entry?.approved && !isCustomAddress) {
                                     // Edit saved entry directly
                                     editSavedEntry(entry.id, 'hours', e.target.value);
                                   } else {
@@ -1922,7 +1927,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     console.log(`🚫 WEEKEND MATERIALS INPUT BLOCKED: ${dateKey} - Weekend is locked!`);
                                     return; // Prevent any input on locked weekends
                                   }
-                                  if (entry?.id && !entry?.approved) {
+                                  // Don't auto-save custom addresses - let user save manually
+                                  const isCustomAddress = entry?.jobId === 'custom-address' || 
+                                                         (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:'));
+                                  
+                                  if (entry?.id && !entry?.approved && !isCustomAddress) {
                                     // Edit saved entry directly
                                     editSavedEntry(entry.id, 'materials', e.target.value);
                                   } else {
