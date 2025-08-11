@@ -2,6 +2,9 @@
 
 BuildFlow Pro is a mobile-first construction management system designed to streamline job costing, billing, and workforce management. It provides role-based access for administrators and staff, enabling comprehensive tracking of labor costs, materials, sub-trades, and project expenses for construction project oversight. The system's vision is to enhance efficiency in construction project management, offering a user-friendly interface for both on-site staff and administrative personnel, and consolidating critical project data for better decision-making.
 
+## Recent Changes
+- **August 11, 2025**: Fixed critical timesheet-to-job sheet synchronization issue affecting labor hour calculations. Resolved database field mapping problem in `updateLaborHoursFromTimesheet` function that prevented approved timesheet entries from properly updating labor costs in job sheets. System now correctly reflects staff hours across all job cost reports and billing documents.
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
