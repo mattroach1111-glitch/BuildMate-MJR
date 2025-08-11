@@ -466,7 +466,16 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     };
   }, []);
 
-  // For staff users, show minimal interface with just the table
+  // Calculate progress stats for staff view
+  const savedHours = Array.isArray(currentFortnightEntries) ? 
+    currentFortnightEntries.reduce((sum: number, entry: any) => sum + parseFloat(entry.hours || '0'), 0) : 0;
+  
+  const workdaysCompleted = Array.isArray(currentFortnightEntries) ? 
+    new Set(currentFortnightEntries.map((entry: any) => format(parseISO(entry.date), 'yyyy-MM-dd'))).size : 0;
+  
+  const completionPercentage = Math.round((workdaysCompleted / 10) * 100);
+
+  // For staff users, show enhanced interface with essential controls
   console.log("FortnightTimesheet - isAdminView:", isAdminView, "selectedEmployeeId:", selectedEmployeeId);
   
   if (!isAdminView) {
@@ -475,10 +484,40 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       <div className="p-4 max-w-7xl mx-auto">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Daily Timesheet Entries
-            </CardTitle>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Daily Timesheet Entries
+              </CardTitle>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button 
+                  onClick={saveAllEntries}
+                  variant="default"
+                  disabled={updateTimesheetMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                  data-testid="button-save-all-timesheet"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {updateTimesheetMutation.isPending ? 'Saving...' : 'Save All'}
+                </Button>
+                <Button onClick={exportToPDF} variant="outline">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export PDF
+                </Button>
+                <Button 
+                  onClick={clearTimesheet} 
+                  variant="outline"
+                  className="text-red-600 hover:text-red-700"
+                  data-testid="button-clear-timesheet"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Clear
+                </Button>
+              </div>
+            </div>
+            <div className="text-sm text-muted-foreground mt-2">
+              {format(currentFortnight.start, 'MMM dd, yyyy')} - {format(currentFortnight.end, 'MMM dd, yyyy')}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -641,6 +680,27 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   })}
                 </tbody>
               </table>
+            </div>
+            
+            {/* Progress and Submit Section for Staff */}
+            <div className="mt-6 pt-6 border-t">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="text-sm text-muted-foreground">
+                  <span className="font-medium">{savedHours}h logged</span> • 
+                  <span className="font-medium"> {Math.min(workdaysCompleted, 10)}/10 workdays</span> • 
+                  <span className="font-medium">{completionPercentage}% complete</span>
+                </div>
+                {completionPercentage >= 100 && (
+                  <Button 
+                    onClick={exportToPDF}
+                    className="bg-blue-600 hover:bg-blue-700"
+                    data-testid="button-submit-timesheet"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Submit Timesheet
+                  </Button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
