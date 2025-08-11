@@ -49,13 +49,48 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     console.log('🏠 DIALOG STATE CHANGED:', showAddressDialog, 'Data:', addressDialogData);
     if (showAddressDialog) {
       console.log('🏠 DIALOG SHOULD BE VISIBLE NOW!');
-      // Try to find the dialog element in DOM
+      
+      // Try direct DOM manipulation since React seems to be failing
+      console.log('🏠 ATTEMPTING DIRECT DOM MANIPULATION...');
+      
+      // Remove any existing DOM dialog
+      const existingDialog = document.getElementById('direct-dom-dialog');
+      if (existingDialog) {
+        existingDialog.remove();
+      }
+      
+      // Create dialog with direct DOM manipulation
+      const dialog = document.createElement('div');
+      dialog.id = 'direct-dom-dialog';
+      dialog.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 99999;
+        background-color: green;
+        color: white;
+        padding: 20px;
+        border: 5px solid orange;
+        font-size: 20px;
+        font-weight: bold;
+        border-radius: 10px;
+      `;
+      dialog.innerHTML = `
+        🟢 DIRECT DOM DIALOG 🟢<br/>
+        This bypasses React entirely!<br/>
+        <button onclick="this.parentElement.remove(); console.log('🏠 DIRECT DOM DIALOG CLOSED');">Close Me</button>
+      `;
+      
+      document.body.appendChild(dialog);
+      console.log('🏠 DIRECT DOM DIALOG CREATED:', dialog);
+      
+      // Also check if React portals work
       setTimeout(() => {
         const alwaysVisible = document.querySelector('[data-testid="always-visible-dialog"]');
-        const regularDialog = document.querySelector('[data-testid="address-dialog"]');
-        console.log('🏠 ALWAYS VISIBLE DIALOG IN DOM:', alwaysVisible);
-        console.log('🏠 ALWAYS VISIBLE DIALOG DISPLAY:', alwaysVisible ? alwaysVisible.style.display : 'NOT FOUND');
-        console.log('🏠 REGULAR DIALOG ELEMENT IN DOM:', regularDialog);
+        const directDialog = document.getElementById('direct-dom-dialog');
+        console.log('🏠 REACT PORTAL DIALOG IN DOM:', alwaysVisible);
+        console.log('🏠 DIRECT DOM DIALOG IN DOM:', directDialog);
       }, 100);
     }
   }, [showAddressDialog, addressDialogData]);
