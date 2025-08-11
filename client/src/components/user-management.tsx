@@ -64,11 +64,15 @@ export function UserManagement() {
       const promotedUser = users?.find(u => u.id === selectedUserId);
       const wasPromotedToAdmin = selectedRole === 'admin';
       
+      const promotedUserName = [promotedUser?.firstName, promotedUser?.lastName].filter(Boolean).join(' ') 
+        || promotedUser?.email 
+        || 'User';
+      
       toast({
         title: "Role Updated",
         description: wasPromotedToAdmin 
-          ? `${promotedUser?.firstName} has been promoted to Admin. They should refresh their browser to see the admin dashboard.`
-          : `${promotedUser?.firstName}'s role has been updated to Staff.`,
+          ? `${promotedUserName} has been promoted to Admin. They should refresh their browser to see the admin dashboard.`
+          : `${promotedUserName}'s role has been updated to Staff.`,
       });
       setSelectedUserId("");
       setSelectedRole("staff");
@@ -94,9 +98,13 @@ export function UserManagement() {
       const user = users?.find(u => u.id === selectedUserId);
       const employee = (employees as Employee[])?.find((e: Employee) => e.id === selectedEmployeeId);
       
+      const userName = [user?.firstName, user?.lastName].filter(Boolean).join(' ') 
+        || user?.email 
+        || 'User';
+      
       toast({
         title: "Assignment Updated",
-        description: `${user?.firstName} has been assigned to employee record: ${employee?.name}`,
+        description: `${userName} has been assigned to employee record: ${employee?.name}`,
       });
       setSelectedUserId("");
       setSelectedEmployeeId("");
@@ -125,9 +133,13 @@ export function UserManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       const deletedUser = users?.find(u => u.id === userId);
       
+      const deletedUserName = [deletedUser?.firstName, deletedUser?.lastName].filter(Boolean).join(' ') 
+        || deletedUser?.email 
+        || 'User';
+      
       toast({
         title: "User Deleted",
-        description: `${deletedUser?.firstName} ${deletedUser?.lastName} has been removed from the system`,
+        description: `${deletedUserName} has been removed from the system`,
       });
     },
     onError: (error: any) => {
@@ -253,7 +265,7 @@ export function UserManagement() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium">
-                        {user.firstName} {user.lastName}
+                        {[user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'Unknown User'}
                       </span>
                       <Badge 
                         variant={user.role === 'admin' ? 'default' : 'secondary'}
@@ -310,7 +322,7 @@ export function UserManagement() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Reset User Assignment</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to unlink <strong>{user.firstName} {user.lastName}</strong> from their employee record?
+                              Are you sure you want to unlink <strong>{[user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'this user'}</strong> from their employee record?
                               <br /><br />
                               This will remove their connection to the employee record for testing purposes. They will need to be reassigned to track timesheets properly.
                             </AlertDialogDescription>
@@ -346,7 +358,7 @@ export function UserManagement() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete User</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to permanently delete <strong>{user.firstName} {user.lastName}</strong>?
+                              Are you sure you want to permanently delete <strong>{[user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'this user'}</strong>?
                               <br /><br />
                               <div className="p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border-l-4 border-red-400 mt-3">
                                 <span className="text-red-800 dark:text-red-200 text-sm block">
@@ -392,19 +404,26 @@ export function UserManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   {Array.isArray(users) && users.length > 0 ? (
-                    users.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        <div className="flex items-center gap-2">
-                          <span>{user.firstName} {user.lastName}</span>
-                          <Badge 
-                            variant={user.role === 'admin' ? 'default' : 'secondary'}
-                            className="text-xs"
-                          >
-                            {user.role}
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                    ))
+                    users.map((user) => {
+                      // Create a display name, falling back to email if no name is available
+                      const displayName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim() 
+                        || user.email 
+                        || 'Unknown User';
+                      
+                      return (
+                        <SelectItem key={user.id} value={user.id}>
+                          <div className="flex items-center gap-2">
+                            <span>{displayName}</span>
+                            <Badge 
+                              variant={user.role === 'admin' ? 'default' : 'secondary'}
+                              className="text-xs"
+                            >
+                              {user.role}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      );
+                    })
                   ) : (
                     <SelectItem value="no-users" disabled>No users available</SelectItem>
                   )}
@@ -438,7 +457,10 @@ export function UserManagement() {
             {selectedUserId && (
               <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
                 <p className="text-sm text-blue-800 dark:text-blue-200">
-                  <strong>Selected:</strong> {getSelectedUser()?.firstName} {getSelectedUser()?.lastName} 
+                  <strong>Selected:</strong> {(() => {
+                    const user = getSelectedUser();
+                    return [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email || 'Unknown User';
+                  })()} 
                   <span className="mx-2">→</span>
                   Change from <strong>{getSelectedUser()?.role}</strong> to <strong>{selectedRole}</strong>
                 </p>
@@ -460,7 +482,10 @@ export function UserManagement() {
                   <AlertDialogTitle>Confirm Role Change</AlertDialogTitle>
                   <AlertDialogDescription>
                     <span>
-                      Are you sure you want to change {getSelectedUser()?.firstName} {getSelectedUser()?.lastName}'s role 
+                      Are you sure you want to change {(() => {
+                        const user = getSelectedUser();
+                        return [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email || 'this user';
+                      })()}'s role 
                       from <strong>{getSelectedUser()?.role}</strong> to <strong>{selectedRole}</strong>?
                     </span>
                     {selectedRole === 'admin' && (
@@ -513,7 +538,7 @@ export function UserManagement() {
                     users.map((user) => (
                       <SelectItem key={`assign-${user.id}`} value={user.id}>
                         <div className="flex items-center gap-2">
-                          <span>{user.firstName} {user.lastName}</span>
+                          <span>{[user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'Unknown User'}</span>
                           {user.employeeId ? (
                             <Badge variant="outline" className="text-xs">
                               Already Assigned
