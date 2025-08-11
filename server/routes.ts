@@ -680,38 +680,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
-      // Find the employee record for this user
-      let staffId = userId;
-      const employees = await storage.getEmployees();
-      
-      // Check if user is directly assigned to an employee
-      if (user && user.employeeId && user.isAssigned) {
-        // User has been assigned to a specific employee
-        const assignedEmployee = employees.find(emp => emp.id === user.employeeId);
-        if (assignedEmployee) {
-          staffId = assignedEmployee.id;
-        }
-      } else {
-        // Fallback: find by matching patterns for unassigned users
-        const userEmployee = employees.find((emp: any) => {
-          // First try to match by user ID (for users created from employees)
-          if (emp.id === userId) {
-            return true;
-          }
-          // Fallback: match by name patterns for backwards compatibility
-          if (user) {
-            const userName = (user.firstName + ' ' + (user.lastName || '')).trim();
-            return emp.name.toLowerCase() === userName.toLowerCase();
-          }
-          return false;
-        });
-        
-        if (userEmployee) {
-          staffId = userEmployee.id;
-        }
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
       }
       
+      // Use the same logic as POST - staff_id must be the user ID due to foreign key constraint
+      const staffId = userId; // Always use the authenticated user's ID
+      
       const entries = await storage.getTimesheetEntries(staffId);
+      console.log(`Fetching timesheet entries for user ${user.email} (staffId: ${staffId}), found ${entries.length} entries`);
       res.json(entries);
     } catch (error) {
       console.error("Error fetching timesheet entries:", error);
