@@ -35,6 +35,16 @@ type JobWithRelations = {
     description: string;
     amount: string;
   }>;
+  timesheets?: Array<{
+    id: string;
+    date: string;
+    hours: string;
+    materials: string;
+    description: string;
+    approved: boolean;
+    staffName: string;
+    staffEmail: string;
+  }>;
 };
 
 export async function generateJobPDF(job: JobWithRelations) {
@@ -214,6 +224,75 @@ export async function generateJobPDF(job: JobWithRelations) {
       yPos += 8;
     });
     yPos += 10;
+  }
+
+  // TIMESHEET ENTRIES SECTION
+  if (job.timesheets && job.timesheets.length > 0) {
+    checkPageBreak(40);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TIMESHEET ENTRIES', 20, yPos);
+    yPos += 10;
+
+    // Table headers
+    doc.setFontSize(9);
+    doc.text('Date', 25, yPos);
+    doc.text('Staff', 55, yPos);
+    doc.text('Hours', 90, yPos);
+    doc.text('Materials/Notes', 110, yPos);
+    doc.text('Status', 160, yPos);
+    yPos += 3;
+    doc.line(20, yPos, 190, yPos);
+    yPos += 8;
+
+    // Sort timesheets by date (newest first)
+    const sortedTimesheets = [...job.timesheets].sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    doc.setFont('helvetica', 'normal');
+    let totalTimesheetHours = 0;
+    let approvedHours = 0;
+
+    sortedTimesheets.forEach((entry) => {
+      checkPageBreak(10);
+      
+      const hours = parseFloat(entry.hours);
+      totalTimesheetHours += hours;
+      if (entry.approved) {
+        approvedHours += hours;
+      }
+
+      // Format date
+      const date = new Date(entry.date).toLocaleDateString('en-AU', { 
+        day: '2-digit', 
+        month: '2-digit' 
+      });
+      
+      // Truncate long staff names and materials
+      const staffName = entry.staffName || entry.staffEmail?.split('@')[0] || 'Unknown';
+      const truncatedStaff = staffName.length > 15 ? staffName.substring(0, 12) + '...' : staffName;
+      const materials = entry.materials || entry.description || '-';
+      const truncatedMaterials = materials.length > 25 ? materials.substring(0, 22) + '...' : materials;
+
+      doc.text(date, 25, yPos);
+      doc.text(truncatedStaff, 55, yPos);
+      doc.text(`${hours.toFixed(1)}h`, 90, yPos);
+      doc.text(truncatedMaterials, 110, yPos);
+      doc.text(entry.approved ? 'Approved' : 'Pending', 160, yPos);
+      yPos += 8;
+    });
+
+    // Timesheet summary
+    yPos += 5;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Total Hours Logged:', 25, yPos);
+    doc.text(`${totalTimesheetHours.toFixed(1)}h`, 160, yPos);
+    yPos += 8;
+    
+    doc.text('Approved Hours:', 25, yPos);
+    doc.text(`${approvedHours.toFixed(1)}h`, 160, yPos);
+    yPos += 15;
   }
 
   // SUMMARY SECTION - Enhanced with detailed breakdown

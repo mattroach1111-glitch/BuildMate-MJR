@@ -565,7 +565,12 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     if (!jobDetails) return;
     
     try {
-      await generateJobPDF(jobDetails);
+      // Include timesheet data in the job details for PDF generation
+      const jobWithTimesheets = {
+        ...jobDetails,
+        timesheets: jobTimesheets
+      };
+      await generateJobPDF(jobWithTimesheets);
       toast({
         title: "Success",
         description: "PDF downloaded successfully",
