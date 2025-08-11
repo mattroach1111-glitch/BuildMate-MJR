@@ -43,6 +43,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const [currentAddress, setCurrentAddress] = useState({houseNumber: '', streetAddress: ''});
   const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null); // Single timeout for all auto-saves
 
+  // Debug effect to track dialog state changes
+  useEffect(() => {
+    console.log('🏠 DIALOG STATE CHANGED:', showAddressDialog, 'Data:', addressDialogData);
+  }, [showAddressDialog, addressDialogData]);
+
   // Function to unlock weekend for editing
   const unlockWeekend = (dateKey: string) => {
     console.log(`🔓 UNLOCKING WEEKEND: ${dateKey}`);
@@ -1563,12 +1568,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         )}
         
         {/* Address Input Dialog - Fixed positioning */}
-        {(() => {
-          console.log('🏠 CHECKING DIALOG RENDER - showAddressDialog:', showAddressDialog);
-          return showAddressDialog;
-        })() && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+        {showAddressDialog && (
+          <div 
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50"
+            style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999}}
+          >
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl border-2 border-red-500">
               <div className="mb-4">
                 <h2 className="text-lg font-semibold">Enter Job Address</h2>
                 <p className="text-sm text-gray-600 mt-1">
