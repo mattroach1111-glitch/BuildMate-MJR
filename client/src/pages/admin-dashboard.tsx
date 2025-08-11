@@ -87,6 +87,11 @@ export default function AdminDashboard() {
   const [sortBy, setSortBy] = useState<'address' | 'client' | 'manager' | 'status'>('address');
   const [activeTab, setActiveTab] = useState("jobs");
 
+  // Debug activeTab changes
+  useEffect(() => {
+    console.log("ActiveTab changed to:", activeTab);
+  }, [activeTab]);
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
@@ -1216,7 +1221,11 @@ export default function AdminDashboard() {
             <Button
               variant={activeTab === "timesheets" ? "default" : "outline"}
               size="sm"
-              onClick={() => setActiveTab("timesheets")}
+              onClick={() => {
+                console.log("Timesheets tab clicked, current activeTab:", activeTab);
+                setActiveTab("timesheets");
+                console.log("setActiveTab called with 'timesheets'");
+              }}
               className="flex items-center gap-2"
               data-testid="tab-timesheets"
             >
