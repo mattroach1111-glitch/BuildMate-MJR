@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
 import AdminDashboard from "@/pages/admin-dashboard";
-import StaffDashboard from "@/pages/staff-dashboard";
 import NotFound from "@/pages/not-found";
 import FortnightTimesheetView from "@/pages/fortnight-timesheet-view";
 
@@ -33,8 +32,8 @@ function Router() {
         </>
       ) : (
         <>
-          <Route path="/" component={() => <StaffDashboard isAdminView={false} />} />
-          <Route path="/staff" component={() => <StaffDashboard isAdminView={false} />} />
+          <Route path="/" component={FortnightTimesheetView} />
+          <Route path="/staff" component={FortnightTimesheetView} />
           <Route path="/timesheet" component={FortnightTimesheetView} />
         </>
       )}
