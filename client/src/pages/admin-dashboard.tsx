@@ -2341,11 +2341,24 @@ export default function AdminDashboard() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
+                              {/* Regular Jobs First */}
                               {jobs?.filter(job => job.id && job.id.trim() !== '').map((job) => (
                                 <SelectItem key={job.id} value={job.id}>
                                   {job.jobAddress}
                                 </SelectItem>
                               ))}
+                              
+                              {/* Separator for Leave Types */}
+                              <div className="px-2 py-1.5 text-xs text-muted-foreground font-medium border-t border-gray-200 mt-1">
+                                Leave Types
+                              </div>
+                              
+                              {/* Leave Types Pinned at Bottom */}
+                              <SelectItem value="sick-leave">Sick Leave</SelectItem>
+                              <SelectItem value="personal-leave">Personal Leave</SelectItem>
+                              <SelectItem value="annual-leave">Annual Leave</SelectItem>
+                              <SelectItem value="leave-without-pay">Leave without pay</SelectItem>
+                              <SelectItem value="rdo">RDO (Rest Day Off)</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
