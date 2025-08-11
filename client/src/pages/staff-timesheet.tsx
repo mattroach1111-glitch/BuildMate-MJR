@@ -81,6 +81,7 @@ export default function StaffTimesheet() {
       return response;
     },
     onSuccess: () => {
+      console.log("✅ Save successful, clearing timesheet data");
       refetchTimesheetEntries();
       setTimesheetData({}); // Clear data only after successful save
       toast({
@@ -120,6 +121,7 @@ export default function StaffTimesheet() {
 
   const handleCellChange = (day: Date, entryIndex: number, field: string, value: string) => {
     const dateKey = format(day, 'yyyy-MM-dd');
+    console.log(`📝 Cell change: ${dateKey} [${entryIndex}] ${field} = "${value}"`);
     setTimesheetData((prev: any) => {
       const dayEntries = prev[dateKey] || [{}];
       const updatedEntries = [...dayEntries];
@@ -134,20 +136,24 @@ export default function StaffTimesheet() {
         date: dateKey,
       };
       
-      return {
+      const newData = {
         ...prev,
         [dateKey]: updatedEntries,
       };
+      console.log("📊 Updated timesheet data:", newData);
+      return newData;
     });
 
+    // Temporarily disable auto-save to debug manual save issue
     // Auto-save with debounce
     if (autoSaveTimeout.current) {
       clearTimeout(autoSaveTimeout.current);
     }
     
-    autoSaveTimeout.current = setTimeout(() => {
-      saveAllEntries();
-    }, 1000);
+    // autoSaveTimeout.current = setTimeout(() => {
+    //   console.log("🔄 Auto-saving entries...");
+    //   saveAllEntries();
+    // }, 2000); // Increased timeout to 2 seconds
   };
 
   const editSavedEntry = (entryId: string, field: string, value: string) => {
@@ -170,6 +176,7 @@ export default function StaffTimesheet() {
   };
 
   const saveAllEntries = () => {
+    console.log("💾 saveAllEntries called, current data:", timesheetData);
     const entriesToSave: any[] = [];
     
     Object.keys(timesheetData).forEach(dateKey => {
@@ -188,9 +195,12 @@ export default function StaffTimesheet() {
       }
     });
 
+    console.log("📤 Entries to save:", entriesToSave);
     if (entriesToSave.length > 0) {
       updateTimesheetMutation.mutate({ entries: entriesToSave });
       // Don't clear timesheet data immediately - let it clear after successful save
+    } else {
+      console.log("⚠️ No entries to save - data might be missing");
     }
   };
 
