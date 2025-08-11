@@ -75,6 +75,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     }
   }, [selectedEmployeeId]);
 
+  // Clear local form data if fortnight is confirmed to prevent display conflicts
+  useEffect(() => {
+    if (isFortnightConfirmed()) {
+      setTimesheetData({});
+      console.log('Cleared local timesheet data - fortnight is confirmed');
+    }
+  }, [currentFortnightEntries]);
+
   // Filter entries for current fortnight and selected employee (if admin view)
   const currentFortnightEntries = Array.isArray(timesheetEntries) ? timesheetEntries.filter((entry: any) => {
     try {
@@ -664,16 +672,23 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         ) : [];
                         
                         // Smart entry display logic:
-                        // 1. If user is actively editing (has local entries), show those
-                        // 2. Otherwise show saved entries from database
-                        // 3. Always show at least one empty row for new input
+                        // 1. If there are approved entries, always show those (they're confirmed)
+                        // 2. If there are saved but not approved entries, show those
+                        // 3. If user is actively editing (has local entries), show those
+                        // 4. Always show at least one empty row for new input
                         let entriesToShow;
-                        if (dayEntries.length > 0) {
+                        const approvedEntries = existingEntries.filter((entry: any) => entry.approved);
+                        const unapprovedEntries = existingEntries.filter((entry: any) => !entry.approved);
+                        
+                        if (approvedEntries.length > 0) {
+                          // Always prioritize approved entries - they're confirmed and locked
+                          entriesToShow = approvedEntries;
+                        } else if (unapprovedEntries.length > 0) {
+                          // Show saved but not approved entries
+                          entriesToShow = unapprovedEntries;
+                        } else if (dayEntries.length > 0) {
                           // User has local unsaved entries - show those
                           entriesToShow = dayEntries;
-                        } else if (existingEntries.length > 0) {
-                          // Show saved entries from database
-                          entriesToShow = existingEntries;
                         } else {
                           // No entries at all - show empty row for input
                           entriesToShow = [{}];
