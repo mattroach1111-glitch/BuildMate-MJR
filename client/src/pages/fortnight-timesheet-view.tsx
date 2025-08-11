@@ -49,16 +49,14 @@ export default function FortnightTimesheetView() {
     return "Track your hours and submit timesheet entries";
   };
 
-  // For staff users, skip the PageLayout wrapper and show timesheet directly
+  // For staff users, show only the timesheet table without any navigation
   if ((user as any)?.role !== "admin") {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <FortnightTimesheet 
-            selectedEmployeeId=""
-            isAdminView={false}
-          />
-        </div>
+      <div className="min-h-screen bg-white">
+        <FortnightTimesheet 
+          selectedEmployeeId=""
+          isAdminView={false}
+        />
       </div>
     );
   }

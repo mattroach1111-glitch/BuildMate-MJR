@@ -467,7 +467,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   }, []);
 
   // For staff users, show minimal interface with just the table
+  console.log("FortnightTimesheet - isAdminView:", isAdminView, "selectedEmployeeId:", selectedEmployeeId);
+  
   if (!isAdminView) {
+    console.log("Rendering staff-only view");
     return (
       <div className="p-4 max-w-7xl mx-auto">
         <Card>
