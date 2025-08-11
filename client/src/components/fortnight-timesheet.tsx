@@ -2106,6 +2106,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   
                   // Create custom address key and save
                   const fullAddress = `${currentAddress.houseNumber} ${currentAddress.streetAddress}`;
+                  console.log('🏠 CREATING CUSTOM ADDRESS:', {
+                    houseNumber: currentAddress.houseNumber,
+                    streetAddress: currentAddress.streetAddress,
+                    fullAddress: fullAddress,
+                    dialogData: addressDialogData
+                  });
                   
                   // Store the address for job dropdown display
                   setCustomAddresses(prev => ({
@@ -2139,6 +2145,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   }
                   
                   const entry = entriesToShow[entryIndex];
+                  console.log('🏠 SETTING CUSTOM ADDRESS ON ENTRY:', {
+                    dateKey,
+                    entryIndex,
+                    entry,
+                    fullAddress,
+                    materials: fullAddress,
+                    description: `CUSTOM_ADDRESS: ${fullAddress}`
+                  });
                   
                   // Set the custom address as the job - but don't auto-save, let user save manually
                   handleCellChange(day, entryIndex, 'jobId', 'custom-address');
