@@ -28,8 +28,9 @@ export default function FortnightTimesheetView() {
 
   const handleBackNavigation = () => {
     if ((user as any)?.role === "admin") {
-      setLocation("/");
+      setLocation("/admin");
     } else {
+      // For staff, this is their main page so no back navigation needed
       setLocation("/");
     }
   };
@@ -54,18 +55,20 @@ export default function FortnightTimesheetView() {
       subtitle={getSubtitle()}
     >
       <div className="space-y-6">
-        {/* Navigation Bar */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            onClick={handleBackNavigation}
-            className="flex items-center gap-2"
-            data-testid="button-back-to-dashboard"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Button>
-        </div>
+        {/* Navigation Bar - Only show for admin viewing staff timesheets */}
+        {isAdminView && employeeId && (
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              onClick={handleBackNavigation}
+              className="flex items-center gap-2"
+              data-testid="button-back-to-dashboard"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Admin
+            </Button>
+          </div>
+        )}
 
         {/* Timesheet Component */}
         <div className="max-w-6xl mx-auto">
