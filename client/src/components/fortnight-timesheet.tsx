@@ -45,6 +45,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const [showEditAddressDialog, setShowEditAddressDialog] = useState(false);
   const [editAddressData, setEditAddressData] = useState<{entryId: string, currentAddress: string}>({entryId: '', currentAddress: ''});
   const [currentAddress, setCurrentAddress] = useState({houseNumber: '', streetAddress: ''});
+  const [showLowHoursDialog, setShowLowHoursDialog] = useState(false);
+  const [lowHoursTotal, setLowHoursTotal] = useState(0);
+  const [pendingSubmission, setPendingSubmission] = useState<(() => void) | null>(null);
   const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null); // Single timeout for all auto-saves
 
   // Debug effect to track dialog state changes
@@ -1398,12 +1401,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                       // Check for low hours warning
                       const totalHours = getTotalHours();
                       if (totalHours < 76) {
-                        const shouldContinue = window.confirm(
-                          `Total hours: ${totalHours.toFixed(2)}\n\nHours are below 76. Are you sure you're ready for submitting?`
-                        );
-                        if (!shouldContinue) {
-                          return;
-                        }
+                        setLowHoursTotal(totalHours);
+                        setPendingSubmission(() => () => confirmTimesheetMutation.mutate());
+                        setShowLowHoursDialog(true);
+                        return;
                       }
                       confirmTimesheetMutation.mutate();
                     }}
@@ -2084,12 +2085,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           // Check for low hours warning
                           const totalHours = getTotalHours();
                           if (totalHours < 76) {
-                            const shouldContinue = window.confirm(
-                              `Total hours: ${totalHours.toFixed(2)}\n\nHours are below 76. Are you sure you're ready for submitting?`
-                            );
-                            if (!shouldContinue) {
-                              return;
-                            }
+                            setLowHoursTotal(totalHours);
+                            setPendingSubmission(() => () => confirmTimesheetMutation.mutate());
+                            setShowLowHoursDialog(true);
+                            return;
                           }
                           
                           confirmTimesheetMutation.mutate();
@@ -2275,6 +2274,65 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             </div>
           </div>
         )}
+        
+        {/* Low Hours Warning Dialog */}
+        <AlertDialog open={showLowHoursDialog} onOpenChange={setShowLowHoursDialog}>
+          <AlertDialogContent className="max-w-md">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2 text-orange-600">
+                <Clock className="h-5 w-5" />
+                Low Hours Warning
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-700">
+                <div className="space-y-3">
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600 mb-1">
+                        {lowHoursTotal.toFixed(2)} hours
+                      </div>
+                      <div className="text-sm text-orange-700">
+                        Current total for this fortnight
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <p className="text-center">
+                    Your hours are below the expected 76 hours for a full fortnight. 
+                    Are you sure you're ready to submit this timesheet?
+                  </p>
+                  
+                  <div className="text-xs text-gray-500 text-center">
+                    You can always add more hours and resubmit later if needed.
+                  </div>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-2">
+              <AlertDialogCancel 
+                onClick={() => {
+                  setShowLowHoursDialog(false);
+                  setPendingSubmission(null);
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  setShowLowHoursDialog(false);
+                  if (pendingSubmission) {
+                    pendingSubmission();
+                    setPendingSubmission(null);
+                  }
+                }}
+                className="flex-1 bg-orange-600 hover:bg-orange-700"
+              >
+                Submit Anyway
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        
         </div>
       </div>
     </>
