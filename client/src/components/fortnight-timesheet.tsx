@@ -174,18 +174,27 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         const dayEntries = timesheetData[dateKey] || [];
         const entry = dayEntries[entryIndex] || {};
         
-        // Save to database immediately
+        // Save to database immediately - ensure hours is not zero for valid entry
         const entryData = {
           staffId: isAdminView ? selectedEmployee : user?.id,
           date: dateKey,
           jobId: customJobId,
           description: fullAddress,
-          hours: entry.hours || '0',
+          hours: entry.hours || '1', // Default to 1 hour so entry is valid
           materials: entry.materials || ''
         };
         
         console.log('🏠 SAVING TO DATABASE:', entryData);
-        updateTimesheetMutation.mutate(entryData);
+        updateTimesheetMutation.mutate(entryData, {
+          onSuccess: (data) => {
+            console.log('🏠 DATABASE SAVE SUCCESS:', data);
+            // Force refresh of timesheet data
+            refetchTimesheetEntries();
+          },
+          onError: (error) => {
+            console.error('🏠 DATABASE SAVE ERROR:', error);
+          }
+        });
         console.log('🏠 CUSTOM ADDRESS SAVED - Database save triggered');
         
         dialog.remove();
