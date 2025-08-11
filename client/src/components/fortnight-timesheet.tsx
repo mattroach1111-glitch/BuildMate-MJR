@@ -23,6 +23,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedEmployee, setSelectedEmployee] = useState<string>(selectedEmployeeId || "");
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   // Calculate which fortnight we should start with based on current date
   const getCurrentFortnightIndex = () => {
     const today = new Date();
@@ -172,6 +173,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       // Refresh timesheet data to reflect confirmed status
       await refetchTimesheetEntries();
       
+      // Show success animation for timesheet completion
+      setShowSuccessAnimation(true);
+      setTimeout(() => setShowSuccessAnimation(false), 3000);
+      
       // Advance to next fortnight
       const nextFortnightIndex = currentFortnightIndex + 1;
       setCurrentFortnightIndex(nextFortnightIndex);
@@ -302,6 +307,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     await refetchTimesheetEntries();
     
     console.log('Successfully saved and cleared local data');
+
+    // Show success animation
+    setShowSuccessAnimation(true);
+    setTimeout(() => setShowSuccessAnimation(false), 3000);
 
     toast({
       title: "Timesheet Saved",
@@ -475,10 +484,27 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   
   const completionPercentage = Math.round((workdaysCompleted / 10) * 100);
 
+  // Success Animation Component
+  const SuccessAnimation = () => {
+    if (!showSuccessAnimation) return null;
+    
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="bg-white rounded-full p-8 animate-pulse">
+          <div className="bg-green-500 rounded-full p-6 animate-bounce">
+            <CheckCircle className="h-16 w-16 text-white animate-spin" style={{ animationDuration: '0.5s' }} />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // For staff users, show enhanced interface with essential controls
   if (!isAdminView) {
     return (
-      <div className="p-4 max-w-7xl mx-auto">
+      <>
+        <SuccessAnimation />
+        <div className="p-4 max-w-7xl mx-auto">
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -801,7 +827,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   }
 
   return (
-    <div className="p-4 max-w-7xl mx-auto">
+    <>
+      <SuccessAnimation />
+      <div className="p-4 max-w-7xl mx-auto">
       <div className="mb-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
@@ -1212,9 +1240,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                 </div>
               </CardContent>
             </Card>
-          </>
-        )}
-
+        
         {/* Show message when no employee selected in admin view */}
         {isAdminView && !selectedEmployee && (
           <Card className="border-2 border-dashed border-gray-300">
@@ -1230,7 +1256,18 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             </CardContent>
           </Card>
         )}
+        </div>
+      </>
+    );
+  }
+
+  // Admin view with success animation (placeholder)
+  return (
+    <>
+      <SuccessAnimation />
+      <div className="p-4 max-w-7xl mx-auto">
+        <p>Admin timesheet view under construction</p>
       </div>
-    </div>
+    </>
   );
 }
