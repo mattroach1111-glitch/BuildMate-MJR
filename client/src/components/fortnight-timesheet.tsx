@@ -613,6 +613,50 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     return errors;
   };
 
+  // Validation for timesheet completion - all weekdays must have entries
+  const validateFortnightCompletion = () => {
+    const errors: string[] = [];
+    const missingDays: string[] = [];
+    
+    // Check each day in the fortnight
+    fortnightDays.forEach(day => {
+      const dateKey = format(day, 'yyyy-MM-dd');
+      const dayOfWeek = day.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+      
+      // Only validate Monday-Friday (1-5)
+      if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+        // Check if day has entries with hours > 0 from any source
+        let hasValidEntry = false;
+        
+        // Check saved entries from database
+        const savedEntries = Array.isArray(currentFortnightEntries) 
+          ? currentFortnightEntries.filter((entry: any) => 
+              format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey && 
+              parseFloat(entry.hours || '0') > 0
+            )
+          : [];
+        
+        // Check local unsaved entries
+        const localEntries = timesheetData[dateKey] || [];
+        const localValidEntries = Array.isArray(localEntries) 
+          ? localEntries.filter(entry => parseFloat(entry.hours || '0') > 0)
+          : [];
+        
+        hasValidEntry = savedEntries.length > 0 || localValidEntries.length > 0;
+        
+        if (!hasValidEntry) {
+          missingDays.push(format(day, 'EEE, MMM dd'));
+        }
+      }
+    });
+    
+    if (missingDays.length > 0) {
+      errors.push(`Missing entries for weekdays: ${missingDays.join(', ')}`);
+    }
+    
+    return errors;
+  };
+
   const saveAllEntries = async () => {
     console.log('Save All clicked, timesheetData:', timesheetData);
     
@@ -2001,7 +2045,19 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                       </div>
                     ) : (
                       <Button
-                        onClick={() => confirmTimesheetMutation.mutate()}
+                        onClick={() => {
+                          // Validate all weekdays are completed before confirming
+                          const completionErrors = validateFortnightCompletion();
+                          if (completionErrors.length > 0) {
+                            toast({
+                              title: "Incomplete Timesheet",
+                              description: completionErrors[0],
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          confirmTimesheetMutation.mutate();
+                        }}
                         disabled={confirmTimesheetMutation.isPending || getTotalHours() === 0}
                         className="bg-green-600 hover:bg-green-700"
                       >
