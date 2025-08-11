@@ -4,6 +4,7 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 
 ## Recent Changes
 - **August 11, 2025**: Fixed critical timesheet-to-job sheet synchronization issue affecting labor hour calculations. Resolved database field mapping problem in `updateLaborHoursFromTimesheet` function that prevented approved timesheet entries from properly updating labor costs in job sheets. System now correctly reflects staff hours across all job cost reports and billing documents.
+- **August 11, 2025**: Enhanced timesheet PDF generation to show actual detailed entries instead of empty templates. Updated `getTimesheetEntriesByPeriod` to include job information via left join, modified PDF generator to filter out zero-hour entries, and improved job detail display format. Cleared all test data (57 timesheet entries, reset 98 labor entries) to provide clean testing environment.
 
 # User Preferences
 
