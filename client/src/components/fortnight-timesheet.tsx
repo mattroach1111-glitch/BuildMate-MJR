@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft, Users, Plus, Trash2, Save, Clock, CheckCircle, Calendar, Lock, Unlock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft, Users, Plus, Trash2, Save, Clock, CheckCircle, Calendar, Lock, Unlock, Edit } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, addDays, parseISO } from "date-fns";
@@ -41,6 +41,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const [customAddresses, setCustomAddresses] = useState<{[key: string]: {houseNumber: string, streetAddress: string}}>({});
   const [showAddressDialog, setShowAddressDialog] = useState(false);
   const [addressDialogData, setAddressDialogData] = useState<{dayIndex: number, entryIndex: number}>({dayIndex: -1, entryIndex: -1});
+  const [showEditAddressDialog, setShowEditAddressDialog] = useState(false);
+  const [editAddressData, setEditAddressData] = useState<{entryId: string, currentAddress: string}>({entryId: '', currentAddress: ''});
   const [currentAddress, setCurrentAddress] = useState({houseNumber: '', streetAddress: ''});
   const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null); // Single timeout for all auto-saves
 
@@ -265,6 +267,96 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       }, 100);
     }
   }, [showAddressDialog, addressDialogData]);
+
+  // Effect to handle edit address dialog
+  useEffect(() => {
+    if (showEditAddressDialog && editAddressData.entryId) {
+      // Create edit dialog
+      const dialog = document.createElement('div');
+      dialog.id = 'edit-address-dialog';
+      dialog.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
+      dialog.innerHTML = `
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+          <h3 class="text-lg font-semibold mb-4">Edit Custom Address</h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Current Address:</label>
+              <p class="text-sm text-gray-600 mb-2">${editAddressData.currentAddress}</p>
+              <label class="block text-sm font-medium mb-1">House Number:</label>
+              <input type="text" id="edit-house-input" class="w-full border rounded px-3 py-2" placeholder="123" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Street Address:</label>
+              <input type="text" id="edit-street-input" class="w-full border rounded px-3 py-2" placeholder="Main Street" />
+            </div>
+          </div>
+          <div class="flex gap-2 mt-6">
+            <button id="edit-address-save-btn" class="flex-1 bg-blue-500 text-white rounded px-4 py-2 hover:bg-blue-600">Save Changes</button>
+            <button id="edit-address-cancel-btn" class="flex-1 bg-gray-500 text-white rounded px-4 py-2 hover:bg-gray-600">Cancel</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(dialog);
+      
+      const houseInput = document.getElementById('edit-house-input') as HTMLInputElement;
+      const streetInput = document.getElementById('edit-street-input') as HTMLInputElement;
+      const saveBtn = document.getElementById('edit-address-save-btn');
+      const cancelBtn = document.getElementById('edit-address-cancel-btn');
+      
+      // Pre-fill with current address parts
+      const addressParts = editAddressData.currentAddress.split(' ');
+      if (addressParts.length >= 2) {
+        houseInput.value = addressParts[0];
+        streetInput.value = addressParts.slice(1).join(' ');
+      }
+      
+      houseInput?.focus();
+      
+      // Cancel button
+      cancelBtn?.addEventListener('click', () => {
+        dialog.remove();
+        setShowEditAddressDialog(false);
+        setEditAddressData({entryId: '', currentAddress: ''});
+      });
+      
+      // Save button
+      saveBtn?.addEventListener('click', () => {
+        const houseNumber = houseInput?.value || '';
+        const streetAddress = streetInput?.value || '';
+        
+        if (!houseNumber.trim() || !streetAddress.trim()) {
+          alert('Please enter both house number and street address');
+          return;
+        }
+        
+        const newAddress = houseNumber.trim() + ' ' + streetAddress.trim();
+        const newDescription = `CUSTOM_ADDRESS: ${newAddress}`;
+        
+        // Update the entry in database
+        editSavedEntry(editAddressData.entryId, 'description', newDescription);
+        
+        toast({
+          title: "Success",
+          description: "Custom address updated successfully",
+        });
+        
+        dialog.remove();
+        setShowEditAddressDialog(false);
+        setEditAddressData({entryId: '', currentAddress: ''});
+      });
+      
+      // Enter key support
+      const handleEnter = (e: KeyboardEvent) => {
+        if (e.key === 'Enter') {
+          saveBtn?.click();
+        }
+      };
+      
+      houseInput?.addEventListener('keydown', handleEnter);
+      streetInput?.addEventListener('keydown', handleEnter);
+    }
+  }, [showEditAddressDialog, editAddressData]);
 
   // Function to unlock weekend for editing
   const unlockWeekend = (dateKey: string) => {
@@ -679,6 +771,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   // Functions for editing and deleting saved entries
   const editSavedEntry = (id: string, field: string, value: string) => {
     editTimesheetMutation.mutate({ id, field, value });
+  };
+
+  // Function to edit custom address
+  const editCustomAddress = (entryId: string, currentAddress: string) => {
+    setEditAddressData({ entryId, currentAddress });
+    setShowEditAddressDialog(true);
   };
 
   const deleteSavedEntry = (id: string) => {
@@ -1188,15 +1286,33 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               </Button>
                             )}
                             {entry?.id && !entry?.approved && (
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => deleteSavedEntry(entry.id)}
-                                className="ml-1"
-                                data-testid={`button-delete-entry-${entry.id}`}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => deleteSavedEntry(entry.id)}
+                                  className="ml-1"
+                                  data-testid={`button-delete-entry-${entry.id}`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                                {/* Edit button for custom addresses - admin only */}
+                                {isAdminView && entry?.description && entry.description.startsWith('CUSTOM_ADDRESS:') && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const address = entry.description.replace('CUSTOM_ADDRESS: ', '');
+                                      editCustomAddress(entry.id, address);
+                                    }}
+                                    className="ml-1"
+                                    data-testid={`button-edit-address-${entry.id}`}
+                                    title="Edit custom address"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </>
                             )}
                             {entry?.id ? (
                               <span className="text-xs text-green-600 flex items-center">
