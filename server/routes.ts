@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { db } from "./db";
 import { timesheetEntries, laborEntries, users } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { ObjectStorageService } from "./objectStorage";
 import { TimesheetPDFGenerator } from "./pdfGenerator";
 import { GoogleDriveService } from "./googleDriveService";
@@ -1111,6 +1111,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error confirming timesheet:", error);
       res.status(500).json({ message: "Failed to confirm timesheet" });
+    }
+  });
+
+  // Admin endpoint to delete pending staff user
+  app.delete("/api/users/:userId", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+
+      // Check if user exists and get their details
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Prevent deletion of admin users (safety check)
+      if (user.role === 'admin') {
+        return res.status(403).json({ message: "Cannot delete admin users" });
+      }
+
+      // Check if user has any timesheet entries
+      const timesheetCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(timesheetEntries)
+        .where(eq(timesheetEntries.staffId, userId));
+
+      if (timesheetCount[0]?.count > 0) {
+        return res.status(400).json({ 
+          message: "Cannot delete user with existing timesheet entries. Please clear entries first." 
+        });
+      }
+
+      // Delete the user
+      await db
+        .delete(users)
+        .where(eq(users.id, userId));
+
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  // Admin endpoint to reset user assignment (unlink from employee)
+  app.patch("/api/users/:userId/reset-assignment", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+
+      // Reset the user assignment
+      await db
+        .update(users)
+        .set({ 
+          employeeId: null,
+          isAssigned: false,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId));
+
+      res.json({ message: "User assignment reset successfully" });
+    } catch (error) {
+      console.error("Error resetting user assignment:", error);
+      res.status(500).json({ message: "Failed to reset user assignment" });
     }
   });
 

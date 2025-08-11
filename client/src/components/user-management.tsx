@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Users, Crown, UserCheck, Shield, AlertTriangle, UserPlus, Link } from "lucide-react";
+import { Users, Crown, UserCheck, Shield, AlertTriangle, UserPlus, Link, Trash2, RotateCcw } from "lucide-react";
 import type { User, Employee } from "@shared/schema";
 
 export function UserManagement() {
@@ -115,6 +115,52 @@ export function UserManagement() {
       updateRoleMutation.mutate({ userId: selectedUserId, role: selectedRole });
     }
   };
+
+  // Delete user mutation
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return apiRequest("DELETE", `/api/users/${userId}`);
+    },
+    onSuccess: (_, userId) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      const deletedUser = users?.find(u => u.id === userId);
+      
+      toast({
+        title: "User Deleted",
+        description: `${deletedUser?.firstName} ${deletedUser?.lastName} has been removed from the system`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Delete Failed",
+        description: error.message || "Failed to delete user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Reset assignment mutation
+  const resetAssignmentMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return apiRequest("PATCH", `/api/users/${userId}/reset-assignment`);
+    },
+    onSuccess: (_, userId) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      const resetUser = users?.find(u => u.id === userId);
+      
+      toast({
+        title: "Assignment Reset",
+        description: `${resetUser?.firstName} ${resetUser?.lastName} has been unlinked from their employee record`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Reset Failed",
+        description: error.message || "Failed to reset user assignment",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleUserEmployeeAssignment = () => {
     if (selectedUserId && selectedEmployeeId) {
@@ -243,6 +289,86 @@ export function UserManagement() {
                         </Badge>
                       )}
                     </div>
+                  </div>
+                  
+                  {/* Action buttons */}
+                  <div className="flex items-center gap-2 ml-4">
+                    {/* Reset Assignment Button (only show if user has an assignment) */}
+                    {user.employeeId && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 border-orange-200"
+                            data-testid={`button-reset-assignment-${user.id}`}
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Reset User Assignment</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to unlink <strong>{user.firstName} {user.lastName}</strong> from their employee record?
+                              <br /><br />
+                              This will remove their connection to the employee record for testing purposes. They will need to be reassigned to track timesheets properly.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => resetAssignmentMutation.mutate(user.id)}
+                              disabled={resetAssignmentMutation.isPending}
+                              className="bg-orange-600 hover:bg-orange-700"
+                            >
+                              {resetAssignmentMutation.isPending ? "Resetting..." : "Reset Assignment"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                    
+                    {/* Delete User Button (only show for staff users without timesheets) */}
+                    {user.role === 'staff' && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                            data-testid={`button-delete-user-${user.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete User</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to permanently delete <strong>{user.firstName} {user.lastName}</strong>?
+                              <br /><br />
+                              <div className="p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border-l-4 border-red-400 mt-3">
+                                <span className="text-red-800 dark:text-red-200 text-sm block">
+                                  <strong>Warning:</strong> This action cannot be undone. The user will be completely removed from the system.
+                                  If they have timesheet entries, deletion will be prevented.
+                                </span>
+                              </div>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => deleteUserMutation.mutate(user.id)}
+                              disabled={deleteUserMutation.isPending}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              {deleteUserMutation.isPending ? "Deleting..." : "Delete User"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                 </div>
               ))
