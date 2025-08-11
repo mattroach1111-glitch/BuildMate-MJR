@@ -155,18 +155,18 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         const { dayIndex, entryIndex } = addressDialogData;
         const targetDate = addDays(currentFortnight.start, dayIndex);
         
-        // Create unique jobId for custom address and store address in description
-        const customJobId = `custom-address-${Date.now()}`;
+        // Use special marker for custom addresses and store address in description
+        const customAddressMarker = 'custom-address';
         console.log('🏠 SAVING CUSTOM ADDRESS:', {
           fullAddress,
-          customJobId,
+          customAddressMarker,
           targetDate: targetDate.toISOString(),
           dayIndex,
           entryIndex
         });
         
-        // Update local state first
-        handleCellChange(targetDate, entryIndex, 'jobId', customJobId);
+        // Update local state first - use custom marker for local tracking
+        handleCellChange(targetDate, entryIndex, 'jobId', customAddressMarker);
         handleCellChange(targetDate, entryIndex, 'description', fullAddress);
         
         // Get the updated entry from local state
@@ -174,12 +174,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         const dayEntries = timesheetData[dateKey] || [];
         const entry = dayEntries[entryIndex] || {};
         
-        // Save to database immediately - ensure hours is not zero for valid entry
+        // Save to database immediately - use null jobId for custom addresses to avoid foreign key constraint
         const entryData = {
           staffId: isAdminView ? selectedEmployee : user?.id,
           date: dateKey,
-          jobId: customJobId,
-          description: fullAddress,
+          jobId: null, // Use null to avoid foreign key constraint
+          description: `CUSTOM_ADDRESS: ${fullAddress}`, // Prefix to identify custom addresses
           hours: entry.hours || '1', // Default to 1 hour so entry is valid
           materials: entry.materials || ''
         };
@@ -954,7 +954,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         </td>
                         <td className="p-3">
                           <Select
-                            value={entry?.jobId || 'no-job'}
+                            value={
+                              // Handle custom addresses properly
+                              entry?.jobId === 'custom-address' || (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:')) 
+                                ? 'custom-address' 
+                                : entry?.jobId || 'no-job'
+                            }
                             onValueChange={(value) => {
                               if (isWeekend && !isWeekendUnlocked(dateKey)) {
                                 console.log(`🚫 STAFF WEEKEND JOB BLOCKED: ${dateKey} - Weekend is locked!`);
@@ -981,7 +986,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))}
                           >
                             <SelectTrigger className={`min-w-40 ${isWeekend ? 'text-white bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}>
-                              <SelectValue placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "Select job"} />
+                              <SelectValue 
+                                placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "Select job"}
+                              />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="no-job">No job</SelectItem>
@@ -991,6 +998,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               <SelectItem value="annual-leave">Annual Leave</SelectItem>
                               <SelectItem value="leave-without-pay">Leave without pay</SelectItem>
                               <SelectItem value="other-address">Other Address (Enter manually)</SelectItem>
+                              {/* Show custom address if it exists */}
+                              {(entry?.jobId === 'custom-address' || (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:'))) && (
+                                <SelectItem value="custom-address">
+                                  {entry?.description 
+                                    ? entry.description.replace('CUSTOM_ADDRESS: ', '')
+                                    : 'Custom Address'
+                                  }
+                                </SelectItem>
+                              )}
                               {jobsLoading ? (
                                 <SelectItem value="loading" disabled>Loading jobs...</SelectItem>
                               ) : jobsError ? (

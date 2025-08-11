@@ -1,0 +1,160 @@
+🏠 OTHER ADDRESS SELECTED - Opening dialog for dayIndex: 2 entryIndex: 0
+Console.js:61 🏠 BEFORE setState - showAddressDialog: false
+Console.js:61 🏠 AFTER setState call - should show dialog now
+Console.js:61 Staff filter: {entryDate: '2025-09-05', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-09-04', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-09-03', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-09-02', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-09-01', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-30', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-29', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-28', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-27', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-26', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-23', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-22', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-21', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-20', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-19', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-18', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-16', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-16', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-15', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-14', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-13', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-12', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-11', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Current fortnight entries: []
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-08 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-09 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-10 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-11 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-12 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-13 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-14 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-15 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-16 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-17 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-18 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-19 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-20 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-21 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🏠 DIALOG STATE CHANGED: true Data: {dayIndex: 2, entryIndex: 0}
+Console.js:61 🏠 DIALOG SHOULD BE VISIBLE NOW!
+Console.js:61 🏠 CREATING ADDRESS INPUT DIALOG...
+Console.js:61 🏠 ADDRESS DIALOG CREATED SUCCESSFULLY
+Console.js:61 🏠 REACT PORTAL DIALOG IN DOM: null
+Console.js:61 🏠 DIRECT DOM DIALOG IN DOM: null
+Console.js:61 🏠 SAVING CUSTOM ADDRESS: 12 gfd
+Console.js:61 🏠 SAVING CUSTOM ADDRESS: {fullAddress: '12 gfd', customJobId: 'custom-address-1754906484128', targetDate: '2025-09-09T14:00:00.000Z', dayIndex: 2, entryIndex: 0}
+Console.js:61 🏠 SAVING TO DATABASE: {staffId: '46214248', date: '2025-09-10', jobId: 'custom-address-1754906484128', description: '12 gfd', hours: '7', …}
+Console.js:61 🏠 CUSTOM ADDRESS SAVED - Database save triggered
+Console.js:61 Staff filter: {entryDate: '2025-09-05', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-09-04', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-09-03', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-09-02', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-09-01', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-30', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-29', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-28', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-27', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-26', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-23', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-22', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-21', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-20', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-19', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-18', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-16', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-16', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-15', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-14', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-13', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-12', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-11', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Current fortnight entries: []
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-08 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-09 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-10 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-11 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-12 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-13 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-14 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-15 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-16 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-17 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-18 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-19 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-20 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-21 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🏠 DIALOG STATE CHANGED: false Data: {dayIndex: -1, entryIndex: -1}
+injected.js:253  POST https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/api/timesheet 500 (Internal Server Error)
+window.fetch @ Network.js:219
+apply @ injected.js:253
+apiRequest @ queryClient.ts:16
+mutationFn @ fortnight-timesheet.tsx:355
+fn @ @tanstack_react-query.js?v=b2f22b93:1189
+run @ @tanstack_react-query.js?v=b2f22b93:494
+start @ @tanstack_react-query.js?v=b2f22b93:536
+execute @ @tanstack_react-query.js?v=b2f22b93:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=b2f22b93:2630
+(anonymous) @ @tanstack_react-query.js?v=b2f22b93:3295
+(anonymous) @ fortnight-timesheet.tsx:188Understand this error
+Console.js:61 🏠 DATABASE SAVE ERROR: Error: 500: {"message":"Failed to create timesheet entry"}
+    at throwIfResNotOk (queryClient.ts:6:11)
+    at async apiRequest (queryClient.ts:24:3)
+    at async Object.mutationFn (fortnight-timesheet.tsx:355:14)
+Mt.forEach.n.<computed> @ Console.js:61
+onError @ fortnight-timesheet.tsx:195
+(anonymous) @ @tanstack_react-query.js?v=b2f22b93:2654
+batch @ @tanstack_react-query.js?v=b2f22b93:583
+notify_fn3 @ @tanstack_react-query.js?v=b2f22b93:2645
+onMutationUpdate @ @tanstack_react-query.js?v=b2f22b93:2612
+(anonymous) @ @tanstack_react-query.js?v=b2f22b93:1340
+(anonymous) @ @tanstack_react-query.js?v=b2f22b93:1339
+batch @ @tanstack_react-query.js?v=b2f22b93:583
+dispatch_fn2 @ @tanstack_react-query.js?v=b2f22b93:1338
+execute @ @tanstack_react-query.js?v=b2f22b93:1277
+await in execute
+mutate @ @tanstack_react-query.js?v=b2f22b93:2630
+(anonymous) @ @tanstack_react-query.js?v=b2f22b93:3295
+(anonymous) @ fortnight-timesheet.tsx:188Understand this error
+Console.js:61 Staff filter: {entryDate: '2025-09-05', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-09-04', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-09-03', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-09-02', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-09-01', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-30', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-29', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-28', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-27', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-26', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-23', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-22', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-21', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-20', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-19', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-18', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-16', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-16', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-15', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-14', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-13', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-12', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Staff filter: {entryDate: '2025-08-11', isInFortnight: false, fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21'}
+Console.js:61 Current fortnight entries: []
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-08 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-09 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-10 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-11 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-12 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-13 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-14 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-15 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-16 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-17 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-18 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-19 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-20 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-09-21 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=
