@@ -294,11 +294,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       return;
     }
 
-    // Clear local data first to avoid display conflicts
+    // Clear local data and refresh to ensure all data is up to date
     setTimesheetData({});
-    
-    // Final refresh to ensure all data is up to date
     await refetchTimesheetEntries();
+    
+    console.log('Successfully saved and cleared local data');
 
     toast({
       title: "Timesheet Saved",
@@ -317,26 +317,16 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   };
 
   const getTotalHours = () => {
-    // Sum hours from saved timesheet entries 
+    // Only sum hours from saved timesheet entries to avoid double-counting
+    // Form data (timesheetData) should only be used for preview before saving
     const savedHours = Array.isArray(currentFortnightEntries) ? 
       currentFortnightEntries.reduce((total: number, entry: any) => {
         const hours = parseFloat(entry.hours);
         return total + (isNaN(hours) ? 0 : hours);
       }, 0) : 0;
     
-    // Sum hours from unsaved form data
-    const formHours = Object.values(timesheetData).reduce((total: number, dayEntries: any) => {
-      if (Array.isArray(dayEntries)) {
-        return total + dayEntries.reduce((dayTotal: number, entry: any) => {
-          const hours = parseFloat(entry.hours);
-          return dayTotal + (isNaN(hours) ? 0 : hours);
-        }, 0);
-      }
-      return total;
-    }, 0);
-    
-    const totalHours = savedHours + formHours;
-    return isNaN(totalHours) ? 0 : totalHours;
+    console.log(`Total hours calculation: ${currentFortnightEntries?.length || 0} entries = ${savedHours} hours`);
+    return isNaN(savedHours) ? 0 : savedHours;
   };
 
   // Check if current fortnight is confirmed (all entries approved)
