@@ -1494,8 +1494,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   
                                   if (value === 'other-address') {
                                     // Show address input dialog
-                                    setShowAddressDialog({show: true, dayIndex, entryIndex});
-                                    setCurrentAddress({houseNumber: '', streetAddress: ''});
+                                    console.log('🏠 OTHER ADDRESS SELECTED - Opening dialog for dayIndex:', dayIndex, 'entryIndex:', entryIndex);
+                                    console.log('🏠 BEFORE setState - showAddressDialog:', showAddressDialog);
+                                    setShowAddressDialog(true);
+                                    setAddressDialogData({dayIndex, entryIndex});
+                                    console.log('🏠 AFTER setState call - should show dialog now');
                                     return;
                                   }
                                   
@@ -1523,8 +1526,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                       
                                       if (leaveTypes[entry.jobId]) {
                                         return leaveTypes[entry.jobId];
-                                      } else if (entry.jobId.startsWith('custom-')) {
-                                        return entry.materials || 'Custom Address';
+                                      } else if (entry.jobId && entry.address) {
+                                        return entry.address;
                                       } else {
                                         const job = Array.isArray(jobs) ? jobs.find((j: any) => j.id === entry.jobId) : null;
                                         return job?.jobAddress || job?.address || job?.jobName || job?.name || `Job ${entry.jobId}`;
