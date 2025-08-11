@@ -1149,6 +1149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
   // Get timesheet entries for a specific period and staff member
   app.get("/api/timesheet-entries/:staffId/:startDate/:endDate", isAuthenticated, async (req: any, res) => {
     try {
