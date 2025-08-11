@@ -1267,9 +1267,10 @@ export default function AdminDashboard() {
         </div>
 
         {/* Content Sections */}
-        <Tabs value={activeTab} className="w-full">
+        <div className="w-full">
 
-          <TabsContent value="jobs" className="space-y-6">
+          {activeTab === "jobs" && (
+          <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h2 className="text-xl font-semibold">Job Management</h2>
             <Dialog open={isCreateJobOpen} onOpenChange={setIsCreateJobOpen}>
@@ -2279,11 +2280,10 @@ export default function AdminDashboard() {
               </Button>
             </Card>
           )}
-        </TabsContent>
 
-        {/* Timesheets Tab */}
-        <TabsContent value="timesheets" className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          {activeTab === "timesheets" && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h2 className="text-xl font-semibold">Fortnight Timesheet Management</h2>
             <Dialog open={isCreateTimesheetOpen} onOpenChange={setIsCreateTimesheetOpen}>
               <DialogTrigger asChild>
@@ -2927,10 +2927,116 @@ export default function AdminDashboard() {
               </p>
             </Card>
           )}
-        </TabsContent>
 
-        {/* Staff View Tab */}
-        <TabsContent value="staff-view" className="space-y-6" data-testid="content-staff-view">
+          {activeTab === "employees" && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <h2 className="text-xl font-semibold">Staff Management</h2>
+              <Dialog open={isCreateEmployeeOpen} onOpenChange={setIsCreateEmployeeOpen}>
+                <DialogTrigger asChild>
+                  <Button className="w-full sm:w-auto" data-testid="button-create-employee">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Staff Member
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md mx-4 sm:max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Add Staff Member</DialogTitle>
+                  </DialogHeader>
+                  <Form {...employeeForm}>
+                    <form onSubmit={employeeForm.handleSubmit(onEmployeeSubmit)} className="space-y-4">
+                      <FormField
+                        control={employeeForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter staff member name" {...field} data-testid="input-employee-name" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={employeeForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="Enter email address" {...field} data-testid="input-employee-email" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <div className="flex gap-2 pt-4">
+                        <Button type="submit" disabled={createEmployeeMutation.isPending} data-testid="button-save-employee">
+                          {createEmployeeMutation.isPending ? "Adding..." : "Add Staff Member"}
+                        </Button>
+                        <Button type="button" variant="outline" onClick={() => setIsCreateEmployeeOpen(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {employeesLoading ? (
+              <div className="grid gap-4">
+                {[...Array(3)].map((_, i) => (
+                  <Card key={i}>
+                    <CardContent className="p-4">
+                      <div className="animate-pulse space-y-3">
+                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : employees && employees.length > 0 ? (
+              <div className="grid gap-4">
+                {employees.map((employee) => (
+                  <Card key={employee.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium">{employee.name}</h3>
+                          <p className="text-sm text-muted-foreground">{employee.email}</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => deleteEmployeeMutation.mutate(employee.id)}
+                          disabled={deleteEmployeeMutation.isPending}
+                          data-testid={`button-delete-employee-${employee.id}`}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card className="p-8 text-center">
+                <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">No staff members yet</h3>
+                <p className="text-muted-foreground mb-4">Add your first staff member to get started</p>
+                <Button onClick={() => setIsCreateEmployeeOpen(true)} data-testid="button-add-first-employee">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add First Staff Member
+                </Button>
+              </Card>
+            )}
+          )}
+
+          {activeTab === "staff-view" && (
+          <div className="space-y-6" data-testid="content-staff-view">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <div>
               <h2 className="text-xl font-semibold" data-testid="text-staff-preview-title">Staff Dashboard Preview</h2>
