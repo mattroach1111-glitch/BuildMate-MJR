@@ -1041,7 +1041,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         const dateKey = format(day, 'yyyy-MM-dd');
                         const isWeekend = day.getDay() === 0 || day.getDay() === 6;
                         const isWeekendLocked = isWeekend && !isWeekendUnlocked(dateKey);
-                        console.log(`🔵 WEEKEND CHECK: ${format(day, 'EEE, MMM dd')} - Day: ${day.getDay()}, IsWeekend: ${isWeekend}, Unlocked: ${isWeekendUnlocked(dateKey)}, Locked: ${isWeekendLocked}`);
+                        if (isWeekend) {
+                          console.log(`🔴 WEEKEND DETECTED: ${format(day, 'EEE, MMM dd')} - Day: ${day.getDay()}, IsWeekend: ${isWeekend}, Unlocked: ${isWeekendUnlocked(dateKey)}, Locked: ${isWeekendLocked}`);
+                        }
                         const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
                         const existingEntries = Array.isArray(currentFortnightEntries) ? currentFortnightEntries.filter((entry: any) => 
                           format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
@@ -1078,8 +1080,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           entriesToShow = [{}];
                         }
                         
-                        return entriesToShow.map((entry: any, entryIndex: number) => (
-                          <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'weekend-row' : ''}`}>
+                        return entriesToShow.map((entry: any, entryIndex: number) => {
+                          if (isWeekend) {
+                            console.log(`🎨 APPLYING WEEKEND STYLING: ${format(day, 'EEE, MMM dd')} - Classes: border-b weekend-row`);
+                          }
+                          return (
+                          <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'weekend-row' : ''}`} style={isWeekend ? { backgroundColor: '#1e40af' } : {}}>
                             <td className="p-3">
                               {entryIndex === 0 && (
                                 <div className={`font-medium ${isWeekend ? 'text-white' : ''} flex items-center justify-between`}>
@@ -1247,7 +1253,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               </div>
                             </td>
                           </tr>
-                        ));
+                          );
+                        });
                       })}
                     </tbody>
                   </table>

@@ -76,32 +76,32 @@
   }
 }
 
-/* Weekend highlighting for timesheets - Royal Blue */
-tr.weekend-row {
+/* Weekend highlighting for timesheets - Royal Blue with high specificity */
+table tr.weekend-row {
   background-color: #1e40af !important; /* Royal blue background */
   border: 2px solid #1d4ed8 !important;
   border-left: 4px solid #1d4ed8 !important;
 }
 
-tr.weekend-row td {
+table tr.weekend-row td {
   background-color: #1e40af !important; /* Royal blue background for cells */
   color: white !important; /* White text for better contrast */
   border-color: #1d4ed8 !important;
 }
 
-tr.weekend-row input,
-tr.weekend-row select,
-tr.weekend-row textarea {
+table tr.weekend-row input,
+table tr.weekend-row select,
+table tr.weekend-row textarea {
   background-color: white !important; /* White input backgrounds */
   color: black !important; /* Black text in inputs */
   border-color: #1e40af !important; /* Royal blue borders for inputs */
 }
 
-tr.weekend-row input::placeholder {
+table tr.weekend-row input::placeholder {
   color: #64748b !important; /* Light blue placeholder text */
 }
 
-tr.weekend-row button {
+table tr.weekend-row button {
   color: white !important; /* White text for buttons on weekend rows */
 }
 
