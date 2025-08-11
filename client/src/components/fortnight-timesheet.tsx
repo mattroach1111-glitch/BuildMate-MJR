@@ -1053,12 +1053,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         }
                         
                         return entriesToShow.map((entry: any, entryIndex: number) => (
-                          <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'bg-blue-200 border-blue-300' : ''}`}>
+                          <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'bg-blue-600 border-blue-700' : ''}`}>
                             <td className="p-3">
                               {entryIndex === 0 && (
-                                <div className={`font-medium ${isWeekend ? 'text-blue-900' : ''}`}>
+                                <div className={`font-medium ${isWeekend ? 'text-white' : ''}`}>
                                   {format(day, 'EEE, MMM dd')}
-                                  {isWeekend && <span className="text-xs text-blue-800 ml-2 font-semibold">(Weekend)</span>}
+                                  {isWeekend && <span className="text-xs text-white ml-2 font-semibold">(Weekend)</span>}
                                 </div>
                               )}
                             </td>
@@ -1077,7 +1077,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     handleCellChange(day, entryIndex, 'hours', e.target.value);
                                   }
                                 }}
-                                className="w-20"
+                                className={`w-20 ${isWeekend ? 'text-white placeholder:text-blue-200' : ''}`}
                                 disabled={entry?.approved} // Only disable if approved
                               />
                             </td>
@@ -1095,7 +1095,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 }}
                                 disabled={entry?.approved} // Only disable if approved
                               >
-                                <SelectTrigger className="min-w-40">
+                                <SelectTrigger className={`min-w-40 ${isWeekend ? 'text-white border-blue-400' : ''}`}>
                                   <SelectValue placeholder="Select job" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1134,7 +1134,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     handleCellChange(day, entryIndex, 'materials', e.target.value);
                                   }
                                 }}
-                                className="min-w-32"
+                                className={`min-w-32 ${isWeekend ? 'text-white placeholder:text-blue-200' : ''}`}
                                 disabled={entry?.approved} // Only disable if approved
                               />
                             </td>
