@@ -75,14 +75,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     }
   }, [selectedEmployeeId]);
 
-  // Clear local form data if fortnight is confirmed to prevent display conflicts
-  useEffect(() => {
-    if (isFortnightConfirmed()) {
-      setTimesheetData({});
-      console.log('Cleared local timesheet data - fortnight is confirmed');
-    }
-  }, [currentFortnightEntries]);
-
   // Filter entries for current fortnight and selected employee (if admin view)
   const currentFortnightEntries = Array.isArray(timesheetEntries) ? timesheetEntries.filter((entry: any) => {
     try {
@@ -113,6 +105,18 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   }) : [];
 
   console.log('Current fortnight entries:', currentFortnightEntries);
+
+  // Clear local form data if fortnight is confirmed to prevent display conflicts
+  useEffect(() => {
+    const isConfirmed = Array.isArray(currentFortnightEntries) && 
+                       currentFortnightEntries.length > 0 && 
+                       currentFortnightEntries.every((entry: any) => entry.approved === true);
+    
+    if (isConfirmed) {
+      setTimesheetData({});
+      console.log('Cleared local timesheet data - fortnight is confirmed');
+    }
+  }, [currentFortnightEntries]);
 
   // Mutations for editing and deleting saved entries
   const editTimesheetMutation = useMutation({
