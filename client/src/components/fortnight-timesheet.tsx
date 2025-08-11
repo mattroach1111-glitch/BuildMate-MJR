@@ -600,6 +600,18 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             errors.push(`${format(parseISO(dateKey), 'MMM dd')}: Leave without pay must have 0 hours`);
           }
           
+          // Validation 1a: Sick leave, annual leave, personal leave, and Tafe must have hours > 0
+          const hourRequiredLeaveTypes = ['sick-leave', 'annual-leave', 'personal-leave', 'tafe'];
+          if (hourRequiredLeaveTypes.includes(jobId) && hours <= 0) {
+            const leaveTypeNames: Record<string, string> = {
+              'sick-leave': 'Sick Leave',
+              'annual-leave': 'Annual Leave', 
+              'personal-leave': 'Personal Leave',
+              'tafe': 'Tafe'
+            };
+            errors.push(`${format(parseISO(dateKey), 'MMM dd')}: ${leaveTypeNames[jobId]} must have hours greater than 0`);
+          }
+          
           // Validation 2: If hours > 0, must have a job selected (not "no-job") 
           // Exception: Special leave types (RDO, sick leave, etc.) and Tafe are allowed even with no actual job
           const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'];
@@ -1382,7 +1394,19 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                 </div>
                 {completionPercentage >= 100 && (
                   <Button 
-                    onClick={() => confirmTimesheetMutation.mutate()}
+                    onClick={() => {
+                      // Check for low hours warning
+                      const totalHours = getTotalHours();
+                      if (totalHours < 76) {
+                        const shouldContinue = window.confirm(
+                          `Total hours: ${totalHours.toFixed(2)}\n\nHours are below 76. Are you sure you're ready for submitting?`
+                        );
+                        if (!shouldContinue) {
+                          return;
+                        }
+                      }
+                      confirmTimesheetMutation.mutate();
+                    }}
                     className="bg-blue-600 hover:bg-blue-700"
                     disabled={confirmTimesheetMutation.isPending}
                     data-testid="button-submit-timesheet"
@@ -2056,6 +2080,18 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             });
                             return;
                           }
+                          
+                          // Check for low hours warning
+                          const totalHours = getTotalHours();
+                          if (totalHours < 76) {
+                            const shouldContinue = window.confirm(
+                              `Total hours: ${totalHours.toFixed(2)}\n\nHours are below 76. Are you sure you're ready for submitting?`
+                            );
+                            if (!shouldContinue) {
+                              return;
+                            }
+                          }
+                          
                           confirmTimesheetMutation.mutate();
                         }}
                         disabled={confirmTimesheetMutation.isPending || getTotalHours() === 0}
