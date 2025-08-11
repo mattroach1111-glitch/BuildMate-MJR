@@ -50,40 +50,127 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     if (showAddressDialog) {
       console.log('🏠 DIALOG SHOULD BE VISIBLE NOW!');
       
-      // Try direct DOM manipulation since React seems to be failing
-      console.log('🏠 ATTEMPTING DIRECT DOM MANIPULATION...');
+      // Use direct DOM manipulation since React rendering is failing
+      console.log('🏠 CREATING ADDRESS INPUT DIALOG...');
       
-      // Remove any existing DOM dialog
-      const existingDialog = document.getElementById('direct-dom-dialog');
+      // Remove any existing dialog
+      const existingDialog = document.getElementById('address-input-dialog');
       if (existingDialog) {
         existingDialog.remove();
       }
       
-      // Create dialog with direct DOM manipulation
+      // Create proper address input dialog
       const dialog = document.createElement('div');
-      dialog.id = 'direct-dom-dialog';
+      dialog.id = 'address-input-dialog';
       dialog.style.cssText = `
         position: fixed;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
         z-index: 99999;
-        background-color: green;
-        color: white;
-        padding: 20px;
-        border: 5px solid orange;
-        font-size: 20px;
-        font-weight: bold;
-        border-radius: 10px;
+        background-color: white;
+        color: black;
+        padding: 24px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        min-width: 400px;
+        font-family: system-ui, -apple-system, sans-serif;
       `;
+      
       dialog.innerHTML = `
-        🟢 DIRECT DOM DIALOG 🟢<br/>
-        This bypasses React entirely!<br/>
-        <button onclick="this.parentElement.remove(); console.log('🏠 DIRECT DOM DIALOG CLOSED');">Close Me</button>
+        <div style="margin-bottom: 16px;">
+          <h3 style="font-size: 18px; font-weight: 600; margin: 0 0 8px 0;">Enter Custom Address</h3>
+          <p style="font-size: 14px; color: #64748b; margin: 0;">Enter the address where you worked</p>
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">House Number</label>
+          <input 
+            type="text" 
+            id="house-number-input"
+            placeholder="e.g. 123"
+            style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;"
+          />
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">Street Address</label>
+          <input 
+            type="text" 
+            id="street-address-input"
+            placeholder="e.g. Main Street"
+            style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;"
+          />
+        </div>
+        
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button 
+            id="cancel-address-btn"
+            style="padding: 8px 16px; border: 1px solid #d1d5db; background: white; color: #374151; border-radius: 6px; font-size: 14px; cursor: pointer;"
+          >
+            Cancel
+          </button>
+          <button 
+            id="save-address-btn"
+            style="padding: 8px 16px; border: none; background: #3b82f6; color: white; border-radius: 6px; font-size: 14px; cursor: pointer;"
+          >
+            Save Address
+          </button>
+        </div>
       `;
       
       document.body.appendChild(dialog);
-      console.log('🏠 DIRECT DOM DIALOG CREATED:', dialog);
+      
+      // Add event listeners
+      const cancelBtn = document.getElementById('cancel-address-btn');
+      const saveBtn = document.getElementById('save-address-btn');
+      const houseInput = document.getElementById('house-number-input') as HTMLInputElement;
+      const streetInput = document.getElementById('street-address-input') as HTMLInputElement;
+      
+      // Focus first input
+      houseInput?.focus();
+      
+      // Cancel button
+      cancelBtn?.addEventListener('click', () => {
+        dialog.remove();
+        setShowAddressDialog(false);
+        setAddressDialogData({dayIndex: -1, entryIndex: -1});
+      });
+      
+      // Save button
+      saveBtn?.addEventListener('click', () => {
+        const houseNumber = houseInput?.value || '';
+        const streetAddress = streetInput?.value || '';
+        
+        if (!houseNumber.trim() || !streetAddress.trim()) {
+          alert('Please enter both house number and street address');
+          return;
+        }
+        
+        const fullAddress = houseNumber.trim() + ' ' + streetAddress.trim();
+        console.log('🏠 SAVING CUSTOM ADDRESS:', fullAddress);
+        
+        // Update the address in the timesheet entry
+        const { dayIndex, entryIndex } = addressDialogData;
+        updateTimesheetEntry(dayIndex, entryIndex, 'address', fullAddress);
+        
+        dialog.remove();
+        setShowAddressDialog(false);
+        setAddressDialogData({dayIndex: -1, entryIndex: -1});
+      });
+      
+      // Enter key support
+      const handleEnter = (e: KeyboardEvent) => {
+        if (e.key === 'Enter') {
+          saveBtn?.click();
+        }
+      };
+      
+      houseInput?.addEventListener('keydown', handleEnter);
+      streetInput?.addEventListener('keydown', handleEnter);
+      
+      console.log('🏠 ADDRESS DIALOG CREATED SUCCESSFULLY');
       
       // Also check if React portals work
       setTimeout(() => {
@@ -1051,38 +1138,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   return (
     <>
-      {/* ALWAYS VISIBLE DIALOG - Toggle with CSS */}
-      {createPortal(
-        <div 
-          data-testid="always-visible-dialog"
-          style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 99999,
-            backgroundColor: showAddressDialog ? 'red' : 'blue',
-            color: 'white',
-            padding: '20px',
-            border: '5px solid yellow',
-            fontSize: '20px',
-            fontWeight: 'bold',
-            display: showAddressDialog ? 'block' : 'none'
-          }}
-          onClick={() => {
-            console.log('🏠 ALWAYS VISIBLE DIALOG CLICKED!');
-            setShowAddressDialog(false);
-            setAddressDialogData({dayIndex: -1, entryIndex: -1});
-          }}
-        >
-          🚨 ALWAYS VISIBLE TEST 🚨
-          <br />
-          State: {showAddressDialog ? 'TRUE' : 'FALSE'}
-          <br />
-          Click me to close!
-        </div>,
-        document.body
-      )}
+
       
       <SuccessAnimation />
       <div className="p-4 max-w-7xl mx-auto">
