@@ -48,6 +48,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const [showLowHoursDialog, setShowLowHoursDialog] = useState(false);
   const [lowHoursTotal, setLowHoursTotal] = useState(0);
   const [pendingSubmission, setPendingSubmission] = useState<(() => void) | null>(null);
+  
+  // Debug effect for low hours dialog
+  useEffect(() => {
+    console.log('🚨 LOW HOURS DIALOG STATE:', showLowHoursDialog, 'total:', lowHoursTotal);
+  }, [showLowHoursDialog, lowHoursTotal]);
   const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null); // Single timeout for all auto-saves
 
   // Debug effect to track dialog state changes
@@ -828,6 +833,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       }, 0) : 0;
     
     console.log(`Total hours calculation: ${currentFortnightEntries?.length || 0} entries = ${savedHours} hours`);
+    console.log('🚨 Low hours debug - savedHours:', savedHours, 'isLessThan76:', savedHours < 76);
     return isNaN(savedHours) ? 0 : savedHours;
   };
 
@@ -1400,12 +1406,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     onClick={() => {
                       // Check for low hours warning
                       const totalHours = getTotalHours();
+                      console.log('🚨 LOW HOURS CHECK: totalHours =', totalHours, 'showLowHoursDialog =', showLowHoursDialog);
                       if (totalHours < 76) {
+                        console.log('🚨 TRIGGERING LOW HOURS DIALOG');
                         setLowHoursTotal(totalHours);
                         setPendingSubmission(() => () => confirmTimesheetMutation.mutate());
                         setShowLowHoursDialog(true);
                         return;
                       }
+                      console.log('🚨 HOURS OK, PROCEEDING TO SUBMIT');
                       confirmTimesheetMutation.mutate();
                     }}
                     className="bg-blue-600 hover:bg-blue-700"
@@ -2084,13 +2093,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           
                           // Check for low hours warning
                           const totalHours = getTotalHours();
+                          console.log('🚨 LOW HOURS CHECK (admin): totalHours =', totalHours, 'showLowHoursDialog =', showLowHoursDialog);
                           if (totalHours < 76) {
+                            console.log('🚨 TRIGGERING LOW HOURS DIALOG (admin)');
                             setLowHoursTotal(totalHours);
                             setPendingSubmission(() => () => confirmTimesheetMutation.mutate());
                             setShowLowHoursDialog(true);
                             return;
                           }
-                          
+                          console.log('🚨 HOURS OK, PROCEEDING TO SUBMIT (admin)');
                           confirmTimesheetMutation.mutate();
                         }}
                         disabled={confirmTimesheetMutation.isPending || getTotalHours() === 0}
