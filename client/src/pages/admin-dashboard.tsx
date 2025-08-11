@@ -1275,8 +1275,16 @@ export default function AdminDashboard() {
           </DropdownMenu>
         </div>
 
+        {/* Debug indicator */}
+        <div className="text-sm text-muted-foreground mb-4 p-2 bg-yellow-100 border border-yellow-300 rounded">
+          Current active tab: <span className="font-mono font-bold">{activeTab}</span>
+        </div>
+
         {/* Content Sections */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={(value) => {
+          console.log("Tabs onValueChange called with:", value);
+          setActiveTab(value);
+        }} className="w-full">
           <TabsContent value="jobs" className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h2 className="text-xl font-semibold">Job Management</h2>
