@@ -3,7 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { db } from "./db";
-import { timesheetEntries, laborEntries } from "@shared/schema";
+import { timesheetEntries, laborEntries, users } from "@shared/schema";
+import { eq } from "drizzle-orm";
 import { ObjectStorageService } from "./objectStorage";
 import { TimesheetPDFGenerator } from "./pdfGenerator";
 import { GoogleDriveService } from "./googleDriveService";
@@ -1110,6 +1111,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error confirming timesheet:", error);
       res.status(500).json({ message: "Failed to confirm timesheet" });
+    }
+  });
+
+  // Admin endpoint to assign user to employee
+  app.patch("/api/users/:userId/assign-employee", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { employeeId } = req.body;
+
+      if (!userId || !employeeId) {
+        return res.status(400).json({ message: "User ID and Employee ID are required" });
+      }
+
+      // Verify the employee exists
+      const employee = await storage.getEmployee(employeeId);
+      if (!employee) {
+        return res.status(404).json({ message: "Employee not found" });
+      }
+
+      // Update the user with employee assignment
+      await db
+        .update(users)
+        .set({ 
+          employeeId: employeeId,
+          isAssigned: true,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId));
+
+      res.json({ message: "User assigned to employee successfully" });
+    } catch (error) {
+      console.error("Error assigning user to employee:", error);
+      res.status(500).json({ message: "Failed to assign user to employee" });
     }
   });
 

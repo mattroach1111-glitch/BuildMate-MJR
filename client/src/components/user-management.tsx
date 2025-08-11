@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Users, Crown, UserCheck, Shield, AlertTriangle } from "lucide-react";
-import type { User } from "@shared/schema";
+import { Users, Crown, UserCheck, Shield, AlertTriangle, UserPlus, Link } from "lucide-react";
+import type { User, Employee } from "@shared/schema";
 
 export function UserManagement() {
   const { toast } = useToast();
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<"admin" | "staff">("staff");
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("");
 
   // Fetch all users
   const { data: users, isLoading, error } = useQuery({
@@ -41,6 +42,12 @@ export function UserManagement() {
         throw err;
       }
     },
+    retry: false,
+  });
+
+  // Fetch all employees
+  const { data: employees } = useQuery({
+    queryKey: ["/api/employees"],
     retry: false,
   });
 
@@ -75,9 +82,43 @@ export function UserManagement() {
     },
   });
 
+  // Assign user to employee mutation
+  const assignUserToEmployeeMutation = useMutation({
+    mutationFn: async ({ userId, employeeId }: { userId: string; employeeId: string }) => {
+      return apiRequest("PATCH", `/api/users/${userId}/assign-employee`, { employeeId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
+      
+      const user = users?.find(u => u.id === selectedUserId);
+      const employee = (employees as Employee[])?.find((e: Employee) => e.id === selectedEmployeeId);
+      
+      toast({
+        title: "Assignment Updated",
+        description: `${user?.firstName} has been assigned to employee record: ${employee?.name}`,
+      });
+      setSelectedUserId("");
+      setSelectedEmployeeId("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to assign user to employee.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleRoleUpdate = () => {
     if (selectedUserId && selectedRole) {
       updateRoleMutation.mutate({ userId: selectedUserId, role: selectedRole });
+    }
+  };
+
+  const handleUserEmployeeAssignment = () => {
+    if (selectedUserId && selectedEmployeeId) {
+      assignUserToEmployeeMutation.mutate({ userId: selectedUserId, employeeId: selectedEmployeeId });
     }
   };
 
@@ -164,7 +205,7 @@ export function UserManagement() {
                   data-testid={`user-item-${user.id}`}
                 >
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium">
                         {user.firstName} {user.lastName}
                       </span>
@@ -184,8 +225,24 @@ export function UserManagement() {
                           </>
                         )}
                       </Badge>
+                      {user.employeeId && (
+                        <Badge variant="outline" className="text-xs">
+                          <Link className="h-3 w-3 mr-1" />
+                          {(() => {
+                            const employee = (employees as Employee[])?.find((e: Employee) => e.id === user.employeeId);
+                            return employee ? `Linked to ${employee.name}` : 'Linked';
+                          })()}
+                        </Badge>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>{user.email}</span>
+                      {!user.employeeId && (
+                        <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800">
+                          Not Assigned
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))
@@ -298,6 +355,99 @@ export function UserManagement() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+          </div>
+        </div>
+
+        {/* User-Employee Assignment Section */}
+        <div className="border-t pt-6">
+          <h4 className="font-semibold mb-3 flex items-center gap-2">
+            <Link className="h-4 w-4" />
+            Assign Users to Employees
+          </h4>
+          <p className="text-sm text-muted-foreground mb-4">
+            Link user accounts to employee records for proper timesheet tracking
+          </p>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Select User</label>
+              <Select 
+                value={selectedUserId} 
+                onValueChange={(value) => {
+                  setSelectedUserId(value);
+                  // Reset employee selection when user changes
+                  setSelectedEmployeeId("");
+                }}
+              >
+                <SelectTrigger data-testid="select-user-for-assignment">
+                  <SelectValue placeholder="Choose a user to assign" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.isArray(users) && users.length > 0 ? (
+                    users.map((user) => (
+                      <SelectItem key={`assign-${user.id}`} value={user.id}>
+                        <div className="flex items-center gap-2">
+                          <span>{user.firstName} {user.lastName}</span>
+                          {user.employeeId ? (
+                            <Badge variant="outline" className="text-xs">
+                              Already Assigned
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-xs">
+                              Unassigned
+                            </Badge>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-users" disabled>No users available</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Assign to Employee</label>
+              <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
+                <SelectTrigger data-testid="select-employee-for-assignment">
+                  <SelectValue placeholder="Choose an employee record" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.isArray(employees) && employees.length > 0 ? (
+                    employees.map((employee: Employee) => (
+                      <SelectItem key={employee.id} value={employee.id}>
+                        <div className="flex items-center gap-2">
+                          <UserPlus className="h-4 w-4" />
+                          <span>{employee.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-employees" disabled>No employees available</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedUserId && selectedEmployeeId && (
+              <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                <p className="text-sm text-green-800 dark:text-green-200">
+                  <strong>Assignment:</strong> {getSelectedUser()?.firstName} {getSelectedUser()?.lastName} 
+                  <span className="mx-2">→</span>
+                  {(employees as Employee[])?.find((e: Employee) => e.id === selectedEmployeeId)?.name}
+                </p>
+              </div>
+            )}
+
+            <Button
+              onClick={handleUserEmployeeAssignment}
+              disabled={!selectedUserId || !selectedEmployeeId || assignUserToEmployeeMutation.isPending}
+              className="w-full"
+              data-testid="button-assign-user-employee"
+            >
+              {assignUserToEmployeeMutation.isPending ? "Assigning..." : "Assign User to Employee"}
+            </Button>
           </div>
         </div>
       </CardContent>
