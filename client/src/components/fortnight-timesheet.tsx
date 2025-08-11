@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft, Users, Plus, Trash2, Save, Clock, CheckCircle, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft, Users, Plus, Trash2, Save, Clock, CheckCircle, Calendar, Lock, Unlock } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format, addDays, parseISO } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -34,7 +35,18 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   const [currentFortnightIndex, setCurrentFortnightIndex] = useState(getCurrentFortnightIndex());
   const [timesheetData, setTimesheetData] = useState<any>({});
+  const [unlockedWeekends, setUnlockedWeekends] = useState<Set<string>>(new Set());
   const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null); // Single timeout for all auto-saves
+
+  // Function to unlock weekend for editing
+  const unlockWeekend = (dateKey: string) => {
+    setUnlockedWeekends(prev => new Set([...Array.from(prev), dateKey]));
+  };
+
+  // Function to check if weekend is unlocked
+  const isWeekendUnlocked = (dateKey: string) => {
+    return unlockedWeekends.has(dateKey);
+  };
 
   // Calculate fortnight boundaries based on August 11, 2025 start date
   const getFortnightDates = (fortnightIndex: number) => {
@@ -1057,9 +1069,49 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'weekend-row' : ''}`}>
                             <td className="p-3">
                               {entryIndex === 0 && (
-                                <div className={`font-medium ${isWeekend ? 'text-white' : ''}`}>
-                                  {format(day, 'EEE, MMM dd')}
-                                  {isWeekend && <span className="text-xs text-white ml-2 font-semibold">(Weekend)</span>}
+                                <div className={`font-medium ${isWeekend ? 'text-white' : ''} flex items-center justify-between`}>
+                                  <div>
+                                    {format(day, 'EEE, MMM dd')}
+                                    {isWeekend && <span className="text-xs text-white ml-2 font-semibold">(Weekend)</span>}
+                                  </div>
+                                  {isWeekend && !isWeekendUnlocked(dateKey) && (
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-6 w-6 p-0 text-white hover:bg-orange-600"
+                                          data-testid={`unlock-weekend-${dateKey}`}
+                                        >
+                                          <Lock className="h-3 w-3" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Weekend Work Confirmation</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            You are about to log hours for {format(day, 'EEEE, MMMM dd, yyyy')}. 
+                                            Please confirm that you actually worked on this weekend day.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction
+                                            onClick={() => unlockWeekend(dateKey)}
+                                            className="bg-orange-500 hover:bg-orange-600"
+                                          >
+                                            Yes, I worked this weekend
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  )}
+                                  {isWeekend && isWeekendUnlocked(dateKey) && (
+                                    <div className="flex items-center text-xs text-white">
+                                      <Unlock className="h-3 w-3 mr-1" />
+                                      Unlocked
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </td>
@@ -1067,7 +1119,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               <Input
                                 type="number"
                                 step="0.5"
-                                placeholder="0"
+                                placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "Locked" : "0"}
                                 value={entry?.hours || ''}
                                 onChange={(e) => {
                                   if (entry?.id && !entry?.approved) {
@@ -1079,7 +1131,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   }
                                 }}
                                 className={`w-20 ${isWeekend ? 'text-white placeholder:text-blue-200' : ''}`}
-                                disabled={entry?.approved} // Only disable if approved
+                                disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))} // Disable for approved entries or locked weekends
                               />
                             </td>
                             <td className="p-3">
@@ -1094,7 +1146,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     handleCellChange(day, entryIndex, 'jobId', value);
                                   }
                                 }}
-                                disabled={entry?.approved} // Only disable if approved
+                                disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))} // Disable for approved entries or locked weekends
                               >
                                 <SelectTrigger className={`min-w-40 ${isWeekend ? 'text-white border-blue-400' : ''}`}>
                                   <SelectValue placeholder="Select job" />
@@ -1124,7 +1176,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             <td className="p-3">
                               <Input
                                 type="text"
-                                placeholder="Materials or notes"
+                                placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "Locked" : "Materials or notes"}
                                 value={entry?.materials || ''}
                                 onChange={(e) => {
                                   if (entry?.id && !entry?.approved) {
@@ -1136,7 +1188,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   }
                                 }}
                                 className={`min-w-32 ${isWeekend ? 'text-white placeholder:text-blue-200' : ''}`}
-                                disabled={entry?.approved} // Only disable if approved
+                                disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))} // Disable for approved entries or locked weekends
                               />
                             </td>
                             <td className="p-3">
