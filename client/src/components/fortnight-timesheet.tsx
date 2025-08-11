@@ -2169,17 +2169,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   
                   const entry = entriesToShow[entryIndex];
                   
-                  // Set the custom address as the job
+                  // Set the custom address as the job - but don't auto-save, let user save manually
+                  handleCellChange(day, entryIndex, 'jobId', customAddressKey);
+                  handleCellChange(day, entryIndex, 'materials', fullAddress);
+                  handleCellChange(day, entryIndex, 'hours', '');
+                  
+                  // If there was an existing saved entry, delete it so user can save fresh custom address entry
                   if (entry?.id && !entry?.approved) {
-                    // Edit saved entry directly and clear hours
-                    editSavedEntry(entry.id, 'jobId', customAddressKey);
-                    editSavedEntry(entry.id, 'materials', fullAddress);
-                    editSavedEntry(entry.id, 'hours', '0');
-                  } else {
-                    // Handle unsaved entry - reset hours to empty when custom address is set
-                    handleCellChange(day, entryIndex, 'jobId', customAddressKey);
-                    handleCellChange(day, entryIndex, 'materials', fullAddress);
-                    handleCellChange(day, entryIndex, 'hours', '');
+                    deleteTimesheetMutation.mutate(entry.id);
                   }
                   
                   toast({
