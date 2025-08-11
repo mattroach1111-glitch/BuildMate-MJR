@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft, Users, Plus, Trash2, Save, Clock, CheckCircle, Calendar, Lock, Unlock, Edit } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -1838,14 +1839,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="no-job">No job</SelectItem>
-                                  <SelectItem value="rdo">RDO (Rest Day Off)</SelectItem>
-                                  <SelectItem value="sick-leave">Sick Leave</SelectItem>
-                                  <SelectItem value="personal-leave">Personal Leave</SelectItem>
-                                  <SelectItem value="annual-leave">Annual Leave</SelectItem>
-                                  <SelectItem value="leave-without-pay">Leave without pay</SelectItem>
-
-                                  <SelectItem value="other-address">Other Address (Enter manually)</SelectItem>
+                                  {/* Regular Jobs First */}
                                   {jobsLoading ? (
                                     <SelectItem value="loading" disabled>Loading jobs...</SelectItem>
                                   ) : jobsError ? (
@@ -1859,6 +1853,21 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   ) : (
                                     <SelectItem value="no-jobs" disabled>No jobs available</SelectItem>
                                   )}
+                                  
+                                  <SelectItem value="other-address">Other Address (Enter manually)</SelectItem>
+
+                                  {/* Separator for Leave Types */}
+                                  <Separator className="my-2" />
+                                  <div className="px-2 py-1.5 text-xs text-muted-foreground font-medium">
+                                    Leave Types
+                                  </div>
+                                  
+                                  {/* Leave Types Pinned at Bottom */}
+                                  <SelectItem value="sick-leave">Sick Leave</SelectItem>
+                                  <SelectItem value="personal-leave">Personal Leave</SelectItem>
+                                  <SelectItem value="annual-leave">Annual Leave</SelectItem>
+                                  <SelectItem value="leave-without-pay">Leave without pay</SelectItem>
+                                  <SelectItem value="rdo">RDO (Rest Day Off)</SelectItem>
                                 </SelectContent>
                               </Select>
                             </td>
