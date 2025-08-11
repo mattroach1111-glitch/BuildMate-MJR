@@ -1011,7 +1011,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         )}
 
         {/* Timesheet Table - Only show when employee is selected in admin view */}
-        {(!isAdminView || selectedEmployee) && (
+        {(() => {
+          const shouldShow = (!isAdminView || selectedEmployee);
+          console.log(`TABLE RENDER CHECK: isAdminView=${isAdminView}, selectedEmployee=${selectedEmployee}, shouldShow=${shouldShow}`);
+          return shouldShow;
+        })() && (
           <>
             <Card>
               <CardHeader>
@@ -1036,7 +1040,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                       {fortnightDays.map((day, dayIndex) => {
                         const dateKey = format(day, 'yyyy-MM-dd');
                         const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-                        console.log(`Date: ${format(day, 'EEE, MMM dd')}, Day: ${day.getDay()}, IsWeekend: ${isWeekend}`);
+                        const isWeekendLocked = isWeekend && !isWeekendUnlocked(dateKey);
+                        console.log(`PROCESSING DAY: ${format(day, 'EEE, MMM dd')}, DateKey: ${dateKey}, Day: ${day.getDay()}, IsWeekend: ${isWeekend}, IsLocked: ${isWeekendLocked}`);
+                        if (isWeekend) {
+                          console.log(`⚠️ WEEKEND DETECTED: ${format(day, 'EEE, MMM dd')} - Should be locked!`);
+                        }
                         const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
                         const existingEntries = Array.isArray(currentFortnightEntries) ? currentFortnightEntries.filter((entry: any) => 
                           format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
@@ -1051,7 +1059,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         const approvedEntries = existingEntries.filter((entry: any) => entry.approved);
                         const unapprovedEntries = existingEntries.filter((entry: any) => !entry.approved);
                         
-                        if (approvedEntries.length > 0) {
+                        // For locked weekends, always show an empty row unless explicitly unlocked
+                        if (isWeekendLocked && approvedEntries.length === 0 && unapprovedEntries.length === 0 && dayEntries.length === 0) {
+                          entriesToShow = [{}]; // Empty locked row
+                        } else if (approvedEntries.length > 0) {
                           // Always prioritize approved entries - they're confirmed and locked
                           entriesToShow = approvedEntries;
                         } else if (unapprovedEntries.length > 0) {
