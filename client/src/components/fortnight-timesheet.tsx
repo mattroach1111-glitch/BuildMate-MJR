@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft, Users, Plus, Trash2, Save, Clock, CheckCircle, Calendar, Lock, Unlock } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, addDays, parseISO } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -36,6 +37,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const [currentFortnightIndex, setCurrentFortnightIndex] = useState(0); // Start with current fortnight (Aug 11-24)
   const [timesheetData, setTimesheetData] = useState<any>({});
   const [unlockedWeekends, setUnlockedWeekends] = useState<Set<string>>(new Set());
+  const [customAddresses, setCustomAddresses] = useState<{[key: string]: {houseNumber: string, streetAddress: string}}>({});
+  const [showAddressDialog, setShowAddressDialog] = useState<{show: boolean, dayIndex: number, entryIndex: number}>({show: false, dayIndex: -1, entryIndex: -1});
+  const [currentAddress, setCurrentAddress] = useState({houseNumber: '', streetAddress: ''});
   const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null); // Single timeout for all auto-saves
 
   // Function to unlock weekend for editing
@@ -502,20 +506,28 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           xPos += colWidths[0];
           doc.text(entry.hours || '', xPos, yPos);
           xPos += colWidths[1];
-          // Handle leave types stored in materials field
+          // Handle leave types and custom addresses
           let jobText = 'No job';
           if (entry.jobId) {
-            const job = Array.isArray(jobs) ? jobs.find((j: any) => j.id === entry.jobId) : null;
-            jobText = job?.jobAddress || 'Job not found';
-          } else if (entry.materials) {
-            // Check if materials contains leave type
+            // Check for special leave types first
             const leaveTypes: { [key: string]: string } = {
               'sick-leave': 'Sick Leave',
               'personal-leave': 'Personal Leave', 
               'annual-leave': 'Annual Leave',
-              'rdo': 'RDO (Rest Day Off)'
+              'rdo': 'RDO (Rest Day Off)',
+              'leave-without-pay': 'Leave without pay'
             };
-            jobText = leaveTypes[entry.materials] || entry.materials;
+            
+            if (leaveTypes[entry.jobId]) {
+              jobText = leaveTypes[entry.jobId];
+            } else if (entry.jobId.startsWith('custom-')) {
+              // Custom address from materials field
+              jobText = entry.materials || 'Custom Address';
+            } else {
+              // Regular job lookup
+              const job = Array.isArray(jobs) ? jobs.find((j: any) => j.id === entry.jobId) : null;
+              jobText = job?.jobAddress || 'Job not found';
+            }
           }
           doc.text(jobText.substring(0, 25), xPos, yPos);
           xPos += colWidths[2];
@@ -1322,6 +1334,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     console.log(`🚫 WEEKEND SELECT BLOCKED: ${dateKey} - Weekend is locked!`);
                                     return; // Prevent any selection on locked weekends
                                   }
+                                  
+                                  if (value === 'other-address') {
+                                    // Show address input dialog
+                                    setShowAddressDialog({show: true, dayIndex, entryIndex});
+                                    setCurrentAddress({houseNumber: '', streetAddress: ''});
+                                    return;
+                                  }
+                                  
                                   if (entry?.id && !entry?.approved) {
                                     // Edit saved entry directly
                                     editSavedEntry(entry.id, 'jobId', value);
@@ -1333,7 +1353,27 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))} // Disable for approved entries or locked weekends
                               >
                                 <SelectTrigger className={`min-w-40 ${isWeekend ? 'text-white border-blue-400 bg-blue-800' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}>
-                                  <SelectValue placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "Select job"} />
+                                  <SelectValue placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "Select job"}>
+                                    {entry?.jobId && (() => {
+                                      const leaveTypes: { [key: string]: string } = {
+                                        'sick-leave': 'Sick Leave',
+                                        'personal-leave': 'Personal Leave', 
+                                        'annual-leave': 'Annual Leave',
+                                        'rdo': 'RDO (Rest Day Off)',
+                                        'leave-without-pay': 'Leave without pay',
+                                        'no-job': 'No job'
+                                      };
+                                      
+                                      if (leaveTypes[entry.jobId]) {
+                                        return leaveTypes[entry.jobId];
+                                      } else if (entry.jobId.startsWith('custom-')) {
+                                        return entry.materials || 'Custom Address';
+                                      } else {
+                                        const job = Array.isArray(jobs) ? jobs.find((j: any) => j.id === entry.jobId) : null;
+                                        return job?.jobAddress || job?.address || job?.jobName || job?.name || `Job ${entry.jobId}`;
+                                      }
+                                    })()}
+                                  </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="no-job">No job</SelectItem>
@@ -1341,6 +1381,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   <SelectItem value="sick-leave">Sick Leave</SelectItem>
                                   <SelectItem value="personal-leave">Personal Leave</SelectItem>
                                   <SelectItem value="annual-leave">Annual Leave</SelectItem>
+                                  <SelectItem value="leave-without-pay">Leave without pay</SelectItem>
+                                  <SelectItem value="other-address">Other Address (Enter manually)</SelectItem>
                                   {jobsLoading ? (
                                     <SelectItem value="loading" disabled>Loading jobs...</SelectItem>
                                   ) : jobsError ? (
@@ -1504,6 +1546,117 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             </CardContent>
           </Card>
         )}
+        
+        {/* Address Input Dialog */}
+        <Dialog open={showAddressDialog.show} onOpenChange={(open) => setShowAddressDialog({show: open, dayIndex: -1, entryIndex: -1})}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Enter Job Address</DialogTitle>
+              <DialogDescription>
+                Please provide the house number and street address for this job location.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="houseNumber">House Number *</Label>
+                <Input
+                  id="houseNumber"
+                  placeholder="e.g., 123"
+                  value={currentAddress.houseNumber}
+                  onChange={(e) => setCurrentAddress(prev => ({...prev, houseNumber: e.target.value}))}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="streetAddress">Street Address *</Label>
+                <Input
+                  id="streetAddress"
+                  placeholder="e.g., Main Street, Suburb, City"
+                  value={currentAddress.streetAddress}
+                  onChange={(e) => setCurrentAddress(prev => ({...prev, streetAddress: e.target.value}))}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAddressDialog({show: false, dayIndex: -1, entryIndex: -1})}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => {
+                  // Validate required fields
+                  if (!currentAddress.houseNumber.trim() || !currentAddress.streetAddress.trim()) {
+                    toast({
+                      title: "Required Fields Missing",
+                      description: "Please enter both house number and street address.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  
+                  // Create custom address key and save
+                  const customAddressKey = `custom-${Date.now()}`;
+                  const fullAddress = `${currentAddress.houseNumber} ${currentAddress.streetAddress}`;
+                  
+                  setCustomAddresses(prev => ({
+                    ...prev,
+                    [customAddressKey]: currentAddress
+                  }));
+                  
+                  // Get the current day for the dialog
+                  const day = fortnightDays[showAddressDialog.dayIndex];
+                  const entryIndex = showAddressDialog.entryIndex;
+                  
+                  // Find the entry being edited
+                  const dateKey = format(day, 'yyyy-MM-dd');
+                  const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
+                  const existingEntries = Array.isArray(currentFortnightEntries) ? currentFortnightEntries.filter((entry: any) => 
+                    format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
+                  ) : [];
+                  
+                  const approvedEntries = existingEntries.filter((entry: any) => entry.approved);
+                  const unapprovedEntries = existingEntries.filter((entry: any) => !entry.approved);
+                  
+                  let entriesToShow;
+                  if (approvedEntries.length > 0) {
+                    entriesToShow = approvedEntries;
+                  } else if (unapprovedEntries.length > 0) {
+                    entriesToShow = unapprovedEntries;
+                  } else if (dayEntries.length > 0) {
+                    entriesToShow = dayEntries;
+                  } else {
+                    entriesToShow = [{}];
+                  }
+                  
+                  const entry = entriesToShow[entryIndex];
+                  
+                  // Set the custom address as the job
+                  if (entry?.id && !entry?.approved) {
+                    // Edit saved entry directly
+                    editSavedEntry(entry.id, 'jobId', customAddressKey);
+                    editSavedEntry(entry.id, 'materials', fullAddress);
+                  } else {
+                    // Handle unsaved entry
+                    handleCellChange(day, entryIndex, 'jobId', customAddressKey);
+                    handleCellChange(day, entryIndex, 'materials', fullAddress);
+                  }
+                  
+                  toast({
+                    title: "Address Added",
+                    description: `Job address set to: ${fullAddress}`,
+                  });
+                  
+                  // Close dialog
+                  setShowAddressDialog({show: false, dayIndex: -1, entryIndex: -1});
+                  setCurrentAddress({houseNumber: '', streetAddress: ''});
+                }}
+                disabled={!currentAddress.houseNumber.trim() || !currentAddress.streetAddress.trim()}
+              >
+                Add Address
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         </div>
       </div>
     </>
