@@ -51,9 +51,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       console.log('🏠 DIALOG SHOULD BE VISIBLE NOW!');
       // Try to find the dialog element in DOM
       setTimeout(() => {
-        const dialogElement = document.querySelector('[data-testid="emergency-dialog-portal"]');
+        const alwaysVisible = document.querySelector('[data-testid="always-visible-dialog"]');
         const regularDialog = document.querySelector('[data-testid="address-dialog"]');
-        console.log('🏠 PORTAL DIALOG ELEMENT IN DOM:', dialogElement);
+        console.log('🏠 ALWAYS VISIBLE DIALOG IN DOM:', alwaysVisible);
+        console.log('🏠 ALWAYS VISIBLE DIALOG DISPLAY:', alwaysVisible ? alwaysVisible.style.display : 'NOT FOUND');
         console.log('🏠 REGULAR DIALOG ELEMENT IN DOM:', regularDialog);
       }, 100);
     }
@@ -1015,34 +1016,35 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   return (
     <>
-      {/* EMERGENCY DIALOG TEST - Using React Portal */}
-      {showAddressDialog && createPortal(
+      {/* ALWAYS VISIBLE DIALOG - Toggle with CSS */}
+      {createPortal(
         <div 
-          data-testid="emergency-dialog-portal"
+          data-testid="always-visible-dialog"
           style={{
             position: 'fixed',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
             zIndex: 99999,
-            backgroundColor: 'red',
+            backgroundColor: showAddressDialog ? 'red' : 'blue',
             color: 'white',
             padding: '20px',
             border: '5px solid yellow',
             fontSize: '20px',
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            display: showAddressDialog ? 'block' : 'none'
           }}
           onClick={() => {
-            console.log('🏠 PORTAL DIALOG CLICKED!');
+            console.log('🏠 ALWAYS VISIBLE DIALOG CLICKED!');
             setShowAddressDialog(false);
             setAddressDialogData({dayIndex: -1, entryIndex: -1});
           }}
         >
-          🚨 PORTAL DIALOG TEST 🚨
+          🚨 ALWAYS VISIBLE TEST 🚨
+          <br />
+          State: {showAddressDialog ? 'TRUE' : 'FALSE'}
           <br />
           Click me to close!
-          <br />
-          This uses React Portal!
         </div>,
         document.body
       )}
