@@ -38,7 +38,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const [timesheetData, setTimesheetData] = useState<any>({});
   const [unlockedWeekends, setUnlockedWeekends] = useState<Set<string>>(new Set());
   const [customAddresses, setCustomAddresses] = useState<{[key: string]: {houseNumber: string, streetAddress: string}}>({});
-  const [showAddressDialog, setShowAddressDialog] = useState<{show: boolean, dayIndex: number, entryIndex: number}>({show: false, dayIndex: -1, entryIndex: -1});
+  const [showAddressDialog, setShowAddressDialog] = useState(false);
+  const [addressDialogData, setAddressDialogData] = useState<{dayIndex: number, entryIndex: number}>({dayIndex: -1, entryIndex: -1});
   const [currentAddress, setCurrentAddress] = useState({houseNumber: '', streetAddress: ''});
   const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null); // Single timeout for all auto-saves
 
@@ -783,8 +784,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 // Show address input dialog
                                 console.log('🏠 OTHER ADDRESS SELECTED - Opening dialog for dayIndex:', dayIndex, 'entryIndex:', entryIndex);
                                 console.log('🏠 BEFORE setState - showAddressDialog:', showAddressDialog);
-                                setShowAddressDialog({show: true, dayIndex, entryIndex});
+                                setAddressDialogData({dayIndex, entryIndex});
                                 setCurrentAddress({houseNumber: '', streetAddress: ''});
+                                setShowAddressDialog(true);
                                 console.log('🏠 AFTER setState call - should show dialog now');
                                 return;
                               }
@@ -1563,7 +1565,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         {/* Address Input Dialog - Fixed positioning */}
         {(() => {
           console.log('🏠 CHECKING DIALOG RENDER - showAddressDialog:', showAddressDialog);
-          return showAddressDialog.show;
+          return showAddressDialog;
         })() && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
@@ -1598,7 +1600,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               <div className="flex gap-2 mt-6">
                 <Button 
                   variant="outline" 
-                  onClick={() => setShowAddressDialog({show: false, dayIndex: -1, entryIndex: -1})}
+                  onClick={() => {
+                    setShowAddressDialog(false);
+                    setAddressDialogData({dayIndex: -1, entryIndex: -1});
+                  }}
                   className="flex-1"
                 >
                   Cancel
@@ -1625,8 +1630,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   }));
                   
                   // Get the current day for the dialog
-                  const day = fortnightDays[showAddressDialog.dayIndex];
-                  const entryIndex = showAddressDialog.entryIndex;
+                  const day = fortnightDays[addressDialogData.dayIndex];
+                  const entryIndex = addressDialogData.entryIndex;
                   
                   // Find the entry being edited
                   const dateKey = format(day, 'yyyy-MM-dd');
@@ -1668,7 +1673,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   });
                   
                   // Close dialog
-                  setShowAddressDialog({show: false, dayIndex: -1, entryIndex: -1});
+                  setShowAddressDialog(false);
+                  setAddressDialogData({dayIndex: -1, entryIndex: -1});
                   setCurrentAddress({houseNumber: '', streetAddress: ''});
                 }}
                 disabled={!currentAddress.houseNumber.trim() || !currentAddress.streetAddress.trim()}
