@@ -155,8 +155,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         const { dayIndex, entryIndex } = addressDialogData;
         const targetDate = addDays(currentFortnight.start, dayIndex);
         
-        // Set special jobId for custom address and store address in description
-        handleCellChange(targetDate, entryIndex, 'jobId', 'custom-address');
+        // Keep jobId as "other-address" and store address in description
+        handleCellChange(targetDate, entryIndex, 'jobId', 'other-address');
         handleCellChange(targetDate, entryIndex, 'description', fullAddress);
         
         dialog.remove();
@@ -1529,8 +1529,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                       
                                       if (leaveTypes[entry.jobId]) {
                                         return leaveTypes[entry.jobId];
-                                      } else if (entry.jobId === 'custom-address') {
-                                        return entry.description || 'Custom Address';
+                                      } else if (entry.jobId === 'other-address' && entry.description) {
+                                        return entry.description;
                                       } else {
                                         const job = Array.isArray(jobs) ? jobs.find((j: any) => j.id === entry.jobId) : null;
                                         return job?.jobAddress || job?.address || job?.jobName || job?.name || `Job ${entry.jobId}`;
@@ -1545,6 +1545,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   <SelectItem value="personal-leave">Personal Leave</SelectItem>
                                   <SelectItem value="annual-leave">Annual Leave</SelectItem>
                                   <SelectItem value="leave-without-pay">Leave without pay</SelectItem>
+
                                   <SelectItem value="other-address">Other Address (Enter manually)</SelectItem>
                                   {jobsLoading ? (
                                     <SelectItem value="loading" disabled>Loading jobs...</SelectItem>
