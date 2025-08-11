@@ -1182,6 +1182,13 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               }
                               
                               if (value === 'other-address') {
+                                // Clear hours when selecting other-address to start fresh
+                                if (entry?.id && !entry?.approved) {
+                                  editSavedEntry(entry.id, 'hours', '');
+                                } else {
+                                  handleCellChange(day, entryIndex, 'hours', '');
+                                }
+                                
                                 // Show address input dialog
                                 console.log('🏠 OTHER ADDRESS SELECTED - Opening dialog for dayIndex:', dayIndex, 'entryIndex:', entryIndex);
                                 console.log('🏠 BEFORE setState - showAddressDialog:', showAddressDialog);
@@ -2168,9 +2175,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     editSavedEntry(entry.id, 'jobId', customAddressKey);
                     editSavedEntry(entry.id, 'materials', fullAddress);
                   } else {
-                    // Handle unsaved entry
+                    // Handle unsaved entry - reset hours to empty when custom address is set
                     handleCellChange(day, entryIndex, 'jobId', customAddressKey);
                     handleCellChange(day, entryIndex, 'materials', fullAddress);
+                    handleCellChange(day, entryIndex, 'hours', '');
                   }
                   
                   toast({
