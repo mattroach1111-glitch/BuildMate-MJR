@@ -74,6 +74,17 @@
   * {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
+}
+
+/* Weekend highlighting for timesheets */
+.weekend-row {
+  background-color: #f97316 !important;
+  border: 2px solid #ea580c !important;
+}
+
+.weekend-row td {
+  color: white !important;
+}
 
   /* Mobile-first optimizations */
   @media (max-width: 768px) {
@@ -149,7 +160,6 @@
       min-width: 48px;
     }
   }
-}
 
 /* Custom classes for construction theme */
 .construction-gradient {

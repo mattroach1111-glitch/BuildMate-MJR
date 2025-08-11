@@ -1024,6 +1024,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                       {fortnightDays.map((day, dayIndex) => {
                         const dateKey = format(day, 'yyyy-MM-dd');
                         const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+                        console.log(`Date: ${format(day, 'EEE, MMM dd')}, Day: ${day.getDay()}, IsWeekend: ${isWeekend}`);
                         const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
                         const existingEntries = Array.isArray(currentFortnightEntries) ? currentFortnightEntries.filter((entry: any) => 
                           format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
@@ -1053,7 +1054,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         }
                         
                         return entriesToShow.map((entry: any, entryIndex: number) => (
-                          <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'bg-orange-500 border-orange-600' : ''}`} style={isWeekend ? {backgroundColor: '#f97316', borderColor: '#ea580c'} : {}}>
+                          <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'weekend-row' : ''}`}>
                             <td className="p-3">
                               {entryIndex === 0 && (
                                 <div className={`font-medium ${isWeekend ? 'text-white' : ''}`}>
