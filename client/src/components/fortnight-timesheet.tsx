@@ -782,8 +782,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               if (value === 'other-address') {
                                 // Show address input dialog
                                 console.log('🏠 OTHER ADDRESS SELECTED - Opening dialog for dayIndex:', dayIndex, 'entryIndex:', entryIndex);
+                                console.log('🏠 BEFORE setState - showAddressDialog:', showAddressDialog);
                                 setShowAddressDialog({show: true, dayIndex, entryIndex});
                                 setCurrentAddress({houseNumber: '', streetAddress: ''});
+                                console.log('🏠 AFTER setState call - should show dialog now');
                                 return;
                               }
                               
@@ -1559,7 +1561,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         )}
         
         {/* Address Input Dialog - Fixed positioning */}
-        {showAddressDialog.show && (
+        {(() => {
+          console.log('🏠 CHECKING DIALOG RENDER - showAddressDialog:', showAddressDialog);
+          return showAddressDialog.show;
+        })() && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
               <div className="mb-4">
