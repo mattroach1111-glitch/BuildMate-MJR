@@ -20,7 +20,7 @@ import { insertJobSchema, insertEmployeeSchema, insertTimesheetEntrySchema } fro
 import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw, Grid3X3, List, Settings, UserPlus, Download } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw, Grid3X3, List, Settings, UserPlus, Download, Edit } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
@@ -88,6 +88,8 @@ export default function AdminDashboard() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'address' | 'client' | 'manager' | 'status'>('address');
   const [activeTab, setActiveTab] = useState("jobs");
+  const [showEditAddressDialog, setShowEditAddressDialog] = useState(false);
+  const [editAddressData, setEditAddressData] = useState<{entryId: string, currentAddress: string}>({entryId: '', currentAddress: ''});
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -676,6 +678,44 @@ export default function AdminDashboard() {
       });
     },
   });
+
+  const editCustomAddressMutation = useMutation({
+    mutationFn: async ({ entryId, address }: { entryId: string; address: string }) => {
+      const response = await apiRequest("PATCH", `/api/admin/timesheet/${entryId}/custom-address`, { address });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/timesheets"] });
+      toast({
+        title: "Success",
+        description: "Custom address updated successfully",
+      });
+      setShowEditAddressDialog(false);
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update custom address",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const editCustomAddress = (entryId: string, currentAddress: string) => {
+    setEditAddressData({ entryId, currentAddress });
+    setShowEditAddressDialog(true);
+  };
 
   const jobForm = useForm<z.infer<typeof jobFormSchema>>({
     resolver: zodResolver(jobFormSchema),
@@ -2593,6 +2633,10 @@ export default function AdminDashboard() {
                                 </div>
                                 <div className="text-sm text-muted-foreground">
                                   {(() => {
+                                    // Handle custom addresses - display with CUSTOM_ADDRESS: prefix
+                                    if (entry.description && entry.description.startsWith('CUSTOM_ADDRESS:')) {
+                                      return entry.description.replace('CUSTOM_ADDRESS: ', 'Custom Address: ');
+                                    }
                                     // Handle leave types stored in materials field
                                     if (!entry.jobAddress && entry.materials) {
                                       const leaveTypes: { [key: string]: string } = {
@@ -2613,21 +2657,41 @@ export default function AdminDashboard() {
                                 )}
                               </div>
                               {!entry.approved && (
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => {
-                                    if (confirm(`Are you sure you want to clear this timesheet entry for ${format(parseISO(entry.date), 'dd/MM/yyyy')}? This action cannot be undone.`)) {
-                                      clearEntryMutation.mutate(entry.id);
-                                    }
-                                  }}
-                                  disabled={clearEntryMutation.isPending}
-                                  data-testid={`button-clear-entry-${entry.id}`}
-                                  className="min-w-20"
-                                >
-                                  <Trash2 className="h-3 w-3 mr-1" />
-                                  Clear
-                                </Button>
+                                <div className="flex gap-2">
+                                  {/* Edit button for custom addresses */}
+                                  {entry.description && entry.description.startsWith('CUSTOM_ADDRESS:') && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        const address = entry.description.replace('CUSTOM_ADDRESS: ', '');
+                                        editCustomAddress(entry.id, address);
+                                      }}
+                                      disabled={editCustomAddressMutation.isPending}
+                                      data-testid={`button-edit-address-${entry.id}`}
+                                      className="min-w-20"
+                                      title="Edit custom address"
+                                    >
+                                      <Edit className="h-3 w-3 mr-1" />
+                                      Edit
+                                    </Button>
+                                  )}
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => {
+                                      if (confirm(`Are you sure you want to clear this timesheet entry for ${format(parseISO(entry.date), 'dd/MM/yyyy')}? This action cannot be undone.`)) {
+                                        clearEntryMutation.mutate(entry.id);
+                                      }
+                                    }}
+                                    disabled={clearEntryMutation.isPending}
+                                    data-testid={`button-clear-entry-${entry.id}`}
+                                    className="min-w-20"
+                                  >
+                                    <Trash2 className="h-3 w-3 mr-1" />
+                                    Clear
+                                  </Button>
+                                </div>
                               )}
                             </div>
                           ))}
@@ -3028,6 +3092,49 @@ export default function AdminDashboard() {
             onClose={() => setSelectedJob(null)}
           />
         )}
+
+        {/* Edit Custom Address Dialog */}
+        <Dialog open={showEditAddressDialog} onOpenChange={setShowEditAddressDialog}>
+          <DialogContent className="max-w-md mx-4 sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Edit Custom Address</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-address">Address</Label>
+                <Input
+                  id="edit-address"
+                  value={editAddressData.currentAddress}
+                  onChange={(e) => setEditAddressData(prev => ({ ...prev, currentAddress: e.target.value }))}
+                  placeholder="Enter address"
+                  data-testid="input-edit-address"
+                />
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button
+                  onClick={() => {
+                    editCustomAddressMutation.mutate({
+                      entryId: editAddressData.entryId,
+                      address: editAddressData.currentAddress
+                    });
+                  }}
+                  disabled={editCustomAddressMutation.isPending || !editAddressData.currentAddress.trim()}
+                  data-testid="button-save-address"
+                >
+                  {editCustomAddressMutation.isPending ? "Saving..." : "Save"}
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowEditAddressDialog(false)}
+                  data-testid="button-cancel-edit"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Onboarding Components */}
         {showWelcome && (

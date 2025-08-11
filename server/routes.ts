@@ -955,6 +955,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Edit custom address for timesheet entry
+  app.patch("/api/admin/timesheet/:entryId/custom-address", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const entryId = req.params.entryId;
+      const { address } = req.body;
+      
+      if (!entryId) {
+        return res.status(400).json({ message: "Entry ID is required" });
+      }
+
+      if (!address || !address.trim()) {
+        return res.status(400).json({ message: "Address is required" });
+      }
+
+      // Get the existing entry to verify it's a custom address
+      const entry = await storage.getTimesheetEntry(entryId);
+      if (!entry) {
+        return res.status(404).json({ message: "Timesheet entry not found" });
+      }
+
+      if (!entry.description || !entry.description.startsWith('CUSTOM_ADDRESS:')) {
+        return res.status(400).json({ message: "This entry is not a custom address" });
+      }
+
+      if (entry.approved) {
+        return res.status(400).json({ message: "Cannot edit approved timesheet entries" });
+      }
+
+      // Update the custom address
+      const updatedDescription = `CUSTOM_ADDRESS: ${address.trim()}`;
+      await storage.updateTimesheetEntry(entryId, { description: updatedDescription });
+      
+      res.status(200).json({ 
+        message: "Custom address updated successfully",
+        entryId,
+        address: address.trim()
+      });
+    } catch (error) {
+      console.error("Error updating custom address:", error);
+      res.status(500).json({ message: "Failed to update custom address", error: (error as Error).message });
+    }
+  });
+
   app.post("/api/admin/timesheet", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
