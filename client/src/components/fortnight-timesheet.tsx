@@ -778,6 +778,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 console.log(`🚫 STAFF WEEKEND JOB BLOCKED: ${dateKey} - Weekend is locked!`);
                                 return; // Prevent job selection on locked weekends
                               }
+                              
+                              if (value === 'other-address') {
+                                // Show address input dialog
+                                setShowAddressDialog({show: true, dayIndex, entryIndex});
+                                setCurrentAddress({houseNumber: '', streetAddress: ''});
+                                return;
+                              }
+                              
                               if (entry?.id && !entry?.approved) {
                                 editSavedEntry(entry.id, 'jobId', value);
                               } else {
