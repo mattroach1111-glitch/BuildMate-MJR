@@ -1489,7 +1489,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             </td>
                             <td className="p-3">
                               <Select
-                                value={entry?.jobId || 'no-job'}
+                                value={entry?.jobId && entry.jobId.startsWith('custom-address') ? 'other-address' : (entry?.jobId || 'no-job')}
                                 onValueChange={(value) => {
                                   if (isWeekend && !isWeekendUnlocked(dateKey)) {
                                     console.log(`🚫 WEEKEND SELECT BLOCKED: ${dateKey} - Weekend is locked!`);
@@ -1497,12 +1497,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   }
                                   
                                   if (value === 'other-address') {
-                                    // Show address input dialog
+                                    // Check if this is already a custom address entry
+                                    if (entry?.jobId && entry.jobId.startsWith('custom-address')) {
+                                      // Don't open dialog, it's already a custom address
+                                      return;
+                                    }
+                                    // Show address input dialog for new custom address
                                     console.log('🏠 OTHER ADDRESS SELECTED - Opening dialog for dayIndex:', dayIndex, 'entryIndex:', entryIndex);
-                                    console.log('🏠 BEFORE setState - showAddressDialog:', showAddressDialog);
                                     setShowAddressDialog(true);
                                     setAddressDialogData({dayIndex, entryIndex});
-                                    console.log('🏠 AFTER setState call - should show dialog now');
                                     return;
                                   }
                                   
