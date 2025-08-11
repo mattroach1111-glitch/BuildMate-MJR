@@ -153,7 +153,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         
         // Update the address in the timesheet entry
         const { dayIndex, entryIndex } = addressDialogData;
-        updateTimesheetEntry(dayIndex, entryIndex, 'address', fullAddress);
+        const targetDate = addDays(currentFortnight.start, dayIndex);
+        handleCellChange(targetDate, entryIndex, 'address', fullAddress);
         
         dialog.remove();
         setShowAddressDialog(false);
