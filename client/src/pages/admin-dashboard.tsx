@@ -1027,11 +1027,15 @@ export default function AdminDashboard() {
       return allColorThemes[6]; // Purple for Mark's jobs
     }
     
-    // Default white background for other jobs
+    // Default white background for other jobs - matches theme structure
     return {
+      name: 'Default',
       bg: 'bg-white',
-      border: 'border-gray-200',
-      hover: 'hover:shadow-md'
+      folderBg: 'bg-gray-100 hover:bg-gray-150',
+      folderIcon: 'text-gray-600',
+      folderText: 'text-gray-800',
+      badge: 'bg-gray-200 text-gray-800 border-gray-300',
+      preview: 'bg-gray-500'
     };
   };
 
@@ -1645,7 +1649,7 @@ export default function AdminDashboard() {
                             key={job.id} 
                             className={`cursor-pointer transition-shadow relative ${
                               groupBy === 'none' 
-                                ? `${getJobCardColors(job).bg} ${getJobCardColors(job).border || 'border-gray-200'} ${getJobCardColors(job).hover || 'hover:shadow-md'} border`
+                                ? `${getJobCardColors(job).bg} border-gray-200 hover:shadow-md border`
                                 : 'hover:shadow-md bg-white'
                             }`}
                             onClick={() => setSelectedJob(job.id)}
@@ -1715,7 +1719,7 @@ export default function AdminDashboard() {
                             key={job.id} 
                             className={`cursor-pointer transition-shadow relative ${
                               groupBy === 'none' 
-                                ? `${getJobCardColors(job).bg} ${getJobCardColors(job).border || 'border-gray-200'} ${getJobCardColors(job).hover || 'hover:shadow-md'} border`
+                                ? `${getJobCardColors(job).bg} border-gray-200 hover:shadow-md border`
                                 : 'hover:shadow-md bg-white'
                             }`}
                             onClick={() => setSelectedJob(job.id)}

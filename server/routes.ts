@@ -56,12 +56,11 @@ const findBestJobMatch = async (timesheetJobDescription: string, threshold: numb
     
     for (const job of allJobs) {
       const jobIdentifiers = [
-        job.jobName,
-        job.address,
+        job.jobAddress,
         job.clientName,
-        job.projectManager,
-        `${job.jobName} ${job.address}`,
-        `${job.clientName} ${job.address}`
+        job.projectName,
+        `${job.clientName} ${job.jobAddress}`,
+        `${job.projectName} ${job.jobAddress}`
       ].filter(Boolean);
       
       for (const identifier of jobIdentifiers) {
@@ -859,7 +858,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               unmatchedCustomAddresses.push(customAddress);
             } else {
               // Auto-match and update the entry
-              console.log(`✅ Auto-matching custom address "${customAddress}" to job: ${jobMatch.job.jobName} (${jobMatch.score}% match)`);
+              console.log(`✅ Auto-matching custom address "${customAddress}" to job: ${jobMatch.job.jobAddress} (${jobMatch.score}% match)`);
               await storage.updateTimesheetEntry(entry.id, { 
                 jobId: jobMatch.job.id, 
                 description: null 
@@ -1089,7 +1088,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const jobMatch = await findBestJobMatch(customAddress, 80);
         
         if (jobMatch) {
-          console.log(`✅ Found matching job sheet for custom address "${customAddress}": ${jobMatch.job.jobName} (${jobMatch.score}% match)`);
+          console.log(`✅ Found matching job sheet for custom address "${customAddress}": ${jobMatch.job.jobAddress} (${jobMatch.score}% match)`);
           // Use the matched job ID instead of null
           finalJobId = jobMatch.job.id;
           finalDescription = null; // Clear custom address description since we have a real job
@@ -1480,7 +1479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             customAddress: customAddress
           });
         } else {
-          console.log(`✅ Job sheet match found during approval for "${customAddress}": ${jobMatch.job.jobName} (${jobMatch.score}% match)`);
+          console.log(`✅ Job sheet match found during approval for "${customAddress}": ${jobMatch.job.jobAddress} (${jobMatch.score}% match)`);
           // Update the entry to use the matched job ID
           await storage.updateTimesheetEntry(id, { 
             approved, 
@@ -1491,7 +1490,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Update labor hours in the matched job
           if (entry.jobId) {
-            await storage.updateLaborHoursFromTimesheet(jobMatch.job.id, entry.staffId, parseFloat(hours));
+            await storage.updateLaborHoursFromTimesheet(entry.staffId, jobMatch.job.id);
             console.log(`Updated labor hours for matched job ${jobMatch.job.id} with ${hours} hours from timesheet entry ${id}`);
           }
           
@@ -1508,7 +1507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (approved && entry.jobId) {
         // Update labor hours in the corresponding job
-        await storage.updateLaborHoursFromTimesheet(entry.jobId, entry.staffId, parseFloat(hours));
+        await storage.updateLaborHoursFromTimesheet(entry.staffId, entry.jobId);
         console.log(`Updated labor hours for job ${entry.jobId} with ${hours} hours from timesheet entry ${id}`);
       }
       
