@@ -1053,11 +1053,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         }
                         
                         return entriesToShow.map((entry: any, entryIndex: number) => (
-                          <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'bg-gray-50' : ''}`}>
+                          <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'bg-blue-50 border-blue-100' : ''}`}>
                             <td className="p-3">
                               {entryIndex === 0 && (
-                                <div className="font-medium">
+                                <div className={`font-medium ${isWeekend ? 'text-blue-700' : ''}`}>
                                   {format(day, 'EEE, MMM dd')}
+                                  {isWeekend && <span className="text-xs text-blue-600 ml-2">(Weekend)</span>}
                                 </div>
                               )}
                             </td>
