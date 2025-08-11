@@ -2342,20 +2342,20 @@ export default function AdminDashboard() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {/* Regular Jobs First */}
+                              {/* Regular Jobs Section - Updated for consistency */}
                               {jobs?.filter(job => job.id && job.id.trim() !== '').map((job) => (
                                 <SelectItem key={job.id} value={job.id}>
                                   {job.jobAddress}
                                 </SelectItem>
                               ))}
                               
-                              {/* Separator for Leave Types */}
+                              {/* Visual Separator for Leave Types */}
                               <Separator className="my-2" />
                               <div className="px-2 py-1.5 text-xs text-muted-foreground font-medium">
                                 Leave Types
                               </div>
                               
-                              {/* Leave Types Pinned at Bottom */}
+                              {/* Leave Types Section - Pinned at Bottom */}
                               <SelectItem value="sick-leave">Sick Leave</SelectItem>
                               <SelectItem value="personal-leave">Personal Leave</SelectItem>
                               <SelectItem value="annual-leave">Annual Leave</SelectItem>
