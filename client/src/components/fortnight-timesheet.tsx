@@ -652,12 +652,21 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             
             // Handle custom addresses specially - set jobId to null and store address in description
             if (isCustomAddress) {
-              const fullAddress = entry.materials || 'Custom Address';
+              // Get address from materials field first, then from description if materials is empty
+              let fullAddress = entry.materials;
+              if (!fullAddress && entry.description && entry.description.startsWith('CUSTOM_ADDRESS:')) {
+                fullAddress = entry.description.replace('CUSTOM_ADDRESS: ', '');
+              }
+              // Fallback to 'Custom Address' only if no address found anywhere
+              fullAddress = fullAddress || 'Custom Address';
+              
               entryData.jobId = null;
               entryData.description = `CUSTOM_ADDRESS: ${fullAddress}`;
               console.log('🏠 PROCESSING CUSTOM ADDRESS:', {
                 originalJobId: entry.jobId,
-                fullAddress,
+                entryMaterials: entry.materials,
+                entryDescription: entry.description,
+                extractedAddress: fullAddress,
                 finalData: entryData
               });
             }
