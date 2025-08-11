@@ -1421,8 +1421,13 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           console.log('🚨 EXECUTING PENDING SUBMISSION');
                           confirmTimesheetMutation.mutate();
                         });
+                        console.log('🚨 ABOUT TO SHOW DIALOG - current state:', showLowHoursDialog);
                         setShowLowHoursDialog(true);
                         console.log('🚨 DIALOG STATE SET TO TRUE');
+                        // Force a small delay to ensure state update
+                        setTimeout(() => {
+                          console.log('🚨 DIALOG STATE CHECK (after timeout):', showLowHoursDialog);
+                        }, 100);
                         return;
                       }
 
@@ -2309,7 +2314,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         )}
         
         {/* Low Hours Warning Dialog */}
-        {console.log('🔥 DIALOG RENDER - showLowHoursDialog:', showLowHoursDialog, 'lowHoursTotal:', lowHoursTotal)}
+        {showLowHoursDialog && console.log('🚨 DIALOG SHOULD BE VISIBLE NOW - showLowHoursDialog:', showLowHoursDialog)}
         <AlertDialog open={showLowHoursDialog} onOpenChange={setShowLowHoursDialog}>
           <AlertDialogContent className="max-w-md">
             <AlertDialogHeader>
