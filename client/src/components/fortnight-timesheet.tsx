@@ -2142,7 +2142,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   
                   // Set the custom address as the job - but don't auto-save, let user save manually
                   handleCellChange(day, entryIndex, 'jobId', 'custom-address');
-                  handleCellChange(day, entryIndex, 'materials', '');
+                  handleCellChange(day, entryIndex, 'materials', fullAddress);
                   handleCellChange(day, entryIndex, 'description', `CUSTOM_ADDRESS: ${fullAddress}`);
                   handleCellChange(day, entryIndex, 'hours', '');
                   
