@@ -226,74 +226,7 @@ export async function generateJobPDF(job: JobWithRelations) {
     yPos += 10;
   }
 
-  // TIMESHEET ENTRIES SECTION
-  if (job.timesheets && job.timesheets.length > 0) {
-    checkPageBreak(40);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('TIMESHEET ENTRIES', 20, yPos);
-    yPos += 10;
 
-    // Table headers
-    doc.setFontSize(9);
-    doc.text('Date', 25, yPos);
-    doc.text('Staff', 55, yPos);
-    doc.text('Hours', 90, yPos);
-    doc.text('Materials/Notes', 110, yPos);
-    doc.text('Status', 160, yPos);
-    yPos += 3;
-    doc.line(20, yPos, 190, yPos);
-    yPos += 8;
-
-    // Sort timesheets by date (newest first)
-    const sortedTimesheets = [...job.timesheets].sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-
-    doc.setFont('helvetica', 'normal');
-    let totalTimesheetHours = 0;
-    let approvedHours = 0;
-
-    sortedTimesheets.forEach((entry) => {
-      checkPageBreak(10);
-      
-      const hours = parseFloat(entry.hours);
-      totalTimesheetHours += hours;
-      if (entry.approved) {
-        approvedHours += hours;
-      }
-
-      // Format date
-      const date = new Date(entry.date).toLocaleDateString('en-AU', { 
-        day: '2-digit', 
-        month: '2-digit' 
-      });
-      
-      // Truncate long staff names and materials
-      const staffName = entry.staffName || entry.staffEmail?.split('@')[0] || 'Unknown';
-      const truncatedStaff = staffName.length > 15 ? staffName.substring(0, 12) + '...' : staffName;
-      const materials = entry.materials || entry.description || '-';
-      const truncatedMaterials = materials.length > 25 ? materials.substring(0, 22) + '...' : materials;
-
-      doc.text(date, 25, yPos);
-      doc.text(truncatedStaff, 55, yPos);
-      doc.text(`${hours.toFixed(1)}h`, 90, yPos);
-      doc.text(truncatedMaterials, 110, yPos);
-      doc.text(entry.approved ? 'Approved' : 'Pending', 160, yPos);
-      yPos += 8;
-    });
-
-    // Timesheet summary
-    yPos += 5;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Total Hours Logged:', 25, yPos);
-    doc.text(`${totalTimesheetHours.toFixed(1)}h`, 160, yPos);
-    yPos += 8;
-    
-    doc.text('Approved Hours:', 25, yPos);
-    doc.text(`${approvedHours.toFixed(1)}h`, 160, yPos);
-    yPos += 15;
-  }
 
   // SUMMARY SECTION - Enhanced with detailed breakdown
   checkPageBreak(100); // Ensure summary stays together
@@ -382,6 +315,112 @@ export async function generateJobPDF(job: JobWithRelations) {
   
   // Reset color
   doc.setTextColor(0, 0, 0);
+
+  // TIMESHEET ENTRIES SECTION - On new page after totals
+  if (job.timesheets && job.timesheets.length > 0) {
+    // Start new page for timesheet entries
+    doc.addPage();
+    yPos = 30;
+
+    // Header for timesheet page
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TIMESHEET ENTRIES', 105, yPos, { align: 'center' });
+    yPos += 10;
+
+    // Job info on timesheet page
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Job: ${job.jobAddress}`, 20, yPos);
+    doc.text(`Client: ${job.clientName}`, 20, yPos + 7);
+    yPos += 25;
+
+    // Table headers
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Date', 25, yPos);
+    doc.text('Staff Member', 55, yPos);
+    doc.text('Hours', 100, yPos);
+    doc.text('Materials/Notes', 120, yPos);
+    doc.text('Status', 160, yPos);
+    yPos += 3;
+    doc.line(20, yPos, 190, yPos);
+    yPos += 8;
+
+    // Sort timesheets by date (newest first)
+    const sortedTimesheets = [...job.timesheets].sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    doc.setFont('helvetica', 'normal');
+    let totalTimesheetHours = 0;
+    let approvedHours = 0;
+
+    sortedTimesheets.forEach((entry) => {
+      checkPageBreak(10);
+      
+      const hours = parseFloat(entry.hours);
+      totalTimesheetHours += hours;
+      if (entry.approved) {
+        approvedHours += hours;
+      }
+
+      // Format date
+      const date = new Date(entry.date).toLocaleDateString('en-AU', { 
+        day: '2-digit', 
+        month: '2-digit',
+        year: '2-digit'
+      });
+      
+      // Handle staff names and materials
+      const staffName = entry.staffName || entry.staffEmail?.split('@')[0] || 'Unknown';
+      const truncatedStaff = staffName.length > 18 ? staffName.substring(0, 15) + '...' : staffName;
+      const materials = entry.materials || entry.description || '-';
+      const truncatedMaterials = materials.length > 22 ? materials.substring(0, 19) + '...' : materials;
+
+      doc.text(date, 25, yPos);
+      doc.text(truncatedStaff, 55, yPos);
+      doc.text(`${hours.toFixed(1)}h`, 100, yPos);
+      doc.text(truncatedMaterials, 120, yPos);
+      doc.text(entry.approved ? 'Approved' : 'Pending', 160, yPos);
+      yPos += 8;
+    });
+
+    // Timesheet summary section
+    yPos += 10;
+    doc.line(20, yPos, 190, yPos);
+    yPos += 15;
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TIMESHEET SUMMARY', 20, yPos);
+    yPos += 15;
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Total Hours Logged:', 25, yPos);
+    doc.text(`${totalTimesheetHours.toFixed(1)} hours`, 160, yPos, { align: 'right' });
+    yPos += 8;
+    
+    doc.text('Approved Hours:', 25, yPos);
+    doc.text(`${approvedHours.toFixed(1)} hours`, 160, yPos, { align: 'right' });
+    yPos += 8;
+
+    doc.text('Pending Hours:', 25, yPos);
+    doc.text(`${(totalTimesheetHours - approvedHours).toFixed(1)} hours`, 160, yPos, { align: 'right' });
+    yPos += 15;
+
+    // Additional notes section
+    doc.setFont('helvetica', 'bold');
+    doc.text('NOTES:', 20, yPos);
+    yPos += 10;
+
+    // Add lines for notes
+    doc.setDrawColor(200, 200, 200);
+    for (let i = 0; i < 5; i++) {
+      doc.line(20, yPos + (i * 10), 190, yPos + (i * 10));
+    }
+  }
   
   // Save the PDF
   doc.save(`${job.jobAddress.replace(/[^a-zA-Z0-9]/g, '-')}-job-sheet.pdf`);
