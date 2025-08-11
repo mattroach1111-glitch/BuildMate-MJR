@@ -57,13 +57,14 @@ export class TimesheetPDFGenerator {
     doc.line(20, yPos + 3, pageWidth - 20, yPos + 3);
     yPos += 15;
     
-    // Sort entries by date
-    const sortedEntries = entries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    // Filter out entries with zero hours and sort by date
+    const workedEntries = entries.filter(entry => entry.hours > 0);
+    const sortedEntries = workedEntries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
     doc.setFont('helvetica', 'normal');
     let totalHours = 0;
     
-    // Table rows
+    // Table rows (only show days worked)
     for (const entry of sortedEntries) {
       // Check if we need a new page
       if (yPos > pageHeight - 30) {
