@@ -641,11 +641,56 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     }
                     
                     return entriesToShow.map((entry: any, entryIndex: number) => (
-                      <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'bg-gray-50' : ''}`}>
+                      <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'weekend-row bg-blue-600 text-white' : ''}`} style={isWeekend ? { backgroundColor: '#1e40af !important', color: 'white !important' } : {}}>
                         <td className="p-3">
                           {entryIndex === 0 && (
-                            <div className="font-medium">
-                              {format(day, 'EEE, MMM dd')}
+                            <div className={`font-medium ${isWeekend ? 'text-white' : ''} flex items-center justify-between`}>
+                              <div>
+                                {format(day, 'EEE, MMM dd')}
+                                {isWeekend && <span className="text-xs text-white ml-2 font-semibold">(Weekend)</span>}
+                              </div>
+                              {(() => {
+                                const shouldShowButton = isWeekend && !isWeekendUnlocked(dateKey);
+                                console.log(`🔧 STAFF UNLOCK BUTTON DEBUG: ${dateKey} - isWeekend=${isWeekend}, unlocked=${isWeekendUnlocked(dateKey)}, shouldShow=${shouldShowButton}, entryIndex=${entryIndex}`);
+                                return shouldShowButton;
+                              })() && (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 w-6 p-0 text-white hover:bg-orange-600"
+                                      data-testid={`unlock-weekend-${dateKey}`}
+                                    >
+                                      <Lock className="h-3 w-3" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Weekend Work Confirmation</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        You are about to log hours for {format(day, 'EEEE, MMMM dd, yyyy')}. 
+                                        Please confirm that you actually worked on this weekend day.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => unlockWeekend(dateKey)}
+                                        className="bg-orange-500 hover:bg-orange-600"
+                                      >
+                                        Yes, I worked this weekend
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
+                              {isWeekend && isWeekendUnlocked(dateKey) && (
+                                <div className="flex items-center text-xs text-white">
+                                  <Unlock className="h-3 w-3 mr-1" />
+                                  Unlocked
+                                </div>
+                              )}
                             </div>
                           )}
                         </td>
@@ -653,33 +698,42 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           <Input
                             type="number"
                             step="0.5"
-                            placeholder="0"
+                            placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "0"}
                             value={entry?.hours || ''}
                             onChange={(e) => {
+                              if (isWeekend && !isWeekendUnlocked(dateKey)) {
+                                console.log(`🚫 STAFF WEEKEND INPUT BLOCKED: ${dateKey} - Weekend is locked!`);
+                                return; // Prevent any input on locked weekends
+                              }
                               if (entry?.id && !entry?.approved) {
                                 editSavedEntry(entry.id, 'hours', e.target.value);
                               } else {
                                 handleCellChange(day, entryIndex, 'hours', e.target.value);
                               }
                             }}
-                            className="w-20"
-                            disabled={entry?.approved}
+                            className={`w-20 ${isWeekend ? 'text-white placeholder:text-blue-200 bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}
+                            disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))} // Disable for approved entries or locked weekends
+                            readOnly={isWeekend && !isWeekendUnlocked(dateKey)} // Make readonly for locked weekends
                           />
                         </td>
                         <td className="p-3">
                           <Select
                             value={entry?.jobId || 'no-job'}
                             onValueChange={(value) => {
+                              if (isWeekend && !isWeekendUnlocked(dateKey)) {
+                                console.log(`🚫 STAFF WEEKEND JOB BLOCKED: ${dateKey} - Weekend is locked!`);
+                                return; // Prevent job selection on locked weekends
+                              }
                               if (entry?.id && !entry?.approved) {
                                 editSavedEntry(entry.id, 'jobId', value);
                               } else {
                                 handleCellChange(day, entryIndex, 'jobId', value);
                               }
                             }}
-                            disabled={entry?.approved}
+                            disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))}
                           >
-                            <SelectTrigger className="min-w-40">
-                              <SelectValue placeholder="Select job" />
+                            <SelectTrigger className={`min-w-40 ${isWeekend ? 'text-white bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}>
+                              <SelectValue placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "Select job"} />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="no-job">No job</SelectItem>
@@ -706,22 +760,27 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         <td className="p-3">
                           <Input
                             type="text"
-                            placeholder="Materials or notes"
+                            placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "Materials or notes"}
                             value={entry?.materials || ''}
                             onChange={(e) => {
+                              if (isWeekend && !isWeekendUnlocked(dateKey)) {
+                                console.log(`🚫 STAFF WEEKEND MATERIALS BLOCKED: ${dateKey} - Weekend is locked!`);
+                                return; // Prevent materials input on locked weekends
+                              }
                               if (entry?.id && !entry?.approved) {
                                 editSavedEntry(entry.id, 'materials', e.target.value);
                               } else {
                                 handleCellChange(day, entryIndex, 'materials', e.target.value);
                               }
                             }}
-                            className="min-w-32"
-                            disabled={entry?.approved}
+                            className={`min-w-32 ${isWeekend ? 'text-white placeholder:text-blue-200 bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}
+                            disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))}
+                            readOnly={isWeekend && !isWeekendUnlocked(dateKey)}
                           />
                         </td>
                         <td className="p-3">
                           <div className="flex gap-2">
-                            {entryIndex === 0 && !isFortnightConfirmed() && (
+                            {entryIndex === 0 && !isFortnightConfirmed() && !(isWeekend && !isWeekendUnlocked(dateKey)) && (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -730,7 +789,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 <Plus className="h-4 w-4" />
                               </Button>
                             )}
-                            {entryIndex > 0 && !isFortnightConfirmed() && (
+                            {entryIndex > 0 && !isFortnightConfirmed() && !(isWeekend && !isWeekendUnlocked(dateKey)) && (
                               <Button
                                 size="sm"
                                 variant="destructive"
