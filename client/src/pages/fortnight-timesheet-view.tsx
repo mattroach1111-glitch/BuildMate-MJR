@@ -50,10 +50,7 @@ export default function FortnightTimesheetView() {
   };
 
   // For staff users, show only the timesheet table without any navigation
-  console.log("FortnightTimesheetView - user role:", (user as any)?.role, "user:", user);
-  
   if ((user as any)?.role !== "admin") {
-    console.log("Rendering staff-only page layout");
     return (
       <div className="min-h-screen bg-white">
         <FortnightTimesheet 

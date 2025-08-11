@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft, Users, Plus, Trash2, Save } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft, Users, Plus, Trash2, Save, Clock, CheckCircle, Calendar } from "lucide-react";
 import { format, addDays, parseISO } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -476,10 +476,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const completionPercentage = Math.round((workdaysCompleted / 10) * 100);
 
   // For staff users, show enhanced interface with essential controls
-  console.log("FortnightTimesheet - isAdminView:", isAdminView, "selectedEmployeeId:", selectedEmployeeId);
-  
   if (!isAdminView) {
-    console.log("Rendering staff-only view");
     return (
       <div className="p-4 max-w-7xl mx-auto">
         <Card>
@@ -682,8 +679,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               </table>
             </div>
             
-            {/* Progress and Submit Section for Staff */}
-            <div className="mt-6 pt-6 border-t">
+            {/* Smart Progress Prompts for Staff */}
+            <div className="mt-6 pt-6 border-t space-y-4">
+              {/* Progress Stats */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="text-sm text-muted-foreground">
                   <span className="font-medium">{savedHours}h logged</span> • 
@@ -701,6 +699,78 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   </Button>
                 )}
               </div>
+
+              {/* Smart Prompts Based on Progress */}
+              {workdaysCompleted === 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <Clock className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-blue-900">Ready to start your fortnight?</h4>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Fill out your daily hours and job details. You need 10 workdays to complete this timesheet period.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {workdaysCompleted >= 1 && workdaysCompleted <= 3 && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-green-900">Great start! 🎯</h4>
+                      <p className="text-sm text-green-700 mt-1">
+                        You've logged {workdaysCompleted} day{workdaysCompleted > 1 ? 's' : ''}. Keep going! Remember to save your entries as you fill them out.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {workdaysCompleted >= 4 && workdaysCompleted <= 6 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <Calendar className="h-5 w-5 text-yellow-600 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-yellow-900">Halfway there! 🚀</h4>
+                      <p className="text-sm text-yellow-700 mt-1">
+                        {workdaysCompleted} days completed - you're making excellent progress! {10 - workdaysCompleted} more days to go.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {workdaysCompleted >= 7 && workdaysCompleted <= 9 && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <Users className="h-5 w-5 text-purple-600 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-purple-900">Almost there! 💪</h4>
+                      <p className="text-sm text-purple-700 mt-1">
+                        Outstanding work! {workdaysCompleted} days logged. Just {10 - workdaysCompleted} more day{10 - workdaysCompleted > 1 ? 's' : ''} to complete your fortnight.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {workdaysCompleted >= 10 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <FileText className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-blue-900">Fortnight Complete! 🎉</h4>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Excellent! You've completed all 10 workdays ({savedHours} hours total). 
+                        Your timesheet is ready for submission. Click "Submit Timesheet" to generate your PDF.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
