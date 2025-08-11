@@ -408,6 +408,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateLaborHoursFromTimesheet(staffId: string, jobId: string): Promise<void> {
+    // Get user info to find the corresponding employee ID
+    const user = await db.select().from(users).where(eq(users.id, staffId)).limit(1);
+    const employeeId = user[0]?.employeeId || staffId; // Use employeeId if available, otherwise use staffId directly
+    
+    console.log(`Updating labor hours: staffId=${staffId}, employeeId=${employeeId}, jobId=${jobId}`);
+
     // Get total hours from timesheet for this staff and job
     const result = await db
       .select({ totalHours: sql`COALESCE(SUM(CAST(${timesheetEntries.hours} AS NUMERIC)), 0)`.as('totalHours') })
@@ -420,17 +426,20 @@ export class DatabaseStorage implements IStorage {
       );
 
     const totalHours = result[0]?.totalHours || 0;
+    console.log(`Total hours from timesheet: ${totalHours}`);
 
-    // Update labor entry hours
-    await db
+    // Update labor entry hours using the employee ID (not user ID)
+    const updateResult = await db
       .update(laborEntries)
       .set({ hoursLogged: totalHours.toString(), updatedAt: new Date() })
       .where(
         and(
-          eq(laborEntries.staffId, staffId),
+          eq(laborEntries.staffId, employeeId), // Use employee ID for labor entries
           eq(laborEntries.jobId, jobId)
         )
       );
+    
+    console.log(`Labor entry update completed for employeeId=${employeeId}, jobId=${jobId}, hours=${totalHours}`);
   }
 
   async addExtraHoursToLaborEntry(laborEntryId: string, extraHours: string): Promise<LaborEntry> {
@@ -908,6 +917,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async markTimesheetEntriesConfirmed(staffId: string, startDate: string, endDate: string): Promise<void> {
+    // First get all the entries we're about to confirm so we can update labor hours
+    const entriesToConfirm = await db
+      .select()
+      .from(timesheetEntries)
+      .where(
+        and(
+          eq(timesheetEntries.staffId, staffId),
+          gte(timesheetEntries.date, startDate),
+          lte(timesheetEntries.date, endDate)
+        )
+      );
+
+    // Mark entries as approved
     await db
       .update(timesheetEntries)
       .set({ approved: true })
@@ -918,6 +940,16 @@ export class DatabaseStorage implements IStorage {
           lte(timesheetEntries.date, endDate)
         )
       );
+
+    // Update labor hours for each job that has timesheet entries
+    const jobIds = [...new Set(entriesToConfirm.filter(entry => entry.jobId).map(entry => entry.jobId))];
+    
+    for (const jobId of jobIds) {
+      if (jobId) {
+        console.log(`Updating labor hours for staffId: ${staffId}, jobId: ${jobId}`);
+        await this.updateLaborHoursFromTimesheet(staffId, jobId);
+      }
+    }
   }
 }
 
