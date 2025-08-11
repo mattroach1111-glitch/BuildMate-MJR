@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -54,6 +55,7 @@ const adminTimesheetFormSchema = insertTimesheetEntrySchema.extend({
 export default function AdminDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+  const [location] = useLocation();
   const { 
     showWelcome, 
     showTour, 
@@ -85,7 +87,20 @@ export default function AdminDashboard() {
   const [isDeletedFolderExpanded, setIsDeletedFolderExpanded] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'address' | 'client' | 'manager' | 'status'>('address');
-  const [activeTab, setActiveTab] = useState("jobs");
+  // Set initial tab based on route
+  const getInitialTab = () => {
+    if (location === "/timesheet") return "timesheets";
+    return "jobs"; // Default for dashboard "/"
+  };
+  
+  const [activeTab, setActiveTab] = useState(getInitialTab);
+
+  // Update activeTab when route changes
+  useEffect(() => {
+    const newTab = getInitialTab();
+    console.log("Route changed to:", location, "Setting tab to:", newTab);
+    setActiveTab(newTab);
+  }, [location]);
 
   // Debug activeTab changes
   useEffect(() => {
