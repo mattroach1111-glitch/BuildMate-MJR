@@ -1405,7 +1405,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                 </div>
                 {completionPercentage >= 100 && (
                   <Button 
-                    onClick={() => {
+                    onClick={(e) => {
+                      console.log('🔥 BUTTON CLICKED - STAFF SUBMIT');
+                      e.preventDefault();
+                      e.stopPropagation();
+                      
                       // Check for low hours warning
                       const totalHours = getTotalHours();
                       console.log('🚨 STAFF SUBMIT - totalHours:', totalHours, 'will show dialog:', totalHours < 76);
@@ -1413,8 +1417,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                       if (totalHours < 76) {
                         console.log('🚨 SHOWING LOW HOURS DIALOG');
                         setLowHoursTotal(totalHours);
-                        setPendingSubmission(() => () => confirmTimesheetMutation.mutate());
+                        setPendingSubmission(() => () => {
+                          console.log('🚨 EXECUTING PENDING SUBMISSION');
+                          confirmTimesheetMutation.mutate();
+                        });
                         setShowLowHoursDialog(true);
+                        console.log('🚨 DIALOG STATE SET TO TRUE');
                         return;
                       }
 
@@ -2083,7 +2091,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                       </div>
                     ) : (
                       <Button
-                        onClick={() => {
+                        onClick={(e) => {
+                          console.log('🔥 BUTTON CLICKED - ADMIN SUBMIT');
+                          e.preventDefault();
+                          e.stopPropagation();
+                          
                           // Validate all weekdays are completed before confirming
                           const completionErrors = validateFortnightCompletion();
                           if (completionErrors.length > 0) {
@@ -2102,8 +2114,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           if (totalHours < 76) {
                             console.log('🚨 SHOWING LOW HOURS DIALOG (admin)');
                             setLowHoursTotal(totalHours);
-                            setPendingSubmission(() => () => confirmTimesheetMutation.mutate());
+                            setPendingSubmission(() => () => {
+                              console.log('🚨 EXECUTING PENDING SUBMISSION (admin)');
+                              confirmTimesheetMutation.mutate();
+                            });
                             setShowLowHoursDialog(true);
+                            console.log('🚨 DIALOG STATE SET TO TRUE (admin)');
                             return;
                           }
 
@@ -2293,6 +2309,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         )}
         
         {/* Low Hours Warning Dialog */}
+        {console.log('🔥 DIALOG RENDER - showLowHoursDialog:', showLowHoursDialog, 'lowHoursTotal:', lowHoursTotal)}
         <AlertDialog open={showLowHoursDialog} onOpenChange={setShowLowHoursDialog}>
           <AlertDialogContent className="max-w-md">
             <AlertDialogHeader>
