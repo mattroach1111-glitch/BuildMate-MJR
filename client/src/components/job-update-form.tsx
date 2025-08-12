@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Mail, FileText, Send, Plus, Building2, ChevronDown, Users, Clock } from "lucide-react";
@@ -69,6 +71,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailSuggestions, setEmailSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<string>("all");
 
   // Fetch current user data
   const { data: currentUser } = useQuery<{ id: string; email: string }>({
@@ -82,31 +85,63 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     retry: false,
   });
 
-  // Filter jobs by project manager
+  // Filter jobs by project manager and client
   const jobs = React.useMemo(() => {
     if (!allJobs) return [];
     
+    let filteredJobs = allJobs;
+    
     // If projectManager is specified (from folder context), filter by that
     if (projectManager) {
-      const filteredJobs = allJobs.filter(job => 
+      filteredJobs = filteredJobs.filter(job => 
         job.projectName?.toLowerCase().includes(projectManager.toLowerCase())
       );
-      return filteredJobs;
     }
-    // For general use, show all jobs
-    return allJobs;
+
+    // Filter by selected client if not "all"
+    if (selectedClient !== "all") {
+      filteredJobs = filteredJobs.filter(job => 
+        job.clientName?.toLowerCase() === selectedClient.toLowerCase()
+      );
+    }
+
+    return filteredJobs;
+  }, [allJobs, projectManager, selectedClient]);
+
+  // Get unique clients from filtered jobs (by project manager)
+  const availableClients = React.useMemo(() => {
+    if (!allJobs) return [];
+    
+    let baseJobs = allJobs;
+    
+    // If projectManager is specified, filter base jobs first
+    if (projectManager) {
+      baseJobs = baseJobs.filter(job => 
+        job.projectName?.toLowerCase().includes(projectManager.toLowerCase())
+      );
+    }
+
+    const clients = Array.from(new Set(baseJobs.map(job => job.clientName).filter(Boolean)))
+      .sort((a, b) => a.localeCompare(b));
+    
+    return clients;
   }, [allJobs, projectManager]);
 
-  // Generate project manager specific email subject
+  // Generate project manager and client specific email subject
   const getEmailSubject = React.useCallback(() => {
     let pmName = "";
+    let clientPart = "";
     
     if (projectManager) {
       pmName = `${projectManager}'s `;
     }
     
-    return `${pmName}Job Updates - ${new Date().toLocaleDateString()}`;
-  }, [projectManager]);
+    if (selectedClient !== "all") {
+      clientPart = ` - ${selectedClient}`;
+    }
+    
+    return `${pmName}Job Updates${clientPart} - ${new Date().toLocaleDateString()}`;
+  }, [projectManager, selectedClient]);
 
   // Form setup
   const form = useForm<JobUpdateForm>({
@@ -124,7 +159,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     setEmailSuggestions(getSavedEmailSuggestions());
   }, []);
 
-  // Update form when jobs load or project manager changes
+  // Update form when jobs load, project manager, or client changes
   React.useEffect(() => {
     if (jobs) {
       form.setValue("updates", jobs.map(job => ({ jobId: job.id, update: "" })));
@@ -331,6 +366,54 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
           </CardContent>
         </Card>
 
+        {/* Client Filter */}
+        {availableClients.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                Client Filter
+              </CardTitle>
+              <CardDescription>
+                Select a specific client to filter jobs, or choose "All Clients" to include everyone.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <Label htmlFor="client-filter" className="text-sm font-medium">
+                  Choose Client
+                </Label>
+                <Select value={selectedClient} onValueChange={setSelectedClient}>
+                  <SelectTrigger data-testid="select-client-filter">
+                    <SelectValue placeholder="Select a client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        All Clients
+                      </div>
+                    </SelectItem>
+                    {availableClients.map((client) => (
+                      <SelectItem key={client} value={client}>
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4" />
+                          {client}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedClient !== "all" && (
+                  <div className="text-sm text-muted-foreground bg-blue-50 p-3 rounded-lg">
+                    <strong>Filtered:</strong> Showing only jobs for <strong>{selectedClient}</strong>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Job Updates */}
         <Card>
           <CardHeader>
@@ -340,15 +423,40 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
               {projectManager && (
                 <Badge variant="secondary" className="text-xs">{projectManager}'s Jobs</Badge>
               )}
+              {selectedClient !== "all" && (
+                <Badge variant="outline" className="text-xs">{selectedClient} Only</Badge>
+              )}
             </CardTitle>
             <CardDescription>
               Add updates for each job. Only jobs with updates will be included in the email.
               {projectManager && ` Showing only ${projectManager}'s assigned jobs.`}
+              {selectedClient !== "all" && ` Filtered to ${selectedClient} jobs only.`}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {jobs.map((job, index) => (
+            {jobs.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">
+                  {selectedClient !== "all" 
+                    ? `No jobs found for ${selectedClient}${projectManager ? ` under ${projectManager}` : ""}`
+                    : `No jobs found${projectManager ? ` for ${projectManager}` : ""}`
+                  }
+                </p>
+                {selectedClient !== "all" && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={() => setSelectedClient("all")}
+                  >
+                    Show All Clients
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {jobs.map((job, index) => (
                 <div key={job.id} className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -385,9 +493,10 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                       </FormItem>
                     )}
                   />
-                </div>
-              ))}
-            </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
