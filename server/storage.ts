@@ -28,7 +28,7 @@ import {
   type InsertJobFile,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sum, ne, gte, lte, sql, isNull, or, ilike } from "drizzle-orm";
+import { eq, and, desc, sum, ne, gte, lte, sql, isNull, or, ilike, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -257,6 +257,16 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(jobs)
       .where(or(eq(jobs.isDeleted, false), isNull(jobs.isDeleted)))
       .orderBy(desc(jobs.createdAt));
+  }
+
+  async getJobsByIds(jobIds: string[]): Promise<Job[]> {
+    if (jobIds.length === 0) return [];
+    return await db.select().from(jobs).where(
+      and(
+        or(eq(jobs.isDeleted, false), isNull(jobs.isDeleted)),
+        inArray(jobs.id, jobIds)
+      )
+    ).orderBy(jobs.jobAddress);
   }
 
   async getJob(id: string): Promise<Job | undefined> {

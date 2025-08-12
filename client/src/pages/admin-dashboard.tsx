@@ -34,6 +34,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { UserManagement } from "@/components/user-management";
 import { PendingUsers } from "@/components/pending-users";
 import { generateJobListPDF } from "@/lib/pdfGenerator";
+import { JobUpdateDialog } from "@/components/job-update-form";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -1944,31 +1945,34 @@ export default function AdminDashboard() {
                       
                       {/* PDF Download Button for Project Managers */}
                       {groupBy === 'manager' && !isReadyForBillingGroup(groupName) && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 hover:bg-white/20"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            try {
-                              await generateJobListPDF(groupJobs, groupName);
-                              toast({
-                                title: "PDF Downloaded",
-                                description: `Job list for ${groupName} has been downloaded.`,
-                              });
-                            } catch (error) {
-                              toast({
-                                title: "Download Failed",
-                                description: "Failed to generate PDF. Please try again.",
-                                variant: "destructive",
-                              });
-                            }
-                          }}
-                          title={`Download PDF job list for ${groupName}`}
-                          data-testid={`download-pdf-${groupName}`}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 hover:bg-white/20"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              try {
+                                await generateJobListPDF(groupJobs, groupName);
+                                toast({
+                                  title: "PDF Downloaded",
+                                  description: `Job list for ${groupName} has been downloaded.`,
+                                });
+                              } catch (error) {
+                                toast({
+                                  title: "Download Failed",
+                                  description: "Failed to generate PDF. Please try again.",
+                                  variant: "destructive",
+                                });
+                              }
+                            }}
+                            title={`Download PDF job list for ${groupName}`}
+                            data-testid={`download-pdf-${groupName}`}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          <JobUpdateDialog />
+                        </div>
                       )}
                       
                       {/* Color Picker Button */}

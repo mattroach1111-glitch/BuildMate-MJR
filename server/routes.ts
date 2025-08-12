@@ -1342,6 +1342,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Job Updates Email endpoint
+  app.post("/api/job-updates/email", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { updates, emailSubject, additionalNotes, recipientEmail } = req.body;
+      
+      if (!updates || !Array.isArray(updates) || updates.length === 0) {
+        return res.status(400).json({ message: "No job updates provided" });
+      }
+
+      if (!recipientEmail || !recipientEmail.trim()) {
+        return res.status(400).json({ message: "Recipient email is required" });
+      }
+
+      // Check if email is configured
+      const { isEmailConfigured } = await import('./services/emailService');
+      if (!isEmailConfigured()) {
+        return res.status(500).json({ 
+          message: "Email service not configured. Please set up SendGrid API key." 
+        });
+      }
+
+      // Get job details for the updates
+      const jobIds = updates.map((update: any) => update.jobId);
+      const jobs = await storage.getJobsByIds(jobIds);
+      
+      // Create job updates map
+      const updatesMap = updates.reduce((acc: any, update: any) => {
+        acc[update.jobId] = update.update;
+        return acc;
+      }, {});
+
+      // Generate email content
+      let emailContent = `Job Updates Report - ${new Date().toLocaleDateString()}\n\n`;
+      
+      for (const job of jobs) {
+        const update = updatesMap[job.id];
+        if (update) {
+          emailContent += `${job.jobAddress}\n`;
+          emailContent += `Client: ${job.clientName} | PM: ${job.projectName}\n`;
+          emailContent += `Status: ${job.status.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}\n`;
+          emailContent += `Update: ${update}\n\n`;
+          emailContent += "─".repeat(50) + "\n\n";
+        }
+      }
+
+      if (additionalNotes && additionalNotes.trim()) {
+        emailContent += `Additional Notes:\n${additionalNotes}\n\n`;
+      }
+
+      emailContent += `Generated on ${new Date().toLocaleString()}\nBuildFlow Pro - Construction Management System`;
+
+      // Send email
+      const { sendEmail } = await import('./services/emailService');
+      const emailSent = await sendEmail({
+        to: recipientEmail,
+        from: 'noreply@buildflowpro.com', // You may want to make this configurable
+        subject: emailSubject,
+        text: emailContent,
+        html: emailContent.replace(/\n/g, '<br>').replace(/─/g, '&mdash;')
+      });
+
+      if (emailSent) {
+        res.json({ 
+          message: "Job updates email sent successfully",
+          subject: emailSubject,
+          updatesCount: updates.length,
+          jobsUpdated: jobs.length,
+          sentTo: recipientEmail
+        });
+      } else {
+        res.status(500).json({ message: "Failed to send email" });
+      }
+
+    } catch (error) {
+      console.error("Error sending job updates email:", error);
+      res.status(500).json({ message: "Failed to send job updates email" });
+    }
+  });
+
   // Admin endpoint to delete pending staff user
   // Timesheet search endpoint for admins
   app.get("/api/timesheet-search", isAuthenticated, isAdmin, async (req: any, res) => {
