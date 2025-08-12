@@ -424,9 +424,8 @@ export function JobUpdateDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" data-testid="button-open-job-updates">
-          <Mail className="h-4 w-4 mr-2" />
-          Send Job Updates
+        <Button variant="outline" size="icon" data-testid="button-open-job-updates">
+          <Mail className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
