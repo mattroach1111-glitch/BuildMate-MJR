@@ -1,13 +1,25 @@
-import { MailService } from '@sendgrid/mail';
+import nodemailer from 'nodemailer';
 
-if (!process.env.SENDGRID_API_KEY) {
-  console.warn("SENDGRID_API_KEY environment variable not set - email functionality will be disabled");
-}
+// SMTP configuration for Onlydomains.com email server
+const createTransporter = () => {
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.warn("SMTP credentials not set - email functionality will be disabled");
+    return null;
+  }
 
-const mailService = new MailService();
-if (process.env.SENDGRID_API_KEY) {
-  mailService.setApiKey(process.env.SENDGRID_API_KEY);
-}
+  return nodemailer.createTransporter({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    tls: {
+      rejectUnauthorized: false // Allow self-signed certificates
+    }
+  });
+};
 
 interface EmailParams {
   to: string;
@@ -18,27 +30,31 @@ interface EmailParams {
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
-  if (!process.env.SENDGRID_API_KEY) {
-    console.error('SendGrid API key not configured - cannot send email');
+  const transporter = createTransporter();
+  
+  if (!transporter) {
+    console.error('SMTP not configured - cannot send email');
     return false;
   }
 
   try {
-    await mailService.send({
-      to: params.to,
+    const mailOptions = {
       from: params.from,
+      to: params.to,
       subject: params.subject,
       text: params.text,
       html: params.html,
-    });
-    console.log('Email sent successfully to:', params.to);
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully to:', params.to, 'Message ID:', result.messageId);
     return true;
   } catch (error) {
-    console.error('SendGrid email error:', error);
+    console.error('SMTP email error:', error);
     return false;
   }
 }
 
 export function isEmailConfigured(): boolean {
-  return !!process.env.SENDGRID_API_KEY;
+  return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
 }

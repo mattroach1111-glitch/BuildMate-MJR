@@ -1359,7 +1359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { isEmailConfigured } = await import('./services/emailService');
       if (!isEmailConfigured()) {
         return res.status(500).json({ 
-          message: "Email service not configured. Please set up SendGrid API key." 
+          message: "Email service not configured. Please set up SMTP credentials." 
         });
       }
 
@@ -1395,9 +1395,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send email
       const { sendEmail } = await import('./services/emailService');
+      const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'noreply@yourdomain.com';
       const emailSent = await sendEmail({
         to: recipientEmail,
-        from: 'noreply@buildflowpro.com', // You may want to make this configurable
+        from: fromEmail,
         subject: emailSubject,
         text: emailContent,
         html: emailContent.replace(/\n/g, '<br>').replace(/─/g, '&mdash;')
