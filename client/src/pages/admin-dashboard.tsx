@@ -73,6 +73,7 @@ export default function AdminDashboard() {
   const [selectedJobForProgress, setSelectedJobForProgress] = useState<string | null>(null);
   const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
   const [isCreateEmployeeOpen, setIsCreateEmployeeOpen] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<string | null>(null);
   const [isCreateTimesheetOpen, setIsCreateTimesheetOpen] = useState(false);
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
   const [expandedManagers, setExpandedManagers] = useState<Set<string>>(new Set());
@@ -599,6 +600,40 @@ export default function AdminDashboard() {
       toast({
         title: "Error",
         description: "Failed to remove employee",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update employee mutation
+  const updateEmployeeMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { name: string } }) => {
+      const response = await apiRequest("PATCH", `/api/employees/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
+      setEditingEmployee(null);
+      toast({
+        title: "Success",
+        description: "Employee updated successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update employee",
         variant: "destructive",
       });
     },
@@ -1285,6 +1320,13 @@ export default function AdminDashboard() {
     },
   });
 
+  const editEmployeeForm = useForm<z.infer<typeof employeeFormSchema>>({
+    resolver: zodResolver(employeeFormSchema),
+    defaultValues: {
+      name: "",
+    },
+  });
+
   const timesheetForm = useForm<z.infer<typeof adminTimesheetFormSchema>>({
     resolver: zodResolver(adminTimesheetFormSchema),
     defaultValues: {
@@ -1321,6 +1363,22 @@ export default function AdminDashboard() {
 
   const onEmployeeSubmit = (data: z.infer<typeof employeeFormSchema>) => {
     createEmployeeMutation.mutate(data);
+  };
+
+  const handleEditEmployee = (employee: Employee) => {
+    setEditingEmployee(employee.id);
+    editEmployeeForm.setValue('name', employee.name);
+  };
+
+  const onEditEmployeeSubmit = (data: z.infer<typeof employeeFormSchema>) => {
+    if (editingEmployee) {
+      updateEmployeeMutation.mutate({ id: editingEmployee, data });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingEmployee(null);
+    editEmployeeForm.reset();
   };
 
   const onTimesheetSubmit = (data: z.infer<typeof adminTimesheetFormSchema>) => {
@@ -3289,20 +3347,68 @@ export default function AdminDashboard() {
                 {employees.map((employee) => (
                   <Card key={employee.id}>
                     <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium">{employee.name}</h3>
+                      {editingEmployee === employee.id ? (
+                        <Form {...editEmployeeForm}>
+                          <form onSubmit={editEmployeeForm.handleSubmit(onEditEmployeeSubmit)} className="space-y-3">
+                            <FormField
+                              control={editEmployeeForm.control}
+                              name="name"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Input {...field} placeholder="Employee name" data-testid={`input-edit-employee-${employee.id}`} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <div className="flex gap-2">
+                              <Button
+                                type="submit"
+                                size="sm"
+                                disabled={updateEmployeeMutation.isPending}
+                                data-testid={`button-save-employee-${employee.id}`}
+                              >
+                                {updateEmployeeMutation.isPending ? "Saving..." : "Save"}
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={handleCancelEdit}
+                                data-testid={`button-cancel-edit-employee-${employee.id}`}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </form>
+                        </Form>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-medium">{employee.name}</h3>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEditEmployee(employee)}
+                              data-testid={`button-edit-employee-${employee.id}`}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => deleteEmployeeMutation.mutate(employee.id)}
+                              disabled={deleteEmployeeMutation.isPending}
+                              data-testid={`button-delete-employee-${employee.id}`}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
                         </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => deleteEmployeeMutation.mutate(employee.id)}
-                          disabled={deleteEmployeeMutation.isPending}
-                          data-testid={`button-delete-employee-${employee.id}`}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
