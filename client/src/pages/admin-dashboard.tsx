@@ -35,6 +35,7 @@ import { UserManagement } from "@/components/user-management";
 import { PendingUsers } from "@/components/pending-users";
 import { generateJobListPDF } from "@/lib/pdfGenerator";
 import JobUpdateDialog from "@/components/job-update-form";
+import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -1412,6 +1413,10 @@ export default function AdminDashboard() {
               <DropdownMenuItem onClick={() => setActiveTab("pending-users")} data-testid="menu-pending-users">
                 <Users className="h-4 w-4 mr-2" />
                 Pending Users
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveTab("documents")} data-testid="menu-documents">
+                <FileText className="h-4 w-4 mr-2" />
+                Document Processing
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setActiveTab("settings")} data-testid="menu-settings">
                 <Settings className="h-4 w-4 mr-2" />
@@ -3320,6 +3325,11 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
+          </TabsContent>
+
+          {/* Document Processing Tab */}
+          <TabsContent value="documents" className="space-y-6">
+            <DocumentExpenseProcessor />
           </TabsContent>
         </Tabs>
 

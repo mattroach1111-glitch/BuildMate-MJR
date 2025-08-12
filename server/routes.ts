@@ -5,10 +5,11 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { db } from "./db";
 import { timesheetEntries, laborEntries, users } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
-import { ObjectStorageService } from "./objectStorage";
+import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { TimesheetPDFGenerator } from "./pdfGenerator";
 import { GoogleDriveService } from "./googleDriveService";
 import { GoogleDriveAuth } from "./googleAuth";
+import { DocumentProcessor } from "./services/documentProcessor";
 import {
   insertJobSchema,
   insertEmployeeSchema,
@@ -2014,6 +2015,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error dismissing notification:", error);
       res.status(500).json({ error: "Failed to dismiss notification" });
+    }
+  });
+
+  // Document upload endpoints for expense processing
+  
+  // Endpoint to get upload URL for expense documents
+  app.post("/api/documents/upload", isAuthenticated, async (req: any, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error getting document upload URL:", error);
+      res.status(500).json({ error: "Failed to get upload URL" });
+    }
+  });
+
+  // Endpoint to process uploaded document and extract expense data
+  app.post("/api/documents/process", isAuthenticated, async (req: any, res) => {
+    try {
+      const { documentURL, jobId } = req.body;
+      
+      if (!documentURL) {
+        return res.status(400).json({ error: "Document URL is required" });
+      }
+      
+      if (!jobId) {
+        return res.status(400).json({ error: "Job ID is required to add expense" });
+      }
+
+      // Verify job exists and user has access
+      const job = await storage.getJob(jobId);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+
+      const objectStorageService = new ObjectStorageService();
+      const documentProcessor = new DocumentProcessor();
+      
+      // Get the document file from object storage
+      const normalizedPath = objectStorageService.normalizeObjectEntityPath(documentURL);
+      const objectFile = await objectStorageService.getObjectEntityFile(normalizedPath);
+      
+      // Download the document content
+      const [metadata] = await objectFile.getMetadata();
+      const stream = objectFile.createReadStream();
+      
+      // Convert stream to base64
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) {
+        chunks.push(chunk);
+      }
+      const buffer = Buffer.concat(chunks);
+      const base64Content = buffer.toString('base64');
+      
+      // Process document with AI
+      const expenseData = await documentProcessor.analyzeExpenseDocument(
+        base64Content, 
+        metadata.contentType || 'application/pdf'
+      );
+      
+      // Add expense to appropriate job category based on AI analysis
+      let addedExpense;
+      switch (expenseData.category) {
+        case 'materials':
+          addedExpense = await storage.createMaterial({
+            jobId,
+            item: expenseData.description,
+            quantity: "1",
+            unitCost: expenseData.amount.toString(),
+            totalCost: expenseData.amount.toString(),
+            supplier: expenseData.vendor,
+            notes: `Auto-extracted from document. Confidence: ${Math.round(expenseData.confidence * 100)}%`
+          });
+          break;
+          
+        case 'subtrades':
+          addedExpense = await storage.createSubTrade({
+            jobId,
+            trade: expenseData.vendor,
+            description: expenseData.description,
+            amount: expenseData.amount.toString(),
+            notes: `Auto-extracted from document. Confidence: ${Math.round(expenseData.confidence * 100)}%`
+          });
+          break;
+          
+        case 'other_costs':
+        default:
+          addedExpense = await storage.createOtherCost({
+            jobId,
+            description: expenseData.description,
+            amount: expenseData.amount.toString(),
+            vendor: expenseData.vendor,
+            notes: `Auto-extracted from document. Confidence: ${Math.round(expenseData.confidence * 100)}%`
+          });
+          break;
+      }
+      
+      res.json({
+        success: true,
+        expenseData,
+        addedExpense,
+        category: expenseData.category,
+        message: `Expense automatically added to ${expenseData.category} with ${Math.round(expenseData.confidence * 100)}% confidence`
+      });
+      
+    } catch (error) {
+      console.error("Error processing document:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      res.status(500).json({ 
+        error: "Failed to process document", 
+        details: error.message 
+      });
+    }
+  });
+
+  // Endpoint to serve uploaded documents
+  app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error serving document:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
     }
   });
 

@@ -1,6 +1,13 @@
 import { Storage, File } from "@google-cloud/storage";
 import { Response } from "express";
 import { randomUUID } from "crypto";
+import {
+  ObjectAclPolicy,
+  ObjectPermission,
+  canAccessObject,
+  getObjectAclPolicy,
+  setObjectAclPolicy,
+} from "./objectAcl";
 
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
 
@@ -67,96 +74,41 @@ export class ObjectStorageService {
     return dir;
   }
 
-  // Upload PDF buffer to object storage
-  async uploadPDF(fileName: string, pdfBuffer: Buffer): Promise<string> {
-    try {
-      const privateObjectDir = this.getPrivateObjectDir();
-      const objectPath = `${privateObjectDir}/timesheets/${fileName}`;
-      
-      const { bucketName, objectName } = parseObjectPath(objectPath);
+  // Search for a public object from the search paths.
+  async searchPublicObject(filePath: string): Promise<File | null> {
+    for (const searchPath of this.getPublicObjectSearchPaths()) {
+      const fullPath = `${searchPath}/${filePath}`;
+
+      // Full path format: /<bucket_name>/<object_name>
+      const { bucketName, objectName } = parseObjectPath(fullPath);
       const bucket = objectStorageClient.bucket(bucketName);
       const file = bucket.file(objectName);
 
-      // Upload the PDF buffer
-      await file.save(pdfBuffer, {
-        metadata: {
-          contentType: 'application/pdf',
-        },
-      });
-
-      return objectPath;
-    } catch (error) {
-      console.error('Error uploading PDF to object storage:', error);
-      throw error;
-    }
-  }
-
-  // Generate a signed URL for downloading the PDF
-  async getSignedUrl(objectPath: string): Promise<string> {
-    try {
-      const { bucketName, objectName } = parseObjectPath(objectPath);
-      const bucket = objectStorageClient.bucket(bucketName);
-      const file = bucket.file(objectName);
-
-      const [url] = await file.getSignedUrl({
-        action: 'read',
-        expires: Date.now() + 60 * 60 * 1000, // 1 hour
-      });
-
-      return url;
-    } catch (error) {
-      console.error('Error generating signed URL:', error);
-      throw error;
-    }
-  }
-
-  // Gets the upload URL for a job file
-  async getJobFileUploadURL(): Promise<string> {
-    const privateObjectDir = this.getPrivateObjectDir();
-    if (!privateObjectDir) {
-      throw new Error(
-        "PRIVATE_OBJECT_DIR not set. Create a bucket in 'Object Storage' " +
-          "tool and set PRIVATE_OBJECT_DIR env var."
-      );
+      // Check if file exists
+      const [exists] = await file.exists();
+      if (exists) {
+        return file;
+      }
     }
 
-    const fileId = randomUUID();
-    const fullPath = `${privateObjectDir}/job-files/${fileId}`;
-
-    const { bucketName, objectName } = parseObjectPath(fullPath);
-
-    // Sign URL for PUT method with TTL
-    return signObjectURL({
-      bucketName,
-      objectName,
-      method: "PUT",
-      ttlSec: 900,
-    });
+    return null;
   }
 
-  // Gets the job file from the object path
-  async getJobFile(objectPath: string): Promise<File> {
-    const { bucketName, objectName } = parseObjectPath(objectPath);
-    const bucket = objectStorageClient.bucket(bucketName);
-    const objectFile = bucket.file(objectName);
-    const [exists] = await objectFile.exists();
-    if (!exists) {
-      throw new ObjectNotFoundError();
-    }
-    return objectFile;
-  }
-
-  // Downloads a file to the response
-  async downloadFile(file: File, res: Response, cacheTtlSec: number = 3600) {
+  // Downloads an object to the response.
+  async downloadObject(file: File, res: Response, cacheTtlSec: number = 3600) {
     try {
       // Get file metadata
       const [metadata] = await file.getMetadata();
-      
+      // Get the ACL policy for the object.
+      const aclPolicy = await getObjectAclPolicy(file);
+      const isPublic = aclPolicy?.visibility === "public";
       // Set appropriate headers
       res.set({
         "Content-Type": metadata.contentType || "application/octet-stream",
         "Content-Length": metadata.size,
-        "Cache-Control": `private, max-age=${cacheTtlSec}`,
+        "Cache-Control": `${
+          isPublic ? "public" : "private"
+        }, max-age=${cacheTtlSec}`,
       });
 
       // Stream the file to the response
@@ -178,14 +130,112 @@ export class ObjectStorageService {
     }
   }
 
-  normalizeJobFilePath(rawPath: string): string {
+  // Gets the upload URL for an object entity.
+  async getObjectEntityUploadURL(): Promise<string> {
+    const privateObjectDir = this.getPrivateObjectDir();
+    if (!privateObjectDir) {
+      throw new Error(
+        "PRIVATE_OBJECT_DIR not set. Create a bucket in 'Object Storage' " +
+          "tool and set PRIVATE_OBJECT_DIR env var."
+      );
+    }
+
+    const objectId = randomUUID();
+    const fullPath = `${privateObjectDir}/uploads/${objectId}`;
+
+    const { bucketName, objectName } = parseObjectPath(fullPath);
+
+    // Sign URL for PUT method with TTL
+    return signObjectURL({
+      bucketName,
+      objectName,
+      method: "PUT",
+      ttlSec: 900,
+    });
+  }
+
+  // Gets the object entity file from the object path.
+  async getObjectEntityFile(objectPath: string): Promise<File> {
+    if (!objectPath.startsWith("/objects/")) {
+      throw new ObjectNotFoundError();
+    }
+
+    const parts = objectPath.slice(1).split("/");
+    if (parts.length < 2) {
+      throw new ObjectNotFoundError();
+    }
+
+    const entityId = parts.slice(1).join("/");
+    let entityDir = this.getPrivateObjectDir();
+    if (!entityDir.endsWith("/")) {
+      entityDir = `${entityDir}/`;
+    }
+    const objectEntityPath = `${entityDir}${entityId}`;
+    const { bucketName, objectName } = parseObjectPath(objectEntityPath);
+    const bucket = objectStorageClient.bucket(bucketName);
+    const objectFile = bucket.file(objectName);
+    const [exists] = await objectFile.exists();
+    if (!exists) {
+      throw new ObjectNotFoundError();
+    }
+    return objectFile;
+  }
+
+  normalizeObjectEntityPath(
+    rawPath: string,
+  ): string {
     if (!rawPath.startsWith("https://storage.googleapis.com/")) {
       return rawPath;
     }
   
     // Extract the path from the URL by removing query parameters and domain
     const url = new URL(rawPath);
-    return url.pathname;
+    const rawObjectPath = url.pathname;
+  
+    let objectEntityDir = this.getPrivateObjectDir();
+    if (!objectEntityDir.endsWith("/")) {
+      objectEntityDir = `${objectEntityDir}/`;
+    }
+  
+    if (!rawObjectPath.startsWith(objectEntityDir)) {
+      return rawObjectPath;
+    }
+  
+    // Extract the entity ID from the path
+    const entityId = rawObjectPath.slice(objectEntityDir.length);
+    return `/objects/${entityId}`;
+  }
+
+  // Tries to set the ACL policy for the object entity and return the normalized path.
+  async trySetObjectEntityAclPolicy(
+    rawPath: string,
+    aclPolicy: ObjectAclPolicy
+  ): Promise<string> {
+    const normalizedPath = this.normalizeObjectEntityPath(rawPath);
+    if (!normalizedPath.startsWith("/")) {
+      return normalizedPath;
+    }
+
+    const objectFile = await this.getObjectEntityFile(normalizedPath);
+    await setObjectAclPolicy(objectFile, aclPolicy);
+    return normalizedPath;
+  }
+
+  // Checks if the user can access the object entity.
+  async canAccessObjectEntity({
+    userId,
+    objectFile,
+    requestedPermission,
+  }: {
+    userId?: string;
+    objectFile: File;
+    requestedPermission?: ObjectPermission;
+  }): Promise<boolean> {
+    return canAccessObject({
+      userId,
+      objectFile,
+      requestedPermission: requestedPermission ?? ObjectPermission.READ,
+    });
   }
 }
 
