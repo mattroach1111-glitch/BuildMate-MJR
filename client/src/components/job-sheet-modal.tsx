@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -144,6 +145,40 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       toast({
         title: "Error",
         description: error.message || "Failed to update job",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete job mutation
+  const deleteJobMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest(`/api/jobs/${jobId}`, "DELETE");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/deleted-jobs"] });
+      toast({
+        title: "Success", 
+        description: "Job has been moved to deleted folder",
+      });
+      onClose(); // Close modal after successful deletion
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete job",
         variant: "destructive",
       });
     },
@@ -834,7 +869,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     disabled={!jobDetails}
                     data-testid="button-edit-job"
                   >
-                    <i className="fas fa-edit mr-2"></i>
+                    <Edit className="h-4 w-4 mr-2" />
                     Edit
                   </Button>
                   <Button 
@@ -844,9 +879,45 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     disabled={!jobDetails}
                     data-testid="button-download-pdf"
                   >
-                    <i className="fas fa-download mr-2"></i>
+                    <Download className="h-4 w-4 mr-2" />
                     Download PDF
                   </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="destructive"
+                        size="sm"
+                        disabled={!jobDetails}
+                        data-testid="button-delete-job"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Job
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure you want to delete this job?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action will move the job "{jobDetails?.jobAddress}" to the deleted folder.
+                          The job can be restored later from the deleted jobs section.
+                          This action cannot be undone without admin intervention.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel data-testid="button-cancel-delete">
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => deleteJobMutation.mutate()}
+                          disabled={deleteJobMutation.isPending}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          data-testid="button-confirm-delete"
+                        >
+                          {deleteJobMutation.isPending ? "Deleting..." : "Delete Job"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </>
               ) : (
                 <>
@@ -856,7 +927,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     disabled={updateJobMutation.isPending}
                     data-testid="button-save-edit"
                   >
-                    <i className="fas fa-check mr-2"></i>
+                    <Clock className="h-4 w-4 mr-2" />
                     {updateJobMutation.isPending ? "Saving..." : "Save"}
                   </Button>
                   <Button 
@@ -865,14 +936,14 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     size="sm"
                     data-testid="button-cancel-edit"
                   >
-                    <i className="fas fa-times mr-2"></i>
+                    <X className="h-4 w-4 mr-2" />
                     Cancel
                   </Button>
                 </>
               )}
 
               <Button variant="ghost" onClick={onClose} className="hidden sm:block" size="sm" data-testid="button-close-modal">
-                <i className="fas fa-times text-xl"></i>
+                <X className="h-5 w-5" />
               </Button>
             </div>
           </div>
