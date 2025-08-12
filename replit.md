@@ -6,6 +6,10 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 
 Preferred communication style: Simple, everyday language.
 
+# Recent Changes
+
+- **August 12, 2025**: ✅ COMPLETED DOCUMENT REVIEW SYSTEM - Implemented comprehensive document processing review workflow with category selection and approval system. Features include AI extraction followed by user review interface, category dropdown with all four options (Materials, Sub-trades, Other Costs, Tip Fees), approval/discard buttons, orange-themed review UI, and backend endpoints for separated processing and job sheet addition. Users can now change AI-suggested categories before adding expenses to job sheets, providing full control over document processing workflow.
+
 # System Architecture
 
 ## Frontend Architecture
