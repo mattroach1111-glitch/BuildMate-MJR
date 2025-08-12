@@ -1705,31 +1705,27 @@ export default function AdminDashboard() {
 
           {/* Total Costs Dashboard Widget */}
           {!totalCostsLoading && totalCostsData && (
-            <div className="mb-8">
-              <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-8">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-blue-100 rounded-xl shadow-sm">
-                        <DollarSign className="h-7 w-7 text-blue-600" />
+            <div className="mb-6">
+              <Card className="bg-blue-50 border-blue-200 shadow-sm">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <DollarSign className="h-5 w-5 text-blue-600" />
                       </div>
                       <div>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-1">Total Active Job Costs</h2>
-                        <p className="text-gray-600 text-sm">
+                        <h3 className="text-lg font-semibold text-gray-800">Total Active Job Costs</h3>
+                        <p className="text-xs text-gray-600">
                           Excluding GST • {totalCostsData.jobCount} active {totalCostsData.jobCount === 1 ? 'job' : 'jobs'}
                         </p>
                       </div>
                     </div>
-                    <div className="text-center md:text-right">
-                      <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2">
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-blue-600">
                         ${totalCostsData.totalCosts.toLocaleString('en-AU', { 
                           minimumFractionDigits: 2, 
                           maximumFractionDigits: 2 
                         })}
-                      </div>
-                      <div className="text-sm text-blue-500 flex items-center justify-center md:justify-end gap-1">
-                        <TrendingUp className="h-4 w-4" />
-                        Current total
                       </div>
                     </div>
                   </div>
