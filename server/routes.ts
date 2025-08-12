@@ -2145,7 +2145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       if (!jobId) {
-        return res.status(400).json({ error: "Job ID is required to add expense" });
+        return res.status(400).json({ error: "Job ID is required" });
       }
 
       // Verify job exists and user has access
@@ -2168,45 +2168,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadata.contentType || 'application/pdf'
       );
       
-      // Add expense to appropriate job category based on AI analysis
-      let addedExpense;
-      switch (expenseData.category) {
-        case 'materials':
-          addedExpense = await storage.createMaterial({
-            jobId,
-            description: expenseData.description,
-            supplier: expenseData.vendor,
-            amount: expenseData.amount.toString(),
-            invoiceDate: expenseData.date
-          });
-          break;
-          
-        case 'subtrades':
-          addedExpense = await storage.createSubTrade({
-            jobId,
-            trade: expenseData.vendor,
-            contractor: expenseData.vendor,
-            amount: expenseData.amount.toString(),
-            invoiceDate: expenseData.date
-          });
-          break;
-          
-        case 'other_costs':
-        default:
-          addedExpense = await storage.createOtherCost({
-            jobId,
-            description: expenseData.description,
-            amount: expenseData.amount.toString()
-          });
-          break;
-      }
-      
+      // Return extracted data for user review (no longer auto-adds to job sheet)
       res.json({
         success: true,
         expenseData,
-        addedExpense,
-        category: expenseData.category,
-        message: `Expense automatically added to ${expenseData.category} with ${Math.round(expenseData.confidence * 100)}% confidence`
+        message: `Document processed successfully with ${Math.round(expenseData.confidence * 100)}% confidence. Review the information before adding to job sheet.`
       });
       
     } catch (error) {
@@ -2265,6 +2231,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating email address:", error);
       res.status(500).json({ error: "Failed to generate email address" });
+    }
+  });
+
+  // Endpoint to add approved expense data to job sheet
+  app.post("/api/documents/add-to-job", isAuthenticated, async (req: any, res) => {
+    try {
+      const { expenseData, jobId } = req.body;
+      
+      if (!expenseData || !jobId) {
+        return res.status(400).json({ error: "Expense data and job ID are required" });
+      }
+
+      // Verify job exists and user has access
+      const job = await storage.getJob(jobId);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+      
+      // Add expense to appropriate job category based on approved category
+      let addedExpense;
+      switch (expenseData.category) {
+        case 'materials':
+          addedExpense = await storage.createMaterial({
+            jobId,
+            description: expenseData.description,
+            supplier: expenseData.vendor,
+            amount: expenseData.amount.toString(),
+            invoiceDate: expenseData.date
+          });
+          break;
+          
+        case 'subtrades':
+          addedExpense = await storage.createSubTrade({
+            jobId,
+            trade: expenseData.vendor,
+            contractor: expenseData.vendor,
+            amount: expenseData.amount.toString(),
+            invoiceDate: expenseData.date
+          });
+          break;
+          
+        case 'other_costs':
+        default:
+          addedExpense = await storage.createOtherCost({
+            jobId,
+            description: expenseData.description,
+            amount: expenseData.amount.toString()
+          });
+          break;
+      }
+      
+      res.json({
+        success: true,
+        addedExpense,
+        category: expenseData.category,
+        message: `Expense added to ${expenseData.category} successfully`
+      });
+      
+    } catch (error) {
+      console.error("Error adding expense to job:", error);
+      res.status(500).json({ 
+        error: "Failed to add expense to job", 
+        details: (error as Error).message 
+      });
     }
   });
 
