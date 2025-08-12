@@ -177,7 +177,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
             <SelectContent>
               {(jobs as any[]).map((job: any) => (
                 <SelectItem key={job.id} value={job.id} data-testid={`job-option-${job.id}`}>
-                  {job.jobNumber} - {job.clientName} ({job.address})
+                  {job.jobAddress} - {job.clientName}
                 </SelectItem>
               ))}
             </SelectContent>
