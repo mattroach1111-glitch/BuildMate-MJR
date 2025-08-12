@@ -1707,98 +1707,29 @@ export default function AdminDashboard() {
           {!totalCostsLoading && totalCostsData && (
             <div className="mb-6">
               <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-lg">
-                <CardHeader className="pb-4">
+                <CardContent className="p-6">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-3 bg-green-100 rounded-full">
-                        <DollarSign className="h-6 w-6 text-green-600" />
+                    <div className="flex items-center gap-4">
+                      <div className="p-4 bg-green-100 rounded-full">
+                        <DollarSign className="h-8 w-8 text-green-600" />
                       </div>
                       <div>
-                        <CardTitle className="text-xl text-green-800">Total Active Job Costs</CardTitle>
-                        <CardDescription className="text-green-600">
+                        <h3 className="text-xl font-semibold text-green-800">Total Active Job Costs</h3>
+                        <p className="text-green-600">
                           Excluding GST • {totalCostsData.jobCount} active jobs
-                        </CardDescription>
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-3xl font-bold text-green-800">
+                      <div className="text-4xl font-bold text-green-800">
                         ${totalCostsData.totalCosts.toLocaleString('en-AU', { 
                           minimumFractionDigits: 2, 
                           maximumFractionDigits: 2 
                         })}
                       </div>
-                      <div className="text-sm text-green-600 flex items-center gap-1">
+                      <div className="text-sm text-green-600 flex items-center justify-end gap-1 mt-1">
                         <TrendingUp className="h-4 w-4" />
                         Current costs
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    <div className="bg-white/60 rounded-lg p-3 border border-blue-200">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                        <span className="text-sm font-medium text-gray-700">Materials</span>
-                      </div>
-                      <div className="text-lg font-bold text-blue-700">
-                        ${totalCostsData.costBreakdown.materials.toLocaleString('en-AU', { 
-                          minimumFractionDigits: 2, 
-                          maximumFractionDigits: 2 
-                        })}
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white/60 rounded-lg p-3 border border-orange-200">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                        <span className="text-sm font-medium text-gray-700">Labor</span>
-                      </div>
-                      <div className="text-lg font-bold text-orange-700">
-                        ${totalCostsData.costBreakdown.labor.toLocaleString('en-AU', { 
-                          minimumFractionDigits: 2, 
-                          maximumFractionDigits: 2 
-                        })}
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white/60 rounded-lg p-3 border border-purple-200">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                        <span className="text-sm font-medium text-gray-700">Sub-trades</span>
-                      </div>
-                      <div className="text-lg font-bold text-purple-700">
-                        ${totalCostsData.costBreakdown.subTrades.toLocaleString('en-AU', { 
-                          minimumFractionDigits: 2, 
-                          maximumFractionDigits: 2 
-                        })}
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white/60 rounded-lg p-3 border border-red-200">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                        <span className="text-sm font-medium text-gray-700">Other Costs</span>
-                      </div>
-                      <div className="text-lg font-bold text-red-700">
-                        ${totalCostsData.costBreakdown.otherCosts.toLocaleString('en-AU', { 
-                          minimumFractionDigits: 2, 
-                          maximumFractionDigits: 2 
-                        })}
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white/60 rounded-lg p-3 border border-amber-200">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
-                        <span className="text-sm font-medium text-gray-700">Tip Fees</span>
-                      </div>
-                      <div className="text-lg font-bold text-amber-700">
-                        ${totalCostsData.costBreakdown.tipFees.toLocaleString('en-AU', { 
-                          minimumFractionDigits: 2, 
-                          maximumFractionDigits: 2 
-                        })}
                       </div>
                     </div>
                   </div>
