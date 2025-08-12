@@ -1813,17 +1813,17 @@ export default function AdminDashboard() {
                                 <div className="flex items-center gap-2 shrink-0">
                                   <div onClick={(e) => e.stopPropagation()}>
                                     <Button
-                                      variant="ghost"
+                                      variant="outline"
                                       size="sm"
-                                      className="h-7 w-7 p-0"
+                                      className="h-8 w-8 p-0 bg-blue-50 hover:bg-blue-100 border-blue-200"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setSelectedJobForProgress(job.id);
                                       }}
                                       data-testid={`progress-${job.id}`}
-                                      title="View Progress"
+                                      title="View Progress Analytics"
                                     >
-                                      <BarChart3 className="h-3 w-3" />
+                                      <BarChart3 className="h-4 w-4 text-blue-600" />
                                     </Button>
                                   </div>
                                   <div onClick={(e) => e.stopPropagation()}>
@@ -1904,17 +1904,17 @@ export default function AdminDashboard() {
                                 <div className="flex items-center gap-3 shrink-0">
                                   <div onClick={(e) => e.stopPropagation()}>
                                     <Button
-                                      variant="ghost"
+                                      variant="outline"
                                       size="sm"
-                                      className="h-7 w-7 p-0"
+                                      className="h-8 w-8 p-0 bg-blue-50 hover:bg-blue-100 border-blue-200"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setSelectedJobForProgress(job.id);
                                       }}
                                       data-testid={`progress-${job.id}`}
-                                      title="View Progress"
+                                      title="View Progress Analytics"
                                     >
-                                      <BarChart3 className="h-3 w-3" />
+                                      <BarChart3 className="h-4 w-4 text-blue-600" />
                                     </Button>
                                   </div>
                                   <div onClick={(e) => e.stopPropagation()}>
@@ -2106,6 +2106,21 @@ export default function AdminDashboard() {
                                 <CardTitle className="text-base sm:text-lg leading-tight flex-1 min-w-0">{job.jobAddress}</CardTitle>
                                 <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                                   <div onClick={(e) => e.stopPropagation()}>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-8 w-8 p-0 bg-blue-50 hover:bg-blue-100 border-blue-200"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedJobForProgress(job.id);
+                                      }}
+                                      data-testid={`progress-${job.id}`}
+                                      title="View Progress Analytics"
+                                    >
+                                      <BarChart3 className="h-4 w-4 text-blue-600" />
+                                    </Button>
+                                  </div>
+                                  <div onClick={(e) => e.stopPropagation()}>
                                     <Select 
                                       value={job.status} 
                                       onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
@@ -2177,6 +2192,21 @@ export default function AdminDashboard() {
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+                                    <div onClick={(e) => e.stopPropagation()}>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 w-8 p-0 bg-blue-50 hover:bg-blue-100 border-blue-200"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedJobForProgress(job.id);
+                                        }}
+                                        data-testid={`progress-${job.id}`}
+                                        title="View Progress Analytics"
+                                      >
+                                        <BarChart3 className="h-4 w-4 text-blue-600" />
+                                      </Button>
+                                    </div>
                                     <div onClick={(e) => e.stopPropagation()}>
                                       <Select 
                                         value={job.status} 
