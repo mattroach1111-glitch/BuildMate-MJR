@@ -2310,11 +2310,11 @@ export default function AdminDashboard() {
                                         permanentDeleteJobMutation.mutate(job.id);
                                       }
                                     }}
-                                    className="text-red-600 focus:text-red-600"
+                                    className="text-red-600 focus:text-red-600 focus:bg-red-50 hover:bg-red-50 font-medium"
                                     data-testid={`permanent-delete-job-${job.id}`}
                                   >
                                     <Trash2 className="h-4 w-4 mr-2" />
-                                    Permanently Delete
+                                    🗑️ Permanently Delete
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
