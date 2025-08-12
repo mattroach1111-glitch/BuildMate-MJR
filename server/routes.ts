@@ -69,10 +69,18 @@ const findBestEmployeeMatch = async (employeeName: string, threshold: number = 8
       console.log(`🔍 Fuzzy match "${employeeName}" vs "${employee.name}": exact=${exactScore}%, partial=${partialScore}%, token=${tokenScore}%, max=${maxScore}%`);
       
       if (maxScore >= threshold) {
-        // If this is better than current best, or same score but longer name (more specific), use it
-        if (maxScore > bestScore || (maxScore === bestScore && employee.name.length > (bestMatch?.name?.length || 0))) {
+        // Prioritize exact matches, then higher scores, then shorter names (more specific matches)
+        const isExactMatch = exactScore === 100;
+        const currentBestIsExact = bestMatch && fuzz.ratio(employeeName.toLowerCase(), bestMatch.name.toLowerCase()) === 100;
+        
+        const shouldUpdate = maxScore > bestScore || 
+                           (maxScore === bestScore && isExactMatch && !currentBestIsExact) ||
+                           (maxScore === bestScore && isExactMatch === currentBestIsExact && employee.name.length < (bestMatch?.name?.length || Infinity));
+        
+        if (shouldUpdate) {
           bestScore = maxScore;
           bestMatch = employee;
+          console.log(`🎯 NEW BEST MATCH: "${employeeName}" -> "${employee.name}" (exact=${isExactMatch ? 'YES' : 'NO'}, score=${maxScore}%)`);
         }
       }
     }
