@@ -3136,7 +3136,6 @@ export default function AdminDashboard() {
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="font-medium">{employee.name}</h3>
-                          <p className="text-sm text-muted-foreground">Rate: ${employee.defaultHourlyRate}/hr</p>
                         </div>
                         <Button
                           size="sm"
