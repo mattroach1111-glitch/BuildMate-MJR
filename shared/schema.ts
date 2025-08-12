@@ -108,6 +108,7 @@ export const timesheetEntries = pgTable("timesheet_entries", {
   description: text("description"),
   materials: text("materials"),
   approved: boolean("approved").notNull().default(false),
+  submitted: boolean("submitted").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

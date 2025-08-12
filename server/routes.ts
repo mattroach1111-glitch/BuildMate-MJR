@@ -1253,6 +1253,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get timesheet entries for the fortnight
       const entries = await storage.getTimesheetEntriesByPeriod(staffId, fortnightStart, fortnightEnd);
       
+      // Mark all entries as submitted when confirming timesheet
+      await storage.markTimesheetEntriesAsSubmitted(userId, fortnightStart, fortnightEnd);
+      
       let driveLink = null;
       let googleDriveConnected = false;
       

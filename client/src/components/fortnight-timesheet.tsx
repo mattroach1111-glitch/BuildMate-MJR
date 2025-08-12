@@ -873,6 +873,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               entryData.staffId = selectedEmployee;
             }
             
+            // Ensure new entries are saved as drafts (not submitted)
+            entryData.submitted = false;
+            
             // Check if there's an existing entry for this date that we should update instead of creating new
             const existingEntry = Array.isArray(currentFortnightEntries) 
               ? currentFortnightEntries.find((savedEntry: any) => {

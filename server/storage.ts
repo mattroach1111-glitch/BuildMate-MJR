@@ -669,6 +669,7 @@ export class DatabaseStorage implements IStorage {
         materials: timesheetEntries.materials,
         description: timesheetEntries.description,
         approved: timesheetEntries.approved,
+        submitted: timesheetEntries.submitted,
         createdAt: timesheetEntries.createdAt,
         updatedAt: timesheetEntries.updatedAt,
         staffName: sql`COALESCE(${users.firstName}, ${employees.name}, CASE WHEN ${users.email} IS NOT NULL THEN SPLIT_PART(${users.email}, '@', 1) ELSE 'Unknown Staff' END, 'Unknown Staff')`.as('staffName'),
@@ -693,6 +694,7 @@ export class DatabaseStorage implements IStorage {
         materials: timesheetEntries.materials,
         description: timesheetEntries.description,
         approved: timesheetEntries.approved,
+        submitted: timesheetEntries.submitted,
         createdAt: timesheetEntries.createdAt,
         updatedAt: timesheetEntries.updatedAt,
         staffName: sql`COALESCE(${users.firstName}, ${employees.name}, CASE WHEN ${users.email} IS NOT NULL THEN SPLIT_PART(${users.email}, '@', 1) ELSE 'Unknown Staff' END, 'Unknown Staff')`.as('staffName'),
@@ -721,6 +723,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(users, eq(timesheetEntries.staffId, users.id))
       .leftJoin(employees, eq(users.employeeId, employees.id))  // Join through users.employeeId instead of direct join
       .leftJoin(jobs, eq(timesheetEntries.jobId, jobs.id))
+      .where(eq(timesheetEntries.submitted, true))  // Only show submitted entries in admin dashboard
       .orderBy(desc(timesheetEntries.date));
   }
 
@@ -729,6 +732,19 @@ export class DatabaseStorage implements IStorage {
       .update(timesheetEntries)
       .set({ approved })
       .where(eq(timesheetEntries.id, id));
+  }
+
+  async markTimesheetEntriesAsSubmitted(userId: string, fortnightStart: string, fortnightEnd: string): Promise<void> {
+    await db
+      .update(timesheetEntries)
+      .set({ submitted: true, updatedAt: new Date() })
+      .where(
+        and(
+          eq(timesheetEntries.staffId, userId),
+          gte(timesheetEntries.date, fortnightStart),
+          lte(timesheetEntries.date, fortnightEnd)
+        )
+      );
   }
 
   async updateFortnightApproval(staffId: string, fortnightStart: string, fortnightEnd: string, approved: boolean): Promise<void> {
