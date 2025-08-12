@@ -13,7 +13,7 @@ const createTransporter = (): Transporter | null => {
   const port = parseInt(process.env.SMTP_PORT || '465');
   const secure = process.env.SMTP_SECURE === 'true' || port === 465;
 
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: host,
     port: port,
     secure: secure, // true for 465 (SSL), false for 587 (TLS)
