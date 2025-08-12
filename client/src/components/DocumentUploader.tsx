@@ -67,10 +67,10 @@ export function DocumentUploader({
       restrictions: {
         maxNumberOfFiles,
         maxFileSize,
-        allowedFileTypes: ['image/*', 'application/pdf', '.pdf', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff'],
+        allowedFileTypes: ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', 'image/*', 'application/pdf'],
       },
       autoProceed: false,
-      allowMultipleUploads: false,
+      allowMultipleUploads: true,
     })
       .use(AwsS3, {
         shouldUseMultipart: false,
@@ -92,7 +92,9 @@ export function DocumentUploader({
         open={showModal}
         onRequestClose={() => setShowModal(false)}
         proudlyDisplayPoweredByUppy={false}
-        note="Upload bills, invoices, and expense documents (PDF, JPG, PNG). Maximum 25MB per file."
+        note="Upload bills, invoices, and expense documents (PDF, JPG, PNG). Drag and drop files or click to browse. Maximum 25MB per file."
+        showProgressDetails={true}
+        hideProgressAfterFinish={false}
       />
     </div>
   );
