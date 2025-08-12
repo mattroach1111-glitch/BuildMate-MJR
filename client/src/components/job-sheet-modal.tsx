@@ -47,6 +47,14 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const [isAddingNewProjectManager, setIsAddingNewProjectManager] = useState(false);
   const [newProjectManagerName, setNewProjectManagerName] = useState("");
   const [extraHours, setExtraHours] = useState<Record<string, string>>({});
+  
+  // Editing states for materials, sub-trades, and other costs
+  const [editingMaterial, setEditingMaterial] = useState<string | null>(null);
+  const [editingSubTrade, setEditingSubTrade] = useState<string | null>(null);
+  const [editingOtherCost, setEditingOtherCost] = useState<string | null>(null);
+  const [editMaterialForm, setEditMaterialForm] = useState<{description: string; supplier: string; amount: string; invoiceDate: string}>({description: "", supplier: "", amount: "", invoiceDate: ""});
+  const [editSubTradeForm, setEditSubTradeForm] = useState<{trade: string; contractor: string; amount: string; invoiceDate: string}>({trade: "", contractor: "", amount: "", invoiceDate: ""});
+  const [editOtherCostForm, setEditOtherCostForm] = useState<{description: string; amount: string}>({description: "", amount: ""});
 
   const { data: jobDetails, isLoading } = useQuery<JobDetails>({
     queryKey: ["/api/jobs", jobId],
@@ -109,6 +117,62 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       setNewProjectManagerName("");
     } else {
       setEditForm(prev => ({ ...prev, projectName: value }));
+    }
+  };
+
+  // Helper functions for editing
+  const startEditingMaterial = (material: Material) => {
+    setEditingMaterial(material.id);
+    setEditMaterialForm({
+      description: material.description,
+      supplier: material.supplier,
+      amount: material.amount,
+      invoiceDate: material.invoiceDate,
+    });
+  };
+
+  const startEditingSubTrade = (subTrade: SubTrade) => {
+    setEditingSubTrade(subTrade.id);
+    setEditSubTradeForm({
+      trade: subTrade.trade,
+      contractor: subTrade.contractor,
+      amount: subTrade.amount,
+      invoiceDate: subTrade.invoiceDate,
+    });
+  };
+
+  const startEditingOtherCost = (otherCost: OtherCost) => {
+    setEditingOtherCost(otherCost.id);
+    setEditOtherCostForm({
+      description: otherCost.description,
+      amount: otherCost.amount,
+    });
+  };
+
+  const handleUpdateMaterial = () => {
+    if (editingMaterial) {
+      updateMaterialMutation.mutate({
+        id: editingMaterial,
+        ...editMaterialForm,
+      });
+    }
+  };
+
+  const handleUpdateSubTrade = () => {
+    if (editingSubTrade) {
+      updateSubTradeMutation.mutate({
+        id: editingSubTrade,
+        ...editSubTradeForm,
+      });
+    }
+  };
+
+  const handleUpdateOtherCost = () => {
+    if (editingOtherCost) {
+      updateOtherCostMutation.mutate({
+        id: editingOtherCost,
+        ...editOtherCostForm,
+      });
     }
   };
 
@@ -407,6 +471,150 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       toast({
         title: "Error",
         description: error.message || "Failed to add sub trade",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update mutations for materials, sub-trades, and other costs
+  const updateMaterialMutation = useMutation({
+    mutationFn: async (data: { id: string; description: string; supplier: string; amount: string; invoiceDate: string }) => {
+      const response = await apiRequest("PATCH", `/api/materials/${data.id}`, {
+        description: data.description,
+        supplier: data.supplier,
+        amount: parseFloat(data.amount),
+        invoiceDate: data.invoiceDate,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
+      setEditingMaterial(null);
+      toast({
+        title: "Success",
+        description: "Material updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update material",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateSubTradeMutation = useMutation({
+    mutationFn: async (data: { id: string; trade: string; contractor: string; amount: string; invoiceDate: string }) => {
+      const response = await apiRequest("PATCH", `/api/subtrades/${data.id}`, {
+        trade: data.trade,
+        contractor: data.contractor,
+        amount: parseFloat(data.amount),
+        invoiceDate: data.invoiceDate,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
+      setEditingSubTrade(null);
+      toast({
+        title: "Success",
+        description: "Sub trade updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update sub trade",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateOtherCostMutation = useMutation({
+    mutationFn: async (data: { id: string; description: string; amount: string }) => {
+      const response = await apiRequest("PATCH", `/api/othercosts/${data.id}`, {
+        description: data.description,
+        amount: parseFloat(data.amount),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
+      setEditingOtherCost(null);
+      toast({
+        title: "Success",
+        description: "Other cost updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update other cost",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete mutations
+  const deleteMaterialMutation = useMutation({
+    mutationFn: async (materialId: string) => {
+      const response = await apiRequest("DELETE", `/api/materials/${materialId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
+      toast({
+        title: "Success",
+        description: "Material deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete material",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteSubTradeMutation = useMutation({
+    mutationFn: async (subTradeId: string) => {
+      const response = await apiRequest("DELETE", `/api/subtrades/${subTradeId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
+      toast({
+        title: "Success",
+        description: "Sub trade deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete sub trade",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteOtherCostMutation = useMutation({
+    mutationFn: async (otherCostId: string) => {
+      const response = await apiRequest("DELETE", `/api/othercosts/${otherCostId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
+      toast({
+        title: "Success",
+        description: "Other cost deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete other cost",
         variant: "destructive",
       });
     },
@@ -1121,23 +1329,129 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                         <th className="pb-3">Supplier</th>
                         <th className="pb-3">Invoice Date</th>
                         <th className="pb-3">Amount</th>
+                        <th className="pb-3">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="space-y-2">
                       {jobDetails.materials.map((material) => (
                         <tr key={material.id}>
-                          <td className="py-2" data-testid={`text-material-description-${material.id}`}>
-                            {material.description}
-                          </td>
-                          <td className="py-2" data-testid={`text-material-supplier-${material.id}`}>
-                            {material.supplier}
-                          </td>
-                          <td className="py-2" data-testid={`text-material-date-${material.id}`}>
-                            {material.invoiceDate}
-                          </td>
-                          <td className="py-2" data-testid={`text-material-amount-${material.id}`}>
-                            ${parseFloat(material.amount).toFixed(2)}
-                          </td>
+                          {editingMaterial === material.id ? (
+                            <>
+                              <td className="py-2">
+                                <Input
+                                  value={editMaterialForm.description}
+                                  onChange={(e) => setEditMaterialForm(prev => ({ ...prev, description: e.target.value }))}
+                                  className="text-sm"
+                                  data-testid={`input-edit-material-description-${material.id}`}
+                                />
+                              </td>
+                              <td className="py-2">
+                                <Input
+                                  value={editMaterialForm.supplier}
+                                  onChange={(e) => setEditMaterialForm(prev => ({ ...prev, supplier: e.target.value }))}
+                                  className="text-sm"
+                                  data-testid={`input-edit-material-supplier-${material.id}`}
+                                />
+                              </td>
+                              <td className="py-2">
+                                <Input
+                                  value={editMaterialForm.invoiceDate}
+                                  onChange={(e) => setEditMaterialForm(prev => ({ ...prev, invoiceDate: e.target.value }))}
+                                  className="text-sm"
+                                  data-testid={`input-edit-material-date-${material.id}`}
+                                />
+                              </td>
+                              <td className="py-2">
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={editMaterialForm.amount}
+                                  onChange={(e) => setEditMaterialForm(prev => ({ ...prev, amount: e.target.value }))}
+                                  className="text-sm"
+                                  data-testid={`input-edit-material-amount-${material.id}`}
+                                />
+                              </td>
+                              <td className="py-2">
+                                <div className="flex gap-1">
+                                  <Button
+                                    size="sm"
+                                    onClick={handleUpdateMaterial}
+                                    disabled={updateMaterialMutation.isPending}
+                                    className="h-7 px-2 text-xs"
+                                    data-testid={`button-save-material-${material.id}`}
+                                  >
+                                    Save
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setEditingMaterial(null)}
+                                    className="h-7 px-2 text-xs"
+                                    data-testid={`button-cancel-material-${material.id}`}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td className="py-2" data-testid={`text-material-description-${material.id}`}>
+                                {material.description}
+                              </td>
+                              <td className="py-2" data-testid={`text-material-supplier-${material.id}`}>
+                                {material.supplier}
+                              </td>
+                              <td className="py-2" data-testid={`text-material-date-${material.id}`}>
+                                {material.invoiceDate}
+                              </td>
+                              <td className="py-2" data-testid={`text-material-amount-${material.id}`}>
+                                ${parseFloat(material.amount).toFixed(2)}
+                              </td>
+                              <td className="py-2">
+                                <div className="flex gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => startEditingMaterial(material)}
+                                    className="h-7 px-2 text-xs"
+                                    data-testid={`button-edit-material-${material.id}`}
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 px-2 text-xs text-red-600 hover:text-red-700"
+                                        data-testid={`button-delete-material-${material.id}`}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Delete Material</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Are you sure you want to delete this material entry? This action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => deleteMaterialMutation.mutate(material.id)}
+                                          className="bg-red-600 hover:bg-red-700"
+                                        >
+                                          Delete
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
+                              </td>
+                            </>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -1183,23 +1497,129 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                         <th className="pb-3">Contractor</th>
                         <th className="pb-3">Invoice Date</th>
                         <th className="pb-3">Amount</th>
+                        <th className="pb-3">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="space-y-2">
                       {jobDetails.subTrades.map((subTrade) => (
                         <tr key={subTrade.id}>
-                          <td className="py-2" data-testid={`text-subtrade-trade-${subTrade.id}`}>
-                            {subTrade.trade}
-                          </td>
-                          <td className="py-2" data-testid={`text-subtrade-contractor-${subTrade.id}`}>
-                            {subTrade.contractor}
-                          </td>
-                          <td className="py-2" data-testid={`text-subtrade-date-${subTrade.id}`}>
-                            {subTrade.invoiceDate}
-                          </td>
-                          <td className="py-2" data-testid={`text-subtrade-amount-${subTrade.id}`}>
-                            ${parseFloat(subTrade.amount).toFixed(2)}
-                          </td>
+                          {editingSubTrade === subTrade.id ? (
+                            <>
+                              <td className="py-2">
+                                <Input
+                                  value={editSubTradeForm.trade}
+                                  onChange={(e) => setEditSubTradeForm(prev => ({ ...prev, trade: e.target.value }))}
+                                  className="text-sm"
+                                  data-testid={`input-edit-subtrade-trade-${subTrade.id}`}
+                                />
+                              </td>
+                              <td className="py-2">
+                                <Input
+                                  value={editSubTradeForm.contractor}
+                                  onChange={(e) => setEditSubTradeForm(prev => ({ ...prev, contractor: e.target.value }))}
+                                  className="text-sm"
+                                  data-testid={`input-edit-subtrade-contractor-${subTrade.id}`}
+                                />
+                              </td>
+                              <td className="py-2">
+                                <Input
+                                  value={editSubTradeForm.invoiceDate}
+                                  onChange={(e) => setEditSubTradeForm(prev => ({ ...prev, invoiceDate: e.target.value }))}
+                                  className="text-sm"
+                                  data-testid={`input-edit-subtrade-date-${subTrade.id}`}
+                                />
+                              </td>
+                              <td className="py-2">
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={editSubTradeForm.amount}
+                                  onChange={(e) => setEditSubTradeForm(prev => ({ ...prev, amount: e.target.value }))}
+                                  className="text-sm"
+                                  data-testid={`input-edit-subtrade-amount-${subTrade.id}`}
+                                />
+                              </td>
+                              <td className="py-2">
+                                <div className="flex gap-1">
+                                  <Button
+                                    size="sm"
+                                    onClick={handleUpdateSubTrade}
+                                    disabled={updateSubTradeMutation.isPending}
+                                    className="h-7 px-2 text-xs"
+                                    data-testid={`button-save-subtrade-${subTrade.id}`}
+                                  >
+                                    Save
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setEditingSubTrade(null)}
+                                    className="h-7 px-2 text-xs"
+                                    data-testid={`button-cancel-subtrade-${subTrade.id}`}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td className="py-2" data-testid={`text-subtrade-trade-${subTrade.id}`}>
+                                {subTrade.trade}
+                              </td>
+                              <td className="py-2" data-testid={`text-subtrade-contractor-${subTrade.id}`}>
+                                {subTrade.contractor}
+                              </td>
+                              <td className="py-2" data-testid={`text-subtrade-date-${subTrade.id}`}>
+                                {subTrade.invoiceDate}
+                              </td>
+                              <td className="py-2" data-testid={`text-subtrade-amount-${subTrade.id}`}>
+                                ${parseFloat(subTrade.amount).toFixed(2)}
+                              </td>
+                              <td className="py-2">
+                                <div className="flex gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => startEditingSubTrade(subTrade)}
+                                    className="h-7 px-2 text-xs"
+                                    data-testid={`button-edit-subtrade-${subTrade.id}`}
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 px-2 text-xs text-red-600 hover:text-red-700"
+                                        data-testid={`button-delete-subtrade-${subTrade.id}`}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Delete Sub Trade</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Are you sure you want to delete this sub trade entry? This action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => deleteSubTradeMutation.mutate(subTrade.id)}
+                                          className="bg-red-600 hover:bg-red-700"
+                                        >
+                                          Delete
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
+                              </td>
+                            </>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -1241,8 +1661,95 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
               <CardContent className="space-y-4">
                 {jobDetails?.otherCosts?.map((cost) => (
                   <div key={cost.id} className="flex justify-between items-center p-2 border rounded">
-                    <span data-testid={`text-other-cost-description-${cost.id}`}>{cost.description}</span>
-                    <span data-testid={`text-other-cost-amount-${cost.id}`}>${parseFloat(cost.amount).toFixed(2)}</span>
+                    {editingOtherCost === cost.id ? (
+                      <div className="flex w-full gap-2 items-center">
+                        <Input
+                          value={editOtherCostForm.description}
+                          onChange={(e) => setEditOtherCostForm(prev => ({ ...prev, description: e.target.value }))}
+                          className="text-sm flex-1"
+                          placeholder="Description"
+                          data-testid={`input-edit-other-cost-description-${cost.id}`}
+                        />
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm">$</span>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={editOtherCostForm.amount}
+                            onChange={(e) => setEditOtherCostForm(prev => ({ ...prev, amount: e.target.value }))}
+                            className="text-sm w-24"
+                            data-testid={`input-edit-other-cost-amount-${cost.id}`}
+                          />
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            onClick={handleUpdateOtherCost}
+                            disabled={updateOtherCostMutation.isPending}
+                            className="h-7 px-2 text-xs"
+                            data-testid={`button-save-other-cost-${cost.id}`}
+                          >
+                            Save
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingOtherCost(null)}
+                            className="h-7 px-2 text-xs"
+                            data-testid={`button-cancel-other-cost-${cost.id}`}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <span data-testid={`text-other-cost-description-${cost.id}`}>{cost.description}</span>
+                        <div className="flex items-center gap-2">
+                          <span data-testid={`text-other-cost-amount-${cost.id}`}>${parseFloat(cost.amount).toFixed(2)}</span>
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => startEditingOtherCost(cost)}
+                              className="h-7 px-2 text-xs"
+                              data-testid={`button-edit-other-cost-${cost.id}`}
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 px-2 text-xs text-red-600 hover:text-red-700"
+                                  data-testid={`button-delete-other-cost-${cost.id}`}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Other Cost</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete this other cost entry? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteOtherCostMutation.mutate(cost.id)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
                 {(!jobDetails?.otherCosts || jobDetails.otherCosts.length === 0) && (

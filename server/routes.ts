@@ -753,6 +753,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/othercosts/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const validatedData = insertOtherCostSchema.partial().parse(req.body);
+      const otherCost = await storage.updateOtherCost(req.params.id, validatedData);
+      res.json(otherCost);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: fromZodError(error).toString() });
+      }
+      console.error("Error updating other cost:", error);
+      res.status(500).json({ message: "Failed to update other cost" });
+    }
+  });
+
   app.delete("/api/othercosts/:id", isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);
