@@ -799,6 +799,17 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     console.log('🔥 SAVE ALL CLICKED - Object.keys(timesheetData):', Object.keys(timesheetData));
     console.log('🔥 SAVE ALL CLICKED - timesheetData detailed:', JSON.stringify(timesheetData, null, 2));
     
+    // If timesheetData is empty, there's nothing to save - this should prevent unnecessary operations
+    if (Object.keys(timesheetData).length === 0) {
+      console.log('🔥 SAVE ALL - No local changes detected, timesheetData is empty');
+      toast({
+        title: "No unsaved changes",
+        description: "All timesheet entries are already saved.",
+        variant: "default",
+      });
+      return;
+    }
+    
     // Validate entries before saving
     const validationErrors = validateEntries(timesheetData);
     if (validationErrors.length > 0) {
@@ -939,9 +950,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
     if (entriesToSave.length === 0 && entriesToUpdate.length === 0) {
       toast({
-        title: "No entries to save",
-        description: "Please enter hours for at least one entry.",
-        variant: "destructive",
+        title: "No changes to save",
+        description: "All timesheet entries are already saved. Use individual entry editing or add new entries to make changes.",
+        variant: "default",
       });
       return;
     }
