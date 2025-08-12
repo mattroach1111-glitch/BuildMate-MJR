@@ -1416,18 +1416,13 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                       
                       if (totalHours < 76) {
                         console.log('🚨 SHOWING LOW HOURS WARNING');
-                        
-                        // Use native browser confirm dialog for now
-                        const confirmed = window.confirm(
-                          `⚠️ Low Hours Warning\n\nCurrent total: ${totalHours.toFixed(2)} hours\n\nThis timesheet has hours below the expected 76 hours for a full fortnight.\n\nAre you sure you want to submit this timesheet?`
-                        );
-                        
-                        if (!confirmed) {
-                          console.log('🚨 USER CANCELLED SUBMISSION');
-                          return;
-                        }
-                        
-                        console.log('🚨 USER CONFIRMED SUBMISSION DESPITE LOW HOURS');
+                        setLowHoursTotal(totalHours);
+                        setPendingSubmission(() => () => {
+                          console.log('🚨 EXECUTING PENDING SUBMISSION');
+                          confirmTimesheetMutation.mutate();
+                        });
+                        setShowLowHoursDialog(true);
+                        return;
                       }
 
                       console.log('🚨 SUBMITTING DIRECTLY - NO DIALOG');
@@ -2317,71 +2312,62 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           console.log('🚨 DIALOG RENDER CHECK - showLowHoursDialog:', showLowHoursDialog, 'lowHoursTotal:', lowHoursTotal);
           return null;
         })()}
-        <AlertDialog 
-          open={showLowHoursDialog} 
-          onOpenChange={(open) => {
-            console.log('🚨 DIALOG onOpenChange called with:', open);
-            if (!open) {
-              setShowLowHoursDialog(false);
-              setPendingSubmission(null);
-            }
-          }}
-        >
-            <AlertDialogContent className="max-w-md z-[9999]" style={{zIndex: 9999}}>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2 text-orange-600">
-                <Clock className="h-5 w-5" />
-                Low Hours Warning
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-gray-700">
-                <div className="space-y-3">
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-orange-600 mb-1">
-                        {lowHoursTotal.toFixed(2)} hours
-                      </div>
-                      <div className="text-sm text-orange-700">
-                        Current total for this fortnight
-                      </div>
+        {showLowHoursDialog && (
+          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-4">
+              <div className="flex items-center gap-2 text-orange-600 mb-2">
+                <Clock className="h-6 w-6" />
+                <h2 className="text-xl font-semibold">Low Hours Warning</h2>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-orange-600 mb-1">
+                      {lowHoursTotal.toFixed(2)} hours
+                    </div>
+                    <div className="text-sm text-orange-700">
+                      Current total for this fortnight
                     </div>
                   </div>
-                  
-                  <p className="text-center">
-                    Your hours are below the expected 76 hours for a full fortnight. 
-                    Are you sure you're ready to submit this timesheet?
-                  </p>
-                  
-                  <div className="text-xs text-gray-500 text-center">
-                    You can always add more hours and resubmit later if needed.
-                  </div>
                 </div>
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="gap-2">
-              <AlertDialogCancel 
-                onClick={() => {
-                  setShowLowHoursDialog(false);
-                  setPendingSubmission(null);
-                }}
-                className="flex-1"
-              >
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => {
-                  setShowLowHoursDialog(false);
-                  if (pendingSubmission) {
-                    pendingSubmission();
+                
+                <p className="text-center text-gray-700">
+                  Your hours are below the expected 76 hours for a full fortnight. 
+                  Are you sure you're ready to submit this timesheet?
+                </p>
+                
+                <div className="text-xs text-gray-500 text-center">
+                  You can always add more hours and resubmit later if needed.
+                </div>
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => {
+                    setShowLowHoursDialog(false);
                     setPendingSubmission(null);
-                  }
-                }}
-                className="flex-1 bg-orange-600 hover:bg-orange-700"
-              >
-                Submit Anyway
-              </AlertDialogAction>
-            </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowLowHoursDialog(false);
+                    if (pendingSubmission) {
+                      pendingSubmission();
+                      setPendingSubmission(null);
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors"
+                >
+                  Submit Anyway
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         
         </div>
       </div>
