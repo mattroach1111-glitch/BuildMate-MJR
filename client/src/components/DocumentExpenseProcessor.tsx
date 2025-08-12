@@ -41,8 +41,20 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   // Get upload URL mutation
   const getUploadUrlMutation = useMutation({
     mutationFn: async () => {
+      console.log("🔵 Making API request to /api/documents/upload");
       const response = await apiRequest("POST", "/api/documents/upload");
-      return await response.json();
+      console.log("🔵 API response status:", response.status);
+      const data = await response.json();
+      console.log("🔵 API response data:", data);
+      return data;
+    },
+    onError: (error: any) => {
+      console.error("🔴 Upload URL mutation error:", error);
+      toast({
+        title: "Connection Error",
+        description: "Failed to connect to upload service",
+        variant: "destructive",
+      });
     },
   });
 
@@ -75,22 +87,37 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
 
   const handleGetUploadParameters = async (file: any) => {
     try {
-      console.log("Getting upload parameters for file:", file);
+      console.log("🔵 UPLOAD DEBUG: Getting upload parameters for file:", file);
       const response: any = await getUploadUrlMutation.mutateAsync();
-      console.log("Upload URL response:", response);
+      console.log("🔵 UPLOAD DEBUG: Upload URL response:", response);
+      
+      if (!response.uploadURL) {
+        console.error("🔴 UPLOAD ERROR: No upload URL received", response);
+        throw new Error("No upload URL received");
+      }
+      
       return {
         method: "PUT" as const,
         url: response.uploadURL,
         fields: {},
-        headers: {}
+        headers: {
+          'Content-Type': file.type || 'application/octet-stream'
+        }
       };
-    } catch (error) {
-      console.error("Error getting upload parameters:", error);
+    } catch (error: any) {
+      console.error("🔴 UPLOAD ERROR: Failed to get upload parameters:", error);
+      toast({
+        title: "Upload setup failed",
+        description: error.message || "Failed to prepare upload",
+        variant: "destructive",
+      });
       throw error;
     }
   };
 
   const handleUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    console.log("🟢 UPLOAD COMPLETE:", result);
+    
     if (!selectedJobId) {
       toast({
         title: "Job required",
@@ -101,6 +128,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     }
 
     if (!result.successful || result.successful.length === 0) {
+      console.error("🔴 UPLOAD FAILED: No successful uploads", result);
       toast({
         title: "Upload failed",
         description: "No files were uploaded successfully.",
@@ -109,16 +137,18 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       return;
     }
 
+    console.log("🟢 PROCESSING FILES:", result.successful.length);
     setIsProcessing(true);
     
     for (const file of result.successful) {
       try {
+        console.log("🟢 PROCESSING FILE:", file);
         await processDocumentMutation.mutateAsync({
           documentURL: file.uploadURL || "",
           jobId: selectedJobId,
         });
       } catch (error) {
-        console.error("Error processing uploaded file:", error);
+        console.error("🔴 PROCESSING ERROR:", error);
       }
     }
   };
@@ -182,6 +212,34 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Test Button */}
+        <div className="space-y-2">
+          <Button 
+            onClick={async () => {
+              try {
+                console.log("🔵 Testing upload URL generation...");
+                const result = await getUploadUrlMutation.mutateAsync();
+                console.log("🟢 Test successful:", result);
+                toast({
+                  title: "Test Successful",
+                  description: "Upload URL generated successfully",
+                });
+              } catch (error: any) {
+                console.error("🔴 Test failed:", error);
+                toast({
+                  title: "Test Failed",
+                  description: error.message || "Failed to generate upload URL",
+                  variant: "destructive",
+                });
+              }
+            }}
+            variant="outline"
+            className="w-full"
+          >
+            Test Upload Connection
+          </Button>
         </div>
 
         {/* Upload Area */}
