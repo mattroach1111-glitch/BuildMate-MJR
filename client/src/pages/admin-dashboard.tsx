@@ -1706,18 +1706,23 @@ export default function AdminDashboard() {
           {/* Total Costs Dashboard Widget */}
           {!totalCostsLoading && totalCostsData && (
             <div className="mb-6">
-              <Card className="bg-gradient-to-r from-slate-50 to-gray-50 border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
-                <CardContent className="p-6">
-                  <div className="text-center">
-                    <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                      ${totalCostsData.totalCosts.toLocaleString('en-AU', { 
-                        minimumFractionDigits: 2, 
-                        maximumFractionDigits: 2 
-                      })}
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                <Card className="relative bg-gradient-to-br from-white via-gray-50 to-slate-100 border-0 shadow-xl rounded-2xl overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-purple-50/20 to-indigo-50/30"></div>
+                  <CardContent className="relative p-8">
+                    <div className="text-center">
+                      <div className="text-5xl font-black tracking-tight bg-gradient-to-r from-blue-700 via-purple-700 to-indigo-800 bg-clip-text text-transparent drop-shadow-sm">
+                        ${totalCostsData.totalCosts.toLocaleString('en-AU', { 
+                          minimumFractionDigits: 2, 
+                          maximumFractionDigits: 2 
+                        })}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500"></div>
+                </Card>
+              </div>
             </div>
           )}
 
