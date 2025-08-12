@@ -298,6 +298,15 @@ export class DatabaseStorage implements IStorage {
       });
     }
     
+    // Automatically create a "Consumables" material entry at 6% of materials (initially $0)
+    await this.createMaterial({
+      jobId: createdJob.id,
+      description: "Consumables",
+      supplier: "General",
+      amount: "0.00",
+      invoiceDate: new Date().toISOString().split('T')[0], // Today's date
+    });
+    
     return createdJob;
   }
 
@@ -539,20 +548,43 @@ export class DatabaseStorage implements IStorage {
       .insert(materials)
       .values(material)
       .returning();
+    
+    // Update consumables calculation (only if this is not the consumables entry itself)
+    if (material.description.toLowerCase() !== "consumables") {
+      await this.updateConsumablesForJob(material.jobId);
+    }
+    
     return createdMaterial;
   }
 
   async updateMaterial(id: string, material: Partial<InsertMaterial>): Promise<Material> {
+    // Get the original material to check if it's consumables and get jobId
+    const [originalMaterial] = await db.select().from(materials).where(eq(materials.id, id));
+    
     const [updatedMaterial] = await db
       .update(materials)
       .set(material)
       .where(eq(materials.id, id))
       .returning();
+    
+    // Update consumables calculation (only if this is not the consumables entry itself)
+    if (originalMaterial && originalMaterial.description.toLowerCase() !== "consumables") {
+      await this.updateConsumablesForJob(originalMaterial.jobId);
+    }
+    
     return updatedMaterial;
   }
 
   async deleteMaterial(id: string): Promise<void> {
+    // Get the material info before deletion to check if it's consumables and get jobId
+    const [materialToDelete] = await db.select().from(materials).where(eq(materials.id, id));
+    
     await db.delete(materials).where(eq(materials.id, id));
+    
+    // Update consumables calculation (only if this is not the consumables entry itself)
+    if (materialToDelete && materialToDelete.description.toLowerCase() !== "consumables") {
+      await this.updateConsumablesForJob(materialToDelete.jobId);
+    }
   }
 
   // Sub trade operations
@@ -611,6 +643,73 @@ export class DatabaseStorage implements IStorage {
 
   async deleteOtherCost(id: string): Promise<void> {
     await db.delete(otherCosts).where(eq(otherCosts.id, id));
+  }
+
+  // Helper function to calculate and update consumables
+  async updateConsumablesForJob(jobId: string): Promise<void> {
+    try {
+      // Get all materials for this job
+      const allMaterials = await this.getMaterialsForJob(jobId);
+      
+      // Find the consumables entry
+      const consumablesEntry = allMaterials.find(material => 
+        material.description.toLowerCase() === "consumables"
+      );
+      
+      if (!consumablesEntry) {
+        // If no consumables entry exists, create one
+        // Use a recursive flag to prevent infinite loop
+        const newConsumables = await db
+          .insert(materials)
+          .values({
+            jobId,
+            description: "Consumables",
+            supplier: "General",
+            amount: "0.00",
+            invoiceDate: new Date().toISOString().split('T')[0],
+          })
+          .returning();
+        
+        // Calculate initial amount for the newly created consumables
+        const otherMaterials = allMaterials.filter(material => 
+          material.description.toLowerCase() !== "consumables"
+        );
+        
+        const totalOtherMaterials = otherMaterials.reduce((sum, material) => {
+          return sum + parseFloat(material.amount || "0");
+        }, 0);
+        
+        const consumablesAmount = (totalOtherMaterials * 0.06).toFixed(2);
+        
+        // Update without triggering recursive call
+        await db
+          .update(materials)
+          .set({ amount: consumablesAmount })
+          .where(eq(materials.id, newConsumables[0].id));
+        
+        return;
+      }
+      
+      // Calculate 6% of all other materials (excluding consumables itself)
+      const otherMaterials = allMaterials.filter(material => 
+        material.description.toLowerCase() !== "consumables"
+      );
+      
+      const totalOtherMaterials = otherMaterials.reduce((sum, material) => {
+        return sum + parseFloat(material.amount || "0");
+      }, 0);
+      
+      const consumablesAmount = (totalOtherMaterials * 0.06).toFixed(2);
+      
+      // Update the consumables entry directly to avoid recursive calls
+      await db
+        .update(materials)
+        .set({ amount: consumablesAmount })
+        .where(eq(materials.id, consumablesEntry.id));
+    } catch (error) {
+      console.error("Error updating consumables:", error);
+      // Don't throw - this is a background calculation
+    }
   }
 
   // Timesheet operations

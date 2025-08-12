@@ -673,6 +673,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add consumables to existing jobs that don't have them
+  app.post("/api/admin/add-consumables-to-existing-jobs", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const jobs = await storage.getJobs();
+      let addedCount = 0;
+
+      for (const job of jobs) {
+        const materials = await storage.getMaterialsForJob(job.id);
+        const hasConsumables = materials.some(material => 
+          material.description.toLowerCase() === "consumables"
+        );
+
+        if (!hasConsumables) {
+          await storage.updateConsumablesForJob(job.id);
+          addedCount++;
+        }
+      }
+
+      res.json({ message: `Added consumables to ${addedCount} jobs` });
+    } catch (error) {
+      console.error("Error adding consumables to existing jobs:", error);
+      res.status(500).json({ error: "Failed to add consumables to existing jobs" });
+    }
+  });
+
   // Sub trade routes
   app.post("/api/jobs/:jobId/subtrades", isAuthenticated, async (req: any, res) => {
     try {
