@@ -794,14 +794,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   };
 
   const saveAllEntries = async () => {
-    console.log('🔥 SAVE ALL CLICKED - timesheetData:', timesheetData);
-    console.log('🔥 SAVE ALL CLICKED - currentFortnightEntries:', currentFortnightEntries?.length || 0, 'entries');
-    console.log('🔥 SAVE ALL CLICKED - Object.keys(timesheetData):', Object.keys(timesheetData));
-    console.log('🔥 SAVE ALL CLICKED - timesheetData detailed:', JSON.stringify(timesheetData, null, 2));
-    
-    // If timesheetData is empty, there's nothing to save - this should prevent unnecessary operations
+    // If timesheetData is empty, there's nothing to save - this prevents unnecessary operations
     if (Object.keys(timesheetData).length === 0) {
-      console.log('🔥 SAVE ALL - No local changes detected, timesheetData is empty');
       toast({
         title: "No unsaved changes",
         description: "All timesheet entries are already saved.",
@@ -900,21 +894,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   const entryDescription = entryData.description || '';
                   const descriptionMatch = savedDescription === entryDescription;
                   
-                  // Debug logging to understand matching
-                  console.log('🔍 MATCHING DEBUG:', {
-                    dateKey,
-                    savedDate,
-                    dateMatches,
-                    savedJobId,
-                    entryJobId,
-                    jobMatches,
-                    isLeaveType,
-                    isCustomAddress,
-                    savedMaterials,
-                    entryMaterials,
-                    materialsMatch,
-                    entryId: savedEntry.id
-                  });
+
                   
                   if (isLeaveType) {
                     return dateMatches && jobMatches && materialsMatch;
@@ -928,25 +908,20 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             
             if (existingEntry && !existingEntry.approved) {
               // Update existing entry
-              console.log('🔄 UPDATING existing entry:', existingEntry.id, 'with data:', entryData);
               entriesToUpdate.push({
                 id: existingEntry.id,
                 data: entryData
               });
             } else {
               // Create new entry
-              console.log('➕ CREATING new entry:', entryData);
               entriesToSave.push(entryData);
             }
-          } else {
-            console.log('Skipping entry - missing required fields:', { hours: entry.hours });
           }
         });
       }
     });
 
-    console.log('Total entries to create:', entriesToSave.length);
-    console.log('Total entries to update:', entriesToUpdate.length);
+
 
     if (entriesToSave.length === 0 && entriesToUpdate.length === 0) {
       toast({
