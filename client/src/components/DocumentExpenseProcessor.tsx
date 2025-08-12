@@ -75,7 +75,9 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
 
   const handleGetUploadParameters = async (file: any) => {
     try {
+      console.log("Getting upload parameters for file:", file);
       const response: any = await getUploadUrlMutation.mutateAsync();
+      console.log("Upload URL response:", response);
       return {
         method: "PUT" as const,
         url: response.uploadURL,

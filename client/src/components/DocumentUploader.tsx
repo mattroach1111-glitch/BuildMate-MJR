@@ -79,7 +79,14 @@ export function DocumentUploader({
         getUploadParameters: onGetUploadParameters,
       })
       .on("complete", (result) => {
+        console.log("Uppy upload complete:", result);
         onComplete?.(result);
+      })
+      .on("upload-error", (file, error) => {
+        console.error("Uppy upload error:", file, error);
+      })
+      .on("upload-success", (file, response) => {
+        console.log("Uppy upload success:", file, response);
       })
       .on("drag-over", () => {
         setIsDragActive(true);
