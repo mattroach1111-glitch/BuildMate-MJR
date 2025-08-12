@@ -371,11 +371,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.syncEmployeesToJob(job.id);
 
       // Get related data
-      const [laborEntries, materials, subTrades, otherCosts] = await Promise.all([
+      const [laborEntries, materials, subTrades, otherCosts, tipFees] = await Promise.all([
         storage.getLaborEntriesForJob(job.id),
         storage.getMaterialsForJob(job.id),
         storage.getSubTradesForJob(job.id),
         storage.getOtherCostsForJob(job.id),
+        storage.getTipFeesForJob(job.id),
       ]);
 
       res.json({
@@ -384,6 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         materials,
         subTrades,
         otherCosts,
+        tipFees,
       });
     } catch (error) {
       console.error("Error fetching job:", error);
