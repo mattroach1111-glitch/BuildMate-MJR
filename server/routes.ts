@@ -46,7 +46,7 @@ const isAdmin = async (req: any, res: any, next: any) => {
   }
 };
 
-// Fuzzy employee matching function
+// Simple and accurate employee matching function
 const findBestEmployeeMatch = async (employeeName: string, threshold: number = 80): Promise<{ employee: any, score: number } | null> => {
   try {
     const allEmployees = await storage.getEmployees();
@@ -54,40 +54,40 @@ const findBestEmployeeMatch = async (employeeName: string, threshold: number = 8
       return null;
     }
 
+    const cleanName = employeeName.toLowerCase().trim();
+    console.log(`🔍 Looking for employee: "${employeeName}"`);
+
+    // Step 1: Try exact match first
+    for (const employee of allEmployees) {
+      if (employee.name.toLowerCase().trim() === cleanName) {
+        console.log(`✅ EXACT MATCH: "${employeeName}" -> "${employee.name}"`);
+        return { employee, score: 100 };
+      }
+    }
+
+    // Step 2: Try partial/fuzzy match with simple ratio
     let bestMatch = null;
     let bestScore = 0;
 
     for (const employee of allEmployees) {
-      // Try multiple fuzzy matching strategies for better accuracy
-      const exactScore = fuzz.ratio(employeeName.toLowerCase(), employee.name.toLowerCase());
-      const partialScore = fuzz.partial_ratio(employeeName.toLowerCase(), employee.name.toLowerCase());
-      const tokenScore = fuzz.token_sort_ratio(employeeName.toLowerCase(), employee.name.toLowerCase());
+      const score = fuzz.ratio(cleanName, employee.name.toLowerCase().trim());
+      console.log(`🔍 Fuzzy: "${employeeName}" vs "${employee.name}" = ${score}%`);
       
-      // Use the highest score from different strategies
-      const maxScore = Math.max(exactScore, partialScore, tokenScore);
-      
-      console.log(`🔍 Fuzzy match "${employeeName}" vs "${employee.name}": exact=${exactScore}%, partial=${partialScore}%, token=${tokenScore}%, max=${maxScore}%`);
-      
-      if (maxScore >= threshold) {
-        // Prioritize exact matches, then higher scores, then shorter names (more specific matches)
-        const isExactMatch = exactScore === 100;
-        const currentBestIsExact = bestMatch && fuzz.ratio(employeeName.toLowerCase(), bestMatch.name.toLowerCase()) === 100;
-        
-        const shouldUpdate = maxScore > bestScore || 
-                           (maxScore === bestScore && isExactMatch && !currentBestIsExact) ||
-                           (maxScore === bestScore && isExactMatch === currentBestIsExact && employee.name.length < (bestMatch?.name?.length || Infinity));
-        
-        if (shouldUpdate) {
-          bestScore = maxScore;
-          bestMatch = employee;
-          console.log(`🎯 NEW BEST MATCH: "${employeeName}" -> "${employee.name}" (exact=${isExactMatch ? 'YES' : 'NO'}, score=${maxScore}%)`);
-        }
+      if (score >= threshold && score > bestScore) {
+        bestScore = score;
+        bestMatch = employee;
       }
     }
 
-    return bestMatch ? { employee: bestMatch, score: bestScore } : null;
+    if (bestMatch) {
+      console.log(`✅ FUZZY MATCH: "${employeeName}" -> "${bestMatch.name}" (${bestScore}%)`);
+      return { employee: bestMatch, score: bestScore };
+    }
+
+    console.log(`❌ NO MATCH FOUND for "${employeeName}" above ${threshold}% threshold`);
+    return null;
   } catch (error) {
-    console.error("Error in fuzzy employee matching:", error);
+    console.error("Error in employee matching:", error);
     return null;
   }
 };
@@ -2297,8 +2297,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (laborEntry.hours > 0) {
           let employeeId: string | undefined;
           
-          // Try fuzzy matching first (80% threshold with improved multi-strategy matching)
-          const fuzzyMatch = await findBestEmployeeMatch(laborEntry.employeeName, 80);
+          // Try accurate employee matching (70% threshold)  
+          const fuzzyMatch = await findBestEmployeeMatch(laborEntry.employeeName, 70);
           if (fuzzyMatch) {
             employeeId = fuzzyMatch.employee.id;
             console.log(`🔵 Fuzzy matched "${laborEntry.employeeName}" to existing employee "${fuzzyMatch.employee.name}" (${fuzzyMatch.score}% match)`);
