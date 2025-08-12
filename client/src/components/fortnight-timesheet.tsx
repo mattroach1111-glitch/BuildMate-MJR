@@ -794,7 +794,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   };
 
   const saveAllEntries = async () => {
-    console.log('Save All clicked, timesheetData:', timesheetData);
+    console.log('🔥 SAVE ALL CLICKED - timesheetData:', timesheetData);
+    console.log('🔥 SAVE ALL CLICKED - currentFortnightEntries:', currentFortnightEntries?.length || 0, 'entries');
+    console.log('🔥 SAVE ALL CLICKED - Object.keys(timesheetData):', Object.keys(timesheetData));
+    console.log('🔥 SAVE ALL CLICKED - timesheetData detailed:', JSON.stringify(timesheetData, null, 2));
     
     // Validate entries before saving
     const validationErrors = validateEntries(timesheetData);
