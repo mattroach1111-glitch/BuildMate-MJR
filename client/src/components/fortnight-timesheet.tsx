@@ -2321,14 +2321,18 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         
         {/* Low Hours Warning Dialog - ADMIN AND STAFF */}
         {console.log('🚨 DIALOG RENDER CHECK - showLowHoursDialog:', showLowHoursDialog, 'lowHoursTotal:', lowHoursTotal)}
-        <AlertDialog 
-          open={showLowHoursDialog} 
-          onOpenChange={(open) => {
-            console.log('🚨 DIALOG onOpenChange called with:', open);
-            setShowLowHoursDialog(open);
-          }}
-        >
-          <AlertDialogContent className="max-w-md z-[9999]" style={{zIndex: 9999}}>
+        {showLowHoursDialog && (
+          <AlertDialog 
+            open={true} 
+            onOpenChange={(open) => {
+              console.log('🚨 DIALOG onOpenChange called with:', open);
+              if (!open) {
+                setShowLowHoursDialog(false);
+                setPendingSubmission(null);
+              }
+            }}
+          >
+            <AlertDialogContent className="max-w-md z-[9999]" style={{zIndex: 9999}}>
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2 text-orange-600">
                 <Clock className="h-5 w-5" />
@@ -2381,8 +2385,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                 Submit Anyway
               </AlertDialogAction>
             </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
         
         </div>
       </div>
