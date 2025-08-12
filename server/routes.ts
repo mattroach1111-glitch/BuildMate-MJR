@@ -68,9 +68,12 @@ const findBestEmployeeMatch = async (employeeName: string, threshold: number = 8
       
       console.log(`🔍 Fuzzy match "${employeeName}" vs "${employee.name}": exact=${exactScore}%, partial=${partialScore}%, token=${tokenScore}%, max=${maxScore}%`);
       
-      if (maxScore > bestScore && maxScore >= threshold) {
-        bestScore = maxScore;
-        bestMatch = employee;
+      if (maxScore >= threshold) {
+        // If this is better than current best, or same score but longer name (more specific), use it
+        if (maxScore > bestScore || (maxScore === bestScore && employee.name.length > (bestMatch?.name?.length || 0))) {
+          bestScore = maxScore;
+          bestMatch = employee;
+        }
       }
     }
 
