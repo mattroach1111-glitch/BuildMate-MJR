@@ -23,7 +23,7 @@ import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 import { JobProgressVisualization } from "@/components/JobProgressVisualization";
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw, Grid3X3, List, Settings, UserPlus, Download, Edit, BarChart3 } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw, Grid3X3, List, Settings, UserPlus, Download, Edit, BarChart3, DollarSign, TrendingUp, Building2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
@@ -119,6 +119,21 @@ export default function AdminDashboard() {
 
   const { data: jobs, isLoading: jobsLoading } = useQuery<Job[]>({
     queryKey: ["/api/jobs"],
+    retry: false,
+  });
+
+  const { data: totalCostsData, isLoading: totalCostsLoading } = useQuery<{
+    totalCosts: number;
+    jobCount: number;
+    costBreakdown: {
+      materials: number;
+      labor: number;
+      subTrades: number;
+      otherCosts: number;
+      tipFees: number;
+    };
+  }>({
+    queryKey: ["/api/jobs/total-costs"],
     retry: false,
   });
 
@@ -1687,6 +1702,110 @@ export default function AdminDashboard() {
               </DialogContent>
             </Dialog>
           </div>
+
+          {/* Total Costs Dashboard Widget */}
+          {!totalCostsLoading && totalCostsData && (
+            <div className="mb-6">
+              <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-lg">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-green-100 rounded-full">
+                        <DollarSign className="h-6 w-6 text-green-600" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-xl text-green-800">Total Active Job Costs</CardTitle>
+                        <CardDescription className="text-green-600">
+                          Excluding GST • {totalCostsData.jobCount} active jobs
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-3xl font-bold text-green-800">
+                        ${totalCostsData.totalCosts.toLocaleString('en-AU', { 
+                          minimumFractionDigits: 2, 
+                          maximumFractionDigits: 2 
+                        })}
+                      </div>
+                      <div className="text-sm text-green-600 flex items-center gap-1">
+                        <TrendingUp className="h-4 w-4" />
+                        Current costs
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div className="bg-white/60 rounded-lg p-3 border border-blue-200">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        <span className="text-sm font-medium text-gray-700">Materials</span>
+                      </div>
+                      <div className="text-lg font-bold text-blue-700">
+                        ${totalCostsData.costBreakdown.materials.toLocaleString('en-AU', { 
+                          minimumFractionDigits: 2, 
+                          maximumFractionDigits: 2 
+                        })}
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white/60 rounded-lg p-3 border border-orange-200">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                        <span className="text-sm font-medium text-gray-700">Labor</span>
+                      </div>
+                      <div className="text-lg font-bold text-orange-700">
+                        ${totalCostsData.costBreakdown.labor.toLocaleString('en-AU', { 
+                          minimumFractionDigits: 2, 
+                          maximumFractionDigits: 2 
+                        })}
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white/60 rounded-lg p-3 border border-purple-200">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                        <span className="text-sm font-medium text-gray-700">Sub-trades</span>
+                      </div>
+                      <div className="text-lg font-bold text-purple-700">
+                        ${totalCostsData.costBreakdown.subTrades.toLocaleString('en-AU', { 
+                          minimumFractionDigits: 2, 
+                          maximumFractionDigits: 2 
+                        })}
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white/60 rounded-lg p-3 border border-red-200">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <span className="text-sm font-medium text-gray-700">Other Costs</span>
+                      </div>
+                      <div className="text-lg font-bold text-red-700">
+                        ${totalCostsData.costBreakdown.otherCosts.toLocaleString('en-AU', { 
+                          minimumFractionDigits: 2, 
+                          maximumFractionDigits: 2 
+                        })}
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white/60 rounded-lg p-3 border border-amber-200">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                        <span className="text-sm font-medium text-gray-700">Tip Fees</span>
+                      </div>
+                      <div className="text-lg font-bold text-amber-700">
+                        ${totalCostsData.costBreakdown.tipFees.toLocaleString('en-AU', { 
+                          minimumFractionDigits: 2, 
+                          maximumFractionDigits: 2 
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Search and Group Controls */}
           <div className="flex flex-col sm:flex-row gap-3 mb-6">

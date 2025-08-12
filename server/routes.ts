@@ -340,6 +340,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Job routes
+  app.get("/api/jobs/total-costs", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const totalCosts = await storage.getTotalActiveCosts();
+      res.json(totalCosts);
+    } catch (error) {
+      console.error("Error fetching total costs:", error);
+      res.status(500).json({ message: "Failed to fetch total costs" });
+    }
+  });
+
   app.get("/api/jobs", isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);

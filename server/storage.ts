@@ -60,6 +60,17 @@ export interface IStorage {
   updateJob(id: string, job: Partial<InsertJob>): Promise<Job>;
   updateJobStatus(id: string, status: "new_job" | "job_in_progress" | "job_complete" | "ready_for_billing"): Promise<Job>;
   deleteJob(id: string): Promise<void>;
+  getTotalActiveCosts(): Promise<{
+    totalCosts: number;
+    jobCount: number;
+    costBreakdown: {
+      materials: number;
+      labor: number;
+      subTrades: number;
+      otherCosts: number;
+      tipFees: number;
+    };
+  }>;
   
   // Labor entry operations
   getLaborEntriesForJob(jobId: string): Promise<LaborEntry[]>;
@@ -389,6 +400,89 @@ export class DatabaseStorage implements IStorage {
     
     // Finally delete the job itself
     await db.delete(jobs).where(eq(jobs.id, id));
+  }
+
+  async getTotalActiveCosts(): Promise<{
+    totalCosts: number;
+    jobCount: number;
+    costBreakdown: {
+      materials: number;
+      labor: number;
+      subTrades: number;
+      otherCosts: number;
+      tipFees: number;
+    };
+  }> {
+    // Get all active jobs (not deleted)
+    const activeJobs = await db.select({ id: jobs.id })
+      .from(jobs)
+      .where(or(eq(jobs.isDeleted, false), isNull(jobs.isDeleted)));
+
+    const jobIds = activeJobs.map(job => job.id);
+
+    if (jobIds.length === 0) {
+      return {
+        totalCosts: 0,
+        jobCount: 0,
+        costBreakdown: {
+          materials: 0,
+          labor: 0,
+          subTrades: 0,
+          otherCosts: 0,
+          tipFees: 0,
+        },
+      };
+    }
+
+    // Calculate costs for each category
+    const [materialsResult, laborResult, subTradesResult, otherCostsResult, tipFeesResult] = await Promise.all([
+      // Materials costs
+      db.select({ total: sum(materials.amount) })
+        .from(materials)
+        .where(inArray(materials.jobId, jobIds)),
+      
+      // Labor costs (hourlyRate * hoursLogged)
+      db.select({ 
+        total: sql<string>`SUM(${laborEntries.hourlyRate} * ${laborEntries.hoursLogged})` 
+      })
+        .from(laborEntries)
+        .where(inArray(laborEntries.jobId, jobIds)),
+      
+      // Sub-trades costs
+      db.select({ total: sum(subTrades.amount) })
+        .from(subTrades)
+        .where(inArray(subTrades.jobId, jobIds)),
+      
+      // Other costs
+      db.select({ total: sum(otherCosts.amount) })
+        .from(otherCosts)
+        .where(inArray(otherCosts.jobId, jobIds)),
+      
+      // Tip fees (use totalAmount which includes cartage)
+      db.select({ total: sum(tipFees.totalAmount) })
+        .from(tipFees)
+        .where(inArray(tipFees.jobId, jobIds)),
+    ]);
+
+    const materialsTotal = Number(materialsResult[0]?.total || 0);
+    const laborTotal = Number(laborResult[0]?.total || 0);
+    const subTradesTotal = Number(subTradesResult[0]?.total || 0);
+    const otherCostsTotal = Number(otherCostsResult[0]?.total || 0);
+    const tipFeesTotal = Number(tipFeesResult[0]?.total || 0);
+
+    const totalCosts = materialsTotal + laborTotal + subTradesTotal + otherCostsTotal + tipFeesTotal;
+
+    return {
+      totalCosts,
+      jobCount: jobIds.length,
+      costBreakdown: {
+        materials: materialsTotal,
+        labor: laborTotal,
+        subTrades: subTradesTotal,
+        otherCosts: otherCostsTotal,
+        tipFees: tipFeesTotal,
+      },
+    };
   }
 
   // Job files operations
