@@ -5,6 +5,8 @@ import pdfParse from 'pdf-parse';
 import { promises as fs } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 
 /*
 <important_code_snippet_instructions>
@@ -166,30 +168,37 @@ Focus on the primary expense amount. If multiple items, use the total. Be conser
       // Write to temporary file
       await fs.writeFile(pdfPath, buffer);
       
-      // Convert PDF to image using pdf2pic with explicit options
-      console.log('🖼️ Converting PDF to image...');
-      const convert = pdf2pic.fromPath(pdfPath, {
-        density: 150,           // DPI for quality
-        saveFilename: `converted_${Date.now()}`,
-        savePath: tempDir,
-        format: "jpg",
-        width: 1200,            // Max width
-        height: 1600            // Max height
-      });
+      // Convert PDF to image using direct Ghostscript command for reliability
+      console.log('🖼️ Converting PDF to image using Ghostscript...');
       
-      // Convert first page only
-      const result = await convert(1, { responseType: "buffer" });
+      const execAsync = promisify(exec);
+      const outputImagePath = path.join(tempDir, `converted_${Date.now()}.jpg`);
       
-      if (!result.buffer) {
-        throw new Error('Failed to convert PDF to image - no buffer returned');
+      // Use Ghostscript directly for reliable PDF-to-image conversion
+      const gsCommand = `gs -dSAFER -dBATCH -dNOPAUSE -dQUIET -sDEVICE=jpeg -r150 -dFirstPage=1 -dLastPage=1 -sOutputFile="${outputImagePath}" "${pdfPath}"`;
+      
+      console.log('🔧 Executing Ghostscript conversion...');
+      await execAsync(gsCommand);
+      
+      // Verify the output file was created
+      const imageBuffer = await fs.readFile(outputImagePath);
+      
+      if (imageBuffer.length === 0) {
+        throw new Error('PDF conversion produced empty image file');
       }
       
-      const base64Image = result.buffer.toString('base64');
+      const base64Image = imageBuffer.toString('base64');
+      
+      // Validate the base64 result
+      if (!base64Image || base64Image.length < 100) {
+        throw new Error(`PDF conversion produced invalid image. Buffer size: ${imageBuffer.length}, Base64 length: ${base64Image.length}`);
+      }
       
       // Clean up temporary files
-      await fs.unlink(pdfPath).catch(() => {}); // Ignore cleanup errors
+      await fs.unlink(pdfPath).catch(() => {});
+      await fs.unlink(outputImagePath).catch(() => {});
       
-      console.log('✅ PDF converted to image successfully');
+      console.log(`✅ PDF converted to image successfully. Base64 length: ${base64Image.length}`);
       return base64Image;
       
     } catch (error: any) {
