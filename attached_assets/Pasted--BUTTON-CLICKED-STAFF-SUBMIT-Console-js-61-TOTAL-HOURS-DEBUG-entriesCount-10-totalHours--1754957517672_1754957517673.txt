@@ -1,0 +1,34 @@
+🔥 BUTTON CLICKED - STAFF SUBMIT
+Console.js:61 🔍 TOTAL HOURS DEBUG: {entriesCount: 10, totalHours: 74, lessThan76: true, entries: Array(10)}
+Console.js:61 🚨 STAFF SUBMIT - totalHours: 74 will show dialog: true
+Console.js:61 🚨 SHOWING LOW HOURS DIALOG
+Console.js:61 🚨 ABOUT TO SHOW DIALOG - current state: false
+Console.js:61 🚨 DIALOG STATE SET TO TRUE
+Console.js:61 Staff filter: {entryDate: '2025-08-22', isInFortnight: true, fortnightStart: '2025-08-11', fortnightEnd: '2025-08-24'}
+Console.js:61 Staff filter: {entryDate: '2025-08-21', isInFortnight: true, fortnightStart: '2025-08-11', fortnightEnd: '2025-08-24'}
+Console.js:61 Staff filter: {entryDate: '2025-08-20', isInFortnight: true, fortnightStart: '2025-08-11', fortnightEnd: '2025-08-24'}
+Console.js:61 Staff filter: {entryDate: '2025-08-19', isInFortnight: true, fortnightStart: '2025-08-11', fortnightEnd: '2025-08-24'}
+Console.js:61 Staff filter: {entryDate: '2025-08-18', isInFortnight: true, fortnightStart: '2025-08-11', fortnightEnd: '2025-08-24'}
+Console.js:61 Staff filter: {entryDate: '2025-08-15', isInFortnight: true, fortnightStart: '2025-08-11', fortnightEnd: '2025-08-24'}
+Console.js:61 Staff filter: {entryDate: '2025-08-14', isInFortnight: true, fortnightStart: '2025-08-11', fortnightEnd: '2025-08-24'}
+Console.js:61 Staff filter: {entryDate: '2025-08-13', isInFortnight: true, fortnightStart: '2025-08-11', fortnightEnd: '2025-08-24'}
+Console.js:61 Staff filter: {entryDate: '2025-08-12', isInFortnight: true, fortnightStart: '2025-08-11', fortnightEnd: '2025-08-24'}
+Console.js:61 Staff filter: {entryDate: '2025-08-11', isInFortnight: true, fortnightStart: '2025-08-11', fortnightEnd: '2025-08-24'}
+Console.js:61 Current fortnight entries: (10) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-11 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-12 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-13 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-14 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-15 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-16 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-17 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-18 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-19 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-20 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-21 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-22 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-23 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-24 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+Console.js:61 🚨 DIALOG STATE CHECK (after timeout): false
+Console.js:61 🚨 DOM CHECK - Dialog element exists? null
+Console.js:61 🚨 FORCING DIALOG STATE AGAIN

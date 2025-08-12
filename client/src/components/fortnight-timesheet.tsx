@@ -1415,26 +1415,19 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                       console.log('🚨 STAFF SUBMIT - totalHours:', totalHours, 'will show dialog:', totalHours < 76);
                       
                       if (totalHours < 76) {
-                        console.log('🚨 SHOWING LOW HOURS DIALOG');
-                        setLowHoursTotal(totalHours);
-                        setPendingSubmission(() => () => {
-                          console.log('🚨 EXECUTING PENDING SUBMISSION');
-                          confirmTimesheetMutation.mutate();
-                        });
-                        console.log('🚨 ABOUT TO SHOW DIALOG - current state:', showLowHoursDialog);
-                        setShowLowHoursDialog(true);
-                        console.log('🚨 DIALOG STATE SET TO TRUE');
-                        // Force a small delay to ensure state update
-                        setTimeout(() => {
-                          console.log('🚨 DIALOG STATE CHECK (after timeout):', showLowHoursDialog);
-                          console.log('🚨 DOM CHECK - Dialog element exists?', document.querySelector('[role="alertdialog"]'));
-                          // Force re-render by updating a dummy state if dialog still not showing
-                          if (!showLowHoursDialog) {
-                            console.log('🚨 FORCING DIALOG STATE AGAIN');
-                            setShowLowHoursDialog(true);
-                          }
-                        }, 50);
-                        return;
+                        console.log('🚨 SHOWING LOW HOURS WARNING');
+                        
+                        // Use native browser confirm dialog for now
+                        const confirmed = window.confirm(
+                          `⚠️ Low Hours Warning\n\nCurrent total: ${totalHours.toFixed(2)} hours\n\nThis timesheet has hours below the expected 76 hours for a full fortnight.\n\nAre you sure you want to submit this timesheet?`
+                        );
+                        
+                        if (!confirmed) {
+                          console.log('🚨 USER CANCELLED SUBMISSION');
+                          return;
+                        }
+                        
+                        console.log('🚨 USER CONFIRMED SUBMISSION DESPITE LOW HOURS');
                       }
 
                       console.log('🚨 SUBMITTING DIRECTLY - NO DIALOG');
