@@ -808,6 +808,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     }
     
     const entriesToSave: any[] = [];
+    const entriesToUpdate: any[] = [];
     
     Object.entries(timesheetData).forEach(([dateKey, dayEntries]) => {
       if (Array.isArray(dayEntries)) {
@@ -864,8 +865,49 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               entryData.staffId = selectedEmployee;
             }
             
-            console.log('Adding entry to save:', entryData);
-            entriesToSave.push(entryData);
+            // Check if there's an existing entry for this date that we should update instead of creating new
+            const existingEntry = Array.isArray(currentFortnightEntries) 
+              ? currentFortnightEntries.find((savedEntry: any) => {
+                  const savedDate = format(parseISO(savedEntry.date), 'yyyy-MM-dd');
+                  const savedJobId = savedEntry.jobId || null;
+                  const entryJobId = entryData.jobId || null;
+                  
+                  // Match by date and job (null matches null for no-job entries)
+                  const dateMatches = savedDate === dateKey;
+                  const jobMatches = savedJobId === entryJobId;
+                  
+                  // For leave types and tafe, also check materials field
+                  const savedMaterials = savedEntry.materials || '';
+                  const entryMaterials = entryData.materials || '';
+                  const materialsMatch = savedMaterials === entryMaterials;
+                  
+                  // For custom addresses, check description
+                  const savedDescription = savedEntry.description || '';
+                  const entryDescription = entryData.description || '';
+                  const descriptionMatch = savedDescription === entryDescription;
+                  
+                  if (isLeaveType) {
+                    return dateMatches && jobMatches && materialsMatch;
+                  } else if (isCustomAddress && entryData.description) {
+                    return dateMatches && jobMatches && descriptionMatch;
+                  } else {
+                    return dateMatches && jobMatches;
+                  }
+                })
+              : null;
+            
+            if (existingEntry && !existingEntry.approved) {
+              // Update existing entry
+              console.log('🔄 UPDATING existing entry:', existingEntry.id, 'with data:', entryData);
+              entriesToUpdate.push({
+                id: existingEntry.id,
+                data: entryData
+              });
+            } else {
+              // Create new entry
+              console.log('➕ CREATING new entry:', entryData);
+              entriesToSave.push(entryData);
+            }
           } else {
             console.log('Skipping entry - missing required fields:', { hours: entry.hours });
           }
@@ -873,9 +915,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       }
     });
 
-    console.log('Total entries to save:', entriesToSave.length, entriesToSave);
+    console.log('Total entries to create:', entriesToSave.length);
+    console.log('Total entries to update:', entriesToUpdate.length);
 
-    if (entriesToSave.length === 0) {
+    if (entriesToSave.length === 0 && entriesToUpdate.length === 0) {
       toast({
         title: "No entries to save",
         description: "Please enter hours for at least one entry.",
@@ -884,16 +927,72 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       return;
     }
 
-    // Save all entries in parallel since backend now handles duplicates properly
+    // Save/update all entries in parallel
     try {
-      const savePromises = entriesToSave.map(entry => 
-        new Promise((resolve, reject) => {
-          updateTimesheetMutation.mutate(entry, {
-            onSuccess: resolve,
-            onError: reject
-          });
-        })
-      );
+      const savePromises = [
+        // Create new entries
+        ...entriesToSave.map(entry => 
+          new Promise((resolve, reject) => {
+            updateTimesheetMutation.mutate(entry, {
+              onSuccess: resolve,
+              onError: reject
+            });
+          })
+        ),
+        // Update existing entries
+        ...entriesToUpdate.map(({ id, data }) => 
+          new Promise((resolve, reject) => {
+            // Update each field individually to match the existing PATCH API
+            const updatePromises = [];
+            
+            if (data.hours !== undefined) {
+              updatePromises.push(
+                new Promise((res, rej) => {
+                  editTimesheetMutation.mutate({ id, field: 'hours', value: data.hours.toString() }, {
+                    onSuccess: res,
+                    onError: rej
+                  });
+                })
+              );
+            }
+            
+            if (data.materials !== undefined) {
+              updatePromises.push(
+                new Promise((res, rej) => {
+                  editTimesheetMutation.mutate({ id, field: 'materials', value: data.materials }, {
+                    onSuccess: res,
+                    onError: rej
+                  });
+                })
+              );
+            }
+            
+            if (data.jobId !== undefined) {
+              updatePromises.push(
+                new Promise((res, rej) => {
+                  editTimesheetMutation.mutate({ id, field: 'jobId', value: data.jobId || '' }, {
+                    onSuccess: res,
+                    onError: rej
+                  });
+                })
+              );
+            }
+            
+            if (data.description !== undefined) {
+              updatePromises.push(
+                new Promise((res, rej) => {
+                  editTimesheetMutation.mutate({ id, field: 'description', value: data.description || '' }, {
+                    onSuccess: res,
+                    onError: rej
+                  });
+                })
+              );
+            }
+            
+            Promise.all(updatePromises).then(resolve).catch(reject);
+          })
+        )
+      ];
 
       await Promise.all(savePromises);
     } catch (error) {
@@ -917,9 +1016,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     setShowSuccessAnimation(true);
     setTimeout(() => setShowSuccessAnimation(false), 3000);
 
+    const totalChanges = entriesToSave.length + entriesToUpdate.length;
     toast({
       title: "Timesheet Saved",
-      description: `Successfully saved ${entriesToSave.length} entries! They should now appear in the timesheet.`,
+      description: `Successfully saved ${totalChanges} entries! (${entriesToSave.length} new, ${entriesToUpdate.length} updated)`,
       variant: "default",
     });
   };
