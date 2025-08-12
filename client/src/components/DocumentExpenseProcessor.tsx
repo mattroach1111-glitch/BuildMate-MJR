@@ -66,12 +66,19 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     },
   });
 
-  const handleGetUploadParameters = async () => {
-    const response: any = await getUploadUrlMutation.mutateAsync();
-    return {
-      method: "PUT" as const,
-      url: response.uploadURL,
-    };
+  const handleGetUploadParameters = async (file: any) => {
+    try {
+      const response: any = await getUploadUrlMutation.mutateAsync();
+      return {
+        method: "PUT" as const,
+        url: response.uploadURL,
+        fields: {},
+        headers: {}
+      };
+    } catch (error) {
+      console.error("Error getting upload parameters:", error);
+      throw error;
+    }
   };
 
   const handleUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {

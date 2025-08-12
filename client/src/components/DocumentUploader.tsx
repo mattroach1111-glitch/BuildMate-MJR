@@ -11,9 +11,11 @@ import { Button } from "@/components/ui/button";
 interface DocumentUploaderProps {
   maxNumberOfFiles?: number;
   maxFileSize?: number;
-  onGetUploadParameters: () => Promise<{
+  onGetUploadParameters: (file: any) => Promise<{
     method: "PUT";
     url: string;
+    fields?: Record<string, never>;
+    headers?: Record<string, string>;
   }>;
   onComplete?: (
     result: UploadResult<Record<string, unknown>, Record<string, unknown>>
