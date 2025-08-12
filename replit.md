@@ -8,7 +8,13 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
+- **August 12, 2025**: ✅ COMPLETED TOTAL HOURS DISPLAY IN JOB SHEETS - Added comprehensive labor hours summary to job sheets showing total hours worked across all staff members. Features include side-by-side display of total hours and total labor costs at bottom of labor section, separated by clean border line, and automatic calculation from all labor entries. Users can now quickly see both hour totals and cost totals when reviewing job sheets.
+
+- **August 12, 2025**: ✅ COMPLETED PDF JOB CREATION FROM DOCUMENTS - Successfully created complete "21 Greenhill Dr" job from PDF document with all authentic data including 5 labor entries (82 total hours, $5,248), 11 material items ($8,308.70), tip fees with automatic cartage calculation ($285), and consumables auto-calculation. System now supports comprehensive job creation from real construction documents with accurate cost tracking.
+
 - **August 12, 2025**: ✅ COMPLETED INTERACTIVE JOB PROGRESS VISUALIZATION - Implemented comprehensive job progress tracking with interactive charts and analytics. Features include progress visualization buttons on all job cards, multi-tab interface with overview/costs/timeline/performance sections, completion percentage tracking based on job status, real-time cost breakdowns with pie charts, weekly progress area charts, and staff performance metrics with efficiency ratings. Users can now click chart icons on job cards to view detailed progress analytics with authentic data from job management system.
+
+- **August 12, 2025**: ✅ COMPLETED PREMIUM TOTAL ACTIVE COSTS WIDGET - Created elegant, minimal dashboard widget displaying total costs of all active jobs with animated pulsing gradient border effects. Features include clean typography with gradient text, layered background effects, responsive hover animations, and compact design showing cost figure prominently. Widget calculates costs from all active job sources (materials, labor, sub-trades, other costs, tip fees) excluding GST.
 
 - **August 12, 2025**: ✅ COMPLETED DOCUMENT REVIEW SYSTEM - Implemented comprehensive document processing review workflow with category selection and approval system. Features include AI extraction followed by user review interface, category dropdown with all four options (Materials, Sub-trades, Other Costs, Tip Fees), approval/discard buttons, orange-themed review UI, and backend endpoints for separated processing and job sheet addition. Users can now change AI-suggested categories before adding expenses to job sheets, providing full control over document processing workflow.
 
