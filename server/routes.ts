@@ -2054,25 +2054,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const objectStorageService = new ObjectStorageService();
       const documentProcessor = new DocumentProcessor();
       
-      // Get the document file from object storage
+      // Get the document file metadata to determine content type
       const normalizedPath = objectStorageService.normalizeObjectEntityPath(documentURL);
       const objectFile = await objectStorageService.getObjectEntityFile(normalizedPath);
-      
-      // Download the document content
       const [metadata] = await objectFile.getMetadata();
-      const stream = objectFile.createReadStream();
       
-      // Convert stream to base64
-      const chunks: Buffer[] = [];
-      for await (const chunk of stream) {
-        chunks.push(chunk);
-      }
-      const buffer = Buffer.concat(chunks);
-      const base64Content = buffer.toString('base64');
-      
-      // Process document with AI
+      // Process document with AI (now handles PDF conversion internally)
       const expenseData = await documentProcessor.analyzeExpenseDocument(
-        base64Content, 
+        documentURL,
         metadata.contentType || 'application/pdf'
       );
       

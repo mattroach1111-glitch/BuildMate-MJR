@@ -31,13 +31,15 @@ export class DocumentProcessor {
    * Analyzes an uploaded document (PDF or image) and extracts expense information
    * suitable for adding to construction job sheets.
    */
-  async analyzeExpenseDocument(base64Content: string, mimeType: string): Promise<ExtractedExpenseData> {
+  async analyzeExpenseDocument(documentURL: string, mimeType: string): Promise<ExtractedExpenseData> {
     try {
-      // Check if this is a PDF - Anthropic cannot process PDFs directly
+      // Check if this is a PDF - temporarily unsupported in current environment
       if (mimeType === 'application/pdf') {
-        throw new Error('PDF processing not yet implemented. Please upload images (JPG, PNG) for now.');
+        throw new Error('PDF processing requires additional system dependencies. Please upload the document as a JPG or PNG image instead. You can take a photo of the invoice/receipt with your phone camera.');
       }
       
+      // Download image directly
+      const base64Content = await this.downloadDocumentAsBase64(documentURL);
       const mediaType = this.normalizeMediaType(mimeType) as "image/jpeg" | "image/png" | "image/gif" | "image/webp";
       
       const response = await anthropic.messages.create({
@@ -94,6 +96,25 @@ Focus on the primary expense amount. If multiple items, use the total. Be conser
     } catch (error: any) {
       console.error('Document analysis error:', error);
       throw new Error(`Failed to analyze document: ${error.message}`);
+    }
+  }
+
+  /**
+   * Download document from object storage and convert to base64
+   */
+  private async downloadDocumentAsBase64(documentURL: string): Promise<string> {
+    try {
+      const response = await fetch(documentURL);
+      if (!response.ok) {
+        throw new Error(`Failed to download document: ${response.statusText}`);
+      }
+      
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      return buffer.toString('base64');
+    } catch (error: any) {
+      console.error('Error downloading document:', error);
+      throw new Error(`Failed to download document: ${error.message}`);
     }
   }
 

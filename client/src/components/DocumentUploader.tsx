@@ -161,6 +161,9 @@ export function DocumentUploader({
         // Handle file drop
         const files = Array.from(e.dataTransfer.files);
         if (files.length > 0) {
+          // Clear existing files first to avoid duplicates
+          uppy.getFiles().forEach(file => uppy.removeFile(file.id));
+          
           // Add files to Uppy and open modal
           files.forEach(file => {
             uppy.addFile({
@@ -198,7 +201,7 @@ export function DocumentUploader({
         open={showModal}
         onRequestClose={() => setShowModal(false)}
         proudlyDisplayPoweredByUppy={false}
-        note="Upload bills, invoices, and expense documents (JPG, PNG recommended). PDF support coming soon. Drag and drop files or click to browse. Maximum 25MB per file."
+        note="Upload bills, invoices, and expense documents (JPG, PNG). Take a photo with your phone for best results. Drag and drop files or click to browse. Maximum 25MB per file."
         showProgressDetails={true}
         hideProgressAfterFinish={false}
       />
