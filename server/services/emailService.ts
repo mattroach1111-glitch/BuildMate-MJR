@@ -44,6 +44,11 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
   }
 
   try {
+    // Test the connection first
+    console.log('Testing SMTP connection...');
+    await transporter.verify();
+    console.log('SMTP connection verified successfully');
+
     const mailOptions = {
       from: params.from,
       to: params.to,
@@ -57,6 +62,12 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
     return true;
   } catch (error) {
     console.error('SMTP email error:', error);
+    console.error('SMTP Config being used:', {
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: process.env.SMTP_SECURE,
+      user: process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 3) + '***' : 'not set'
+    });
     return false;
   }
 }
