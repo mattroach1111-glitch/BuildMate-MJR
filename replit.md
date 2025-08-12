@@ -2,28 +2,6 @@
 
 BuildFlow Pro is a mobile-first construction management system designed to streamline job costing, billing, and workforce management. It provides role-based access for administrators and staff, enabling comprehensive tracking of labor costs, materials, sub-trades, and project expenses for construction project oversight. The system's vision is to enhance efficiency in construction project management, offering a user-friendly interface for both on-site staff and administrative personnel, and consolidating critical project data for better decision-making.
 
-## Recent Changes
-- **August 12, 2025**: ✅ COMPLETED INLINE EDITING FOR JOB SHEET ITEMS - Implemented comprehensive inline editing functionality for materials, sub-trades, and other costs in job sheets. Features include edit/delete buttons for each item, inline form editing with Save/Cancel options, confirmation dialogs for deletions, automatic data refresh after updates, and full CRUD operations connected to existing backend API endpoints. All job sheet cost items can now be modified directly without separate forms or page navigation.
-- **August 12, 2025**: ✅ COMPLETED AI DOCUMENT PROCESSING WITH FULL PDF SUPPORT - Implemented comprehensive AI-powered expense extraction for all document types (PDF, JPG, PNG). Features include enhanced drag-and-drop upload, intelligent expense categorization, vendor/amount extraction, automatic PDF-to-image conversion using pdf2pic with ImageMagick, and seamless integration with Anthropic AI. Upload system fully operational with proper job selection, duplicate handling, and robust object storage integration. PDF invoices and bills now process automatically through conversion to high-quality images for AI analysis.
-- **August 12, 2025**: ✅ VERIFIED - PDF PROCESSING FULLY OPERATIONAL - Successfully tested with real business invoices including Clennett's Mitre 10 ($32.40 materials) and Brodie Pullen Painting ($1,588.00 subtrades). System reliably converts PDFs using Ghostscript, extracts expense data with high accuracy, and adds to job sheets automatically. Email processing will also support PDFs with same conversion pipeline.
-- **August 12, 2025**: ✅ COMPLETED - AI-POWERED DOCUMENT PROCESSING - Implemented comprehensive AI-powered expense extraction system using Anthropic API. Features include document upload via Uppy with drag-and-drop support for PDFs and images, automatic expense extraction (vendor, amount, description, date), intelligent categorization into materials/sub-trades/other costs, confidence scoring, and seamless integration with existing job sheets. Accessible through admin dashboard via More → Document Processing. Complete workflow: upload bills/invoices → AI analysis → automatic expense addition to selected jobs.
-- **August 12, 2025**: ✅ COMPLETED - PERMANENT DELETE FUNCTIONALITY - Implemented comprehensive two-tier job deletion system. Jobs can be soft deleted (moved to deleted folder) and then permanently deleted if needed. Features include permanent delete API endpoint, confirmation dialog with detailed warnings, red color coding for visibility, and complete removal of all associated data (labor entries, materials, sub-trades, other costs, timesheet entries, job files). Permanent delete option appears in dropdown menu for jobs in "Previous completed job sheets" folder with enhanced styling and trash emoji for easy identification.
-- **August 12, 2025**: ✅ COMPLETED - CLIENT-FILTERED EMAIL UPDATES - Enhanced email system with granular client filtering. Project managers can now select specific clients when sending job updates (e.g., Mark selects "Hernan" to send only Hernan's job updates). Features include client dropdown filter, updated email subjects with client names (e.g., "Mark's Job Updates - Hernan"), visual filtering badges, empty state handling, and quick reset to show all clients. Maintains full project manager separation while adding precise client-level control.
-- **August 12, 2025**: ✅ COMPLETED - PROJECT MANAGER FILTERED EMAILS - Successfully implemented project manager email filtering system. Email icons in Mark and Will folders now show only their respective jobs. Modified JobUpdateDialog component to accept projectManager parameter and properly filter jobs by PM name. Email subjects automatically include PM name prefix (e.g., "Mark's Job Updates" or "Will's Job Updates"). Visual badges show which PM's jobs are displayed. System prevents cross-contamination of project manager updates while maintaining admin access to all jobs.
-- **August 12, 2025**: ENHANCED EMAIL SYSTEM - Added multiple email recipient support for job updates with smart email suggestions. Users can now send job updates to multiple recipients using comma-separated addresses. System remembers previously used email addresses and provides quick-select dropdown with recent emails. Includes "Add All Recent Emails" option for bulk recipient selection. Email suggestion storage persists in browser localStorage for improved user experience.
-- **August 12, 2025**: FEATURE COMPLETE - Job update email system fully operational using Onlydomains.com Titan email service. Successfully configured SMTP authentication with mail.mjrbuilders.com.au server (port 587, TLS). Admin dashboard now includes "Send Job Updates" button next to PDF downloads for manager folders. System sends professional job update emails with recipient field, custom subject lines, and additional notes section. Email functionality verified working with proper authentication and message delivery.
-- **August 12, 2025**: RESOLVED SAVE ALL WORKFLOW - Fixed critical issue where "Save All" button was automatically sending timesheet entries to pending approvals, bypassing the intended draft/submit workflow. Implemented proper separation by adding `submitted` field to timesheet schema. Save All now creates draft entries (`submitted: false`) that don't appear in admin pending approvals, while Submit Timesheet properly marks entries as submitted (`submitted: true`) for admin review. This restores the intended two-step workflow: Save All for drafts, Submit Timesheet for final approval submission.
-- **August 12, 2025**: RESOLVED DUPLICATE ENTRIES - Fixed critical issue where "Save All" button was creating duplicate timesheet entries. Modified `saveAllEntries` function to properly distinguish between existing entries (use PATCH to update) vs new entries (use POST to create). System now checks for existing entries by matching date/job/materials and updates them appropriately. Prevents approved entries from being modified to maintain data integrity.
-- **August 12, 2025**: FEATURE COMPLETE - Successfully implemented professional low hours warning dialog for Fortnight Timesheet submission. Resolved React state management issues by implementing DOM-based dialog approach that bypasses component re-rendering conflicts. Features elegant orange theme, clock icon, prominent hours display (74.00), clear warning messaging about 76-hour expectation, and functional "Cancel"/"Submit Anyway" buttons. Dialog appears consistently when total hours < 76 and allows users to confirm or cancel timesheet submission.
-- **August 11, 2025**: ENHANCEMENT - Upgraded low hours warning to professional AlertDialog component. Replaced basic browser alert with modern UI featuring orange warning theme, clock icon, highlighted hours display, clear messaging about 76-hour expectation, and styled "Cancel"/"Submit Anyway" buttons with proper state management.
-- **August 11, 2025**: FEATURE - Added enhanced leave type validation requiring hours > 0 for sick leave, annual leave, personal leave, and Tafe entries. System prevents saving these leave types with zero hours and shows clear error messages.
-- **August 11, 2025**: FEATURE - Added low hours warning prompt when submitting timesheets. If total hours < 76, users see confirmation dialog asking "Hours are below 76. Are you sure you're ready for submitting?" with current total displayed.
-- **August 11, 2025**: FEATURE - Reorganized job dropdown structure moving all leave types (RDO, sick leave, personal leave, annual leave, leave without pay) below Tafe at the bottom of dropdowns for better organization.
-- **August 11, 2025**: FEATURE - Added timesheet completion validation requiring all Monday-Friday entries to be filled before submission. System now prevents timesheet confirmation unless all weekdays have at least one entry with hours > 0. Shows clear error messages listing missing weekdays.
-- **August 11, 2025**: FEATURE - Added "Tafe" as a pinned option at the bottom of timesheet job dropdowns for easy access to educational/training entries.
-- **August 11, 2025**: RESOLVED - Fixed weekend timesheet multiple entry issue. Second and subsequent entries on weekend days were not saving properly due to Add Entry button being disabled for locked weekends. Added proper weekend unlock checking to allow multiple entries on unlocked weekend days. Multiple weekend entries now save successfully with proper weekend confirmation flags.
-- **August 11, 2025**: RESOLVED - Fixed custom address display bug in admin dashboard. Custom addresses were showing as generic "Custom Address" text instead of actual entered addresses. Root cause was in the "Save All" processing logic that defaulted to fallback text when materials field was empty. Fixed address extraction logic to properly get address data from both materials and description fields. Custom addresses now correctly display the actual entered address (e.g., "123 Main Street") in admin pending approvals.
-
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -64,6 +42,23 @@ Preferred communication style: Simple, everyday language.
 - **Security**: HTTP-only cookies with secure flags.
 - **User Management**: Admins can assign staff/admin roles, link user accounts to employee records, and view assignment status. Automatic user account creation for employees and cascade cleanup on employee deletion.
 
+## Feature Specifications
+- **Tip Fees**: Comprehensive system with automatic 20% cartage calculation, database schema with relations, backend API for CRUD, frontend UI with inline editing, display of base amount + cartage fees, integration with job totals and billing.
+- **Inline Editing**: For job sheet items (materials, sub-trades, other costs) with edit/delete buttons, inline forms, save/cancel options, confirmation dialogs, and automatic data refresh.
+- **AI Document Processing**: AI-powered expense extraction for all document types (PDF, JPG, PNG) including drag-and-drop upload, intelligent categorization, vendor/amount extraction, automatic PDF-to-image conversion, and integration with Anthropic AI.
+- **Permanent Delete Functionality**: Two-tier job deletion (soft delete to folder, then permanent delete) with API endpoint, confirmation dialogs, and complete removal of all associated data.
+- **Client-Filtered Email Updates**: Granular client filtering for job updates, updated email subjects with client names, visual filtering badges, and empty state handling.
+- **Project Manager Filtered Emails**: Email filtering by project manager, inclusion of PM name in email subjects, and visual badges.
+- **Multiple Email Recipient Support**: For job updates with comma-separated addresses, smart email suggestions, "Add All Recent Emails" option, and localStorage persistence for suggestions.
+- **Job Update Email System**: Fully operational using Onlydomains.com Titan email service, SMTP authentication, and "Send Job Updates" button in admin dashboard.
+- **Timesheet Workflow**: Separation of draft (`Save All`) and submitted (`Submit Timesheet`) entries to prevent premature approval.
+- **Timesheet Duplicates**: Prevention of duplicate timesheet entries by distinguishing between existing (PATCH) and new (POST) entries.
+- **Low Hours Warning**: Professional dialog for timesheet submission if total hours < 76, with orange theme, clock icon, and 'Cancel'/'Submit Anyway' buttons.
+- **Leave Type Validation**: Requires hours > 0 for sick leave, annual leave, personal leave, and Tafe entries.
+- **Timesheet Completion Validation**: Requires all Monday-Friday entries to be filled before submission.
+- **Weekend Timesheet Entries**: Allows multiple entries on unlocked weekend days.
+- **Custom Address Display**: Correct display of custom addresses in admin dashboard.
+
 # External Dependencies
 
 ## Database Services
@@ -87,10 +82,15 @@ Preferred communication style: Simple, everyday language.
 
 ## PDF Generation
 - **jsPDF**: Client-side PDF generation.
+- **pdf2pic**: PDF-to-image conversion.
+- **ImageMagick**: Image processing for PDF conversion.
+- **Ghostscript**: PDF conversion (used by pdf2pic).
 
 ## Cloud Integrations
-- **Google Drive Integration**: OAuth flow for personal Google Drive connections, allowing timesheet PDFs to auto-save upon admin approval.
-- **Replit Object Storage**: For job document management with upload, download, and delete capabilities.
+- **Google Drive Integration**: OAuth flow for personal Google Drive connections.
+- **Replit Object Storage**: For job document management.
+- **Anthropic AI**: For AI-powered document processing.
+- **Uppy**: Document upload library.
 
 ## Utilities
 - **date-fns**: Date manipulation.
