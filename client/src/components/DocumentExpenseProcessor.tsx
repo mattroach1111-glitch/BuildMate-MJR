@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DocumentUploader } from "./DocumentUploader";
 import { EmailInboxInfo } from "./EmailInboxInfo";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,15 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   const [lastProcessedExpense, setLastProcessedExpense] = useState<ProcessedExpense | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Use ref to capture current selectedJobId value in callbacks  
+  const selectedJobIdRef = useRef(selectedJobId);
+  
+  // Update ref whenever selectedJobId changes
+  useEffect(() => {
+    selectedJobIdRef.current = selectedJobId;
+    console.log("🔵 Job selection changed:", selectedJobId);
+  }, [selectedJobId]);
 
   // Fetch jobs for dropdown
   const { data: jobs = [] } = useQuery({
@@ -117,8 +126,13 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
 
   const handleUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
     console.log("🟢 UPLOAD COMPLETE:", result);
+    console.log("🔵 Selected Job ID from state:", selectedJobId);
+    console.log("🔵 Selected Job ID from ref:", selectedJobIdRef.current);
     
-    if (!selectedJobId) {
+    const currentJobId = selectedJobIdRef.current;
+    
+    if (!currentJobId) {
+      console.error("🔴 NO JOB SELECTED - State:", selectedJobId, "Ref:", selectedJobIdRef.current);
       toast({
         title: "Job required",
         description: "Please select a job to add the expense to.",
@@ -143,14 +157,24 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     for (const file of result.successful) {
       try {
         console.log("🟢 PROCESSING FILE:", file);
+        console.log("🔵 Document URL:", file.uploadURL);
+        console.log("🔵 Job ID:", currentJobId);
+        
         await processDocumentMutation.mutateAsync({
           documentURL: file.uploadURL || "",
-          jobId: selectedJobId,
+          jobId: currentJobId,
         });
       } catch (error) {
         console.error("🔴 PROCESSING ERROR:", error);
+        toast({
+          title: "Processing failed",
+          description: "Failed to process the uploaded document",
+          variant: "destructive",
+        });
       }
     }
+    
+    setIsProcessing(false);
   };
 
   const getCategoryLabel = (category: string) => {
