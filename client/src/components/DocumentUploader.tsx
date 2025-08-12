@@ -5,6 +5,8 @@ import { DashboardModal } from "@uppy/react";
 import "@uppy/core/dist/style.min.css";
 import "@uppy/dashboard/dist/style.min.css";
 import AwsS3 from "@uppy/aws-s3";
+import DragDrop from "@uppy/drag-drop";
+import "@uppy/drag-drop/dist/style.min.css";
 import type { UploadResult } from "@uppy/core";
 import { Button } from "@/components/ui/button";
 
@@ -68,6 +70,7 @@ export function DocumentUploader({
         allowedFileTypes: ['image/*', 'application/pdf', '.pdf', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff'],
       },
       autoProceed: false,
+      allowMultipleUploads: false,
     })
       .use(AwsS3, {
         shouldUseMultipart: false,

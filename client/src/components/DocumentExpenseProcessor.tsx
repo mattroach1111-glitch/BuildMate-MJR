@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { DocumentUploader } from "./DocumentUploader";
+import { EmailInboxInfo } from "./EmailInboxInfo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, CheckCircle, AlertCircle, Loader2, FileText, Receipt } from "lucide-react";
+import { Upload, CheckCircle, AlertCircle, Loader2, FileText, Receipt, Mail } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { UploadResult } from "@uppy/core";
 
 interface DocumentExpenseProcessorProps {
@@ -138,17 +140,31 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   };
 
   return (
-    <Card className="w-full max-w-2xl">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Receipt className="h-5 w-5" />
-          Document Expense Processor
-        </CardTitle>
-        <CardDescription>
-          Upload bills, invoices, and receipts to automatically extract expense information and add to job sheets
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="space-y-6">
+      <Tabs defaultValue="upload" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="upload" className="flex items-center gap-2">
+            <Upload className="h-4 w-4" />
+            Upload Documents
+          </TabsTrigger>
+          <TabsTrigger value="email" className="flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            Email Processing
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="upload">
+          <Card className="w-full max-w-2xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Receipt className="h-5 w-5" />
+                Document Expense Processor
+              </CardTitle>
+              <CardDescription>
+                Upload bills, invoices, and receipts to automatically extract expense information and add to job sheets
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
         {/* Job Selection */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Select Job</label>
@@ -231,7 +247,14 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
           <div>• Extracted information will be added directly to the selected job sheet</div>
           <div>• Review and edit the added expenses in the job sheet if needed</div>
         </div>
-      </CardContent>
-    </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="email">
+          <EmailInboxInfo />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }

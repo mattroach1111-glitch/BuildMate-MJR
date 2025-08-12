@@ -2144,6 +2144,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Email inbox endpoints for automatic document processing
+  
+  // Get unique email address for document submission
+  app.get("/api/email-inbox/address", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Generate a unique email address for this user
+      const emailAddress = `documents-${userId.slice(-8)}@mjrbuilders.com.au`;
+      
+      res.json({ 
+        emailAddress,
+        instructions: "Send invoices, bills, and expense documents to this email address for automatic processing. Include the job name in the email subject for auto-assignment.",
+        features: [
+          "Automatic expense extraction using AI",
+          "Smart categorization (materials, sub-trades, other costs)",
+          "Direct addition to specified job sheets",
+          "PDF and image support",
+          "Email confirmation when processed"
+        ]
+      });
+    } catch (error) {
+      console.error("Error generating email address:", error);
+      res.status(500).json({ error: "Failed to generate email address" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
