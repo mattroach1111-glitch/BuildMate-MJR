@@ -60,7 +60,7 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
     const result = await transporter.sendMail(mailOptions);
     console.log('Email sent successfully to:', params.to, 'Message ID:', result.messageId);
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('SMTP email error:', error);
     console.error('SMTP Config being used:', {
       host: process.env.SMTP_HOST,
