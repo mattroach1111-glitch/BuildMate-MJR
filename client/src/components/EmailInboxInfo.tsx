@@ -137,9 +137,23 @@ export function EmailInboxInfo() {
           </ul>
         </div>
 
+        {/* Setup Status */}
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+          <h4 className="text-sm font-medium text-orange-800 mb-2">📧 Setup Required:</h4>
+          <div className="space-y-2 text-xs text-orange-700">
+            <p>To activate email processing, your domain administrator needs to:</p>
+            <ul className="space-y-1 ml-2">
+              <li>• Configure email forwarding from {inboxData.emailAddress}</li>
+              <li>• Set up webhook integration with email service</li>
+              <li>• Test the email processing pipeline</li>
+            </ul>
+            <p className="text-orange-600 font-medium">Currently using direct upload method until email forwarding is configured.</p>
+          </div>
+        </div>
+
         {/* Usage Tips */}
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-          <h4 className="text-sm font-medium text-amber-800 mb-2">💡 Pro Tips:</h4>
+          <h4 className="text-sm font-medium text-amber-800 mb-2">💡 Once Active:</h4>
           <ul className="space-y-1 text-xs text-amber-700">
             <li>• Include the job name in your email subject for automatic assignment</li>
             <li>• Attach multiple invoices in one email to process them all at once</li>
