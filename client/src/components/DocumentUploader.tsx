@@ -73,30 +73,29 @@ export function DocumentUploader({
       },
       autoProceed: false,
       allowMultipleUploads: true,
+      debug: true,
     })
       .use(AwsS3, {
         shouldUseMultipart: false,
         getUploadParameters: onGetUploadParameters,
       })
-      .on("complete", (result) => {
-        console.log("Uppy upload complete:", result);
-        onComplete?.(result);
+      .on("upload", () => {
+        console.log("🔵 Uppy: Upload started");
       })
-      .on("upload-error", (file, error) => {
-        console.error("Uppy upload error:", file, error);
+      .on("upload-progress", (file, progress) => {
+        console.log("🔵 Uppy: Upload progress:", file?.name, progress);
       })
       .on("upload-success", (file, response) => {
-        console.log("Uppy upload success:", file, response);
+        console.log("🟢 Uppy: Upload success:", file?.name, response);
       })
-      .on("drag-over", () => {
-        setIsDragActive(true);
+      .on("upload-error", (file, error) => {
+        console.error("🔴 Uppy: Upload error:", file?.name, error);
       })
-      .on("drag-leave", () => {
-        setIsDragActive(false);
+      .on("complete", (result) => {
+        console.log("🟢 Uppy: Upload complete:", result);
+        onComplete?.(result);
       })
-      .on("drop", () => {
-        setIsDragActive(false);
-      })
+
   );
 
   // Add global drag event listeners for better drag feedback

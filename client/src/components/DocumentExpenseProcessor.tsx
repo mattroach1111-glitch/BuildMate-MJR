@@ -214,34 +214,6 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
           </Select>
         </div>
 
-        {/* Test Button */}
-        <div className="space-y-2">
-          <Button 
-            onClick={async () => {
-              try {
-                console.log("🔵 Testing upload URL generation...");
-                const result = await getUploadUrlMutation.mutateAsync();
-                console.log("🟢 Test successful:", result);
-                toast({
-                  title: "Test Successful",
-                  description: "Upload URL generated successfully",
-                });
-              } catch (error: any) {
-                console.error("🔴 Test failed:", error);
-                toast({
-                  title: "Test Failed",
-                  description: error.message || "Failed to generate upload URL",
-                  variant: "destructive",
-                });
-              }
-            }}
-            variant="outline"
-            className="w-full"
-          >
-            Test Upload Connection
-          </Button>
-        </div>
-
         {/* Upload Area */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Upload Documents</label>
