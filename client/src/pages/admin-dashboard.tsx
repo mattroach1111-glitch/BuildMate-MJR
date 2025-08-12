@@ -1709,16 +1709,11 @@ export default function AdminDashboard() {
               <Card className="bg-blue-50 border-blue-200 shadow-sm">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <DollarSign className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-800">Total Active Job Costs</h3>
-                        <p className="text-xs text-gray-600">
-                          Excluding GST • {totalCostsData.jobCount} active {totalCostsData.jobCount === 1 ? 'job' : 'jobs'}
-                        </p>
-                      </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800">Total Active Job Costs</h3>
+                      <p className="text-xs text-gray-600">
+                        Excluding GST • {totalCostsData.jobCount} active {totalCostsData.jobCount === 1 ? 'job' : 'jobs'}
+                      </p>
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold text-blue-600">
