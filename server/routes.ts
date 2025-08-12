@@ -2272,6 +2272,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           break;
           
+        case 'tip_fees':
+          addedExpense = await storage.createTipFee({
+            jobId,
+            description: expenseData.description,
+            amount: expenseData.amount.toString()
+          });
+          break;
+          
         case 'other_costs':
         default:
           addedExpense = await storage.createOtherCost({

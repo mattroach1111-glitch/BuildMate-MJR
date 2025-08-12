@@ -22,7 +22,7 @@ interface ProcessedExpense {
   amount: number;
   description: string;
   date: string;
-  category: 'materials' | 'subtrades' | 'other_costs';
+  category: 'materials' | 'subtrades' | 'other_costs' | 'tip_fees';
   confidence: number;
 }
 
@@ -140,7 +140,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   });
 
   // Helper functions for expense review
-  const handleCategoryChange = (newCategory: 'materials' | 'subtrades' | 'other_costs') => {
+  const handleCategoryChange = (newCategory: 'materials' | 'subtrades' | 'other_costs' | 'tip_fees') => {
     if (pendingExpense) {
       setPendingExpense({
         ...pendingExpense,
@@ -252,6 +252,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       case 'materials': return 'Materials';
       case 'subtrades': return 'Sub-trades';
       case 'other_costs': return 'Other Costs';
+      case 'tip_fees': return 'Tip Fees';
       default: return category;
     }
   };
@@ -261,6 +262,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       case 'materials': return 'bg-blue-100 text-blue-800';
       case 'subtrades': return 'bg-green-100 text-green-800';
       case 'other_costs': return 'bg-orange-100 text-orange-800';
+      case 'tip_fees': return 'bg-purple-100 text-purple-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -377,6 +379,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
                     <SelectItem value="materials">Materials</SelectItem>
                     <SelectItem value="subtrades">Sub-trades</SelectItem>
                     <SelectItem value="other_costs">Other Costs</SelectItem>
+                    <SelectItem value="tip_fees">Tip Fees</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -420,7 +423,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
             <FileText className="h-3 w-3" />
             Supported formats: PDF, JPG, PNG, GIF, BMP, TIFF
           </div>
-          <div>• AI will automatically categorize expenses as Materials, Sub-trades, or Other Costs</div>
+          <div>• AI will automatically categorize expenses as Materials, Sub-trades, Tip Fees, or Other Costs</div>
           <div>• Review and confirm extracted information before adding to job sheet</div>
           <div>• Change category if needed, then click "Add to Job Sheet" to approve</div>
         </div>
