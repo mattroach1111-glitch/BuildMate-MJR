@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { generateJobPDF } from "@/lib/pdfGenerator";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { debounce } from "lodash";
-import { Upload, Download, Trash2, FileText, Clock, X } from "lucide-react";
+import { Upload, Download, Trash2, FileText, Clock, X, Edit } from "lucide-react";
 import type { Job, LaborEntry, Material, SubTrade, OtherCost, JobFile } from "@shared/schema";
 
 interface JobSheetModalProps {
