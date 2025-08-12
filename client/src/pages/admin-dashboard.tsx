@@ -1708,7 +1708,7 @@ export default function AdminDashboard() {
             <div className="mb-6">
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 via-indigo-600 to-cyan-600 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
-                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 via-pink-500 to-indigo-500 rounded-2xl opacity-20 animate-spin" style={{animationDuration: '8s'}}></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 via-pink-500 to-indigo-500 rounded-2xl opacity-20 animate-pulse" style={{animationDuration: '2s'}}></div>
                 <Card className="relative bg-gradient-to-br from-white via-gray-50 to-slate-100 border-0 shadow-xl rounded-2xl overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-purple-50/20 to-indigo-50/30"></div>
                   <CardContent className="relative py-5 px-8">
