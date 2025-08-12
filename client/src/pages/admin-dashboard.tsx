@@ -1706,22 +1706,14 @@ export default function AdminDashboard() {
           {/* Total Costs Dashboard Widget */}
           {!totalCostsLoading && totalCostsData && (
             <div className="mb-6">
-              <Card className="bg-blue-50 border-blue-200 shadow-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800">Total Active Job Costs</h3>
-                      <p className="text-xs text-gray-600">
-                        Excluding GST • {totalCostsData.jobCount} active {totalCostsData.jobCount === 1 ? 'job' : 'jobs'}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-blue-600">
-                        ${totalCostsData.totalCosts.toLocaleString('en-AU', { 
-                          minimumFractionDigits: 2, 
-                          maximumFractionDigits: 2 
-                        })}
-                      </div>
+              <Card className="bg-gradient-to-r from-slate-50 to-gray-50 border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+                <CardContent className="p-6">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                      ${totalCostsData.totalCosts.toLocaleString('en-AU', { 
+                        minimumFractionDigits: 2, 
+                        maximumFractionDigits: 2 
+                      })}
                     </div>
                   </div>
                 </CardContent>
