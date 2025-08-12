@@ -2249,23 +2249,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allEmployees = await storage.getEmployees();
       const employeeMap = new Map(allEmployees.map(emp => [emp.name.toLowerCase(), emp.id]));
 
-      // Add labor entries
+      // Add labor entries with employee auto-creation
+      let laborEntriesCreated = 0;
       for (const laborEntry of jobData.laborEntries) {
         if (laborEntry.hours > 0) {
-          const employeeId = employeeMap.get(laborEntry.employeeName.toLowerCase());
-          if (employeeId) {
-            await storage.createLaborEntry({
-              jobId: newJob.id,
-              employeeId: employeeId,
-              hoursLogged: laborEntry.hours.toString(),
-              hourlyRate: laborEntry.hourlyRate.toString(),
-              date: new Date().toISOString().split('T')[0]
+          let employeeId = employeeMap.get(laborEntry.employeeName.toLowerCase());
+          
+          // If employee doesn't exist, create them
+          if (!employeeId) {
+            console.log(`🔵 Creating new employee: ${laborEntry.employeeName}`);
+            const newEmployee = await storage.createEmployee({
+              name: laborEntry.employeeName,
+              email: `${laborEntry.employeeName.toLowerCase().replace(/\s+/g, '.')}@buildflow.com`,
+              isActive: true
             });
+            employeeId = newEmployee.id;
+            employeeMap.set(laborEntry.employeeName.toLowerCase(), employeeId);
           }
+          
+          await storage.createLaborEntry({
+            jobId: newJob.id,
+            employeeId: employeeId,
+            hoursLogged: laborEntry.hours.toString(),
+            hourlyRate: laborEntry.hourlyRate.toString(),
+            date: new Date().toISOString().split('T')[0]
+          });
+          laborEntriesCreated++;
         }
       }
 
       // Add materials
+      let materialsCreated = 0;
       for (const material of jobData.materials) {
         if (material.amount > 0) {
           await storage.createMaterial({
@@ -2275,6 +2289,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             amount: material.amount.toString(),
             invoiceDate: material.date
           });
+          materialsCreated++;
         }
       }
 
@@ -2322,8 +2337,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true,
         job: newJob,
         summary: {
-          laborEntries: jobData.laborEntries.length,
-          materials: jobData.materials.length,
+          laborEntries: laborEntriesCreated,
+          materials: materialsCreated,
           tipFees: jobData.tipFees?.length || 0,
           otherCosts: jobData.otherCosts?.length || 0,
           totalLaborHours: jobData.laborEntries.reduce((sum, entry) => sum + entry.hours, 0),
