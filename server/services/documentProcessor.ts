@@ -114,13 +114,22 @@ Focus on the primary expense amount. If multiple items, use the total. Be conser
    */
   private async downloadDocumentAsBase64(documentURL: string): Promise<string> {
     try {
-      const response = await fetch(documentURL);
-      if (!response.ok) {
-        throw new Error(`Failed to download document: ${response.statusText}`);
-      }
+      // Use object storage service to get the document data directly
+      const { ObjectStorageService } = await import('../objectStorage');
+      const objectStorageService = new ObjectStorageService();
       
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
+      // Get the object file directly from storage
+      const normalizedPath = objectStorageService.normalizeObjectEntityPath(documentURL);
+      const objectFile = await objectStorageService.getObjectEntityFile(normalizedPath);
+      
+      // Stream the document content to a buffer
+      const stream = objectFile.createReadStream();
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) {
+        chunks.push(chunk);
+      }
+      const buffer = Buffer.concat(chunks);
+      
       return buffer.toString('base64');
     } catch (error: any) {
       console.error('Error downloading document:', error);
@@ -137,15 +146,24 @@ Focus on the primary expense amount. If multiple items, use the total. Be conser
     const pdfPath = path.join(tempDir, pdfFileName);
     
     try {
-      // Download PDF to temporary file
-      console.log('📥 Downloading PDF...');
-      const response = await fetch(documentURL);
-      if (!response.ok) {
-        throw new Error(`Failed to download PDF: ${response.statusText}`);
-      }
+      // Use object storage service to get the PDF data directly
+      console.log('📥 Downloading PDF from object storage...');
+      const { ObjectStorageService } = await import('../objectStorage');
+      const objectStorageService = new ObjectStorageService();
       
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
+      // Get the object file directly from storage
+      const normalizedPath = objectStorageService.normalizeObjectEntityPath(documentURL);
+      const objectFile = await objectStorageService.getObjectEntityFile(normalizedPath);
+      
+      // Stream the PDF content to a buffer
+      const stream = objectFile.createReadStream();
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) {
+        chunks.push(chunk);
+      }
+      const buffer = Buffer.concat(chunks);
+      
+      // Write to temporary file
       await fs.writeFile(pdfPath, buffer);
       
       // Convert PDF to image using pdf2pic with explicit options
