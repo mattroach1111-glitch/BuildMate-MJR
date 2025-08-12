@@ -68,6 +68,14 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       secure: process.env.SMTP_SECURE,
       user: process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 3) + '***' : 'not set'
     });
+    
+    if (error.code === 'EAUTH') {
+      console.error('Authentication failed - this usually means:');
+      console.error('1. Wrong username/password');
+      console.error('2. Need to use an App Password instead of regular password');
+      console.error('3. Two-factor authentication is blocking access');
+      console.error('4. SMTP access needs to be enabled in your email provider');
+    }
     return false;
   }
 }
