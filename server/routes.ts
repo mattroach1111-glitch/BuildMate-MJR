@@ -1250,8 +1250,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Get timesheet entries for the fortnight
-      const entries = await storage.getTimesheetEntriesByPeriod(staffId, fortnightStart, fortnightEnd);
+      // Get timesheet entries for the fortnight using the correct user ID (not employee ID)
+      const entries = await storage.getTimesheetEntriesByPeriod(userId, fortnightStart, fortnightEnd);
+      
+      console.log(`PDF Generation - Fetching entries for userId: ${userId}, period: ${fortnightStart} to ${fortnightEnd}`);
+      console.log(`PDF Generation - Found ${entries.length} entries for PDF generation`);
       
       // Mark all entries as submitted when confirming timesheet
       await storage.markTimesheetEntriesAsSubmitted(userId, fortnightStart, fortnightEnd);

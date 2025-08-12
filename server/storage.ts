@@ -1040,6 +1040,7 @@ export class DatabaseStorage implements IStorage {
         description: timesheetEntries.description,
         materials: timesheetEntries.materials,
         approved: timesheetEntries.approved,
+        submitted: timesheetEntries.submitted,
         job: {
           id: jobs.id,
           jobAddress: jobs.jobAddress,

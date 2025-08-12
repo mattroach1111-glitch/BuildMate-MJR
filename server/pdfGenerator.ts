@@ -6,13 +6,15 @@ interface TimesheetEntry {
   date: string;
   hours: number;
   materials: string;
+  description?: string;
   jobId: string | null;
   staffId: string;
   approved: boolean;
   job?: {
-    jobNumber: string;
-    address: string;
+    id: string;
+    jobAddress: string;
     clientName: string;
+    projectName: string;
   };
 }
 
@@ -84,8 +86,15 @@ export class TimesheetPDFGenerator {
       let jobStr = 'No Job';
       if (entry.job && entry.job.projectName && entry.job.clientName) {
         jobStr = `${entry.job.projectName} - ${entry.job.clientName}`;
+      } else if (entry.job && entry.job.jobAddress) {
+        jobStr = entry.job.jobAddress;
       } else if (entry.jobId) {
         jobStr = `Job ${entry.jobId.substring(0, 8)}...`;
+      }
+      
+      // Handle custom addresses from description
+      if (entry.description && entry.description.startsWith('CUSTOM_ADDRESS:')) {
+        jobStr = entry.description.replace('CUSTOM_ADDRESS: ', '');
       }
       
       // Handle materials and leave types
