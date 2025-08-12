@@ -1707,12 +1707,13 @@ export default function AdminDashboard() {
           {!totalCostsLoading && totalCostsData && (
             <div className="mb-6">
               <div className="relative group">
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 via-indigo-600 to-cyan-600 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 via-pink-500 to-indigo-500 rounded-2xl opacity-20 animate-spin" style={{animationDuration: '8s'}}></div>
                 <Card className="relative bg-gradient-to-br from-white via-gray-50 to-slate-100 border-0 shadow-xl rounded-2xl overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-purple-50/20 to-indigo-50/30"></div>
-                  <CardContent className="relative p-8">
+                  <CardContent className="relative py-5 px-8">
                     <div className="text-center">
-                      <div className="text-5xl font-black tracking-tight bg-gradient-to-r from-blue-700 via-purple-700 to-indigo-800 bg-clip-text text-transparent drop-shadow-sm">
+                      <div className="text-4xl font-black tracking-tight bg-gradient-to-r from-blue-700 via-purple-700 to-indigo-800 bg-clip-text text-transparent drop-shadow-sm">
                         ${totalCostsData.totalCosts.toLocaleString('en-AU', { 
                           minimumFractionDigits: 2, 
                           maximumFractionDigits: 2 
@@ -1720,7 +1721,7 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   </CardContent>
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500"></div>
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500 animate-pulse"></div>
                 </Card>
               </div>
             </div>
