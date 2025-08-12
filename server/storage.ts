@@ -360,6 +360,19 @@ export class DatabaseStorage implements IStorage {
       .where(eq(jobs.id, id));
   }
 
+  async permanentlyDeleteJob(id: string): Promise<void> {
+    // Delete all related data first
+    await db.delete(laborEntries).where(eq(laborEntries.jobId, id));
+    await db.delete(materials).where(eq(materials.jobId, id));
+    await db.delete(subTrades).where(eq(subTrades.jobId, id));
+    await db.delete(otherCosts).where(eq(otherCosts.jobId, id));
+    await db.delete(timesheetEntries).where(eq(timesheetEntries.jobId, id));
+    await db.delete(jobFiles).where(eq(jobFiles.jobId, id));
+    
+    // Finally delete the job itself
+    await db.delete(jobs).where(eq(jobs.id, id));
+  }
+
   // Job files operations
   async getJobFiles(jobId: string): Promise<JobFile[]> {
     return await db

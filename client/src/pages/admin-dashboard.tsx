@@ -521,6 +521,38 @@ export default function AdminDashboard() {
     },
   });
 
+  const permanentDeleteJobMutation = useMutation({
+    mutationFn: async (jobId: string) => {
+      const response = await apiRequest("DELETE", `/api/jobs/${jobId}/permanent`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/deleted-jobs"] });
+      toast({
+        title: "Success",
+        description: "Job permanently deleted",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to permanently delete job",
+        variant: "destructive",
+      });
+    },
+  });
+
 
 
   const deleteEmployeeMutation = useMutation({
@@ -2269,6 +2301,20 @@ export default function AdminDashboard() {
                                   >
                                     <RotateCcw className="h-4 w-4 mr-2" />
                                     Restore Job
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (confirm(`⚠️ PERMANENT DELETE WARNING\n\nThis will permanently delete the job "${job.jobAddress}" and ALL associated data including:\n• Labor entries\n• Materials\n• Sub-trades\n• Other costs\n• Timesheet entries\n• Job files\n\nThis action CANNOT be undone.\n\nAre you sure you want to permanently delete this job?`)) {
+                                        permanentDeleteJobMutation.mutate(job.id);
+                                      }
+                                    }}
+                                    className="text-red-600 focus:text-red-600"
+                                    data-testid={`permanent-delete-job-${job.id}`}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Permanently Delete
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>

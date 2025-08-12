@@ -484,6 +484,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add route to permanently delete a job
+  app.delete("/api/jobs/:id/permanent", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      await storage.permanentlyDeleteJob(req.params.id);
+      res.json({ message: "Job permanently deleted" });
+    } catch (error) {
+      console.error("Error permanently deleting job:", error);
+      res.status(500).json({ message: "Failed to permanently delete job" });
+    }
+  });
+
   // Get timesheet data for a specific job
   app.get("/api/jobs/:id/timesheets", isAuthenticated, async (req: any, res) => {
     try {
