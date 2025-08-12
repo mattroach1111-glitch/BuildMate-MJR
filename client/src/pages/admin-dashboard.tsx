@@ -73,7 +73,7 @@ export default function AdminDashboard() {
   const [isCreateTimesheetOpen, setIsCreateTimesheetOpen] = useState(false);
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
   const [expandedManagers, setExpandedManagers] = useState<Set<string>>(new Set());
-  const [groupBy, setGroupBy] = useState<'client' | 'manager' | 'none'>('client');
+  const [groupBy, setGroupBy] = useState<'client' | 'manager' | 'none'>('manager');
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>("all");
   const [dateRangeFilter, setDateRangeFilter] = useState<string>("all");
