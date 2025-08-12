@@ -46,6 +46,32 @@ const isAdmin = async (req: any, res: any, next: any) => {
   }
 };
 
+// Fuzzy employee matching function
+const findBestEmployeeMatch = async (employeeName: string, threshold: number = 80): Promise<{ employee: any, score: number } | null> => {
+  try {
+    const allEmployees = await storage.getEmployees();
+    if (!allEmployees || allEmployees.length === 0) {
+      return null;
+    }
+
+    let bestMatch = null;
+    let bestScore = 0;
+
+    for (const employee of allEmployees) {
+      const score = fuzz.ratio(employeeName.toLowerCase(), employee.name.toLowerCase());
+      if (score > bestScore && score >= threshold) {
+        bestScore = score;
+        bestMatch = employee;
+      }
+    }
+
+    return bestMatch ? { employee: bestMatch, score: bestScore } : null;
+  } catch (error) {
+    console.error("Error in fuzzy employee matching:", error);
+    return null;
+  }
+};
+
 // Fuzzy job matching function
 const findBestJobMatch = async (timesheetJobDescription: string, threshold: number = 80): Promise<{ job: any, score: number } | null> => {
   try {
@@ -2235,45 +2261,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create the new job with proper address handling
       const jobAddress = jobData.jobAddress || jobData.projectName || "Address TBD";
       const newJob = await storage.createJob({
-        jobId: jobData.jobId || `Job-${Date.now()}`,
         jobAddress: jobAddress,
         clientName: jobData.clientName || "New Client",
         projectName: jobData.projectName || "Construction Project",
-        status: "active",
-        builderMargin: jobData.builderMargin || 35
+        status: "job_in_progress",
+        builderMargin: (jobData.builderMargin || 35).toString(),
+        defaultHourlyRate: "64.00"
       });
 
       console.log('🔵 Created job:', newJob);
 
-      // Get all employees to match names
-      const allEmployees = await storage.getEmployees();
-      const employeeMap = new Map(allEmployees.map(emp => [emp.name.toLowerCase(), emp.id]));
-
-      // Add labor entries with employee auto-creation
+      // Add labor entries with fuzzy employee matching and auto-creation
       let laborEntriesCreated = 0;
       for (const laborEntry of jobData.laborEntries) {
         if (laborEntry.hours > 0) {
-          let employeeId = employeeMap.get(laborEntry.employeeName.toLowerCase());
+          let employeeId: string | undefined;
           
-          // If employee doesn't exist, create them
-          if (!employeeId) {
+          // Try fuzzy matching first (80% threshold)
+          const fuzzyMatch = await findBestEmployeeMatch(laborEntry.employeeName, 80);
+          if (fuzzyMatch) {
+            employeeId = fuzzyMatch.employee.id;
+            console.log(`🔵 Fuzzy matched "${laborEntry.employeeName}" to existing employee "${fuzzyMatch.employee.name}" (${fuzzyMatch.score}% match)`);
+          } else {
+            // If no fuzzy match, create new employee
             console.log(`🔵 Creating new employee: ${laborEntry.employeeName}`);
             const newEmployee = await storage.createEmployee({
-              name: laborEntry.employeeName,
-              email: `${laborEntry.employeeName.toLowerCase().replace(/\s+/g, '.')}@buildflow.com`,
-              isActive: true
+              name: laborEntry.employeeName
             });
             employeeId = newEmployee.id;
-            employeeMap.set(laborEntry.employeeName.toLowerCase(), employeeId);
           }
           
-          await storage.createLaborEntry({
-            jobId: newJob.id,
-            employeeId: employeeId,
-            hoursLogged: laborEntry.hours.toString(),
-            hourlyRate: laborEntry.hourlyRate.toString(),
-            date: new Date().toISOString().split('T')[0]
-          });
+          if (employeeId) {
+            await storage.createLaborEntry({
+              jobId: newJob.id,
+              staffId: employeeId,
+              hoursLogged: laborEntry.hours.toString(),
+              hourlyRate: laborEntry.hourlyRate.toString()
+            });
+          }
           laborEntriesCreated++;
         }
       }
