@@ -886,6 +886,22 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   const entryDescription = entryData.description || '';
                   const descriptionMatch = savedDescription === entryDescription;
                   
+                  // Debug logging to understand matching
+                  console.log('🔍 MATCHING DEBUG:', {
+                    dateKey,
+                    savedDate,
+                    dateMatches,
+                    savedJobId,
+                    entryJobId,
+                    jobMatches,
+                    isLeaveType,
+                    isCustomAddress,
+                    savedMaterials,
+                    entryMaterials,
+                    materialsMatch,
+                    entryId: savedEntry.id
+                  });
+                  
                   if (isLeaveType) {
                     return dateMatches && jobMatches && materialsMatch;
                   } else if (isCustomAddress && entryData.description) {
