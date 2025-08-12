@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -94,6 +95,9 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("jobs");
   const [showEditAddressDialog, setShowEditAddressDialog] = useState(false);
   const [editAddressData, setEditAddressData] = useState<{entryId: string, currentAddress: string}>({entryId: '', currentAddress: ''});
+  const [showLowHoursDialog, setShowLowHoursDialog] = useState(false);
+  const [lowHoursTotal, setLowHoursTotal] = useState(0);
+  const [pendingApproval, setPendingApproval] = useState<{staffId: string, fortnightStart: string, fortnightEnd: string, approved: boolean} | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -2693,7 +2697,32 @@ export default function AdminDashboard() {
                           <Button
                             size="default"
                             variant={fortnight.allApproved ? "outline" : "default"}
-                            onClick={() => {
+                            onClick={(e) => {
+                              console.log('🔥 ADMIN APPROVE BUTTON CLICKED');
+                              e.preventDefault();
+                              e.stopPropagation();
+                              
+                              const totalHours = fortnight.entries.reduce((sum: number, entry: any) => {
+                                return sum + parseFloat(entry.hours || '0');
+                              }, 0);
+                              
+                              console.log('🚨 ADMIN APPROVE - totalHours:', totalHours, 'will show dialog:', totalHours < 76);
+                              
+                              // Only show dialog when approving (not unapproving) and hours < 76
+                              if (!fortnight.allApproved && totalHours < 76) {
+                                console.log('🚨 SHOWING ADMIN LOW HOURS DIALOG');
+                                setLowHoursTotal(totalHours);
+                                setPendingApproval({
+                                  staffId: fortnight.staffId,
+                                  fortnightStart: fortnight.fortnightStart.toISOString().split('T')[0],
+                                  fortnightEnd: fortnight.fortnightEnd.toISOString().split('T')[0],
+                                  approved: !fortnight.allApproved
+                                });
+                                setShowLowHoursDialog(true);
+                                return;
+                              }
+                              
+                              console.log('🚨 APPROVING DIRECTLY - NO DIALOG');
                               approveFortnightMutation.mutate({
                                 staffId: fortnight.staffId,
                                 fortnightStart: fortnight.fortnightStart.toISOString().split('T')[0],
@@ -3296,6 +3325,65 @@ export default function AdminDashboard() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Low Hours Warning Dialog */}
+        <AlertDialog open={showLowHoursDialog} onOpenChange={setShowLowHoursDialog}>
+          <AlertDialogContent className="max-w-md">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2 text-orange-600">
+                <Clock className="h-5 w-5" />
+                Low Hours Warning
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-700">
+                <div className="space-y-3">
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600 mb-1">
+                        {lowHoursTotal.toFixed(2)} hours
+                      </div>
+                      <div className="text-sm text-orange-700">
+                        Current total for this fortnight
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <p className="text-center">
+                    This timesheet has hours below the expected 76 hours for a full fortnight. 
+                    Are you sure you want to approve this timesheet?
+                  </p>
+                  
+                  <div className="text-xs text-gray-500 text-center">
+                    You can always unapprove and ask staff to add more hours if needed.
+                  </div>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-2">
+              <AlertDialogCancel 
+                onClick={() => {
+                  setShowLowHoursDialog(false);
+                  setPendingApproval(null);
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  setShowLowHoursDialog(false);
+                  if (pendingApproval) {
+                    console.log('🚨 EXECUTING PENDING APPROVAL');
+                    approveFortnightMutation.mutate(pendingApproval);
+                    setPendingApproval(null);
+                  }
+                }}
+                className="flex-1 bg-orange-600 hover:bg-orange-700"
+              >
+                Approve Anyway
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Onboarding Components */}
         {showWelcome && (
