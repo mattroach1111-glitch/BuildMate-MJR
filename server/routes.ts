@@ -58,9 +58,18 @@ const findBestEmployeeMatch = async (employeeName: string, threshold: number = 8
     let bestScore = 0;
 
     for (const employee of allEmployees) {
-      const score = fuzz.ratio(employeeName.toLowerCase(), employee.name.toLowerCase());
-      if (score > bestScore && score >= threshold) {
-        bestScore = score;
+      // Try multiple fuzzy matching strategies for better accuracy
+      const exactScore = fuzz.ratio(employeeName.toLowerCase(), employee.name.toLowerCase());
+      const partialScore = fuzz.partial_ratio(employeeName.toLowerCase(), employee.name.toLowerCase());
+      const tokenScore = fuzz.token_sort_ratio(employeeName.toLowerCase(), employee.name.toLowerCase());
+      
+      // Use the highest score from different strategies
+      const maxScore = Math.max(exactScore, partialScore, tokenScore);
+      
+      console.log(`🔍 Fuzzy match "${employeeName}" vs "${employee.name}": exact=${exactScore}%, partial=${partialScore}%, token=${tokenScore}%, max=${maxScore}%`);
+      
+      if (maxScore > bestScore && maxScore >= threshold) {
+        bestScore = maxScore;
         bestMatch = employee;
       }
     }
@@ -2277,7 +2286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (laborEntry.hours > 0) {
           let employeeId: string | undefined;
           
-          // Try fuzzy matching first (80% threshold)
+          // Try fuzzy matching first (80% threshold with improved multi-strategy matching)
           const fuzzyMatch = await findBestEmployeeMatch(laborEntry.employeeName, 80);
           if (fuzzyMatch) {
             employeeId = fuzzyMatch.employee.id;
