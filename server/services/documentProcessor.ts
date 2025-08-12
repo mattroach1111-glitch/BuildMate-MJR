@@ -92,7 +92,18 @@ Focus on the primary expense amount. If multiple items, use the total. Be conser
         }]
       });
 
-      const result = JSON.parse((response.content[0] as any).text);
+      // Extract JSON from response, handling potential markdown code blocks
+      let responseText = (response.content[0] as any).text;
+      console.log('🤖 Raw AI response:', responseText.substring(0, 200) + '...');
+      
+      // Remove markdown code blocks if present
+      const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (jsonMatch) {
+        responseText = jsonMatch[1];
+        console.log('📄 Extracted JSON from code block');
+      }
+      
+      const result = JSON.parse(responseText);
       
       // Validate and normalize the extracted data
       return {
