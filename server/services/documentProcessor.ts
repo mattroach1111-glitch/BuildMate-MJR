@@ -1,4 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk';
+import pdf2pic from 'pdf2pic';
+// @ts-ignore - pdf-parse doesn't have types
+import pdfParse from 'pdf-parse';
+import { promises as fs } from 'fs';
+import { tmpdir } from 'os';
+import path from 'path';
 
 /*
 <important_code_snippet_instructions>
@@ -33,14 +39,18 @@ export class DocumentProcessor {
    */
   async analyzeExpenseDocument(documentURL: string, mimeType: string): Promise<ExtractedExpenseData> {
     try {
-      // Check if this is a PDF - temporarily unsupported in current environment
-      if (mimeType === 'application/pdf') {
-        throw new Error('PDF processing requires additional system dependencies. Please upload the document as a JPG or PNG image instead. You can take a photo of the invoice/receipt with your phone camera.');
-      }
+      let base64Content: string;
+      let mediaType: "image/jpeg" | "image/png" | "image/gif" | "image/webp";
       
-      // Download image directly
-      const base64Content = await this.downloadDocumentAsBase64(documentURL);
-      const mediaType = this.normalizeMediaType(mimeType) as "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+      if (mimeType === 'application/pdf') {
+        console.log('🔄 Converting PDF to image for AI processing...');
+        base64Content = await this.convertPdfToImage(documentURL);
+        mediaType = 'image/jpeg';
+      } else {
+        // Download image directly
+        base64Content = await this.downloadDocumentAsBase64(documentURL);
+        mediaType = this.normalizeMediaType(mimeType) as "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+      }
       
       const response = await anthropic.messages.create({
         // "claude-sonnet-4-20250514"
@@ -115,6 +125,60 @@ Focus on the primary expense amount. If multiple items, use the total. Be conser
     } catch (error: any) {
       console.error('Error downloading document:', error);
       throw new Error(`Failed to download document: ${error.message}`);
+    }
+  }
+
+  /**
+   * Convert PDF to image using pdf2pic with ImageMagick backend
+   */
+  private async convertPdfToImage(documentURL: string): Promise<string> {
+    const tempDir = tmpdir();
+    const pdfFileName = `pdf_${Date.now()}.pdf`;
+    const pdfPath = path.join(tempDir, pdfFileName);
+    
+    try {
+      // Download PDF to temporary file
+      console.log('📥 Downloading PDF...');
+      const response = await fetch(documentURL);
+      if (!response.ok) {
+        throw new Error(`Failed to download PDF: ${response.statusText}`);
+      }
+      
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      await fs.writeFile(pdfPath, buffer);
+      
+      // Convert PDF to image using pdf2pic with explicit options
+      console.log('🖼️ Converting PDF to image...');
+      const convert = pdf2pic.fromPath(pdfPath, {
+        density: 150,           // DPI for quality
+        saveFilename: `converted_${Date.now()}`,
+        savePath: tempDir,
+        format: "jpg",
+        width: 1200,            // Max width
+        height: 1600            // Max height
+      });
+      
+      // Convert first page only
+      const result = await convert(1, { responseType: "buffer" });
+      
+      if (!result.buffer) {
+        throw new Error('Failed to convert PDF to image - no buffer returned');
+      }
+      
+      const base64Image = result.buffer.toString('base64');
+      
+      // Clean up temporary files
+      await fs.unlink(pdfPath).catch(() => {}); // Ignore cleanup errors
+      
+      console.log('✅ PDF converted to image successfully');
+      return base64Image;
+      
+    } catch (error: any) {
+      // Clean up on error
+      await fs.unlink(pdfPath).catch(() => {});
+      console.error('🔴 PDF conversion error:', error);
+      throw new Error(`Failed to convert PDF: ${error.message}`);
     }
   }
 

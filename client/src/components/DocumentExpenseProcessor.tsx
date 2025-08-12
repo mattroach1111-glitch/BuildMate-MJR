@@ -241,10 +241,10 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
         {/* Upload Area */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Upload Documents</label>
-          <Alert className="border-blue-200 bg-blue-50">
-            <AlertCircle className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-800">
-              <strong>Best Results:</strong> Upload JPG or PNG images of your bills/receipts. Take a photo with your phone camera for excellent results!
+          <Alert className="border-green-200 bg-green-50">
+            <AlertCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              <strong>PDF Support Enabled!</strong> Upload PDF invoices and bills directly. AI will automatically convert and analyze them for expense extraction.
             </AlertDescription>
           </Alert>
           <DocumentUploader
@@ -257,7 +257,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
             <div className="flex flex-col items-center gap-2 text-gray-600">
               <Upload className="h-6 w-6" />
               <span className="text-sm">Upload Bills & Invoices</span>
-              <span className="text-xs">JPG, PNG (max 25MB) • Drag & Drop!</span>
+              <span className="text-xs">PDF, JPG, PNG (max 25MB) • Drag & Drop!</span>
             </div>
           </DocumentUploader>
         </div>

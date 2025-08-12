@@ -201,7 +201,7 @@ export function DocumentUploader({
         open={showModal}
         onRequestClose={() => setShowModal(false)}
         proudlyDisplayPoweredByUppy={false}
-        note="Upload bills, invoices, and expense documents (JPG, PNG). Take a photo with your phone for best results. Drag and drop files or click to browse. Maximum 25MB per file."
+        note="Upload bills, invoices, and expense documents (PDF, JPG, PNG). AI will convert PDFs automatically. Drag and drop files or click to browse. Maximum 25MB per file."
         showProgressDetails={true}
         hideProgressAfterFinish={false}
       />
