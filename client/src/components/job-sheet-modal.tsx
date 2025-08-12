@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { generateJobPDF } from "@/lib/pdfGenerator";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { debounce } from "lodash";
-import { Upload, Download, Trash2, FileText, Clock } from "lucide-react";
+import { Upload, Download, Trash2, FileText, Clock, X } from "lucide-react";
 import type { Job, LaborEntry, Material, SubTrade, OtherCost, JobFile } from "@shared/schema";
 
 interface JobSheetModalProps {
@@ -647,25 +647,38 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
-        className="max-w-6xl max-h-[95vh] overflow-hidden sm:max-w-6xl w-full max-w-[95vw] sm:w-auto flex flex-col" 
+        className="sm:max-w-6xl sm:max-h-[95vh] 
+                   max-sm:fixed max-sm:inset-0 max-sm:w-screen max-sm:h-screen max-sm:max-w-none max-sm:max-h-none 
+                   max-sm:rounded-none max-sm:border-0 max-sm:m-0 max-sm:p-0
+                   overflow-hidden flex flex-col" 
         aria-describedby="job-sheet-description"
       >
-        <DialogHeader className="flex-shrink-0 pb-4 border-b">
+        <DialogHeader className="flex-shrink-0 pb-4 border-b max-sm:px-4 max-sm:pt-4">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              {!isEditing ? (
-                <>
-                  <DialogTitle data-testid="text-job-sheet-title" className="text-lg sm:text-xl font-semibold truncate">
-                    {jobDetails ? `${jobDetails.projectName} - ${jobDetails.clientName}` : "Loading..."}
-                  </DialogTitle>
-                  <p className="text-gray-600 text-sm truncate" data-testid="text-job-address">
-                    {jobDetails?.jobAddress}
-                  </p>
-                  <p id="job-sheet-description" className="text-xs text-muted-foreground mt-1">
-                    Manage job details, costs, and generate PDF reports
-                  </p>
-                </>
-              ) : (
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="shrink-0 sm:hidden h-8 w-8"
+                data-testid="close-job-sheet-mobile"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <div className="flex-1 min-w-0">
+                {!isEditing ? (
+                  <>
+                    <DialogTitle data-testid="text-job-sheet-title" className="text-lg sm:text-xl font-semibold truncate">
+                      {jobDetails ? `${jobDetails.projectName} - ${jobDetails.clientName}` : "Loading..."}
+                    </DialogTitle>
+                    <p className="text-gray-600 text-sm truncate" data-testid="text-job-address">
+                      {jobDetails?.jobAddress}
+                    </p>
+                    <p id="job-sheet-description" className="text-xs text-muted-foreground mt-1">
+                      Manage job details, costs, and generate PDF reports
+                    </p>
+                  </>
+                ) : (
                 <div className="space-y-3">
                   <div>
                     <Label htmlFor="edit-address" className="text-sm font-medium">Job Address</Label>
@@ -807,7 +820,8 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     </div>
                   </div>
                 </div>
-              )}
+                )}
+              </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
               {!isEditing ? (
@@ -856,7 +870,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                 </>
               )}
 
-              <Button variant="ghost" onClick={onClose} className="w-full sm:w-auto" size="sm" data-testid="button-close-modal">
+              <Button variant="ghost" onClick={onClose} className="hidden sm:block" size="sm" data-testid="button-close-modal">
                 <i className="fas fa-times text-xl"></i>
               </Button>
             </div>
