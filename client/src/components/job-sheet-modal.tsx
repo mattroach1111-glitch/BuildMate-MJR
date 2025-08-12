@@ -1396,10 +1396,17 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                   </table>
                 </div>
 
-                <div className="text-right mt-4">
-                  <span className="text-lg font-semibold" data-testid="text-labor-total">
-                    Labour Total: ${totals.laborTotal.toFixed(2)}
-                  </span>
+                <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200">
+                  <div className="text-left">
+                    <span className="text-lg font-semibold text-gray-700" data-testid="text-total-hours">
+                      Total Hours: {jobDetails.laborEntries.reduce((total, entry) => total + parseFloat(entry.hoursLogged), 0)} hrs
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-lg font-semibold" data-testid="text-labor-total">
+                      Labour Total: ${totals.laborTotal.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
