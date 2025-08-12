@@ -49,8 +49,127 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const [lowHoursTotal, setLowHoursTotal] = useState(0);
   const [pendingSubmission, setPendingSubmission] = useState<(() => void) | null>(null);
   
+  // Use refs to persist dialog state across re-renders
+  const lowHoursDialogRef = useRef({
+    isOpen: false,
+    totalHours: 0,
+    pendingSubmission: null as (() => void) | null
+  });
+  
 
   const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null); // Single timeout for all auto-saves
+  
+  // Function to show low hours dialog using DOM manipulation (avoids React re-render issues)
+  const showLowHoursDialogDOM = (totalHours: number, onConfirm: () => void) => {
+    console.log('🚨 SHOWING LOW HOURS DIALOG DOM');
+    
+    // Remove any existing dialog
+    const existingDialog = document.getElementById('low-hours-dialog');
+    if (existingDialog) {
+      existingDialog.remove();
+    }
+    
+    // Create the dialog
+    const dialog = document.createElement('div');
+    dialog.id = 'low-hours-dialog';
+    dialog.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    `;
+    
+    dialog.innerHTML = `
+      <div style="
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
+        width: 100%;
+        padding: 24px;
+        font-family: system-ui, -apple-system, sans-serif;
+      ">
+        <div style="display: flex; align-items: center; gap: 8px; color: #ea580c; margin-bottom: 8px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12,6 12,12 16,14"></polyline>
+          </svg>
+          <h2 style="font-size: 20px; font-weight: 600; margin: 0;">Low Hours Warning</h2>
+        </div>
+        
+        <div style="margin: 16px 0;">
+          <div style="background: #fed7aa; border: 1px solid #fdba74; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+            <div style="text-align: center;">
+              <div style="font-size: 28px; font-weight: bold; color: #ea580c; margin-bottom: 4px;">
+                ${totalHours.toFixed(2)} hours
+              </div>
+              <div style="font-size: 14px; color: #c2410c;">
+                Current total for this fortnight
+              </div>
+            </div>
+          </div>
+          
+          <p style="text-align: center; color: #374151; margin: 12px 0;">
+            Your hours are below the expected 76 hours for a full fortnight. 
+            Are you sure you're ready to submit this timesheet?
+          </p>
+          
+          <div style="font-size: 12px; color: #6b7280; text-align: center;">
+            You can always add more hours and resubmit later if needed.
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 12px; margin-top: 20px;">
+          <button 
+            id="low-hours-cancel-btn"
+            style="flex: 1; padding: 8px 16px; border: 1px solid #d1d5db; background: white; color: #374151; border-radius: 6px; font-size: 14px; cursor: pointer;"
+          >
+            Cancel
+          </button>
+          <button 
+            id="low-hours-submit-btn"
+            style="flex: 1; padding: 8px 16px; border: none; background: #ea580c; color: white; border-radius: 6px; font-size: 14px; cursor: pointer;"
+          >
+            Submit Anyway
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(dialog);
+    
+    // Add event listeners
+    const cancelBtn = document.getElementById('low-hours-cancel-btn');
+    const submitBtn = document.getElementById('low-hours-submit-btn');
+    
+    cancelBtn?.addEventListener('click', () => {
+      console.log('🚨 USER CANCELLED SUBMISSION');
+      dialog.remove();
+    });
+    
+    submitBtn?.addEventListener('click', () => {
+      console.log('🚨 USER CONFIRMED SUBMISSION DESPITE LOW HOURS');
+      dialog.remove();
+      onConfirm();
+    });
+    
+    // Close on backdrop click
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) {
+        console.log('🚨 USER CANCELLED SUBMISSION (BACKDROP)');
+        dialog.remove();
+      }
+    });
+    
+    console.log('🚨 LOW HOURS DIALOG CREATED AND ADDED TO DOM');
+  };
 
   // Debug effect to track dialog state changes
   useEffect(() => {
@@ -1417,6 +1536,18 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                       if (totalHours < 76) {
                         console.log('🚨 SHOWING LOW HOURS WARNING');
                         console.log('🚨 BEFORE setState - showLowHoursDialog:', showLowHoursDialog);
+                        
+                        // Store in ref for persistence across re-renders
+                        lowHoursDialogRef.current = {
+                          isOpen: true,
+                          totalHours: totalHours,
+                          pendingSubmission: () => {
+                            console.log('🚨 EXECUTING PENDING SUBMISSION');
+                            confirmTimesheetMutation.mutate();
+                          }
+                        };
+                        
+                        // Also set state for render
                         setLowHoursTotal(totalHours);
                         setPendingSubmission(() => () => {
                           console.log('🚨 EXECUTING PENDING SUBMISSION');
@@ -1424,9 +1555,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         });
                         setShowLowHoursDialog(true);
                         console.log('🚨 AFTER setState - dialog should be true');
+                        
+                        // Use DOM approach directly to avoid re-render issues
                         setTimeout(() => {
-                          console.log('🚨 TIMEOUT CHECK - showLowHoursDialog state:', showLowHoursDialog);
-                        }, 100);
+                          showLowHoursDialogDOM(totalHours, () => {
+                            console.log('🚨 USER CONFIRMED SUBMISSION');
+                            confirmTimesheetMutation.mutate();
+                          });
+                        }, 0);
+                        
                         return;
                       }
 
