@@ -1914,10 +1914,10 @@ export default function AdminDashboard() {
                 return (
                   <div 
                     key={groupName} 
-                    className={`border rounded-lg p-4 transition-colors ${colors.bg}`}
+                    className={`border rounded-lg p-3 sm:p-4 transition-colors ${colors.bg} mb-3 sm:mb-4`}
                   >
                     <div 
-                      className={`flex items-center gap-2 p-2 rounded transition-colors ${colors.folderBg}`}
+                      className={`flex items-center gap-2 p-2 sm:p-3 rounded transition-colors ${colors.folderBg}`}
                     >
                       <div 
                         className="flex items-center gap-2 flex-1 cursor-pointer"
@@ -1925,27 +1925,27 @@ export default function AdminDashboard() {
                         data-testid={`folder-${groupName}`}
                       >
                         {isExpanded ? (
-                          <ChevronDown className="h-4 w-4" />
+                          <ChevronDown className="h-4 w-4 shrink-0" />
                         ) : (
-                          <ChevronRight className="h-4 w-4" />
+                          <ChevronRight className="h-4 w-4 shrink-0" />
                         )}
                         {isExpanded ? (
-                          <FolderOpen className={`h-5 w-5 ${colors.folderIcon}`} />
+                          <FolderOpen className={`h-5 w-5 shrink-0 ${colors.folderIcon}`} />
                         ) : (
-                          <Folder className={`h-5 w-5 ${colors.folderIcon}`} />
+                          <Folder className={`h-5 w-5 shrink-0 ${colors.folderIcon}`} />
                         )}
-                        <span className={`font-medium ${colors.folderText}`}>{groupName}</span>
+                        <span className={`font-medium ${colors.folderText} truncate`}>{groupName}</span>
                         <Badge 
                           variant="secondary" 
-                          className={`ml-2 ${colors.badge}`}
+                          className={`ml-2 shrink-0 ${colors.badge} text-xs px-2 py-1`}
                         >
-                          {groupJobs.length} job{groupJobs.length !== 1 ? 's' : ''}
+                          {groupJobs.length}
                         </Badge>
                       </div>
                       
                       {/* PDF Download Button for Project Managers */}
                       {groupBy === 'manager' && !isReadyForBillingGroup(groupName) && (
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 shrink-0">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -2023,7 +2023,7 @@ export default function AdminDashboard() {
                     </div>
                     
                     {isExpanded && (
-                      <div className={`mt-4 ${viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-2"}`}>
+                      <div className={`mt-3 sm:mt-4 ${viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4" : "space-y-2"}`}>
                         {groupJobs.map((job) => 
                           viewMode === 'grid' ? (
                             <Card 
@@ -2032,10 +2032,10 @@ export default function AdminDashboard() {
                               onClick={() => setSelectedJob(job.id)}
                               data-testid={`card-job-${job.id}`}
                             >
-                            <CardHeader className="pb-3">
-                              <div className="flex items-start justify-between">
-                                <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
-                                <div className="flex items-center gap-2 shrink-0">
+                            <CardHeader className="pb-3 p-3 sm:p-6">
+                              <div className="flex items-start justify-between gap-2">
+                                <CardTitle className="text-base sm:text-lg leading-tight flex-1 min-w-0">{job.jobAddress}</CardTitle>
+                                <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                                   <div onClick={(e) => e.stopPropagation()}>
                                     <Select 
                                       value={job.status} 
@@ -2098,16 +2098,16 @@ export default function AdminDashboard() {
                               onClick={() => setSelectedJob(job.id)}
                               data-testid={`card-job-${job.id}`}
                             >
-                              <CardContent className="p-4">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-4">
-                                      <div>
-                                        <h3 className="font-semibold text-lg">{job.jobAddress}</h3>
+                              <CardContent className="p-3 sm:p-4">
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 sm:gap-4">
+                                      <div className="min-w-0 flex-1">
+                                        <h3 className="font-semibold text-base sm:text-lg truncate">{job.jobAddress}</h3>
                                       </div>
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-3 shrink-0">
+                                  <div className="flex items-center gap-1 sm:gap-3 shrink-0">
                                     <div onClick={(e) => e.stopPropagation()}>
                                       <Select 
                                         value={job.status} 

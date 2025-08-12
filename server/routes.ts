@@ -18,6 +18,7 @@ import {
   insertOtherCostSchema,
   insertTimesheetEntrySchema,
   insertJobFileSchema,
+  insertNotificationSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -1868,6 +1869,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting job file:", error);
       res.status(500).json({ message: "Failed to delete job file" });
+    }
+  });
+
+  // Notification routes
+  app.get("/api/notifications", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const notifications = await storage.getNotificationsForUser(userId);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ error: "Failed to fetch notifications" });
+    }
+  });
+
+  app.get("/api/notifications/active", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const notifications = await storage.getActiveNotifications(userId);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching active notifications:", error);
+      res.status(500).json({ error: "Failed to fetch active notifications" });
+    }
+  });
+
+  app.post("/api/notifications", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const result = insertNotificationSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: "Invalid notification data", details: result.error.errors });
+      }
+
+      const notification = await storage.createNotification(result.data);
+      res.status(201).json(notification);
+    } catch (error) {
+      console.error("Error creating notification:", error);
+      res.status(500).json({ error: "Failed to create notification" });
+    }
+  });
+
+  app.patch("/api/notifications/:id/read", isAuthenticated, async (req: any, res) => {
+    try {
+      const notificationId = req.params.id;
+      await storage.markNotificationAsRead(notificationId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ error: "Failed to mark notification as read" });
+    }
+  });
+
+  app.patch("/api/notifications/:id/dismiss", isAuthenticated, async (req: any, res) => {
+    try {
+      const notificationId = req.params.id;
+      await storage.dismissNotification(notificationId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error dismissing notification:", error);
+      res.status(500).json({ error: "Failed to dismiss notification" });
     }
   });
 
