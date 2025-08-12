@@ -34,7 +34,140 @@ export interface ExtractedExpenseData {
   rawText?: string;
 }
 
+export interface ExtractedJobData {
+  jobAddress: string;
+  clientName: string;
+  projectName: string;
+  laborEntries: Array<{
+    employeeName: string;
+    hours: number;
+    hourlyRate: number;
+  }>;
+  materials: Array<{
+    description: string;
+    amount: number;
+    supplier: string;
+    date: string;
+  }>;
+  tipFees?: Array<{
+    description: string;
+    amount: number;
+  }>;
+  otherCosts?: Array<{
+    description: string;
+    amount: number;
+  }>;
+  builderMargin: number;
+  confidence: number;
+  rawText?: string;
+}
+
 export class DocumentProcessor {
+  /**
+   * Analyzes a complete job cost sheet (PDF or image) and extracts all job data
+   * including labor, materials, and costs for creating a complete new job.
+   */
+  async analyzeCompleteJobSheet(documentURL: string, mimeType: string): Promise<ExtractedJobData> {
+    try {
+      let base64Content: string;
+      let mediaType: "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+      
+      if (mimeType === 'application/pdf') {
+        console.log('🔄 Converting PDF to image for complete job analysis...');
+        base64Content = await this.convertPdfToImage(documentURL);
+        mediaType = 'image/jpeg';
+      } else {
+        base64Content = await this.downloadDocumentAsBase64(documentURL);
+        mediaType = this.normalizeMediaType(mimeType) as "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+      }
+      
+      const response = await anthropic.messages.create({
+        // "claude-sonnet-4-20250514"
+        model: DEFAULT_MODEL_STR,
+        max_tokens: 2000,
+        system: `You are analyzing complete job cost sheets for construction projects to extract all job data for creating new project records.
+
+Extract ALL information visible in the document and return a JSON object with:
+- jobAddress: Property/project address (if visible)
+- clientName: Client name (if visible, otherwise use address or "New Client")
+- projectName: Project name/description (if visible, otherwise use address)
+- laborEntries: Array of all labor entries with:
+  * employeeName: Staff member name
+  * hours: Hours worked (as number)
+  * hourlyRate: Rate per hour (as number, extract from rate column)
+- materials: Array of all material/supply items with:
+  * description: Item description
+  * amount: Cost as number (extract individual amounts, not totals)
+  * supplier: Supplier name (e.g., "Bunnings", "Knauf") 
+  * date: Date in DD/MM format if visible, otherwise current date
+- tipFees: Array of tip/cartage fees if present
+- otherCosts: Array of other miscellaneous costs
+- builderMargin: Margin percentage (default 35 if not specified)
+- confidence: Extraction confidence (0-1)
+- rawText: All visible text content
+
+CRITICAL: Extract ALL individual items, not just totals. For materials with multiple line items, create separate entries for each item with its own cost.`,
+        messages: [{
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Analyze this complete job cost sheet and extract ALL job data including every labor entry, material item, and cost:"
+            },
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: mediaType,
+                data: base64Content
+              }
+            }
+          ]
+        }]
+      });
+
+      let responseText = (response.content[0] as any).text;
+      console.log('🤖 Complete job analysis response:', responseText.substring(0, 300) + '...');
+      
+      // Remove markdown code blocks if present
+      const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (jsonMatch) {
+        responseText = jsonMatch[1];
+      }
+      
+      const result = JSON.parse(responseText);
+      
+      return {
+        jobAddress: result.jobAddress || 'New Project Address',
+        clientName: result.clientName || result.jobAddress || 'New Client',
+        projectName: result.projectName || result.jobAddress || 'New Project',
+        laborEntries: (result.laborEntries || []).map((entry: any) => ({
+          employeeName: entry.employeeName || 'Unknown Employee',
+          hours: parseFloat(entry.hours) || 0,
+          hourlyRate: parseFloat(entry.hourlyRate) || 64
+        })),
+        materials: (result.materials || []).map((material: any) => ({
+          description: material.description || 'Material Item',
+          amount: parseFloat(material.amount) || 0,
+          supplier: material.supplier || 'Unknown Supplier',
+          date: material.date || new Date().toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit' })
+        })),
+        tipFees: (result.tipFees || []).map((tip: any) => ({
+          description: tip.description || 'Tip Fee',
+          amount: parseFloat(tip.amount) || 0
+        })),
+        otherCosts: result.otherCosts || [],
+        builderMargin: result.builderMargin || 35,
+        confidence: Math.max(0, Math.min(1, result.confidence || 0.8)),
+        rawText: result.rawText || ''
+      };
+      
+    } catch (error: any) {
+      console.error('Complete job analysis error:', error);
+      throw new Error(`Failed to analyze job sheet: ${error.message}`);
+    }
+  }
+
   /**
    * Analyzes an uploaded document (PDF or image) and extracts expense information
    * suitable for adding to construction job sheets.

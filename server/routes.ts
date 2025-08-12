@@ -2202,6 +2202,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint to process complete job cost sheets and create new jobs
+  app.post("/api/documents/create-job", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { documentURL } = req.body;
+      
+      if (!documentURL) {
+        return res.status(400).json({ error: "Document URL is required" });
+      }
+
+      const objectStorageService = new ObjectStorageService();
+      const documentProcessor = new DocumentProcessor();
+      
+      // Get the document file metadata to determine content type
+      const normalizedPath = objectStorageService.normalizeObjectEntityPath(documentURL);
+      const objectFile = await objectStorageService.getObjectEntityFile(normalizedPath);
+      const [metadata] = await objectFile.getMetadata();
+      
+      // Process complete job sheet with AI
+      const jobData = await documentProcessor.analyzeCompleteJobSheet(
+        documentURL,
+        metadata.contentType || 'application/pdf'
+      );
+      
+      console.log('🔵 Extracted job data:', JSON.stringify(jobData, null, 2));
+      
+      // Create the new job
+      const newJob = await storage.createJob({
+        jobId: jobData.jobAddress || `Job-${Date.now()}`,
+        clientName: jobData.clientName,
+        projectName: jobData.projectName,
+        status: "active",
+        builderMargin: jobData.builderMargin
+      });
+
+      console.log('🔵 Created job:', newJob);
+
+      // Get all employees to match names
+      const allEmployees = await storage.getEmployees();
+      const employeeMap = new Map(allEmployees.map(emp => [emp.name.toLowerCase(), emp.id]));
+
+      // Add labor entries
+      for (const laborEntry of jobData.laborEntries) {
+        if (laborEntry.hours > 0) {
+          const employeeId = employeeMap.get(laborEntry.employeeName.toLowerCase());
+          if (employeeId) {
+            await storage.createLaborEntry({
+              jobId: newJob.id,
+              employeeId: employeeId,
+              hoursLogged: laborEntry.hours.toString(),
+              hourlyRate: laborEntry.hourlyRate.toString(),
+              date: new Date().toISOString().split('T')[0]
+            });
+          }
+        }
+      }
+
+      // Add materials
+      for (const material of jobData.materials) {
+        if (material.amount > 0) {
+          await storage.createMaterial({
+            jobId: newJob.id,
+            description: material.description,
+            supplier: material.supplier,
+            amount: material.amount.toString(),
+            invoiceDate: material.date
+          });
+        }
+      }
+
+      // Add tip fees if any
+      if (jobData.tipFees) {
+        for (const tipFee of jobData.tipFees) {
+          if (tipFee.amount > 0) {
+            await storage.createTipFee({
+              jobId: newJob.id,
+              description: tipFee.description,
+              amount: tipFee.amount.toString()
+            });
+          }
+        }
+      }
+
+      // Add other costs if any
+      if (jobData.otherCosts) {
+        for (const otherCost of jobData.otherCosts) {
+          if (otherCost.amount > 0) {
+            await storage.createOtherCost({
+              jobId: newJob.id,
+              description: otherCost.description,
+              amount: otherCost.amount.toString()
+            });
+          }
+        }
+      }
+
+      // Calculate material totals for consumables (6% of materials)
+      const materialTotal = jobData.materials.reduce((sum, mat) => sum + mat.amount, 0);
+      const consumablesAmount = materialTotal * 0.06;
+      
+      if (consumablesAmount > 0) {
+        await storage.createMaterial({
+          jobId: newJob.id,
+          description: "Consumables",
+          supplier: "Auto-calculated",
+          amount: consumablesAmount.toFixed(2),
+          invoiceDate: new Date().toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit' })
+        });
+      }
+
+      res.json({
+        success: true,
+        job: newJob,
+        summary: {
+          laborEntries: jobData.laborEntries.length,
+          materials: jobData.materials.length,
+          tipFees: jobData.tipFees?.length || 0,
+          otherCosts: jobData.otherCosts?.length || 0,
+          totalLaborHours: jobData.laborEntries.reduce((sum, entry) => sum + entry.hours, 0),
+          materialTotal,
+          consumablesAmount: consumablesAmount.toFixed(2)
+        },
+        confidence: jobData.confidence,
+        message: `Complete job created successfully from cost sheet with ${Math.round(jobData.confidence * 100)}% confidence`
+      });
+      
+    } catch (error) {
+      console.error("Error creating job from document:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      res.status(500).json({ 
+        error: "Failed to create job from document", 
+        details: (error as Error).message 
+      });
+    }
+  });
+
   // Endpoint to serve uploaded documents
   app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
     const objectStorageService = new ObjectStorageService();

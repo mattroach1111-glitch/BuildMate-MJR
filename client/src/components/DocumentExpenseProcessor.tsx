@@ -139,6 +139,29 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     },
   });
 
+  // Create complete job from document
+  const createJobFromDocumentMutation = useMutation({
+    mutationFn: async (documentURL: string) => {
+      const response = await apiRequest("POST", "/api/documents/create-job", { documentURL });
+      return await response.json();
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "New job created!",
+        description: `${data.job.jobId} created with ${data.summary.laborEntries} labor entries, ${data.summary.materials} materials`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      onSuccess?.();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to create job",
+        description: error.message || "Something went wrong",
+        variant: "destructive",
+      });
+    }
+  });
+
   // Helper functions for expense review
   const handleCategoryChange = (newCategory: 'materials' | 'subtrades' | 'other_costs' | 'tip_fees') => {
     if (pendingExpense) {
@@ -247,6 +270,30 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     setIsProcessing(false);
   };
 
+  const handleCreateJobUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    if (!result.successful || result.successful.length === 0) {
+      toast({
+        title: "Upload failed",
+        description: "No files were uploaded successfully.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    for (const file of result.successful) {
+      try {
+        await createJobFromDocumentMutation.mutateAsync(file.uploadURL || "");
+      } catch (error) {
+        console.error("🔴 JOB CREATION ERROR:", error);
+        toast({
+          title: "Job creation failed",
+          description: "Failed to create job from document",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   const getCategoryLabel = (category: string) => {
     switch (category) {
       case 'materials': return 'Materials';
@@ -270,10 +317,14 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   return (
     <div className="space-y-6">
       <Tabs defaultValue="upload" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="upload" className="flex items-center gap-2">
             <Upload className="h-4 w-4" />
-            Upload Documents
+            Add Expenses
+          </TabsTrigger>
+          <TabsTrigger value="create-job" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Create New Job
           </TabsTrigger>
           <TabsTrigger value="email" className="flex items-center gap-2">
             <Mail className="h-4 w-4" />
@@ -427,6 +478,59 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
           <div>• Review and confirm extracted information before adding to job sheet</div>
           <div>• Change category if needed, then click "Add to Job Sheet" to approve</div>
         </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="create-job">
+          <Card className="w-full max-w-2xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Create Job from Cost Sheet
+              </CardTitle>
+              <CardDescription>
+                Upload complete job cost sheets (PDFs with labor, materials, and costs) to automatically create new jobs with all data
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Upload Section */}
+              <div className="space-y-4">
+                <DocumentUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={10485760}
+                  onGetUploadParameters={handleGetUploadParameters}
+                  onComplete={handleCreateJobUploadComplete}
+                  buttonClassName="w-full h-12 border-2 border-dashed border-gray-300 hover:border-blue-400 bg-gray-50 hover:bg-blue-50 transition-colors"
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <Upload className="h-6 w-6 text-gray-400" />
+                    <span className="text-sm font-medium">Upload Job Cost Sheet</span>
+                    <span className="text-xs text-gray-500">PDF, JPG, PNG (Max 10MB)</span>
+                  </div>
+                </DocumentUploader>
+
+                {createJobFromDocumentMutation.isPending && (
+                  <Alert>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <AlertDescription>
+                      Processing job cost sheet and creating complete job with all labor, materials, and costs...
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+
+              {/* Instructions */}
+              <div className="text-xs text-gray-500 space-y-1">
+                <div className="flex items-center gap-1">
+                  <FileText className="h-3 w-3" />
+                  Perfect for migrating existing job data during initial setup
+                </div>
+                <div>• Upload complete job cost sheets with labor hours, materials list, and costs</div>
+                <div>• AI will extract all labor entries, materials, tip fees, and other costs</div>
+                <div>• Automatically creates new job with all extracted data and relationships</div>
+                <div>• Includes automatic 6% consumables calculation and employee matching</div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
