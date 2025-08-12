@@ -1,16 +1,22 @@
 import nodemailer from 'nodemailer';
+import type { Transporter } from 'nodemailer';
 
-// SMTP configuration for Onlydomains.com email server
-const createTransporter = () => {
+// SMTP configuration for Onlydomains.com Titan email service
+const createTransporter = (): Transporter | null => {
   if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
     console.warn("SMTP credentials not set - email functionality will be disabled");
     return null;
   }
 
+  // Default to Titan email settings if not specified
+  const host = process.env.SMTP_HOST || 'smtp.titan.email';
+  const port = parseInt(process.env.SMTP_PORT || '465');
+  const secure = process.env.SMTP_SECURE === 'true' || port === 465;
+
   return nodemailer.createTransporter({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+    host: host,
+    port: port,
+    secure: secure, // true for 465 (SSL), false for 587 (TLS)
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,

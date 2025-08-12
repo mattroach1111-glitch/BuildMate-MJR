@@ -172,7 +172,7 @@ export function JobUpdateForm({ onClose }: JobUpdateFormProps) {
                   <FormControl>
                     <Input 
                       type="email"
-                      placeholder="Enter recipient email address" 
+                      placeholder="Enter project manager's email address" 
                       {...field} 
                       data-testid="input-recipient-email"
                     />
@@ -181,6 +181,10 @@ export function JobUpdateForm({ onClose }: JobUpdateFormProps) {
                 </FormItem>
               )}
             />
+            <div className="text-sm text-muted-foreground bg-blue-50 p-3 rounded-lg">
+              <strong>Note:</strong> This will send via your Onlydomains.com email server (smtp.titan.email). 
+              Make sure SMTP credentials are configured in your environment settings.
+            </div>
           </CardContent>
         </Card>
 
