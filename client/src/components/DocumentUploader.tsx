@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import Uppy from "@uppy/core";
 import { DashboardModal } from "@uppy/react";
@@ -62,6 +62,8 @@ export function DocumentUploader({
   children,
 }: DocumentUploaderProps) {
   const [showModal, setShowModal] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
+  
   const [uppy] = useState(() =>
     new Uppy({
       restrictions: {
@@ -79,13 +81,76 @@ export function DocumentUploader({
       .on("complete", (result) => {
         onComplete?.(result);
       })
+      .on("drag-over", () => {
+        setIsDragActive(true);
+      })
+      .on("drag-leave", () => {
+        setIsDragActive(false);
+      })
+      .on("drop", () => {
+        setIsDragActive(false);
+      })
   );
 
+  // Add global drag event listeners for better drag feedback
+  useEffect(() => {
+    const handleDragEnter = (e: DragEvent) => {
+      e.preventDefault();
+      if (e.dataTransfer?.types.includes('Files')) {
+        setIsDragActive(true);
+      }
+    };
+
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+    };
+
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      // Only set to false if we're leaving the window
+      if (!e.relatedTarget) {
+        setIsDragActive(false);
+      }
+    };
+
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragActive(false);
+    };
+
+    document.addEventListener('dragenter', handleDragEnter);
+    document.addEventListener('dragover', handleDragOver);
+    document.addEventListener('dragleave', handleDragLeave);
+    document.addEventListener('drop', handleDrop);
+
+    return () => {
+      document.removeEventListener('dragenter', handleDragEnter);
+      document.removeEventListener('dragover', handleDragOver);
+      document.removeEventListener('dragleave', handleDragLeave);
+      document.removeEventListener('drop', handleDrop);
+    };
+  }, []);
+
   return (
-    <div>
-      <Button onClick={() => setShowModal(true)} className={buttonClassName}>
+    <div className="relative">
+      <Button 
+        onClick={() => setShowModal(true)} 
+        className={`
+          ${buttonClassName} 
+          ${isDragActive ? 'ring-2 ring-blue-500 ring-offset-2 bg-blue-50 border-blue-300' : ''}
+          transition-all duration-200
+        `}
+      >
         {children}
       </Button>
+
+      {isDragActive && (
+        <div className="absolute inset-0 bg-blue-500/10 border-2 border-dashed border-blue-500 rounded-md flex items-center justify-center pointer-events-none z-10">
+          <div className="text-blue-600 font-medium text-sm">
+            Drop files here to upload
+          </div>
+        </div>
+      )}
 
       <DashboardModal
         uppy={uppy}
