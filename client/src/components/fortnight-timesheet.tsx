@@ -1427,7 +1427,13 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         // Force a small delay to ensure state update
                         setTimeout(() => {
                           console.log('🚨 DIALOG STATE CHECK (after timeout):', showLowHoursDialog);
-                        }, 100);
+                          console.log('🚨 DOM CHECK - Dialog element exists?', document.querySelector('[role="alertdialog"]'));
+                          // Force re-render by updating a dummy state if dialog still not showing
+                          if (!showLowHoursDialog) {
+                            console.log('🚨 FORCING DIALOG STATE AGAIN');
+                            setShowLowHoursDialog(true);
+                          }
+                        }, 50);
                         return;
                       }
 
@@ -2313,10 +2319,16 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           </div>
         )}
         
-        {/* Low Hours Warning Dialog */}
-        {showLowHoursDialog && console.log('🚨 DIALOG SHOULD BE VISIBLE NOW - showLowHoursDialog:', showLowHoursDialog)}
-        <AlertDialog open={showLowHoursDialog} onOpenChange={setShowLowHoursDialog}>
-          <AlertDialogContent className="max-w-md">
+        {/* Low Hours Warning Dialog - ADMIN AND STAFF */}
+        {console.log('🚨 DIALOG RENDER CHECK - showLowHoursDialog:', showLowHoursDialog, 'lowHoursTotal:', lowHoursTotal)}
+        <AlertDialog 
+          open={showLowHoursDialog} 
+          onOpenChange={(open) => {
+            console.log('🚨 DIALOG onOpenChange called with:', open);
+            setShowLowHoursDialog(open);
+          }}
+        >
+          <AlertDialogContent className="max-w-md z-[9999]" style={{zIndex: 9999}}>
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2 text-orange-600">
                 <Clock className="h-5 w-5" />
