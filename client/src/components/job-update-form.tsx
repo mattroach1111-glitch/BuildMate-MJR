@@ -88,12 +88,20 @@ export function JobUpdateForm({ onClose }: JobUpdateFormProps) {
     // For Mark and Will, filter jobs by their project manager name
     const userEmail = currentUser.email?.toLowerCase();
     
+    console.log('Current user email:', userEmail);
+    console.log('All jobs:', allJobs.map(j => ({ id: j.id, address: j.jobAddress, pm: j.projectName })));
+    
     if (userEmail?.includes('mark')) {
-      return allJobs.filter(job => job.projectName?.toLowerCase().includes('mark'));
+      const markJobs = allJobs.filter(job => job.projectName?.toLowerCase().includes('mark'));
+      console.log('Mark filtered jobs:', markJobs.map(j => ({ id: j.id, address: j.jobAddress, pm: j.projectName })));
+      return markJobs;
     } else if (userEmail?.includes('will')) {
-      return allJobs.filter(job => job.projectName?.toLowerCase().includes('will'));
+      const willJobs = allJobs.filter(job => job.projectName?.toLowerCase().includes('will'));
+      console.log('Will filtered jobs:', willJobs.map(j => ({ id: j.id, address: j.jobAddress, pm: j.projectName })));
+      return willJobs;
     }
     
+    console.log('Admin user - showing all jobs');
     // For other users (admins), show all jobs
     return allJobs;
   }, [allJobs, currentUser]);
