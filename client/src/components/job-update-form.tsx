@@ -23,7 +23,7 @@ const jobUpdateSchema = z.object({
     update: z.string().optional(),
   })),
   emailSubject: z.string().min(1, "Email subject is required"),
-  recipientEmail: z.string().email("Please enter a valid email address"),
+  recipientEmails: z.string().min(1, "At least one email address is required"),
   additionalNotes: z.string().optional(),
 });
 
@@ -49,7 +49,7 @@ export function JobUpdateForm({ onClose }: JobUpdateFormProps) {
     defaultValues: {
       updates: jobs?.map(job => ({ jobId: job.id, update: "" })) || [],
       emailSubject: `Job Updates - ${new Date().toLocaleDateString()}`,
-      recipientEmail: "",
+      recipientEmails: "",
       additionalNotes: "",
     },
   });
@@ -165,18 +165,21 @@ export function JobUpdateForm({ onClose }: JobUpdateFormProps) {
             />
             <FormField
               control={form.control}
-              name="recipientEmail"
+              name="recipientEmails"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Send To (Email)</FormLabel>
+                  <FormLabel>Send To (Email Addresses)</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="email"
-                      placeholder="Enter project manager's email address" 
+                    <Textarea 
+                      placeholder="Enter email addresses separated by commas (e.g., manager@company.com, client@client.com, owner@business.com)"
+                      className="min-h-[80px]"
                       {...field} 
-                      data-testid="input-recipient-email"
+                      data-testid="input-recipient-emails"
                     />
                   </FormControl>
+                  <p className="text-sm text-muted-foreground">
+                    Separate multiple email addresses with commas. Supports as many recipients as needed.
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}

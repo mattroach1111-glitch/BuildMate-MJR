@@ -1346,14 +1346,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Job Updates Email endpoint
   app.post("/api/job-updates/email", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const { updates, emailSubject, additionalNotes, recipientEmail } = req.body;
+      const { updates, emailSubject, additionalNotes, recipientEmails } = req.body;
       
       if (!updates || !Array.isArray(updates) || updates.length === 0) {
         return res.status(400).json({ message: "No job updates provided" });
       }
 
-      if (!recipientEmail || !recipientEmail.trim()) {
-        return res.status(400).json({ message: "Recipient email is required" });
+      if (!recipientEmails || !recipientEmails.trim()) {
+        return res.status(400).json({ message: "At least one recipient email is required" });
+      }
+
+      // Parse and validate email addresses
+      const emailList = recipientEmails
+        .split(',')
+        .map((email: string) => email.trim())
+        .filter((email: string) => email.length > 0);
+
+      if (emailList.length === 0) {
+        return res.status(400).json({ message: "No valid email addresses found" });
+      }
+
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const invalidEmails = emailList.filter((email: string) => !emailRegex.test(email));
+      
+      if (invalidEmails.length > 0) {
+        return res.status(400).json({ 
+          message: `Invalid email addresses: ${invalidEmails.join(', ')}` 
+        });
       }
 
       // Check if email is configured
@@ -1394,27 +1414,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       emailContent += `Generated on ${new Date().toLocaleString()}\nBuildFlow Pro - Construction Management System`;
 
-      // Send email
+      // Send emails to all recipients
       const { sendEmail } = await import('./services/emailService');
       const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'noreply@yourdomain.com';
-      const emailSent = await sendEmail({
-        to: recipientEmail,
-        from: fromEmail,
-        subject: emailSubject,
-        text: emailContent,
-        html: emailContent.replace(/\n/g, '<br>').replace(/─/g, '&mdash;')
-      });
+      
+      let successCount = 0;
+      let failedEmails: string[] = [];
+      
+      // Send email to each recipient
+      for (const email of emailList) {
+        try {
+          const emailSent = await sendEmail({
+            to: email,
+            from: fromEmail,
+            subject: emailSubject,
+            text: emailContent,
+            html: emailContent.replace(/\n/g, '<br>').replace(/─/g, '&mdash;')
+          });
+          
+          if (emailSent) {
+            successCount++;
+          } else {
+            failedEmails.push(email);
+          }
+        } catch (error) {
+          console.error(`Failed to send email to ${email}:`, error);
+          failedEmails.push(email);
+        }
+      }
 
-      if (emailSent) {
+      if (successCount > 0) {
+        const responseMessage = failedEmails.length > 0 
+          ? `Job updates sent to ${successCount} recipients. Failed to send to: ${failedEmails.join(', ')}`
+          : `Job updates sent successfully to all ${successCount} recipients`;
+          
         res.json({ 
-          message: "Job updates email sent successfully",
+          message: responseMessage,
           subject: emailSubject,
           updatesCount: updates.length,
           jobsUpdated: jobs.length,
-          sentTo: recipientEmail
+          successCount,
+          failedCount: failedEmails.length,
+          sentTo: emailList.filter(email => !failedEmails.includes(email)),
+          failedEmails
         });
       } else {
-        res.status(500).json({ message: "Failed to send email" });
+        res.status(500).json({ 
+          message: "Failed to send emails to any recipients",
+          failedEmails
+        });
       }
 
     } catch (error) {
