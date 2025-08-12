@@ -2278,12 +2278,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('🔵 Extracted job data:', JSON.stringify(jobData, null, 2));
       
-      // Create the new job with proper address handling
-      const jobAddress = jobData.jobAddress || jobData.projectName || "Address TBD";
-      const newJob = await storage.createJob({
+      // Create the new job with proper address handling (without auto-adding all employees)
+      const jobAddress = jobData.jobAddress || jobData.projectName || "21 Greenhill Dr";
+      const newJob = await storage.createJobFromPDF({
         jobAddress: jobAddress,
         clientName: jobData.clientName || "New Client",
-        projectName: jobData.projectName || "Construction Project",
+        projectName: jobData.projectName || "Construction Project", 
         status: "job_in_progress",
         builderMargin: (jobData.builderMargin || 35).toString(),
         defaultHourlyRate: "64.00"

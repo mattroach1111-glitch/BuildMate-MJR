@@ -140,6 +140,9 @@ export interface IStorage {
   softDeleteJob(id: string): Promise<void>;
   restoreJob(id: string): Promise<void>;
   
+  // PDF job creation (without auto-adding all employees)
+  createJobFromPDF(job: InsertJob): Promise<Job>;
+  
   // Notification operations
   getNotificationsForUser(userId: string): Promise<Notification[]>;
   createNotification(notification: InsertNotification): Promise<Notification>;
@@ -327,6 +330,12 @@ export class DatabaseStorage implements IStorage {
       invoiceDate: new Date().toISOString().split('T')[0], // Today's date
     });
     
+    return createdJob;
+  }
+
+  async createJobFromPDF(job: InsertJob): Promise<Job> {
+    // Create job without auto-adding all employees (for PDF import)
+    const [createdJob] = await db.insert(jobs).values(job).returning();
     return createdJob;
   }
 
