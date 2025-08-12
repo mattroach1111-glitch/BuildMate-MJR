@@ -1348,6 +1348,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { updates, emailSubject, additionalNotes, recipientEmails } = req.body;
       
+      console.log('Job update request body:', { 
+        hasUpdates: !!updates, 
+        updatesCount: updates?.length, 
+        hasSubject: !!emailSubject,
+        hasRecipientEmails: !!recipientEmails,
+        recipientEmailsValue: recipientEmails
+      });
+      
       if (!updates || !Array.isArray(updates) || updates.length === 0) {
         return res.status(400).json({ message: "No job updates provided" });
       }
