@@ -38,13 +38,18 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
 
   // Get upload URL mutation
   const getUploadUrlMutation = useMutation({
-    mutationFn: () => apiRequest("/api/documents/upload", "POST"),
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/documents/upload");
+      return await response.json();
+    },
   });
 
   // Process document mutation
   const processDocumentMutation = useMutation({
-    mutationFn: ({ documentURL, jobId }: { documentURL: string; jobId: string }) =>
-      apiRequest("/api/documents/process", "POST", { documentURL, jobId }),
+    mutationFn: async ({ documentURL, jobId }: { documentURL: string; jobId: string }) => {
+      const response = await apiRequest("POST", "/api/documents/process", { documentURL, jobId });
+      return await response.json();
+    },
     onSuccess: (data: any) => {
       setLastProcessedExpense(data.expenseData);
       toast({

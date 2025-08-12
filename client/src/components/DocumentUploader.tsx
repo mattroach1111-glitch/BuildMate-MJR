@@ -65,7 +65,7 @@ export function DocumentUploader({
       restrictions: {
         maxNumberOfFiles,
         maxFileSize,
-        allowedFileTypes: ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff'],
+        allowedFileTypes: ['image/*', 'application/pdf', '.pdf', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff'],
       },
       autoProceed: false,
     })
