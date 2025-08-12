@@ -8,6 +8,8 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
+- **August 12, 2025**: ✅ COMPLETED FUZZY EMPLOYEE MATCHING FOR PDF JOB CREATION - Added 80% fuzzy matching for employee names during PDF job creation process using fuzzball library. System now automatically matches similar names (e.g., "Matt" matches "Matt Roach" at 80+ similarity) instead of creating duplicate employees. Includes inline employee name editing capability in admin dashboard with edit buttons, save/cancel functionality, and update mutations. Resolves PDF job creation failures due to exact name matching requirements.
+
 - **August 12, 2025**: ✅ COMPLETED TOTAL HOURS DISPLAY IN JOB SHEETS - Added comprehensive labor hours summary to job sheets showing total hours worked across all staff members. Features include side-by-side display of total hours and total labor costs at bottom of labor section, separated by clean border line, and automatic calculation from all labor entries. Users can now quickly see both hour totals and cost totals when reviewing job sheets.
 
 - **August 12, 2025**: ✅ COMPLETED PDF JOB CREATION FROM DOCUMENTS - Successfully created complete "21 Greenhill Dr" job from PDF document with all authentic data including 5 labor entries (82 total hours, $5,248), 11 material items ($8,308.70), tip fees with automatic cartage calculation ($285), and consumables auto-calculation. System now supports comprehensive job creation from real construction documents with accurate cost tracking.
