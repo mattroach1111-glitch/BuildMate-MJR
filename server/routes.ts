@@ -1480,7 +1480,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           jobsUpdated: jobs.length,
           successCount,
           failedCount: failedEmails.length,
-          sentTo: emailList.filter(email => !failedEmails.includes(email)),
+          sentTo: emailList.filter((email: string) => !failedEmails.includes(email)),
           failedEmails
         });
       } else {
@@ -1862,7 +1862,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/job-files/upload-url", isAuthenticated, async (req: any, res) => {
     try {
       const objectStorageService = new ObjectStorageService();
-      const uploadURL = await objectStorageService.getJobFileUploadURL();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
       res.json({ uploadURL });
     } catch (error) {
       console.error("Error getting upload URL:", error);
@@ -1880,7 +1880,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const objectStorageService = new ObjectStorageService();
-      const normalizedPath = objectStorageService.normalizeJobFilePath(req.body.objectPath);
+      const normalizedPath = objectStorageService.normalizeObjectEntityPath(req.body.objectPath);
       
       const jobFile = await storage.createJobFile({
         ...validatedData,
@@ -1921,12 +1921,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const objectStorageService = new ObjectStorageService();
-      const objectFile = await objectStorageService.getJobFile(file.objectPath);
+      const objectFile = await objectStorageService.getObjectEntityFile(file.objectPath);
       
       // Set filename header for download
       res.setHeader('Content-Disposition', `attachment; filename="${file.originalName}"`);
       
-      await objectStorageService.downloadFile(objectFile, res);
+      await objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
       console.error("Error downloading file:", error);
       res.status(500).json({ message: "Failed to download file" });
@@ -2082,12 +2082,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case 'materials':
           addedExpense = await storage.createMaterial({
             jobId,
-            item: expenseData.description,
-            quantity: "1",
-            unitCost: expenseData.amount.toString(),
-            totalCost: expenseData.amount.toString(),
+            description: expenseData.description,
             supplier: expenseData.vendor,
-            notes: `Auto-extracted from document. Confidence: ${Math.round(expenseData.confidence * 100)}%`
+            amount: expenseData.amount.toString(),
+            invoiceDate: expenseData.date
           });
           break;
           
@@ -2095,9 +2093,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           addedExpense = await storage.createSubTrade({
             jobId,
             trade: expenseData.vendor,
-            description: expenseData.description,
+            contractor: expenseData.vendor,
             amount: expenseData.amount.toString(),
-            notes: `Auto-extracted from document. Confidence: ${Math.round(expenseData.confidence * 100)}%`
+            invoiceDate: expenseData.date
           });
           break;
           
@@ -2106,9 +2104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           addedExpense = await storage.createOtherCost({
             jobId,
             description: expenseData.description,
-            amount: expenseData.amount.toString(),
-            vendor: expenseData.vendor,
-            notes: `Auto-extracted from document. Confidence: ${Math.round(expenseData.confidence * 100)}%`
+            amount: expenseData.amount.toString()
           });
           break;
       }
@@ -2128,7 +2124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.status(500).json({ 
         error: "Failed to process document", 
-        details: error.message 
+        details: (error as Error).message 
       });
     }
   });
