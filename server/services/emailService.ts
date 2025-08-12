@@ -8,10 +8,10 @@ const createTransporter = (): Transporter | null => {
     return null;
   }
 
-  // Default to Titan email settings if not specified
-  const host = process.env.SMTP_HOST || 'smtp.titan.email';
-  const port = parseInt(process.env.SMTP_PORT || '465');
-  const secure = process.env.SMTP_SECURE === 'true' || port === 465;
+  // Use provided SMTP settings
+  const host = process.env.SMTP_HOST;
+  const port = parseInt(process.env.SMTP_PORT || '587');
+  const secure = process.env.SMTP_SECURE === 'true';
 
   return nodemailer.createTransport({
     host: host,
