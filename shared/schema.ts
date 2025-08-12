@@ -69,6 +69,16 @@ export const otherCosts = pgTable("other_costs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const tipFees = pgTable("tip_fees", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobId: varchar("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
+  description: varchar("description").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  cartageAmount: decimal("cartage_amount", { precision: 10, scale: 2 }).notNull(), // Automatic 20% of amount
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(), // amount + cartageAmount
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const laborEntries = pgTable("labor_entries", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   jobId: varchar("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
@@ -153,6 +163,7 @@ export const jobsRelations = relations(jobs, ({ many }) => ({
   materials: many(materials),
   subTrades: many(subTrades),
   otherCosts: many(otherCosts),
+  tipFees: many(tipFees),
   timesheetEntries: many(timesheetEntries),
   jobFiles: many(jobFiles),
 }));
@@ -185,6 +196,13 @@ export const subTradesRelations = relations(subTrades, ({ one }) => ({
 export const otherCostsRelations = relations(otherCosts, ({ one }) => ({
   job: one(jobs, {
     fields: [otherCosts.jobId],
+    references: [jobs.id],
+  }),
+}));
+
+export const tipFeesRelations = relations(tipFees, ({ one }) => ({
+  job: one(jobs, {
+    fields: [tipFees.jobId],
     references: [jobs.id],
   }),
 }));
@@ -264,6 +282,15 @@ export const insertSubTradeSchema = createInsertSchema(subTrades).omit({
   amount: z.string().or(z.number()).transform(val => String(val)),
 });
 
+export const insertTipFeeSchema = createInsertSchema(tipFees).omit({
+  id: true,
+  createdAt: true,
+  cartageAmount: true, // Auto-calculated
+  totalAmount: true,   // Auto-calculated
+}).extend({
+  amount: z.string().or(z.number()).transform(val => String(val)),
+});
+
 export const insertTimesheetEntrySchema = createInsertSchema(timesheetEntries).omit({
   id: true,
   createdAt: true,
@@ -296,6 +323,8 @@ export type SubTrade = typeof subTrades.$inferSelect;
 export type InsertSubTrade = z.infer<typeof insertSubTradeSchema>;
 export type OtherCost = typeof otherCosts.$inferSelect;
 export type InsertOtherCost = z.infer<typeof insertOtherCostSchema>;
+export type TipFee = typeof tipFees.$inferSelect;
+export type InsertTipFee = z.infer<typeof insertTipFeeSchema>;
 export type TimesheetEntry = typeof timesheetEntries.$inferSelect;
 export type InsertTimesheetEntry = z.infer<typeof insertTimesheetEntrySchema>;
 export type JobFile = typeof jobFiles.$inferSelect;

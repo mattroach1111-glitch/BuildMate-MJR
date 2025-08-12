@@ -17,6 +17,7 @@ import {
   insertMaterialSchema,
   insertSubTradeSchema,
   insertOtherCostSchema,
+  insertTipFeeSchema,
   insertTimesheetEntrySchema,
   insertJobFileSchema,
   insertNotificationSchema,
@@ -700,6 +701,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error adding consumables to existing jobs:", error);
       res.status(500).json({ error: "Failed to add consumables to existing jobs" });
+    }
+  });
+
+  // Tip fees routes
+  app.post("/api/jobs/:jobId/tipfees", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const validatedData = insertTipFeeSchema.parse({
+        ...req.body,
+        jobId: req.params.jobId,
+      });
+      const tipFee = await storage.createTipFee(validatedData);
+      res.status(201).json(tipFee);
+    } catch (error) {
+      console.error("Error creating tip fee:", error);
+      res.status(500).json({ message: "Failed to create tip fee" });
+    }
+  });
+
+  app.patch("/api/tipfees/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const validatedData = insertTipFeeSchema.partial().parse(req.body);
+      const tipFee = await storage.updateTipFee(req.params.id, validatedData);
+      res.json(tipFee);
+    } catch (error) {
+      console.error("Error updating tip fee:", error);
+      res.status(500).json({ message: "Failed to update tip fee" });
+    }
+  });
+
+  app.delete("/api/tipfees/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      await storage.deleteTipFee(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting tip fee:", error);
+      res.status(500).json({ message: "Failed to delete tip fee" });
     }
   });
 

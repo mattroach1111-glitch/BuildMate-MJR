@@ -14,7 +14,7 @@ import { generateJobPDF } from "@/lib/pdfGenerator";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { debounce } from "lodash";
 import { Upload, Download, Trash2, FileText, Clock, X, Edit } from "lucide-react";
-import type { Job, LaborEntry, Material, SubTrade, OtherCost, JobFile } from "@shared/schema";
+import type { Job, LaborEntry, Material, SubTrade, OtherCost, TipFee, JobFile } from "@shared/schema";
 
 interface JobSheetModalProps {
   jobId: string;
@@ -27,6 +27,7 @@ interface JobDetails extends Job {
   materials: Material[];
   subTrades: SubTrade[];
   otherCosts: OtherCost[];
+  tipFees: TipFee[];
 }
 
 export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalProps) {
@@ -48,13 +49,15 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const [newProjectManagerName, setNewProjectManagerName] = useState("");
   const [extraHours, setExtraHours] = useState<Record<string, string>>({});
   
-  // Editing states for materials, sub-trades, and other costs
+  // Editing states for materials, sub-trades, other costs, and tip fees
   const [editingMaterial, setEditingMaterial] = useState<string | null>(null);
   const [editingSubTrade, setEditingSubTrade] = useState<string | null>(null);
   const [editingOtherCost, setEditingOtherCost] = useState<string | null>(null);
+  const [editingTipFee, setEditingTipFee] = useState<string | null>(null);
   const [editMaterialForm, setEditMaterialForm] = useState<{description: string; supplier: string; amount: string; invoiceDate: string}>({description: "", supplier: "", amount: "", invoiceDate: ""});
   const [editSubTradeForm, setEditSubTradeForm] = useState<{trade: string; contractor: string; amount: string; invoiceDate: string}>({trade: "", contractor: "", amount: "", invoiceDate: ""});
   const [editOtherCostForm, setEditOtherCostForm] = useState<{description: string; amount: string}>({description: "", amount: ""});
+  const [editTipFeeForm, setEditTipFeeForm] = useState<{description: string; amount: string}>({description: "", amount: ""});
 
   const { data: jobDetails, isLoading } = useQuery<JobDetails>({
     queryKey: ["/api/jobs", jobId],
@@ -127,7 +130,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       description: material.description,
       supplier: material.supplier,
       amount: material.amount,
-      invoiceDate: material.invoiceDate,
+      invoiceDate: material.invoiceDate || "",
     });
   };
 
@@ -137,7 +140,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       trade: subTrade.trade,
       contractor: subTrade.contractor,
       amount: subTrade.amount,
-      invoiceDate: subTrade.invoiceDate,
+      invoiceDate: subTrade.invoiceDate || "",
     });
   };
 
@@ -146,6 +149,14 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     setEditOtherCostForm({
       description: otherCost.description,
       amount: otherCost.amount,
+    });
+  };
+
+  const startEditingTipFee = (tipFee: TipFee) => {
+    setEditingTipFee(tipFee.id);
+    setEditTipFeeForm({
+      description: tipFee.description,
+      amount: tipFee.amount,
     });
   };
 
@@ -172,6 +183,15 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       updateOtherCostMutation.mutate({
         id: editingOtherCost,
         ...editOtherCostForm,
+      });
+    }
+  };
+
+  const handleUpdateTipFee = () => {
+    if (editingTipFee) {
+      updateTipFeeMutation.mutate({
+        id: editingTipFee,
+        data: editTipFeeForm,
       });
     }
   };
@@ -402,6 +422,41 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     },
   });
 
+  const addTipFeeMutation = useMutation({
+    mutationFn: async (data: { description: string; amount: string }) => {
+      const response = await apiRequest("POST", `/api/jobs/${jobId}/tipfees`, {
+        description: data.description,
+        amount: parseFloat(data.amount),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
+      toast({
+        title: "Success",
+        description: "Tip fee added successfully (includes 20% cartage)",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add tip fee",
+        variant: "destructive",
+      });
+    },
+  });
+
   const addMaterialMutation = useMutation({
     mutationFn: async (data: { description: string; supplier: string; amount: string; invoiceDate: string }) => {
       const response = await apiRequest("POST", `/api/jobs/${jobId}/materials`, {
@@ -556,6 +611,31 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     },
   });
 
+  const updateTipFeeMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { description: string; amount: string } }) => {
+      const response = await apiRequest("PATCH", `/api/tipfees/${id}`, {
+        description: data.description,
+        amount: parseFloat(data.amount),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
+      setEditingTipFee(null);
+      toast({
+        title: "Success",
+        description: "Tip fee updated successfully (includes 20% cartage)",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update tip fee",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Delete mutations
   const deleteMaterialMutation = useMutation({
     mutationFn: async (materialId: string) => {
@@ -615,6 +695,27 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       toast({
         title: "Error",
         description: error.message || "Failed to delete other cost",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteTipFeeMutation = useMutation({
+    mutationFn: async (tipFeeId: string) => {
+      const response = await apiRequest("DELETE", `/api/tipfees/${tipFeeId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
+      toast({
+        title: "Success",
+        description: "Tip fee deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete tip fee",
         variant: "destructive",
       });
     },
@@ -693,16 +794,17 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   // Handle file upload
   const handleGetUploadParameters = async () => {
     const response = await apiRequest("/api/job-files/upload-url", "POST");
+    const data = await response.json();
     return {
       method: "PUT" as const,
-      url: response.uploadURL,
+      url: data.uploadURL,
     };
   };
 
   const handleFileUploadComplete = (result: any) => {
     if (result.successful && result.successful.length > 0) {
       result.successful.forEach((file: any) => {
-        const uploadURL = file.uploadURL;
+        const uploadURL = file.response?.uploadURL;
         uploadFileMutation.mutate({
           jobId,
           fileName: file.name,
@@ -748,7 +850,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   }, [jobDetails]);
 
   const calculateTotals = () => {
-    if (!jobDetails) return { laborTotal: 0, materialsTotal: 0, subTradesTotal: 0, otherCostsTotal: 0, subtotal: 0, marginAmount: 0, subtotalWithMargin: 0, gstAmount: 0, total: 0 };
+    if (!jobDetails) return { laborTotal: 0, materialsTotal: 0, subTradesTotal: 0, otherCostsTotal: 0, tipFeesTotal: 0, subtotal: 0, marginAmount: 0, subtotalWithMargin: 0, gstAmount: 0, total: 0 };
 
     const laborTotal = jobDetails.laborEntries.reduce((sum, entry) => {
       const currentRate = localLaborRates[entry.id] || entry.hourlyRate;
@@ -767,7 +869,11 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return sum + parseFloat(cost.amount);
     }, 0);
 
-    const subtotal = laborTotal + materialsTotal + subTradesTotal + otherCostsTotal;
+    const tipFeesTotal = jobDetails.tipFees?.reduce((sum, tipFee) => {
+      return sum + parseFloat(tipFee.totalAmount);
+    }, 0) || 0;
+
+    const subtotal = laborTotal + materialsTotal + subTradesTotal + otherCostsTotal + tipFeesTotal;
     const marginPercent = parseFloat(builderMargin) / 100;
     const marginAmount = subtotal * marginPercent;
     const subtotalWithMargin = subtotal + marginAmount;
@@ -781,6 +887,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       materialsTotal,
       subTradesTotal,
       otherCostsTotal,
+      tipFeesTotal,
       subtotal,
       marginAmount,
       subtotalWithMargin,
@@ -1763,6 +1870,144 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
               </CardContent>
             </Card>
 
+            {/* Tip Fees Section */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle data-testid="text-tip-fees-title">Tip Fees</CardTitle>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      const description = prompt("Enter tip fee description:");
+                      const amount = prompt("Enter tip fee amount (cartage 20% will be added automatically):");
+                      if (description && amount && !isNaN(parseFloat(amount))) {
+                        addTipFeeMutation.mutate({
+                          description: description.trim(),
+                          amount: parseFloat(amount).toString()
+                        });
+                      }
+                    }}
+                    data-testid="button-add-tip-fee"
+                  >
+                    <i className="fas fa-plus mr-1"></i>
+                    Add
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {jobDetails?.tipFees?.map((tipFee) => (
+                  <div key={tipFee.id} className="flex justify-between items-center p-2 border rounded">
+                    {editingTipFee === tipFee.id ? (
+                      <div className="flex w-full gap-2 items-center">
+                        <Input
+                          value={editTipFeeForm.description}
+                          onChange={(e) => setEditTipFeeForm(prev => ({ ...prev, description: e.target.value }))}
+                          className="text-sm flex-1"
+                          placeholder="Description"
+                          data-testid={`input-edit-tip-fee-description-${tipFee.id}`}
+                        />
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm">$</span>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={editTipFeeForm.amount}
+                            onChange={(e) => setEditTipFeeForm(prev => ({ ...prev, amount: e.target.value }))}
+                            className="text-sm w-24"
+                            placeholder="Base amount"
+                            data-testid={`input-edit-tip-fee-amount-${tipFee.id}`}
+                          />
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            onClick={handleUpdateTipFee}
+                            disabled={updateTipFeeMutation.isPending}
+                            className="h-7 px-2 text-xs"
+                            data-testid={`button-save-tip-fee-${tipFee.id}`}
+                          >
+                            Save
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingTipFee(null)}
+                            className="h-7 px-2 text-xs"
+                            data-testid={`button-cancel-tip-fee-${tipFee.id}`}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex flex-col">
+                          <span data-testid={`text-tip-fee-description-${tipFee.id}`}>{tipFee.description}</span>
+                          <div className="text-xs text-gray-500">
+                            Base: ${parseFloat(tipFee.amount).toFixed(2)} + 20% cartage: ${parseFloat(tipFee.cartageAmount).toFixed(2)}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold" data-testid={`text-tip-fee-total-${tipFee.id}`}>
+                            ${parseFloat(tipFee.totalAmount).toFixed(2)}
+                          </span>
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => startEditingTipFee(tipFee)}
+                              className="h-7 px-2 text-xs"
+                              data-testid={`button-edit-tip-fee-${tipFee.id}`}
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 px-2 text-xs text-red-600 hover:text-red-700"
+                                  data-testid={`button-delete-tip-fee-${tipFee.id}`}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Tip Fee</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete this tip fee entry? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteTipFeeMutation.mutate(tipFee.id)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+                {(!jobDetails?.tipFees || jobDetails.tipFees.length === 0) && (
+                  <p className="text-gray-500 text-center py-4">No tip fees added yet</p>
+                )}
+                <div className="text-right mt-4">
+                  <span className="text-lg font-semibold" data-testid="text-tip-fees-total">
+                    Tip Fees Total: ${totals.tipFeesTotal.toFixed(2)}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Timesheets Section */}
             <Card>
               <CardHeader>
@@ -1878,6 +2123,12 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                         ${totals.otherCostsTotal.toFixed(2)}
                       </span>
                     </div>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span className="text-gray-700">Tip Fees (inc. cartage):</span>
+                      <span className="font-semibold" data-testid="text-final-tip-fees-total">
+                        ${totals.tipFeesTotal.toFixed(2)}
+                      </span>
+                    </div>
                     <div className="flex justify-between items-center py-3 bg-gray-50 px-4 rounded">
                       <span className="font-semibold text-gray-800">Subtotal:</span>
                       <span className="font-bold text-lg" data-testid="text-subtotal">
@@ -1982,7 +2233,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                                   {file.originalName}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  {(file.fileSize / 1024 / 1024).toFixed(2)} MB • {new Date(file.uploadedAt).toLocaleDateString()}
+                                  {(file.fileSize / 1024 / 1024).toFixed(2)} MB • {new Date(file.createdAt || '').toLocaleDateString()}
                                 </p>
                               </div>
                             </div>

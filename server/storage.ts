@@ -6,6 +6,7 @@ import {
   materials,
   subTrades,
   otherCosts,
+  tipFees,
   timesheetEntries,
   jobFiles,
   notifications,
@@ -23,6 +24,8 @@ import {
   type InsertSubTrade,
   type OtherCost,
   type InsertOtherCost,
+  type TipFee,
+  type InsertTipFee,
   type TimesheetEntry,
   type InsertTimesheetEntry,
   type JobFile,
@@ -82,6 +85,12 @@ export interface IStorage {
   createOtherCost(otherCost: InsertOtherCost): Promise<OtherCost>;
   updateOtherCost(id: string, otherCost: Partial<InsertOtherCost>): Promise<OtherCost>;
   deleteOtherCost(id: string): Promise<void>;
+
+  // Tip fees operations
+  getTipFeesForJob(jobId: string): Promise<TipFee[]>;
+  createTipFee(tipFee: InsertTipFee): Promise<TipFee>;
+  updateTipFee(id: string, tipFee: Partial<InsertTipFee>): Promise<TipFee>;
+  deleteTipFee(id: string): Promise<void>;
   
   // Timesheet operations
   getTimesheetEntries(staffId: string): Promise<TimesheetEntry[]>;
@@ -643,6 +652,58 @@ export class DatabaseStorage implements IStorage {
 
   async deleteOtherCost(id: string): Promise<void> {
     await db.delete(otherCosts).where(eq(otherCosts.id, id));
+  }
+
+  // Tip fees operations
+  async getTipFeesForJob(jobId: string): Promise<TipFee[]> {
+    return await db
+      .select()
+      .from(tipFees)
+      .where(eq(tipFees.jobId, jobId));
+  }
+
+  async createTipFee(tipFee: InsertTipFee): Promise<TipFee> {
+    const amount = parseFloat(tipFee.amount);
+    const cartageAmount = amount * 0.20; // 20% cartage fee
+    const totalAmount = amount + cartageAmount;
+
+    const [createdTipFee] = await db
+      .insert(tipFees)
+      .values({
+        ...tipFee,
+        cartageAmount: cartageAmount.toFixed(2),
+        totalAmount: totalAmount.toFixed(2),
+      })
+      .returning();
+    return createdTipFee;
+  }
+
+  async updateTipFee(id: string, tipFee: Partial<InsertTipFee>): Promise<TipFee> {
+    let updateData: any = { ...tipFee };
+
+    // If amount is being updated, recalculate cartage and total
+    if (tipFee.amount) {
+      const amount = parseFloat(tipFee.amount);
+      const cartageAmount = amount * 0.20;
+      const totalAmount = amount + cartageAmount;
+      
+      updateData = {
+        ...updateData,
+        cartageAmount: cartageAmount.toFixed(2),
+        totalAmount: totalAmount.toFixed(2),
+      };
+    }
+
+    const [updatedTipFee] = await db
+      .update(tipFees)
+      .set(updateData)
+      .where(eq(tipFees.id, id))
+      .returning();
+    return updatedTipFee;
+  }
+
+  async deleteTipFee(id: string): Promise<void> {
+    await db.delete(tipFees).where(eq(tipFees.id, id));
   }
 
   // Helper function to calculate and update consumables
