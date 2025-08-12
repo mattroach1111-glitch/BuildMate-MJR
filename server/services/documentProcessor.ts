@@ -33,7 +33,12 @@ export class DocumentProcessor {
    */
   async analyzeExpenseDocument(base64Content: string, mimeType: string): Promise<ExtractedExpenseData> {
     try {
-      const mediaType = this.normalizeMediaType(mimeType);
+      // Check if this is a PDF - Anthropic cannot process PDFs directly
+      if (mimeType === 'application/pdf') {
+        throw new Error('PDF processing not yet implemented. Please upload images (JPG, PNG) for now.');
+      }
+      
+      const mediaType = this.normalizeMediaType(mimeType) as "image/jpeg" | "image/png" | "image/gif" | "image/webp";
       
       const response = await anthropic.messages.create({
         // "claude-sonnet-4-20250514"
@@ -73,7 +78,7 @@ Focus on the primary expense amount. If multiple items, use the total. Be conser
         }]
       });
 
-      const result = JSON.parse(response.content[0].text);
+      const result = JSON.parse((response.content[0] as any).text);
       
       // Validate and normalize the extracted data
       return {
@@ -86,7 +91,7 @@ Focus on the primary expense amount. If multiple items, use the total. Be conser
         rawText: result.rawText || ''
       };
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Document analysis error:', error);
       throw new Error(`Failed to analyze document: ${error.message}`);
     }

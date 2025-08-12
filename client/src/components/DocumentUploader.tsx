@@ -138,13 +138,48 @@ export function DocumentUploader({
   }, []);
 
   return (
-    <div className="relative">
+    <div 
+      className="relative"
+      onDragEnter={(e) => {
+        e.preventDefault();
+        setIsDragActive(true);
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+      }}
+      onDragLeave={(e) => {
+        e.preventDefault();
+        // Only hide if leaving the component area
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+          setIsDragActive(false);
+        }
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        setIsDragActive(false);
+        
+        // Handle file drop
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+          // Add files to Uppy and open modal
+          files.forEach(file => {
+            uppy.addFile({
+              source: 'drag-drop',
+              name: file.name,
+              type: file.type,
+              data: file,
+            });
+          });
+          setShowModal(true);
+        }
+      }}
+    >
       <Button 
         onClick={() => setShowModal(true)} 
         className={`
           ${buttonClassName} 
           ${isDragActive ? 'ring-2 ring-blue-500 ring-offset-2 bg-blue-50 border-blue-300' : ''}
-          transition-all duration-200
+          transition-all duration-200 w-full min-h-[60px]
         `}
       >
         {children}
@@ -163,7 +198,7 @@ export function DocumentUploader({
         open={showModal}
         onRequestClose={() => setShowModal(false)}
         proudlyDisplayPoweredByUppy={false}
-        note="Upload bills, invoices, and expense documents (PDF, JPG, PNG). Drag and drop files or click to browse. Maximum 25MB per file."
+        note="Upload bills, invoices, and expense documents (JPG, PNG recommended). PDF support coming soon. Drag and drop files or click to browse. Maximum 25MB per file."
         showProgressDetails={true}
         hideProgressAfterFinish={false}
       />
