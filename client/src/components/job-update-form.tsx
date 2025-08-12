@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,7 +13,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Mail, FileText, Send, Plus, Building2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Mail, FileText, Send, Plus, Building2, ChevronDown, Users, Clock } from "lucide-react";
 import type { Job } from "@shared/schema";
 
 // Schema for job update form
@@ -33,9 +35,39 @@ interface JobUpdateFormProps {
   onClose?: () => void;
 }
 
+// Local storage key for email suggestions
+const EMAIL_SUGGESTIONS_KEY = 'buildflow-email-suggestions';
+
+// Helper functions for email suggestions
+const getSavedEmailSuggestions = (): string[] => {
+  try {
+    const saved = localStorage.getItem(EMAIL_SUGGESTIONS_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveEmailSuggestions = (emails: string[]) => {
+  try {
+    localStorage.setItem(EMAIL_SUGGESTIONS_KEY, JSON.stringify(emails));
+  } catch {
+    // Ignore localStorage errors
+  }
+};
+
+const addEmailsToSuggestions = (newEmails: string[]) => {
+  const existing = getSavedEmailSuggestions();
+  const emailSet = new Set([...existing, ...newEmails]);
+  const updated = Array.from(emailSet).slice(0, 20); // Keep only 20 most recent
+  saveEmailSuggestions(updated);
+};
+
 export function JobUpdateForm({ onClose }: JobUpdateFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [emailSuggestions, setEmailSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Fetch jobs data
   const { data: jobs, isLoading: jobsLoading } = useQuery<Job[]>({
@@ -54,6 +86,11 @@ export function JobUpdateForm({ onClose }: JobUpdateFormProps) {
     },
   });
 
+  // Load email suggestions on component mount
+  useEffect(() => {
+    setEmailSuggestions(getSavedEmailSuggestions());
+  }, []);
+
   // Update form when jobs load
   React.useEffect(() => {
     if (jobs) {
@@ -66,10 +103,16 @@ export function JobUpdateForm({ onClose }: JobUpdateFormProps) {
     mutationFn: async (data: JobUpdateForm) => {
       return apiRequest("POST", "/api/job-updates/email", data);
     },
-    onSuccess: () => {
+    onSuccess: (response: any) => {
+      // Save successful email addresses to suggestions
+      if (response.sentTo && Array.isArray(response.sentTo)) {
+        addEmailsToSuggestions(response.sentTo);
+        setEmailSuggestions(getSavedEmailSuggestions());
+      }
+      
       toast({
         title: "Updates Sent",
-        description: "Job updates have been emailed successfully.",
+        description: response.message || "Job updates have been emailed successfully.",
       });
       form.reset();
       onClose?.();
@@ -168,7 +211,63 @@ export function JobUpdateForm({ onClose }: JobUpdateFormProps) {
               name="recipientEmails"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Send To (Email Addresses)</FormLabel>
+                  <FormLabel className="flex items-center justify-between">
+                    Send To (Email Addresses)
+                    {emailSuggestions.length > 0 && (
+                      <Popover open={showSuggestions} onOpenChange={setShowSuggestions}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            data-testid="button-email-suggestions"
+                          >
+                            <Users className="h-3 w-3 mr-1" />
+                            Recent Emails
+                            <ChevronDown className="h-3 w-3 ml-1" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 p-0" align="end">
+                          <Command>
+                            <CommandInput placeholder="Search email addresses..." />
+                            <CommandEmpty>No emails found.</CommandEmpty>
+                            <CommandGroup heading="Recent Email Addresses">
+                              {emailSuggestions.map((email, index) => (
+                                <CommandItem
+                                  key={index}
+                                  onSelect={() => {
+                                    const currentEmails = field.value || "";
+                                    const newValue = currentEmails 
+                                      ? `${currentEmails}, ${email}`
+                                      : email;
+                                    field.onChange(newValue);
+                                    setShowSuggestions(false);
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                                  {email}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                            <CommandGroup heading="Quick Actions">
+                              <CommandItem
+                                onSelect={() => {
+                                  const allEmails = emailSuggestions.join(", ");
+                                  field.onChange(allEmails);
+                                  setShowSuggestions(false);
+                                }}
+                                className="cursor-pointer text-primary"
+                              >
+                                <Users className="h-4 w-4 mr-2" />
+                                Add All Recent Emails
+                              </CommandItem>
+                            </CommandGroup>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  </FormLabel>
                   <FormControl>
                     <Textarea 
                       placeholder="Enter email addresses separated by commas (e.g., manager@company.com, client@client.com, owner@business.com)"
@@ -177,9 +276,16 @@ export function JobUpdateForm({ onClose }: JobUpdateFormProps) {
                       data-testid="input-recipient-emails"
                     />
                   </FormControl>
-                  <p className="text-sm text-muted-foreground">
-                    Separate multiple email addresses with commas. Supports as many recipients as needed.
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      Separate multiple email addresses with commas.
+                    </p>
+                    {emailSuggestions.length > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        {emailSuggestions.length} saved email{emailSuggestions.length !== 1 ? 's' : ''}
+                      </p>
+                    )}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
