@@ -35,6 +35,7 @@ export interface ExtractedExpenseData {
 }
 
 export interface ExtractedJobData {
+  jobId?: string;
   jobAddress: string;
   clientName: string;
   projectName: string;
@@ -88,9 +89,10 @@ export class DocumentProcessor {
         system: `You are analyzing complete job cost sheets for construction projects to extract all job data for creating new project records.
 
 Extract ALL information visible in the document and return a JSON object with:
-- jobAddress: Property/project address (if visible)
-- clientName: Client name (if visible, otherwise use address or "New Client")
-- projectName: Project name/description (if visible, otherwise use address)
+- jobId: Project identifier or address (check document name/title, often the main header)
+- jobAddress: Property/project address (if visible, could be in title like "21 Greenhill Dr")
+- clientName: Client name (if visible, otherwise use "New Client")
+- projectName: Project name/description (if visible, otherwise use address or document title)
 - laborEntries: Array of all labor entries with:
   * employeeName: Staff member name
   * hours: Hours worked (as number)
@@ -138,7 +140,8 @@ CRITICAL: Extract ALL individual items, not just totals. For materials with mult
       const result = JSON.parse(responseText);
       
       return {
-        jobAddress: result.jobAddress || 'New Project Address',
+        jobId: result.jobId || result.jobAddress || `Job-${Date.now()}`,
+        jobAddress: result.jobAddress || result.jobId || 'New Project Address',
         clientName: result.clientName || result.jobAddress || 'New Client',
         projectName: result.projectName || result.jobAddress || 'New Project',
         laborEntries: (result.laborEntries || []).map((entry: any) => ({
