@@ -8,6 +8,7 @@ import {
   otherCosts,
   timesheetEntries,
   jobFiles,
+  notifications,
   type User,
   type UpsertUser,
   type Employee,
@@ -26,6 +27,8 @@ import {
   type InsertTimesheetEntry,
   type JobFile,
   type InsertJobFile,
+  type Notification,
+  type InsertNotification,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sum, ne, gte, lte, sql, isNull, or, ilike, inArray } from "drizzle-orm";
@@ -116,6 +119,13 @@ export interface IStorage {
   getDeletedJobs(): Promise<Job[]>;
   softDeleteJob(id: string): Promise<void>;
   restoreJob(id: string): Promise<void>;
+  
+  // Notification operations
+  getNotificationsForUser(userId: string): Promise<Notification[]>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  markNotificationAsRead(id: string): Promise<void>;
+  dismissNotification(id: string): Promise<void>;
+  getActiveNotifications(userId: string): Promise<Notification[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1169,6 +1179,53 @@ export class DatabaseStorage implements IStorage {
     
     // No approval status change - entries stay as approved=false until admin approval
     // No labor hour updates - these happen only when admin approves
+  }
+
+  // Notification operations
+  async getNotificationsForUser(userId: string): Promise<Notification[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.scheduledFor));
+  }
+
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const [newNotification] = await db
+      .insert(notifications)
+      .values(notification)
+      .returning();
+    return newNotification;
+  }
+
+  async markNotificationAsRead(id: string): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ read: true })
+      .where(eq(notifications.id, id));
+  }
+
+  async dismissNotification(id: string): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ dismissedAt: new Date() })
+      .where(eq(notifications.id, id));
+  }
+
+  async getActiveNotifications(userId: string): Promise<Notification[]> {
+    const now = new Date();
+    return await db
+      .select()
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.userId, userId),
+          lte(notifications.scheduledFor, now),
+          eq(notifications.read, false),
+          isNull(notifications.dismissedAt)
+        )
+      )
+      .orderBy(desc(notifications.scheduledFor));
   }
 }
 

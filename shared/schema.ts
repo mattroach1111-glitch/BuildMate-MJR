@@ -125,10 +125,23 @@ export const jobFiles = pgTable("job_files", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  type: varchar("type", { length: 50 }).notNull(), // 'job_update_reminder', 'timesheet_reminder', etc.
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  read: boolean("read").notNull().default(false),
+  scheduledFor: timestamp("scheduled_for").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  dismissedAt: timestamp("dismissed_at"),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   laborEntries: many(laborEntries),
   timesheetEntries: many(timesheetEntries),
+  notifications: many(notifications),
 }));
 
 export const employeesRelations = relations(employees, ({ many }) => ({
@@ -198,6 +211,13 @@ export const jobFilesRelations = relations(jobFiles, ({ one }) => ({
   }),
 }));
 
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertJobSchema = createInsertSchema(jobs).omit({
   id: true,
@@ -256,6 +276,11 @@ export const insertJobFileSchema = createInsertSchema(jobFiles).omit({
   createdAt: true,
 });
 
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -275,3 +300,5 @@ export type TimesheetEntry = typeof timesheetEntries.$inferSelect;
 export type InsertTimesheetEntry = z.infer<typeof insertTimesheetEntrySchema>;
 export type JobFile = typeof jobFiles.$inferSelect;
 export type InsertJobFile = z.infer<typeof insertJobFileSchema>;
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
