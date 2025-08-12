@@ -153,7 +153,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   // Delete job mutation
   const deleteJobMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest(`/api/jobs/${jobId}`, "DELETE");
+      return await apiRequest("DELETE", `/api/jobs/${jobId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
