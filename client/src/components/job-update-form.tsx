@@ -69,18 +69,55 @@ export function JobUpdateForm({ onClose }: JobUpdateFormProps) {
   const [emailSuggestions, setEmailSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
+  // Fetch current user data
+  const { data: currentUser } = useQuery<{ id: string; email: string }>({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+  });
+
   // Fetch jobs data
-  const { data: jobs, isLoading: jobsLoading } = useQuery<Job[]>({
+  const { data: allJobs, isLoading: jobsLoading } = useQuery<Job[]>({
     queryKey: ["/api/jobs"],
     retry: false,
   });
+
+  // Filter jobs by current user's project manager role
+  const jobs = React.useMemo(() => {
+    if (!allJobs || !currentUser) return [];
+    
+    // For Mark and Will, filter jobs by their project manager name
+    const userEmail = currentUser.email?.toLowerCase();
+    
+    if (userEmail?.includes('mark')) {
+      return allJobs.filter(job => job.projectName?.toLowerCase().includes('mark'));
+    } else if (userEmail?.includes('will')) {
+      return allJobs.filter(job => job.projectName?.toLowerCase().includes('will'));
+    }
+    
+    // For other users (admins), show all jobs
+    return allJobs;
+  }, [allJobs, currentUser]);
+
+  // Generate project manager specific email subject
+  const getEmailSubject = React.useCallback(() => {
+    const userEmail = currentUser?.email?.toLowerCase();
+    let pmName = "";
+    
+    if (userEmail?.includes('mark')) {
+      pmName = "Mark's ";
+    } else if (userEmail?.includes('will')) {
+      pmName = "Will's ";
+    }
+    
+    return `${pmName}Job Updates - ${new Date().toLocaleDateString()}`;
+  }, [currentUser]);
 
   // Form setup
   const form = useForm<JobUpdateForm>({
     resolver: zodResolver(jobUpdateSchema),
     defaultValues: {
       updates: jobs?.map(job => ({ jobId: job.id, update: "" })) || [],
-      emailSubject: `Job Updates - ${new Date().toLocaleDateString()}`,
+      emailSubject: getEmailSubject(),
       recipientEmails: "",
       additionalNotes: "",
     },
@@ -91,12 +128,15 @@ export function JobUpdateForm({ onClose }: JobUpdateFormProps) {
     setEmailSuggestions(getSavedEmailSuggestions());
   }, []);
 
-  // Update form when jobs load
+  // Update form when jobs load or user changes
   React.useEffect(() => {
     if (jobs) {
       form.setValue("updates", jobs.map(job => ({ jobId: job.id, update: "" })));
     }
-  }, [jobs, form]);
+    if (currentUser) {
+      form.setValue("emailSubject", getEmailSubject());
+    }
+  }, [jobs, currentUser, form, getEmailSubject]);
 
   // Submit job updates via email
   const submitUpdatesMutation = useMutation({
@@ -303,9 +343,17 @@ export function JobUpdateForm({ onClose }: JobUpdateFormProps) {
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               Job Updates
+              {currentUser?.email?.toLowerCase().includes('mark') && (
+                <Badge variant="secondary" className="text-xs">Mark's Jobs</Badge>
+              )}
+              {currentUser?.email?.toLowerCase().includes('will') && (
+                <Badge variant="secondary" className="text-xs">Will's Jobs</Badge>
+              )}
             </CardTitle>
             <CardDescription>
               Add updates for each job. Only jobs with updates will be included in the email.
+              {(currentUser?.email?.toLowerCase().includes('mark') || currentUser?.email?.toLowerCase().includes('will')) && 
+                " Showing only your assigned jobs."}
             </CardDescription>
           </CardHeader>
           <CardContent>
