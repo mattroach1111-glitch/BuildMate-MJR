@@ -1416,12 +1416,17 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                       
                       if (totalHours < 76) {
                         console.log('🚨 SHOWING LOW HOURS WARNING');
+                        console.log('🚨 BEFORE setState - showLowHoursDialog:', showLowHoursDialog);
                         setLowHoursTotal(totalHours);
                         setPendingSubmission(() => () => {
                           console.log('🚨 EXECUTING PENDING SUBMISSION');
                           confirmTimesheetMutation.mutate();
                         });
                         setShowLowHoursDialog(true);
+                        console.log('🚨 AFTER setState - dialog should be true');
+                        setTimeout(() => {
+                          console.log('🚨 TIMEOUT CHECK - showLowHoursDialog state:', showLowHoursDialog);
+                        }, 100);
                         return;
                       }
 
@@ -2310,6 +2315,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         {/* Low Hours Warning Dialog - ADMIN AND STAFF */}
         {(() => {
           console.log('🚨 DIALOG RENDER CHECK - showLowHoursDialog:', showLowHoursDialog, 'lowHoursTotal:', lowHoursTotal);
+          console.log('🚨 CONDITIONAL RENDER CHECK - will render dialog?', !!showLowHoursDialog);
           return null;
         })()}
         {showLowHoursDialog && (
