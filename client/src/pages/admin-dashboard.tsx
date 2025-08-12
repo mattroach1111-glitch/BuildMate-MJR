@@ -21,8 +21,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { insertJobSchema, insertEmployeeSchema, insertTimesheetEntrySchema } from "@shared/schema";
 import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
+import { JobProgressVisualization } from "@/components/JobProgressVisualization";
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw, Grid3X3, List, Settings, UserPlus, Download, Edit } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw, Grid3X3, List, Settings, UserPlus, Download, Edit, BarChart3 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
@@ -69,6 +70,7 @@ export default function AdminDashboard() {
     skipTour 
   } = useOnboarding();
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
+  const [selectedJobForProgress, setSelectedJobForProgress] = useState<string | null>(null);
   const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
   const [isCreateEmployeeOpen, setIsCreateEmployeeOpen] = useState(false);
   const [isCreateTimesheetOpen, setIsCreateTimesheetOpen] = useState(false);
@@ -1810,6 +1812,21 @@ export default function AdminDashboard() {
                                 <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
                                 <div className="flex items-center gap-2 shrink-0">
                                   <div onClick={(e) => e.stopPropagation()}>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 w-7 p-0"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedJobForProgress(job.id);
+                                      }}
+                                      data-testid={`progress-${job.id}`}
+                                      title="View Progress"
+                                    >
+                                      <BarChart3 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                  <div onClick={(e) => e.stopPropagation()}>
                                     <Select 
                                       value={job.status} 
                                       onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
@@ -1885,6 +1902,21 @@ export default function AdminDashboard() {
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-3 shrink-0">
+                                  <div onClick={(e) => e.stopPropagation()}>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 w-7 p-0"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedJobForProgress(job.id);
+                                      }}
+                                      data-testid={`progress-${job.id}`}
+                                      title="View Progress"
+                                    >
+                                      <BarChart3 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
                                   <div onClick={(e) => e.stopPropagation()}>
                                     <Select 
                                       value={job.status} 
@@ -3341,6 +3373,13 @@ export default function AdminDashboard() {
             onClose={() => setSelectedJob(null)}
           />
         )}
+
+        {/* Job Progress Visualization Modal */}
+        <JobProgressVisualization
+          jobId={selectedJobForProgress || ''}
+          isOpen={!!selectedJobForProgress}
+          onClose={() => setSelectedJobForProgress(null)}
+        />
 
         {/* Edit Custom Address Dialog */}
         <Dialog open={showEditAddressDialog} onOpenChange={setShowEditAddressDialog}>
