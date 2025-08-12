@@ -33,6 +33,7 @@ type JobUpdateForm = z.infer<typeof jobUpdateSchema>;
 
 interface JobUpdateFormProps {
   onClose?: () => void;
+  projectManager?: string; // "Mark" or "Will" to filter jobs
 }
 
 // Local storage key for email suggestions
@@ -63,7 +64,7 @@ const addEmailsToSuggestions = (newEmails: string[]) => {
   saveEmailSuggestions(updated);
 };
 
-export function JobUpdateForm({ onClose }: JobUpdateFormProps) {
+export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailSuggestions, setEmailSuggestions] = useState<string[]>([]);
@@ -81,44 +82,31 @@ export function JobUpdateForm({ onClose }: JobUpdateFormProps) {
     retry: false,
   });
 
-  // Filter jobs by current user's project manager role
+  // Filter jobs by project manager
   const jobs = React.useMemo(() => {
-    if (!allJobs || !currentUser) return [];
+    if (!allJobs) return [];
     
-    // For Mark and Will, filter jobs by their project manager name
-    const userEmail = currentUser.email?.toLowerCase();
-    
-    console.log('Current user email:', userEmail);
-    console.log('All jobs:', allJobs.map(j => ({ id: j.id, address: j.jobAddress, pm: j.projectName })));
-    
-    if (userEmail?.includes('mark')) {
-      const markJobs = allJobs.filter(job => job.projectName?.toLowerCase().includes('mark'));
-      console.log('Mark filtered jobs:', markJobs.map(j => ({ id: j.id, address: j.jobAddress, pm: j.projectName })));
-      return markJobs;
-    } else if (userEmail?.includes('will')) {
-      const willJobs = allJobs.filter(job => job.projectName?.toLowerCase().includes('will'));
-      console.log('Will filtered jobs:', willJobs.map(j => ({ id: j.id, address: j.jobAddress, pm: j.projectName })));
-      return willJobs;
+    // If projectManager is specified (from folder context), filter by that
+    if (projectManager) {
+      const filteredJobs = allJobs.filter(job => 
+        job.projectName?.toLowerCase().includes(projectManager.toLowerCase())
+      );
+      return filteredJobs;
     }
-    
-    console.log('Admin user - showing all jobs');
-    // For other users (admins), show all jobs
+    // For general use, show all jobs
     return allJobs;
-  }, [allJobs, currentUser]);
+  }, [allJobs, projectManager]);
 
   // Generate project manager specific email subject
   const getEmailSubject = React.useCallback(() => {
-    const userEmail = currentUser?.email?.toLowerCase();
     let pmName = "";
     
-    if (userEmail?.includes('mark')) {
-      pmName = "Mark's ";
-    } else if (userEmail?.includes('will')) {
-      pmName = "Will's ";
+    if (projectManager) {
+      pmName = `${projectManager}'s `;
     }
     
     return `${pmName}Job Updates - ${new Date().toLocaleDateString()}`;
-  }, [currentUser]);
+  }, [projectManager]);
 
   // Form setup
   const form = useForm<JobUpdateForm>({
@@ -136,15 +124,13 @@ export function JobUpdateForm({ onClose }: JobUpdateFormProps) {
     setEmailSuggestions(getSavedEmailSuggestions());
   }, []);
 
-  // Update form when jobs load or user changes
+  // Update form when jobs load or project manager changes
   React.useEffect(() => {
     if (jobs) {
       form.setValue("updates", jobs.map(job => ({ jobId: job.id, update: "" })));
     }
-    if (currentUser) {
-      form.setValue("emailSubject", getEmailSubject());
-    }
-  }, [jobs, currentUser, form, getEmailSubject]);
+    form.setValue("emailSubject", getEmailSubject());
+  }, [jobs, form, getEmailSubject]);
 
   // Submit job updates via email
   const submitUpdatesMutation = useMutation({
@@ -351,17 +337,13 @@ export function JobUpdateForm({ onClose }: JobUpdateFormProps) {
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               Job Updates
-              {currentUser?.email?.toLowerCase().includes('mark') && (
-                <Badge variant="secondary" className="text-xs">Mark's Jobs</Badge>
-              )}
-              {currentUser?.email?.toLowerCase().includes('will') && (
-                <Badge variant="secondary" className="text-xs">Will's Jobs</Badge>
+              {projectManager && (
+                <Badge variant="secondary" className="text-xs">{projectManager}'s Jobs</Badge>
               )}
             </CardTitle>
             <CardDescription>
               Add updates for each job. Only jobs with updates will be included in the email.
-              {(currentUser?.email?.toLowerCase().includes('mark') || currentUser?.email?.toLowerCase().includes('will')) && 
-                " Showing only your assigned jobs."}
+              {projectManager && ` Showing only ${projectManager}'s assigned jobs.`}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -474,7 +456,11 @@ export function JobUpdateForm({ onClose }: JobUpdateFormProps) {
 }
 
 // Dialog wrapper component
-export function JobUpdateDialog() {
+export interface JobUpdateDialogProps {
+  projectManager?: string; // "Mark" or "Will" to filter jobs by PM
+}
+
+function JobUpdateDialog({ projectManager }: JobUpdateDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -486,10 +472,15 @@ export function JobUpdateDialog() {
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Send Job Updates Email</DialogTitle>
+          <DialogTitle>
+            Send Job Updates Email
+            {projectManager && ` - ${projectManager}'s Jobs`}
+          </DialogTitle>
         </DialogHeader>
-        <JobUpdateForm onClose={() => setIsOpen(false)} />
+        <JobUpdateForm onClose={() => setIsOpen(false)} projectManager={projectManager} />
       </DialogContent>
     </Dialog>
   );
 }
+
+export default JobUpdateDialog;

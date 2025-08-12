@@ -34,7 +34,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { UserManagement } from "@/components/user-management";
 import { PendingUsers } from "@/components/pending-users";
 import { generateJobListPDF } from "@/lib/pdfGenerator";
-import { JobUpdateDialog } from "@/components/job-update-form";
+import JobUpdateDialog from "@/components/job-update-form";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -1971,7 +1971,7 @@ export default function AdminDashboard() {
                           >
                             <Download className="h-4 w-4" />
                           </Button>
-                          <JobUpdateDialog />
+                          <JobUpdateDialog projectManager={groupName} />
                         </div>
                       )}
                       
