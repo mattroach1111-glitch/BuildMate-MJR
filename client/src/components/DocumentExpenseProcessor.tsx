@@ -418,7 +418,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
         // Save the uploaded file as a job file attachment
         if (jobResponse.job?.id && file.uploadURL) {
           try {
-            await apiRequest("/api/job-files", "POST", {
+            await apiRequest("POST", "/api/job-files", {
               jobId: jobResponse.job.id,
               fileName: file.name || "document.pdf",
               originalName: file.name || "document.pdf",

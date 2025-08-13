@@ -2600,19 +2600,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Calculate material totals for consumables (6% of materials)
+      // Calculate material totals (no auto-consumables since AI already extracts them)
       const materialTotal = jobData.materials.reduce((sum: number, mat: any) => sum + (mat.quantity * mat.rate), 0);
-      const consumablesAmount = materialTotal * 0.06;
-      
-      if (consumablesAmount > 0) {
-        await storage.createMaterial({
-          jobId: newJob.id,
-          description: "Consumables",
-          supplier: "Auto-calculated",
-          amount: consumablesAmount.toFixed(2),
-          invoiceDate: new Date().toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit' })
-        });
-      }
 
       res.json({
         success: true,
@@ -2624,8 +2613,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           tipFees: jobData.tipFees?.length || 0,
           otherCosts: jobData.otherCosts?.length || 0,
           totalLaborHours: jobData.laborEntries.reduce((sum: number, entry: any) => sum + entry.hours, 0),
-          materialTotal,
-          consumablesAmount: consumablesAmount.toFixed(2)
+          materialTotal
         },
         confidence: jobData.confidence,
         message: `Complete job created successfully from cost sheet with ${Math.round(jobData.confidence * 100)}% confidence`
