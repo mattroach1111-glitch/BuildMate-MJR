@@ -254,7 +254,7 @@ export function EmailProcessingReview() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-500">Loading pending documents...</p>
+          <p className="text-sm text-muted-foreground">Loading...</p>
         </CardContent>
       </Card>
     );
@@ -270,7 +270,7 @@ export function EmailProcessingReview() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-500">No documents pending review.</p>
+          <p className="text-sm text-muted-foreground">All clear</p>
         </CardContent>
       </Card>
     );
