@@ -425,7 +425,9 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
 
   // Add compact attached files section if any
   if (attachedFiles && attachedFiles.length > 0) {
-    checkPageBreak(30);
+    // Force new page for attachments
+    doc.addPage();
+    yPos = 20;
     
     // Attachments header
     doc.setFontSize(12);
@@ -756,6 +758,48 @@ export async function generateJobPDFBase64(job: JobWithRelations, attachedFiles?
   
   // Reset color
   doc.setTextColor(0, 0, 0);
+
+  // Add compact attached files section if any
+  if (attachedFiles && attachedFiles.length > 0) {
+    // Force new page for attachments
+    doc.addPage();
+    yPos = 20;
+    
+    // Attachments header
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ATTACHED DOCUMENTS', 20, yPos);
+    yPos += 12;
+    
+    // List of attached files with better readability
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    attachedFiles.forEach((file, index) => {
+      checkPageBreak(20);
+      
+      if (file.googleDriveLink) {
+        // Google Drive file - larger, more readable clickable link
+        doc.setTextColor(0, 100, 200); // Darker blue for better readability
+        const linkText = `• ${file.originalName}`;
+        doc.text(linkText, 25, yPos);
+        doc.link(25, yPos - 4, doc.getTextWidth(linkText), 10, { url: file.googleDriveLink });
+        doc.setTextColor(100, 100, 100);
+        doc.text('(Click to open in Google Drive)', 25, yPos + 8);
+        doc.setTextColor(0, 0, 0);
+        yPos += 18;
+      } else {
+        // Internal storage file - show as available internally
+        doc.setTextColor(80, 80, 80);
+        doc.text(`• ${file.originalName}`, 25, yPos);
+        doc.setTextColor(100, 100, 100);
+        doc.text('(Available in system)', 25, yPos + 8);
+        doc.setTextColor(0, 0, 0);
+        yPos += 18;
+      }
+    });
+    
+    yPos += 10; // Add some space after attachments
+  }
 
   // Return PDF as base64 string instead of saving
   return doc.output('datauristring').split(',')[1]; // Remove data:application/pdf;filename=generated.pdf;base64, prefix
