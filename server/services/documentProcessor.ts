@@ -134,13 +134,14 @@ export class DocumentProcessor {
     try {
       console.log(`🤖 Analyzing complete job sheet: ${documentURL}`);
 
-      // Fetch the document from object storage
-      const response = await fetch(documentURL);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch document: ${response.statusText}`);
-      }
-
-      const documentBuffer = await response.arrayBuffer();
+      // Fetch the document from object storage using the service
+      const { ObjectStorageService } = await import('../objectStorage');
+      const objectStorageService = new ObjectStorageService();
+      
+      const normalizedPath = objectStorageService.normalizeObjectEntityPath(documentURL);
+      const objectFile = await objectStorageService.getObjectEntityFile(normalizedPath);
+      
+      const [documentBuffer] = await objectFile.download();
       let imageData: string;
       let mediaType = contentType;
 
@@ -237,6 +238,127 @@ export class DocumentProcessor {
 
     } catch (error) {
       console.error('Error analyzing job sheet with AI:', error);
+      throw error;
+    }
+  }
+
+  async analyzeExpenseDocument(documentURL: string, contentType: string = 'application/pdf') {
+    try {
+      console.log(`🤖 Analyzing expense document: ${documentURL}`);
+
+      // Fetch the document from object storage using the service
+      const { ObjectStorageService } = await import('../objectStorage');
+      const objectStorageService = new ObjectStorageService();
+      
+      const normalizedPath = objectStorageService.normalizeObjectEntityPath(documentURL);
+      const objectFile = await objectStorageService.getObjectEntityFile(normalizedPath);
+      
+      const [documentBuffer] = await objectFile.download();
+      let imageData: string;
+      let mediaType = contentType;
+
+      // Convert PDF to image if needed
+      if (contentType === 'application/pdf') {
+        try {
+          const { convertPdfToImage } = await import('../utils/pdfConverter');
+          const imageBuffer = await convertPdfToImage(documentBuffer);
+          imageData = imageBuffer.toString('base64');
+          mediaType = 'image/jpeg';
+          console.log(`📄 Converted PDF to image for AI analysis`);
+        } catch (pdfError) {
+          console.error('PDF conversion error:', pdfError);
+          throw new Error('Failed to convert PDF for processing');
+        }
+      } else {
+        imageData = documentBuffer.toString('base64');
+      }
+
+      const prompt = `
+        Analyze this document image and extract expense/invoice information.
+        
+        Return a JSON object with these fields:
+        - vendor: The company/vendor name
+        - amount: The total amount as a number (extract from any currency format)
+        - description: Brief description of the goods/services
+        - date: Invoice/document date in YYYY-MM-DD format
+        - category: One of: "materials", "sub_trades", "other_costs", "tip_fees"
+        - confidence: Your confidence level (0.0 to 1.0)
+        
+        For category classification:
+        - "materials": Building supplies, hardware, lumber, concrete, etc.
+        - "sub_trades": Subcontractor services, electrician, plumber, etc.
+        - "other_costs": General expenses, equipment rental, permits, etc.
+        - "tip_fees": Waste disposal, dump fees, rubbish removal
+        
+        If you cannot extract clear information, set confidence to 0.0.
+        Always return valid JSON.
+      `;
+
+      // Ensure we have a valid media type
+      if (!['image/jpeg', 'image/png', 'image/jpg'].includes(mediaType)) {
+        throw new Error(`Unsupported image format: ${mediaType}`);
+      }
+
+      // Normalize media type
+      const normalizedMediaType = mediaType === 'image/jpg' ? 'image/jpeg' : mediaType;
+
+      console.log(`🖼️ Sending ${normalizedMediaType} image to AI for expense analysis`);
+
+      const response = await this.anthropic.messages.create({
+        model: DEFAULT_MODEL_STR,
+        max_tokens: 1024,
+        messages: [{
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: prompt
+            },
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: normalizedMediaType as "image/jpeg" | "image/png",
+                data: imageData
+              }
+            }
+          ]
+        }]
+      });
+
+      const aiResponse = response.content[0].text;
+      console.log(`🤖 AI Response for expense:`, aiResponse);
+
+      let extractedData;
+      try {
+        extractedData = JSON.parse(aiResponse);
+      } catch (parseError) {
+        console.error('Failed to parse AI response as JSON:', parseError);
+        // Try to extract JSON from the response if it's wrapped in markdown or other text
+        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            extractedData = JSON.parse(jsonMatch[0]);
+          } catch (secondParseError) {
+            throw new Error('AI response was not valid JSON');
+          }
+        } else {
+          throw new Error('AI response was not valid JSON');
+        }
+      }
+
+      // Validate and normalize the extracted data
+      return {
+        vendor: extractedData.vendor || 'Unknown Vendor',
+        amount: parseFloat(extractedData.amount) || 0,
+        description: extractedData.description || 'Unknown Description',
+        date: extractedData.date || new Date().toISOString().split('T')[0],
+        category: extractedData.category || 'other_costs',
+        confidence: extractedData.confidence || 0.5
+      };
+
+    } catch (error) {
+      console.error('Error analyzing expense document with AI:', error);
       throw error;
     }
   }
