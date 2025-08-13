@@ -2323,7 +2323,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Add materials
+      // Add materials (only individual supply items)
       let materialsCreated = 0;
       for (const material of jobData.materials) {
         if (material.amount > 0) {
@@ -2335,6 +2335,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             invoiceDate: material.date
           });
           materialsCreated++;
+        }
+      }
+
+      // Add subtrades (trade services)
+      let subTradesCreated = 0;
+      if (jobData.subTrades) {
+        for (const subTrade of jobData.subTrades) {
+          if (subTrade.amount > 0) {
+            await storage.createSubTrade({
+              jobId: newJob.id,
+              trade: subTrade.description,
+              contractor: subTrade.supplier || "Trade Service",
+              amount: subTrade.amount.toString()
+            });
+            subTradesCreated++;
+          }
         }
       }
 
@@ -2384,6 +2400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         summary: {
           laborEntries: laborEntriesCreated,
           materials: materialsCreated,
+          subTrades: subTradesCreated,
           tipFees: jobData.tipFees?.length || 0,
           otherCosts: jobData.otherCosts?.length || 0,
           totalLaborHours: jobData.laborEntries.reduce((sum, entry) => sum + entry.hours, 0),

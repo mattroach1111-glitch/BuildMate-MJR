@@ -50,6 +50,11 @@ export interface ExtractedJobData {
     supplier: string;
     date: string;
   }>;
+  subTrades?: Array<{
+    description: string;
+    amount: number;
+    supplier?: string;
+  }>;
   tipFees?: Array<{
     description: string;
     amount: number;
@@ -97,18 +102,27 @@ Extract ALL information visible in the document and return a JSON object with:
   * employeeName: Staff member name
   * hours: Hours worked (as number)
   * hourlyRate: Rate per hour (as number, extract from rate column)
-- materials: Array of all material/supply items with:
-  * description: Item description
+- materials: Array of ONLY individual material/supply items from the detailed list (NOT including trade services):
+  * description: Item description (e.g., "ply brace", "coveralls", "insulation batts")
   * amount: Cost as number (extract individual amounts, not totals)
-  * supplier: Supplier name (e.g., "Bunnings", "Knauf") 
+  * supplier: Supplier name (e.g., "Bunnings", "Clennetts") 
   * date: Date in DD/MM format if visible, otherwise current date
+- subTrades: Array of trade services (e.g., "plastering", "plumbing", "electrical", "painters"):
+  * description: Trade service description
+  * amount: Cost as number
+  * supplier: Trade company name if visible
 - tipFees: Array of tip/cartage fees if present
-- otherCosts: Array of other miscellaneous costs
+- otherCosts: Array of other miscellaneous costs (e.g., "Asbestos removal + test")
 - builderMargin: Margin percentage (default 35 if not specified)
 - confidence: Extraction confidence (0-1)
 - rawText: All visible text content
 
-CRITICAL: Extract ALL individual items, not just totals. For materials with multiple line items, create separate entries for each item with its own cost.`,
+CRITICAL RULES:
+1. Materials = individual supply items only (ply, coveralls, insulation, etc.)
+2. SubTrades = trade services (plastering, plumbing, electrical, painters)
+3. Extract individual items, NEVER extract totals or summary amounts
+4. If you see "Materials $1195" - this is a total, not an item - skip it
+5. "Asbestos removal + test" goes to otherCosts with correct amount`,
         messages: [{
           role: "user",
           content: [
