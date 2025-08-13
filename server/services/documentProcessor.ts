@@ -353,14 +353,47 @@ Focus on the primary expense amount. If multiple items, use the total. Be conser
       const execAsync = promisify(exec);
       const outputImagePath = path.join(tempDir, `converted_${Date.now()}.jpg`);
       
-      // Use Ghostscript directly for reliable PDF-to-image conversion (all pages)
-      const gsCommand = `gs -dSAFER -dBATCH -dNOPAUSE -dQUIET -sDEVICE=jpeg -r150 -sOutputFile="${outputImagePath}" "${pdfPath}"`;
+      // Convert all pages to separate images first, then combine them
+      const pagePattern = path.join(tempDir, `page_%d.jpg`);
+      const gsCommand = `gs -dSAFER -dBATCH -dNOPAUSE -dQUIET -sDEVICE=jpeg -r150 -sOutputFile="${pagePattern}" "${pdfPath}"`;
       
-      console.log('🔧 Executing Ghostscript conversion...');
+      console.log('🔧 Executing Ghostscript conversion for all pages...');
       await execAsync(gsCommand);
       
-      // Verify the output file was created
-      const imageBuffer = await fs.readFile(outputImagePath);
+      // Find all created page files
+      const files = await fs.readdir(tempDir);
+      const pageFiles = files
+        .filter(f => f.startsWith('page_') && f.endsWith('.jpg'))
+        .sort((a, b) => {
+          const aNum = parseInt(a.match(/page_(\d+)\.jpg/)?.[1] || '0');
+          const bNum = parseInt(b.match(/page_(\d+)\.jpg/)?.[1] || '0');
+          return aNum - bNum;
+        });
+      
+      console.log(`📄 Found ${pageFiles.length} pages:`, pageFiles);
+      
+      let combinedImageBuffer: Buffer;
+      if (pageFiles.length === 0) {
+        throw new Error('No pages were extracted from PDF');
+      } else if (pageFiles.length === 1) {
+        // Single page - use directly
+        combinedImageBuffer = await fs.readFile(path.join(tempDir, pageFiles[0]));
+      } else {
+        // Multiple pages - combine vertically using ImageMagick
+        const pageInputs = pageFiles.map(f => `"${path.join(tempDir, f)}"`).join(' ');
+        const combineCommand = `convert ${pageInputs} -append "${outputImagePath}"`;
+        console.log('🔧 Combining pages with ImageMagick...');
+        await execAsync(combineCommand);
+        combinedImageBuffer = await fs.readFile(outputImagePath);
+        
+        // Clean up individual page files
+        for (const pageFile of pageFiles) {
+          await fs.unlink(path.join(tempDir, pageFile)).catch(() => {});
+        }
+      }
+      
+      // Verify the combined image
+      const imageBuffer = combinedImageBuffer;
       
       if (imageBuffer.length === 0) {
         throw new Error('PDF conversion produced empty image file');
