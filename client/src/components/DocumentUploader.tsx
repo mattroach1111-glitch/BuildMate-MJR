@@ -9,11 +9,12 @@ import DragDrop from "@uppy/drag-drop";
 import "@uppy/drag-drop/dist/style.min.css";
 import type { UploadResult } from "@uppy/core";
 import { Button } from "@/components/ui/button";
+import { Upload } from "lucide-react";
 
 interface DocumentUploaderProps {
   maxNumberOfFiles?: number;
   maxFileSize?: number;
-  onGetUploadParameters: (file: any) => Promise<{
+  getUploadParameters: () => Promise<{
     method: "PUT";
     url: string;
     fields?: Record<string, never>;
@@ -23,7 +24,7 @@ interface DocumentUploaderProps {
     result: UploadResult<Record<string, unknown>, Record<string, unknown>>
   ) => void;
   buttonClassName?: string;
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 /**
@@ -56,7 +57,7 @@ interface DocumentUploaderProps {
 export function DocumentUploader({
   maxNumberOfFiles = 5,
   maxFileSize = 26214400, // 25MB default for documents
-  onGetUploadParameters,
+  getUploadParameters,
   onComplete,
   buttonClassName,
   children,
@@ -77,7 +78,7 @@ export function DocumentUploader({
     })
       .use(AwsS3, {
         shouldUseMultipart: false,
-        getUploadParameters: onGetUploadParameters,
+        getUploadParameters: getUploadParameters,
       })
       .on("upload", () => {
         console.log("🔵 Uppy: Upload started");
@@ -185,7 +186,12 @@ export function DocumentUploader({
           transition-all duration-200 w-full min-h-[60px]
         `}
       >
-        {children}
+        {children || (
+          <div className="flex items-center gap-2">
+            <Upload className="h-4 w-4" />
+            Choose Files or Drag & Drop
+          </div>
+        )}
       </Button>
 
       {isDragActive && (
