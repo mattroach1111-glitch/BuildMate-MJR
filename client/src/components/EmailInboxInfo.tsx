@@ -233,7 +233,8 @@ export function EmailInboxInfo() {
             <ul className="space-y-1 ml-2">
               <li>• Create the email account shown above in OnlyDomains</li>
               <li>• Configure IMAP access in your email hosting panel</li>
-              <li>• Email credentials are already configured ✅</li>
+              <li>• Email credentials are configured ✅</li>
+              <li>• Email address: {inboxData.emailAddress}</li>
               <li>• Forward invoices to your document processing email</li>
               <li>• Click "Check for New Emails" for automatic processing</li>
             </ul>

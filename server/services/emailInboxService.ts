@@ -363,6 +363,7 @@ export class EmailInboxService {
   async processInbox(userId: string): Promise<{ processed: number; errors: string[] }> {
     try {
       console.log('📧 Email processing system initialized');
+      console.log('📧 Connecting to:', process.env.EMAIL_HOST, 'as', process.env.EMAIL_USER);
       
       // Check for email credentials in environment
       const emailHost = process.env.EMAIL_HOST;

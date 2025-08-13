@@ -1,4 +1,4 @@
-const Imap = require('imap');
+import Imap from 'node-imap';
 import { simpleParser } from 'mailparser';
 import { storage } from '../storage';
 
@@ -31,7 +31,7 @@ export class ImapEmailService {
     private password: string,
     private tls: boolean = true
   ) {
-    this.imap = new (Imap as any)({
+    this.imap = new Imap({
       host,
       port,
       tls,
@@ -47,7 +47,7 @@ export class ImapEmailService {
       const emails: EmailMessage[] = [];
 
       this.imap.once('ready', () => {
-        console.log('📧 Connected to email server');
+        console.log('📧 Connected to email server:', this.host);
         
         this.imap.openBox('INBOX', false, (err: any, box: any) => {
           if (err) {
@@ -56,22 +56,36 @@ export class ImapEmailService {
             return;
           }
 
-          // Search for unread emails with attachments
-          this.imap.search(['UNSEEN'], (err: any, results: any) => {
+          console.log(`📧 Inbox opened. Total messages: ${box.messages.total}, New: ${box.messages.new}`);
+
+          // Search for ALL emails first to see what's there
+          this.imap.search(['ALL'], (err: any, allResults: any) => {
             if (err) {
-              console.error('Error searching emails:', err);
+              console.error('Error searching all emails:', err);
               reject(err);
               return;
             }
 
-            if (!results || results.length === 0) {
-              console.log('📧 No unread emails found');
-              this.imap.end();
-              resolve([]);
-              return;
-            }
+            console.log(`📧 Total emails in inbox: ${allResults ? allResults.length : 0}`);
 
-            console.log(`📧 Found ${results.length} unread emails`);
+            // Now search for unread emails
+            this.imap.search(['UNSEEN'], (err: any, results: any) => {
+              if (err) {
+                console.error('Error searching unread emails:', err);
+                reject(err);
+                return;
+              }
+
+              console.log(`📧 Unread emails found: ${results ? results.length : 0}`);
+
+              if (!results || results.length === 0) {
+                console.log('📧 No unread emails found');
+                this.imap.end();
+                resolve([]);
+                return;
+              }
+
+              console.log(`📧 Processing ${results.length} unread emails`);
 
             const fetch = this.imap.fetch(results, {
               bodies: '',
@@ -141,6 +155,7 @@ export class ImapEmailService {
               console.log(`📧 Finished processing ${emails.length} emails with attachments`);
               this.imap.end();
               resolve(emails);
+              });
             });
           });
         });
