@@ -550,6 +550,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Otherwise, handle as a full job update
       const validatedData = insertJobSchema.partial().parse(req.body);
+      
+      // Check if defaultHourlyRate is being updated
+      if (validatedData.defaultHourlyRate) {
+        console.log(`[HOURLY_RATE] Updating default hourly rate for job ${req.params.id} to ${validatedData.defaultHourlyRate}`);
+        // Update all existing labor entries with the new rate
+        await storage.updateAllLaborRatesForJob(req.params.id, validatedData.defaultHourlyRate);
+      }
+      
       const job = await storage.updateJob(req.params.id, validatedData);
       res.json(job);
     } catch (error) {
@@ -2169,8 +2177,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete job file
   app.delete("/api/job-files/:fileId", isAuthenticated, async (req: any, res) => {
     try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
       const { fileId } = req.params;
+      
+      // Get file info before deleting for logging
+      const file = await storage.getJobFile(fileId);
+      if (!file) {
+        return res.status(404).json({ message: "File not found" });
+      }
+      
+      console.log(`[FILE_DELETE] Deleting file: ${file.fileName} (ID: ${fileId})`);
+      
       await storage.deleteJobFile(fileId);
+      
+      console.log(`[FILE_DELETE] Successfully deleted file: ${file.fileName}`);
       res.json({ message: "File deleted successfully" });
     } catch (error) {
       console.error("Error deleting job file:", error);
