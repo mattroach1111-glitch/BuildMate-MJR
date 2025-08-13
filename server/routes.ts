@@ -2944,8 +2944,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // PDF generation will be handled on the client side
       // We'll receive the PDF data in the request body
-      const { pdfData } = req.body;
-      
       if (!pdfData) {
         return res.status(400).json({ message: "PDF data is required" });
       }
