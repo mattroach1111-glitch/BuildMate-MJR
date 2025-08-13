@@ -157,6 +157,22 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
             objectPath: lastUploadedFile.uploadURL
           });
           console.log("✅ Saved document as job file attachment");
+
+          // Automatically upload to Google Drive after saving to job
+          try {
+            await apiRequest("POST", "/api/documents/upload-to-drive", {
+              documentURL: lastUploadedFile.uploadURL,
+              fileName: lastUploadedFile.name,
+              mimeType: lastUploadedFile.type,
+              fileSize: lastUploadedFile.size,
+              jobId: selectedJobId
+            });
+            console.log("✅ Automatically uploaded to Google Drive");
+          } catch (driveError: any) {
+            console.log("ℹ️ Google Drive upload not available:", driveError.message);
+            // Don't fail the process if Google Drive upload fails
+          }
+
           setLastUploadedFile(null); // Clear after saving
         } catch (fileError) {
           console.error("Failed to save document as job file:", fileError);
@@ -166,7 +182,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       
       toast({
         title: "Added to job sheet!",
-        description: `${pendingExpense?.vendor} - $${pendingExpense?.amount} added successfully`,
+        description: `${pendingExpense?.vendor} - $${pendingExpense?.amount} added successfully and uploaded to Google Drive`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", selectedJobId, "files"] });
