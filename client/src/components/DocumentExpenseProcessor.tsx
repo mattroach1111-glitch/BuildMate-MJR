@@ -76,6 +76,9 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     queryKey: ["/api/jobs"],
   });
 
+  // Get unique project managers from existing jobs
+  const projectManagers = jobs ? Array.from(new Set((jobs as any[]).map(job => job.projectManager).filter(Boolean))) : [];
+
   // Get upload URL mutation
   const getUploadUrlMutation = useMutation({
     mutationFn: async () => {
@@ -574,12 +577,19 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
               {/* Project Manager (Optional) */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Project Manager <span className="text-gray-400">(Optional)</span></label>
-                <Input
-                  value={projectManager}
-                  onChange={(e) => setProjectManager(e.target.value)}
-                  placeholder="e.g. Mark Thompson"
-                  data-testid="input-project-manager"
-                />
+                <Select value={projectManager} onValueChange={setProjectManager}>
+                  <SelectTrigger data-testid="select-project-manager">
+                    <SelectValue placeholder="Select project manager" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None (optional)</SelectItem>
+                    {projectManagers.map((manager) => (
+                      <SelectItem key={manager} value={manager}>
+                        {manager}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Upload Section */}
