@@ -2710,6 +2710,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to extract job ID from email subject
+  async function extractJobFromEmailSubject(emailSubject: string | undefined, storage: any): Promise<string | null> {
+    if (!emailSubject) return null;
+    
+    try {
+      const allJobs = await storage.getJobs();
+      
+      // Look for job address patterns in the email subject
+      for (const job of allJobs) {
+        // Check if job address is mentioned in subject
+        if (job.jobAddress && emailSubject.toLowerCase().includes(job.jobAddress.toLowerCase())) {
+          return job.id;
+        }
+        
+        // Check if client name is mentioned in subject
+        if (job.clientName && emailSubject.toLowerCase().includes(job.clientName.toLowerCase())) {
+          return job.id;
+        }
+        
+        // Check if project manager is mentioned in subject
+        if (job.projectManager && emailSubject.toLowerCase().includes(job.projectManager.toLowerCase())) {
+          return job.id;
+        }
+      }
+      
+      // Look for common address patterns (street numbers, suburb names)
+      const addressPatterns = [
+        /(\d+\s+[A-Za-z\s]+(?:st|street|rd|road|ave|avenue|dr|drive|pl|place|ct|court))/i,
+        /([A-Za-z\s]+(?:st|street|rd|road|ave|avenue|dr|drive|pl|place|ct|court)\s*\d*)/i
+      ];
+      
+      for (const pattern of addressPatterns) {
+        const match = emailSubject.match(pattern);
+        if (match) {
+          const extractedAddress = match[1].trim();
+          // Find jobs with similar addresses
+          for (const job of allJobs) {
+            if (job.jobAddress && job.jobAddress.toLowerCase().includes(extractedAddress.toLowerCase())) {
+              return job.id;
+            }
+          }
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error extracting job from email subject:', error);
+    }
+    
+    return null;
+  }
+
   // Email processing review endpoints
   app.get('/api/email-processing/pending', isAuthenticated, async (req: any, res) => {
     try {
@@ -2724,7 +2775,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/email-processing/approve/:id', isAuthenticated, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const { jobId } = req.body;
+      const { jobId, categoryOverride } = req.body;
       
       // Get the document data before approving
       const documents = await storage.getEmailProcessedDocumentsPending();
@@ -2737,25 +2788,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Parse the extracted data
       const extractedData = JSON.parse(document.extractedData);
       
-      // If no specific job provided, try to find a matching job or use a default job
+      // Use category override if provided
+      const finalCategory = categoryOverride || extractedData.category;
+      
+      // If no specific job provided, try to extract from email subject or use default
       let targetJobId = jobId;
       if (!targetJobId) {
-        // For now, let's get the first active job as default
-        // In the future, this could be enhanced with job matching logic
-        const allJobs = await storage.getJobs();
-        const activeJobs = allJobs.filter(job => job.status !== 'ready_for_billing');
-        if (activeJobs.length > 0) {
-          targetJobId = activeJobs[0].id;
-        } else {
-          return res.status(400).json({ 
-            error: 'No active jobs available. Please select a job to add this expense to.' 
-          });
+        // Try to extract job information from email subject
+        targetJobId = await extractJobFromEmailSubject(document.email_subject, storage);
+        
+        // If still no job, use the first active job as default
+        if (!targetJobId) {
+          const allJobs = await storage.getJobs();
+          const activeJobs = allJobs.filter(job => job.status !== 'ready_for_billing');
+          if (activeJobs.length > 0) {
+            targetJobId = activeJobs[0].id;
+          } else {
+            return res.status(400).json({ 
+              error: 'No active jobs available. Please select a job to add this expense to.' 
+            });
+          }
         }
       }
 
-      // Add expense to the specified job based on category
+      // Add expense to the specified job based on final category
       let addedExpense;
-      switch (extractedData.category) {
+      switch (finalCategory) {
         case 'materials':
           addedExpense = await storage.createMaterial({
             jobId: targetJobId,
@@ -2801,8 +2859,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true, 
         addedExpense,
         jobId: targetJobId,
-        category: extractedData.category,
-        message: `Expense added to job as ${extractedData.category}`
+        category: finalCategory,
+        message: `Expense added to job as ${finalCategory}`
       });
     } catch (error) {
       console.error('Error approving document:', error);

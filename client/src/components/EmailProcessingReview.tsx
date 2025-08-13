@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Clock, FileText, DollarSign, Building } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CheckCircle, XCircle, Clock, FileText, DollarSign, Building, Edit } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -18,9 +19,32 @@ interface ProcessedDocument {
   email_subject?: string;
 }
 
+// Helper function to match job from email subject
+function getJobFromSubject(emailSubject: string, jobs: any[]): string {
+  if (!emailSubject || !jobs) return '';
+  
+  const subject = emailSubject.toLowerCase();
+  
+  // Look for job address patterns
+  for (const job of jobs) {
+    if (job.jobAddress && subject.includes(job.jobAddress.toLowerCase())) {
+      return job.jobAddress;
+    }
+    if (job.clientName && subject.includes(job.clientName.toLowerCase())) {
+      return job.clientName;
+    }
+    if (job.projectManager && subject.includes(job.projectManager.toLowerCase())) {
+      return job.projectManager;
+    }
+  }
+  
+  return '';
+}
+
 export function EmailProcessingReview() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [categoryOverrides, setCategoryOverrides] = useState<Record<string, string>>({});
 
   // Get pending documents from email processing
   const { data: pendingDocs = [], isLoading, refetch } = useQuery({
@@ -37,15 +61,29 @@ export function EmailProcessingReview() {
     refetchInterval: 5000, // Auto-refresh every 5 seconds
   });
 
+  // Get all jobs for job matching display
+  const { data: jobs } = useQuery({
+    queryKey: ['/api/jobs'],
+    queryFn: async () => {
+      const response = await fetch('/api/jobs', {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch jobs');
+      }
+      return response.json();
+    },
+  });
+
   const approveMutation = useMutation({
-    mutationFn: async ({ docId, jobId }: { docId: string; jobId?: string }) => {
+    mutationFn: async ({ docId, jobId, category }: { docId: string; jobId?: string; category?: string }) => {
       const response = await fetch(`/api/email-processing/approve/${docId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ jobId }),
+        body: JSON.stringify({ jobId, categoryOverride: category }),
       });
       if (!response.ok) {
         throw new Error('Failed to approve document');
@@ -155,6 +193,11 @@ export function EmailProcessingReview() {
                     {doc.email_subject && (
                       <p className="text-xs text-gray-500">From: {doc.email_subject}</p>
                     )}
+                    {doc.email_subject && jobs && (
+                      <div className="text-xs text-blue-600 mt-1">
+                        <span className="font-medium">Auto-detected job:</span> {getJobFromSubject(doc.email_subject, jobs) || 'Will use first active job'}
+                      </div>
+                    )}
                   </div>
                   <Badge variant="outline" className="text-orange-600 border-orange-200">
                     Pending Review
@@ -174,14 +217,30 @@ export function EmailProcessingReview() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-gray-600">Category:</span>
-                    <Badge variant="secondary">{doc.category || 'other_costs'}</Badge>
+                    <Select 
+                      value={categoryOverrides[doc.id] || doc.category || 'other_costs'} 
+                      onValueChange={(value) => setCategoryOverrides(prev => ({...prev, [doc.id]: value}))}
+                    >
+                      <SelectTrigger className="w-32 h-7 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="materials">Materials</SelectItem>
+                        <SelectItem value="subtrades">Sub-trades</SelectItem>
+                        <SelectItem value="tip_fees">Tip Fees</SelectItem>
+                        <SelectItem value="other_costs">Other Costs</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
                 <div className="flex gap-2 pt-2">
                   <Button
                     size="sm"
-                    onClick={() => approveMutation.mutate({ docId: doc.id })}
+                    onClick={() => approveMutation.mutate({ 
+                      docId: doc.id, 
+                      category: categoryOverrides[doc.id] || doc.category 
+                    })}
                     disabled={approveMutation.isPending}
                     className="bg-green-600 hover:bg-green-700"
                   >
