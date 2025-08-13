@@ -139,6 +139,7 @@ export interface IStorage {
   getJobFiles(jobId: string): Promise<JobFile[]>;
   getJobFile(id: string): Promise<JobFile | undefined>;
   createJobFile(jobFile: InsertJobFile): Promise<JobFile>;
+  updateJobFile(id: string, updates: Partial<InsertJobFile>): Promise<JobFile>;
   deleteJobFile(id: string): Promise<void>;
   
   // Soft delete operations  
