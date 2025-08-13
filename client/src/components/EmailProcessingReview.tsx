@@ -36,44 +36,48 @@ function getJobFromSubject(emailSubject: string, jobs: any[]): string {
     pm: j.projectManager 
   })));
   
-  // Look for job address patterns (exact and partial matching)
+  // Look for job address patterns (exact matching only)
   let potentialMatches = [];
   
   for (const job of jobs) {
-    // First try very close match (95%+ similarity)
+    // First try exact substring match
+    if (job.jobAddress && subject.includes(job.jobAddress.toLowerCase())) {
+      console.log('✅ Frontend exact substring match by address:', job.jobAddress);
+      return `${job.jobAddress} (${job.clientName || 'Unknown Client'})`;
+    }
+    
+    // Try perfect fuzzy match (98%+ similarity) for very close matches only
     if (job.jobAddress) {
       const similarity = fuzzball.ratio(subject.trim(), job.jobAddress.toLowerCase().trim());
-      if (similarity >= 95) {
-        console.log('🎯 Frontend HIGH match by address:', job.jobAddress, `(${similarity}% similarity)`);
+      if (similarity >= 98) {
+        console.log('🎯 Frontend PERFECT match by address:', job.jobAddress, `(${similarity}% similarity)`);
         return `${job.jobAddress} (${job.clientName || 'Unknown Client'})`;
       }
     }
     
-    // Then try substring match
-    if (job.jobAddress && subject.includes(job.jobAddress.toLowerCase())) {
-      console.log('✅ Frontend exact substring match by address:', job.jobAddress);
-      potentialMatches.push({ job, priority: 2, type: 'substring' });
-    }
-    
-    // Then try partial matching
+    // Enhanced address pattern matching - require street number AND street name to match
     if (job.jobAddress) {
       const jobAddr = job.jobAddress.toLowerCase().trim();
-      const addressWords = jobAddr.split(' ').filter((w: string) => w.length > 2);
-      const subjectWords = subject.split(' ');
       
-      console.log(`🔍 Comparing "${subject}" with "${jobAddr}"`);
+      // Extract street number and name from both subject and job address
+      const subjectMatch = subject.match(/(\d+)\s+([a-zA-Z\s]+(?:st|street|rd|road|ave|avenue|dr|drive|pl|place|ct|court))/i);
+      const jobMatch = jobAddr.match(/(\d+)\s+([a-zA-Z\s]+(?:st|street|rd|road|ave|avenue|dr|drive|pl|place|ct|court))/i);
       
-      // Check if significant words from address appear in subject
-      let matchCount = 0;
-      for (const word of addressWords) {
-        if (subjectWords.some(sw => sw.includes(word) || word.includes(sw))) {
-          matchCount++;
+      if (subjectMatch && jobMatch) {
+        const subjectNumber = subjectMatch[1];
+        const subjectStreet = subjectMatch[2].toLowerCase().trim();
+        const jobNumber = jobMatch[1];
+        const jobStreet = jobMatch[2].toLowerCase().trim();
+        
+        console.log(`🔍 Address comparison: "${subjectNumber} ${subjectStreet}" vs "${jobNumber} ${jobStreet}"`);
+        
+        // Both street number AND street name must match exactly
+        if (subjectNumber === jobNumber && 
+            (subjectStreet === jobStreet || 
+             fuzzball.ratio(subjectStreet, jobStreet) >= 90)) {
+          console.log('✅ Frontend EXACT address match:', job.jobAddress);
+          potentialMatches.push({ job, priority: 1, type: 'exact_address' });
         }
-      }
-      
-      if (matchCount >= Math.max(1, Math.floor(addressWords.length * 0.6))) {
-        console.log('✅ Frontend partial match by address:', job.jobAddress, `(${matchCount}/${addressWords.length} words)`);
-        potentialMatches.push({ job, priority: 3, type: 'partial', score: matchCount });
       }
     }
     

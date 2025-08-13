@@ -139,7 +139,7 @@ const findBestEmployeeMatch = async (employeeName: string, threshold: number = 8
 };
 
 // Fuzzy job matching function
-const findBestJobMatch = async (timesheetJobDescription: string, threshold: number = 80): Promise<{ job: any, score: number } | null> => {
+const findBestJobMatch = async (timesheetJobDescription: string, threshold: number = 90): Promise<{ job: any, score: number } | null> => {
   try {
     const allJobs = await storage.getJobs();
     if (!allJobs || allJobs.length === 0) {
@@ -2735,20 +2735,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Look for common address patterns (street numbers, suburb names)
-      const addressPatterns = [
-        /(\d+\s+[A-Za-z\s]+(?:st|street|rd|road|ave|avenue|dr|drive|pl|place|ct|court))/i,
-        /([A-Za-z\s]+(?:st|street|rd|road|ave|avenue|dr|drive|pl|place|ct|court)\s*\d*)/i
-      ];
+      // Look for exact address patterns - require exact matching
+      const addressPattern = /(\d+)\s+([A-Za-z\s]+(?:st|street|rd|road|ave|avenue|dr|drive|pl|place|ct|court))/i;
+      const subjectMatch = emailSubject.match(addressPattern);
       
-      for (const pattern of addressPatterns) {
-        const match = emailSubject.match(pattern);
-        if (match) {
-          const extractedAddress = match[1].trim();
-          // Find jobs with similar addresses
-          for (const job of allJobs) {
-            if (job.jobAddress && job.jobAddress.toLowerCase().includes(extractedAddress.toLowerCase())) {
-              return job.id;
+      if (subjectMatch) {
+        const subjectNumber = subjectMatch[1];
+        const subjectStreet = subjectMatch[2].toLowerCase().trim();
+        
+        console.log(`🔍 Backend extracting address: "${subjectNumber} ${subjectStreet}"`);
+        
+        // Find jobs with exact address match
+        for (const job of allJobs) {
+          if (job.jobAddress) {
+            const jobMatch = job.jobAddress.match(addressPattern);
+            if (jobMatch) {
+              const jobNumber = jobMatch[1];
+              const jobStreet = jobMatch[2].toLowerCase().trim();
+              
+              // Require exact street number AND street name match
+              if (subjectNumber === jobNumber && 
+                  (subjectStreet === jobStreet || 
+                   fuzz.ratio(subjectStreet, jobStreet) >= 90)) {
+                console.log(`✅ Backend EXACT address match: "${emailSubject}" -> "${job.jobAddress}"`);
+                return job.id;
+              }
             }
           }
         }
