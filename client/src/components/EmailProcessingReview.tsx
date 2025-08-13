@@ -10,11 +10,11 @@ interface ProcessedDocument {
   id: string;
   filename: string;
   vendor: string;
-  amount: number;
+  amount: string | number;
   category: string;
   status: 'pending' | 'approved' | 'rejected';
-  extractedAt: string;
-  emailSubject?: string;
+  created_at: string;
+  email_subject?: string;
 }
 
 export function EmailProcessingReview() {
@@ -37,24 +37,46 @@ export function EmailProcessingReview() {
 
   const approveMutation = useMutation({
     mutationFn: async ({ docId, jobId }: { docId: string; jobId?: string }) => {
-      return apiRequest(`/api/email-processing/approve/${docId}`, {
+      const response = await fetch(`/api/email-processing/approve/${docId}`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
         body: JSON.stringify({ jobId }),
       });
+      if (!response.ok) {
+        throw new Error('Failed to approve document');
+      }
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/email-processing/pending'] });
+    },
+    onError: (error) => {
+      console.error('Error approving document:', error);
     },
   });
 
   const rejectMutation = useMutation({
     mutationFn: async (docId: string) => {
-      return apiRequest(`/api/email-processing/reject/${docId}`, {
+      const response = await fetch(`/api/email-processing/reject/${docId}`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
       });
+      if (!response.ok) {
+        throw new Error('Failed to reject document');
+      }
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/email-processing/pending'] });
+    },
+    onError: (error) => {
+      console.error('Error rejecting document:', error);
     },
   });
 
@@ -100,63 +122,74 @@ export function EmailProcessingReview() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {pendingDocs.map((doc: any) => (
-          <div key={doc.id} className="border rounded-lg p-4 space-y-3">
-            <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-blue-600" />
-                  <span className="font-medium">{doc.filename}</span>
+        {pendingDocs.map((doc: any) => {
+          try {
+            return (
+              <div key={doc.id} className="border rounded-lg p-4 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium">{doc.filename || 'Unknown File'}</span>
+                    </div>
+                    {doc.email_subject && (
+                      <p className="text-xs text-gray-500">From: {doc.email_subject}</p>
+                    )}
+                  </div>
+                  <Badge variant="outline" className="text-orange-600 border-orange-200">
+                    Pending Review
+                  </Badge>
                 </div>
-                {doc.email_subject && (
-                  <p className="text-xs text-gray-500">From: {doc.email_subject}</p>
-                )}
-              </div>
-              <Badge variant="outline" className="text-orange-600 border-orange-200">
-                Pending Review
-              </Badge>
-            </div>
 
-            <div className="grid grid-cols-3 gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <Building className="h-3 w-3 text-gray-500" />
-                <span className="text-gray-600">Vendor:</span>
-                <span className="font-medium">{doc.vendor}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-3 w-3 text-gray-500" />
-                <span className="text-gray-600">Amount:</span>
-                <span className="font-medium">${parseFloat(doc.amount || 0).toFixed(2)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-600">Category:</span>
-                <Badge variant="secondary">{doc.category}</Badge>
-              </div>
-            </div>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Building className="h-3 w-3 text-gray-500" />
+                    <span className="text-gray-600">Vendor:</span>
+                    <span className="font-medium">{doc.vendor || 'Unknown'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-3 w-3 text-gray-500" />
+                    <span className="text-gray-600">Amount:</span>
+                    <span className="font-medium">${(parseFloat(doc.amount) || 0).toFixed(2)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-600">Category:</span>
+                    <Badge variant="secondary">{doc.category || 'other_costs'}</Badge>
+                  </div>
+                </div>
 
-            <div className="flex gap-2 pt-2">
-              <Button
-                size="sm"
-                onClick={() => approveMutation.mutate({ docId: doc.id })}
-                disabled={approveMutation.isPending}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Approve
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => rejectMutation.mutate(doc.id)}
-                disabled={rejectMutation.isPending}
-                className="text-red-600 border-red-200 hover:bg-red-50"
-              >
-                <XCircle className="h-3 w-3 mr-1" />
-                Reject
-              </Button>
-            </div>
-          </div>
-        ))}
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    size="sm"
+                    onClick={() => approveMutation.mutate({ docId: doc.id })}
+                    disabled={approveMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Approve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => rejectMutation.mutate(doc.id)}
+                    disabled={rejectMutation.isPending}
+                    className="text-red-600 border-red-200 hover:bg-red-50"
+                  >
+                    <XCircle className="h-3 w-3 mr-1" />
+                    Reject
+                  </Button>
+                </div>
+              </div>
+            );
+          } catch (error) {
+            console.error('Error rendering document:', error, doc);
+            return (
+              <div key={doc.id || Math.random()} className="border rounded-lg p-4 bg-red-50">
+                <p className="text-red-600 text-sm">Error displaying document: {doc.filename || 'Unknown'}</p>
+              </div>
+            );
+          }
+        })}
       </CardContent>
     </Card>
   );
