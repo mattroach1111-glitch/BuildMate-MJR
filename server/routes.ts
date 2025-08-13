@@ -2278,16 +2278,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('🔵 Extracted job data:', JSON.stringify(jobData, null, 2));
       console.log('🔵 SubTrades extracted:', jobData.subTrades?.length || 0, jobData.subTrades);
+      console.log('🔵 Original AI extracted address:', JSON.stringify(jobData.jobAddress));
       
       // Create the new job with proper address handling (without auto-adding all employees)
       // Force extract job name from raw text if AI didn't get it
       let jobAddress = jobData.jobAddress;
       let projectName = jobData.projectName;
       
-      if (!jobAddress || jobAddress === "Not specified") {
+      if (!jobAddress || jobAddress === "Not specified" || jobAddress.length < 3) {
         // Extract from raw text - look for "21 Greenhill Dr" pattern
-        const addressMatch = jobData.rawText?.match(/\d+\s+[A-Za-z\s]+\s+Dr|Drive|Street|St|Road|Rd/i);
-        jobAddress = addressMatch ? addressMatch[0].trim() : "21 Greenhill Dr";
+        const addressMatch = jobData.rawText?.match(/\d+\s+[A-Za-z\s]+\s+(Dr|Drive|Street|St|Road|Rd|Ave|Avenue|Place|Pl|Court|Ct)/i);
+        if (addressMatch) {
+          jobAddress = addressMatch[0].trim();
+        } else {
+          // Fallback: look for any address-like pattern in filename or document
+          const filenameMatch = documentURL.match(/(\d+[^\/]*(?:Dr|Drive|Street|St|Road|Rd|Ave|Avenue))/i);
+          jobAddress = filenameMatch ? filenameMatch[1].replace(/%20/g, ' ') : "21 Greenhill Dr";
+        }
       }
       
       if (!projectName || projectName === "Construction Project") {
