@@ -573,14 +573,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = await storage.getUser(req.user.claims.sub);
       if (user?.role !== "admin") {
+        console.error(`Delete job failed: User ${req.user.claims.sub} is not admin, role: ${user?.role}`);
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      await storage.softDeleteJob(req.params.id);
+      const jobId = req.params.id;
+      console.log(`Attempting to delete job: ${jobId}`);
+      
+      // Check if job exists before attempting deletion
+      const existingJob = await storage.getJob(jobId);
+      if (!existingJob) {
+        console.error(`Delete job failed: Job ${jobId} not found`);
+        return res.status(404).json({ message: "Job not found" });
+      }
+      
+      if (existingJob.isDeleted) {
+        console.error(`Delete job failed: Job ${jobId} is already deleted`);
+        return res.status(400).json({ message: "Job is already deleted" });
+      }
+
+      await storage.softDeleteJob(jobId);
+      console.log(`Successfully deleted job: ${jobId}`);
       res.json({ message: "Job moved to deleted folder" });
     } catch (error) {
       console.error("Error deleting job:", error);
-      res.status(500).json({ message: "Failed to delete job" });
+      console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
+      res.status(500).json({ message: "Failed to delete job", error: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 

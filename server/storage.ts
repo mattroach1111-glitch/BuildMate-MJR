@@ -402,14 +402,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async softDeleteJob(id: string): Promise<void> {
-    await db
-      .update(jobs)
-      .set({ 
-        isDeleted: true, 
-        deletedAt: new Date(),
-        updatedAt: new Date() 
-      })
-      .where(eq(jobs.id, id));
+    console.log(`[STORAGE] Soft deleting job: ${id}`);
+    try {
+      const result = await db
+        .update(jobs)
+        .set({ 
+          isDeleted: true, 
+          deletedAt: new Date(),
+          updatedAt: new Date() 
+        })
+        .where(eq(jobs.id, id))
+        .returning();
+      
+      if (result.length === 0) {
+        throw new Error(`No job found with ID: ${id}`);
+      }
+      
+      console.log(`[STORAGE] Successfully soft deleted job: ${id}`);
+    } catch (error) {
+      console.error(`[STORAGE] Error soft deleting job ${id}:`, error);
+      throw error;
+    }
   }
 
   async getDeletedJobs(): Promise<Job[]> {
