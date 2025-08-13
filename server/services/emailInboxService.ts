@@ -73,7 +73,7 @@ export class EmailInboxService {
       // Convert to base64 for AI processing
       const base64Content = attachment.content.toString('base64');
       
-      const response = await fetch('/api/documents/process', {
+      const response = await fetch('http://localhost:5000/api/documents/process', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -297,13 +297,25 @@ export class EmailInboxService {
         if (processed) {
           processedDocuments.push(processed);
           
-          // Add to job if found
-          if (targetJob) {
-            const added = await this.addExpenseToJob(targetJob.id, processed, targetUser.id);
-            if (added) {
-              console.log(`✅ Added ${processed.filename} to job ${targetJob.jobAddress}`);
-            }
-          }
+          console.log(`📄 Document processed: ${processed.filename}`);
+          console.log(`💰 Extracted amount: $${processed.amount}`);
+          console.log(`🏢 Vendor: ${processed.vendor}`);
+          console.log(`📁 Category: ${processed.category}`);
+          
+          // Save to database for review workflow
+          await storage.createEmailProcessedDocument({
+            filename: processed.filename,
+            vendor: processed.vendor,
+            amount: processed.amount,
+            category: processed.category,
+            status: 'pending',
+            emailSubject: emailMessage.subject,
+            emailFrom: emailMessage.from,
+            extractedData: JSON.stringify(processed),
+            userId: targetUser.id
+          });
+          
+          console.log(`📋 Document saved for review approval`);
         }
       }
       

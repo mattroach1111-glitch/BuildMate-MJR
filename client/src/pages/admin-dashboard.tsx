@@ -37,6 +37,7 @@ import { PendingUsers } from "@/components/pending-users";
 import { generateJobListPDF } from "@/lib/pdfGenerator";
 import JobUpdateDialog from "@/components/job-update-form";
 import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor";
+import { EmailProcessingReview } from "@/components/EmailProcessingReview";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()

@@ -331,6 +331,28 @@ export const insertEmailProcessingLogSchema = createInsertSchema(emailProcessing
   createdAt: true,
 });
 
+// Email processed documents for review workflow
+export const emailProcessedDocuments = pgTable("email_processed_documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  filename: varchar("filename").notNull(),
+  vendor: varchar("vendor").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  category: varchar("category").notNull(),
+  status: varchar("status", { enum: ["pending", "approved", "rejected"] }).notNull().default("pending"),
+  emailSubject: varchar("email_subject"),
+  emailFrom: varchar("email_from"),
+  extractedData: text("extracted_data"), // JSON string of full extracted data
+  userId: varchar("user_id").notNull().references(() => users.id),
+  jobId: varchar("job_id").references(() => jobs.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  processedAt: timestamp("processed_at")
+});
+
+export const insertEmailProcessedDocumentSchema = createInsertSchema(emailProcessedDocuments).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -356,3 +378,5 @@ export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type EmailProcessingLog = typeof emailProcessingLogs.$inferSelect;
 export type InsertEmailProcessingLog = z.infer<typeof insertEmailProcessingLogSchema>;
+export type EmailProcessedDocument = typeof emailProcessedDocuments.$inferSelect;
+export type InsertEmailProcessedDocument = z.infer<typeof insertEmailProcessedDocumentSchema>;

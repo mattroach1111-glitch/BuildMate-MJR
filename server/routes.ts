@@ -2710,6 +2710,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Email processing review endpoints
+  app.get('/api/email-processing/pending', isAuthenticated, async (req: any, res) => {
+    try {
+      const documents = await storage.getEmailProcessedDocumentsPending();
+      res.json(documents);
+    } catch (error) {
+      console.error('Error getting pending documents:', error);
+      res.status(500).json({ error: 'Failed to get pending documents' });
+    }
+  });
+
+  app.post('/api/email-processing/approve/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { jobId } = req.body;
+      
+      await storage.approveEmailProcessedDocument(id, jobId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error approving document:', error);
+      res.status(500).json({ error: 'Failed to approve document' });
+    }
+  });
+
+  app.post('/api/email-processing/reject/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      await storage.rejectEmailProcessedDocument(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error rejecting document:', error);
+      res.status(500).json({ error: 'Failed to reject document' });
+    }
+  });
+
   // Endpoint to add approved expense data to job sheet
   app.post("/api/documents/add-to-job", isAuthenticated, async (req: any, res) => {
     try {

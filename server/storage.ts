@@ -11,6 +11,7 @@ import {
   jobFiles,
   notifications,
   emailProcessingLogs,
+  emailProcessedDocuments,
   type User,
   type UpsertUser,
   type Employee,
@@ -35,6 +36,8 @@ import {
   type InsertNotification,
   type EmailProcessingLog,
   type InsertEmailProcessingLog,
+  type EmailProcessedDocument,
+  type InsertEmailProcessedDocument,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sum, ne, gte, lte, sql, isNull, or, ilike, inArray } from "drizzle-orm";
@@ -158,6 +161,12 @@ export interface IStorage {
   updateEmailProcessingLogStatus(id: string, status: "processing" | "completed" | "failed", errorMessage?: string): Promise<void>;
   getRecentEmailProcessingActivity(limit?: number): Promise<EmailProcessingLog[]>;
   getActiveNotifications(userId: string): Promise<Notification[]>;
+
+  // Email processed documents for review
+  createEmailProcessedDocument(data: InsertEmailProcessedDocument): Promise<EmailProcessedDocument>;
+  getEmailProcessedDocumentsPending(): Promise<EmailProcessedDocument[]>;
+  approveEmailProcessedDocument(id: string, jobId?: string): Promise<void>;
+  rejectEmailProcessedDocument(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1549,6 +1558,39 @@ export class DatabaseStorage implements IStorage {
       .from(emailProcessingLogs)
       .orderBy(desc(emailProcessingLogs.createdAt))
       .limit(limit);
+  }
+
+  // Email processed documents for review workflow
+  async createEmailProcessedDocument(data: InsertEmailProcessedDocument): Promise<EmailProcessedDocument> {
+    const [result] = await db.insert(emailProcessedDocuments).values(data).returning();
+    return result;
+  }
+
+  async getEmailProcessedDocumentsPending(): Promise<EmailProcessedDocument[]> {
+    const results = await db.select()
+      .from(emailProcessedDocuments)
+      .where(eq(emailProcessedDocuments.status, 'pending'))
+      .orderBy(desc(emailProcessedDocuments.createdAt));
+    return results;
+  }
+
+  async approveEmailProcessedDocument(id: string, jobId?: string): Promise<void> {
+    await db.update(emailProcessedDocuments)
+      .set({ 
+        status: 'approved',
+        jobId,
+        processedAt: new Date()
+      })
+      .where(eq(emailProcessedDocuments.id, id));
+  }
+
+  async rejectEmailProcessedDocument(id: string): Promise<void> {
+    await db.update(emailProcessedDocuments)
+      .set({ 
+        status: 'rejected',
+        processedAt: new Date()
+      })
+      .where(eq(emailProcessedDocuments.id, id));
   }
 }
 
