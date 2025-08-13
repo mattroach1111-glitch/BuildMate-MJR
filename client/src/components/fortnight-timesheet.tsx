@@ -1237,8 +1237,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     return (
       <>
         <SuccessAnimation />
-        <div className="p-4 max-w-7xl mx-auto">
-          <Card>
+        <div className="p-4 max-w-7xl mx-auto main-container touch-pan-y" data-scroll-container>
+          <Card className="timesheet-container">
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-4">
@@ -1304,7 +1304,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               {format(currentFortnight.start, 'MMM dd, yyyy')} - {format(currentFortnight.end, 'MMM dd, yyyy')}
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="touch-pan-y">
             {/* Mobile-optimized table with pinch-to-zoom and touch-friendly controls */}
             <div className="overflow-x-auto touch-pan-x">
               <table className="w-full border-collapse min-w-[800px]" style={{ touchAction: 'manipulation' }}>
