@@ -539,6 +539,24 @@ export class DatabaseStorage implements IStorage {
     return file;
   }
 
+  async findExistingJobFile(jobId: string, fileName: string, objectPath?: string): Promise<JobFile | undefined> {
+    // First try to find by exact object path if provided
+    if (objectPath) {
+      const [fileByPath] = await db
+        .select()
+        .from(jobFiles)
+        .where(and(eq(jobFiles.jobId, jobId), eq(jobFiles.objectPath, objectPath)));
+      if (fileByPath) return fileByPath;
+    }
+    
+    // Then try to find by filename (to catch duplicates with different object paths)
+    const [fileByName] = await db
+      .select()
+      .from(jobFiles)
+      .where(and(eq(jobFiles.jobId, jobId), eq(jobFiles.originalName, fileName)));
+    return fileByName;
+  }
+
   async createJobFile(jobFile: InsertJobFile): Promise<JobFile> {
     const [createdFile] = await db
       .insert(jobFiles)

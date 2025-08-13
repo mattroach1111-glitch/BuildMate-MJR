@@ -2646,9 +2646,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('Could not extract filename from URL, using default');
         }
         
-        // Check if a file record already exists for this object path to avoid duplicates
-        const existingFiles = await storage.getJobFiles(newJob.id);
-        const existingFile = existingFiles.find(f => f.objectPath === normalizedPath);
+        // Check if a file record already exists to avoid duplicates (by object path or filename)
+        const existingFile = await storage.findExistingJobFile(newJob.id, fileName, normalizedPath);
         
         if (existingFile) {
           console.log('🔵 File record already exists, updating with job ID:', existingFile.id);
