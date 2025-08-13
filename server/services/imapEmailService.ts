@@ -1,4 +1,4 @@
-import * as Imap from 'imap';
+const Imap = require('imap');
 import { simpleParser } from 'mailparser';
 import { storage } from '../storage';
 
@@ -31,7 +31,7 @@ export class ImapEmailService {
     private password: string,
     private tls: boolean = true
   ) {
-    this.imap = new Imap({
+    this.imap = new (Imap as any)({
       host,
       port,
       tls,

@@ -231,10 +231,10 @@ export function EmailInboxInfo() {
           <div className="space-y-2 text-xs text-blue-700">
             <p><strong>Using Your @mjrbuilders.com.au Email:</strong></p>
             <ul className="space-y-1 ml-2">
-              <li>• Create a dedicated email: documents@mjrbuilders.com.au</li>
-              <li>• Configure IMAP access in your email hosting (OnlyDomains)</li>
-              <li>• Add email credentials to BuildFlow Pro</li>
-              <li>• Forward invoices to documents@mjrbuilders.com.au</li>
+              <li>• Create the email account shown above in OnlyDomains</li>
+              <li>• Configure IMAP access in your email hosting panel</li>
+              <li>• Email credentials are already configured ✅</li>
+              <li>• Forward invoices to your document processing email</li>
               <li>• Click "Check for New Emails" for automatic processing</li>
             </ul>
             <p className="text-blue-600 font-medium mt-2">✅ Email credentials configured! Ready to test connection.</p>

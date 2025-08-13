@@ -2645,7 +2645,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Generate a unique email address for this user
-      const emailAddress = `documents-${userId.slice(-8)}@mjrbuilders.com.au`;
+      // Use the actual email address that's configured
+      const emailAddress = process.env.EMAIL_USER || "documents@mjrbuilders.com.au";
       
       res.json({ 
         emailAddress,
@@ -2685,8 +2686,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get email processing status and recent activity
   app.get("/api/email-inbox/status", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
-      
       // Get recent email processing activity
       const recentActivity = await storage.getRecentEmailProcessingActivity(5);
       const allLogs = await storage.getEmailProcessingLogs();
@@ -2695,9 +2694,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalProcessed = allLogs.filter(log => log.status === "completed").length;
       const lastChecked = allLogs.length > 0 ? allLogs[0].createdAt : new Date();
       
+      // Use the actual email address from environment or default
+      const emailAddress = process.env.EMAIL_USER || "documents@mjrbuilders.com.au";
+      
       res.json({
         status: "active",
-        emailAddress: `documents-${userId.slice(-8)}@mjrbuilders.com.au`,
+        emailAddress,
         lastChecked: lastChecked.toISOString(),
         recentProcessed: recentActivity,
         totalProcessed
