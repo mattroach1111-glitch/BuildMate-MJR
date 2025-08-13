@@ -44,6 +44,8 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   const [jobAddress, setJobAddress] = useState<string>("");
   const [clientName, setClientName] = useState<string>("");
   const [projectManager, setProjectManager] = useState<string>("");
+  const [isAddingNewProjectManager, setIsAddingNewProjectManager] = useState(false);
+  const [newProjectManagerName, setNewProjectManagerName] = useState<string>("");
   const [lastUploadedFile, setLastUploadedFile] = useState<any>(null);
   const [previewDoc, setPreviewDoc] = useState<{
     url: string;
@@ -739,18 +741,77 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
               {/* Project Manager (Optional) */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Project Manager <span className="text-gray-400">(Optional)</span></label>
-                <Input
-                  value={projectManager}
-                  onChange={(e) => setProjectManager(e.target.value)}
-                  placeholder="e.g. Mark, Matt, Will"
-                  data-testid="input-project-manager"
-                  list="project-managers"
-                />
-                <datalist id="project-managers">
-                  {projectManagers.map((manager) => (
-                    <option key={manager} value={manager} />
-                  ))}
-                </datalist>
+                {!isAddingNewProjectManager ? (
+                  <Select
+                    value={projectManager}
+                    onValueChange={(value) => {
+                      if (value === "add-new") {
+                        setIsAddingNewProjectManager(true);
+                        setNewProjectManagerName("");
+                        setProjectManager("");
+                      } else {
+                        setProjectManager(value);
+                      }
+                    }}
+                  >
+                    <SelectTrigger data-testid="select-project-manager">
+                      <SelectValue placeholder="Select or add project manager" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {projectManagers.map((manager) => (
+                        <SelectItem key={manager} value={manager}>
+                          {manager}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="add-new" className="text-blue-600">
+                        + Add new project manager
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="flex gap-2">
+                    <Input
+                      value={newProjectManagerName}
+                      onChange={(e) => setNewProjectManagerName(e.target.value)}
+                      placeholder="Enter new project manager name"
+                      data-testid="input-new-project-manager"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && newProjectManagerName.trim()) {
+                          setProjectManager(newProjectManagerName.trim());
+                          setIsAddingNewProjectManager(false);
+                          setNewProjectManagerName("");
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        if (newProjectManagerName.trim()) {
+                          setProjectManager(newProjectManagerName.trim());
+                          setIsAddingNewProjectManager(false);
+                          setNewProjectManagerName("");
+                        }
+                      }}
+                      disabled={!newProjectManagerName.trim()}
+                      size="sm"
+                      data-testid="button-save-project-manager"
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setIsAddingNewProjectManager(false);
+                        setNewProjectManagerName("");
+                      }}
+                      size="sm"
+                      data-testid="button-cancel-project-manager"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Upload Section */}

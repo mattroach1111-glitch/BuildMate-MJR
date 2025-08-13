@@ -5,6 +5,7 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 Preferred communication style: Simple, everyday language.
 
 # Recent Changes
+- **August 13, 2025**: Enhanced project manager selection in job creation with professional dropdown interface. Added "Add new project manager" option with inline input mode, Save/Cancel buttons, and immediate availability for future jobs.
 - **August 13, 2025**: Enhanced Google Drive folder organization with main "BuildFlow Pro" folder structure. All job folders now created inside "BuildFlow Pro/Job - [Address]/" and timesheets saved to "BuildFlow Pro/Timesheets/" for better organization and easier navigation.
 - **August 13, 2025**: Improved mobile responsiveness for email PDF dialog with portrait mode optimization, stacked buttons, compact spacing, and larger touch targets for better mobile usability.
 - **August 13, 2025**: Implemented complete "Email PDF" functionality for job sheets. Added blue "Email PDF" button next to "Download PDF" in job sheet modal. Features email dialog with recipient input, subject auto-fill, custom message field, client-side PDF generation, and server-side email sending with PDF attachment via jobs@mjrbuilders.com.au. Includes email validation, loading states, success/error notifications, and proper error handling.
