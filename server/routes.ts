@@ -2545,7 +2545,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add materials (only individual supply items)
       let materialsCreated = 0;
       for (const material of jobData.materials) {
-        const materialAmount = material.quantity * material.rate;
+        // Use the quantity as the amount if rate is null (AI sometimes puts cost in quantity field)
+        const materialAmount = material.rate ? (material.quantity * material.rate) : material.quantity;
         if (materialAmount > 0) {
           await storage.createMaterial({
             jobId: newJob.id,
@@ -2601,7 +2602,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Calculate material totals (no auto-consumables since AI already extracts them)
-      const materialTotal = jobData.materials.reduce((sum: number, mat: any) => sum + (mat.quantity * mat.rate), 0);
+      const materialTotal = jobData.materials.reduce((sum: number, mat: any) => {
+        const amount = mat.rate ? (mat.quantity * mat.rate) : mat.quantity;
+        return sum + amount;
+      }, 0);
 
       res.json({
         success: true,
