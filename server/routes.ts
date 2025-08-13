@@ -2594,14 +2594,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await storage.createOtherCost({
               jobId: newJob.id,
               description: otherCost.description,
-              amount: otherCost.amount.toString()
+              amount: otherCost.cost.toString()
             });
           }
         }
       }
 
       // Calculate material totals for consumables (6% of materials)
-      const materialTotal = jobData.materials.reduce((sum, mat) => sum + mat.amount, 0);
+      const materialTotal = jobData.materials.reduce((sum: number, mat: any) => sum + (mat.quantity * mat.rate), 0);
       const consumablesAmount = materialTotal * 0.06;
       
       if (consumablesAmount > 0) {
@@ -2623,7 +2623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           subTrades: subTradesCreated,
           tipFees: jobData.tipFees?.length || 0,
           otherCosts: jobData.otherCosts?.length || 0,
-          totalLaborHours: jobData.laborEntries.reduce((sum, entry) => sum + entry.hours, 0),
+          totalLaborHours: jobData.laborEntries.reduce((sum: number, entry: any) => sum + entry.hours, 0),
           materialTotal,
           consumablesAmount: consumablesAmount.toFixed(2)
         },
