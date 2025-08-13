@@ -255,25 +255,18 @@ export class EmailInboxService {
       });
       logId = logEntry.id;
       
-      // Extract user ID from email address
-      const userIdSuffix = this.getUserIdFromEmailAddress(emailMessage.to);
-      if (!userIdSuffix) {
-        console.log(`❌ Could not extract user ID from email address: ${emailMessage.to}`);
-        await storage.updateEmailProcessingLogStatus(logId, "failed", "Invalid email address format");
-        return false;
-      }
-      
-      // Find user by ID suffix
+      // For direct email integration, we'll use the admin user who's processing
+      // In the future, this could be made configurable per email address
       const allUsers = await storage.getAllUsers();
-      const targetUser = allUsers.find((user: any) => user.id.slice(-8) === userIdSuffix);
+      const targetUser = allUsers.find((user: any) => user.role === 'admin');
       
       if (!targetUser) {
-        console.log(`❌ Could not find user with ID ending in: ${userIdSuffix}`);
-        await storage.updateEmailProcessingLogStatus(logId, "failed", `User not found for ID suffix: ${userIdSuffix}`);
+        console.log(`❌ Could not find admin user for email processing`);
+        await storage.updateEmailProcessingLogStatus(logId, "failed", "Admin user not found");
         return false;
       }
       
-      console.log(`👤 Processing email for user: ${targetUser.email}`);
+      console.log(`👤 Processing email for admin user: ${targetUser.email}`);
       
       // Extract job name from subject
       const extractedJobName = this.extractJobNameFromSubject(emailMessage.subject);
@@ -406,8 +399,10 @@ export class EmailInboxService {
             // Mark email as read after successful processing
             await emailService.markAsRead(email.id);
             processed++;
+            console.log(`✅ Successfully processed email: ${email.subject}`);
           } else {
             errors.push(`Failed to process email: ${email.subject}`);
+            console.log(`❌ Failed to process email: ${email.subject}`);
           }
         } catch (error) {
           console.error(`Error processing email ${email.id}:`, error);
