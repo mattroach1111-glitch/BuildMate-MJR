@@ -2607,7 +2607,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return sum + amount;
       }, 0);
 
-      // Upload the original PDF to Google Drive if connected
+      // Upload the original PDF to Google Drive if connected and create a single file record
       let googleDriveResult = null;
       try {
         const currentUser = await storage.getUser(req.user.claims.sub);
@@ -2653,14 +2653,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (uploadResult) {
             console.log(`✅ Job sheet uploaded to Google Drive: ${uploadResult.webViewLink}`);
             
-            // Save file record in database
+            // Save file record in database with Google Drive link (not a duplicate, this is the main record)
             await storage.createJobFile({
               jobId: newJob.id,
               fileName: fileName,
               originalName: fileName,
               fileSize: fileBuffer.length,
               mimeType: metadata.contentType || 'application/pdf',
-              objectPath: null, // No object storage path for Google Drive files
+              objectPath: normalizedPath, // Keep the original object storage path for reference
               googleDriveLink: uploadResult.webViewLink,
               googleDriveFileId: uploadResult.fileId,
               uploadedById: req.user.claims.sub
@@ -2672,11 +2672,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
             };
           }
         } else {
-          console.log('🔵 Google Drive not connected, skipping upload');
+          console.log('🔵 Google Drive not connected, creating file record for object storage only');
+          
+          // Generate filename from document URL  
+          let fileName = 'job-sheet.pdf';
+          try {
+            const urlParts = documentURL.split('/');
+            const lastPart = urlParts[urlParts.length - 1];
+            if (lastPart && lastPart.includes('.')) {
+              fileName = decodeURIComponent(lastPart);
+            }
+          } catch (e) {
+            console.log('Could not extract filename from URL, using default');
+          }
+          
+          // Get file size
+          const [metadata] = await objectFile.getMetadata();
+          
+          // Save file record in database for object storage
+          await storage.createJobFile({
+            jobId: newJob.id,
+            fileName: fileName,
+            originalName: fileName,
+            fileSize: parseInt(metadata.size || '0'),
+            mimeType: metadata.contentType || 'application/pdf',
+            objectPath: normalizedPath,
+            googleDriveLink: null,
+            googleDriveFileId: null,
+            uploadedById: req.user.claims.sub
+          });
         }
       } catch (error) {
-        console.error('Error uploading job sheet to Google Drive:', error);
-        // Don't fail the entire process if Google Drive upload fails
+        console.error('Error processing job sheet file:', error);
+        // Don't fail the entire process if file processing fails
       }
 
       res.json({

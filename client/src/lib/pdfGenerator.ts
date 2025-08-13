@@ -423,106 +423,40 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
     }
   }
 
-  // Append attached PDF files if any
+  // Add compact attached files section if any
   if (attachedFiles && attachedFiles.length > 0) {
-    // Add a new page for attachments section
-    doc.addPage();
-    yPos = 20;
+    checkPageBreak(30);
     
     // Attachments header
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text('ATTACHED DOCUMENTS', 105, yPos, { align: 'center' });
-    yPos += 20;
-    
-    // List of attached files
     doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ATTACHED DOCUMENTS', 20, yPos);
+    yPos += 12;
+    
+    // List of attached files as compact links
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     attachedFiles.forEach((file, index) => {
-      doc.text(`${index + 1}. ${file.originalName}`, 20, yPos);
-      yPos += 15;
+      checkPageBreak(15);
+      
+      if (file.googleDriveLink) {
+        // Google Drive file - compact clickable link
+        doc.setTextColor(59, 130, 246);
+        doc.text(`🔗 ${file.originalName}`, 25, yPos);
+        doc.link(25, yPos - 3, doc.getTextWidth(`🔗 ${file.originalName}`), 8, { url: file.googleDriveLink });
+        doc.setTextColor(0, 0, 0);
+        doc.text('(Google Drive)', 25 + doc.getTextWidth(`🔗 ${file.originalName}`) + 5, yPos);
+      } else {
+        // Internal storage file
+        doc.setTextColor(100, 100, 100);
+        doc.text(`📄 ${file.originalName}`, 25, yPos);
+        doc.setTextColor(0, 0, 0);
+        doc.text('(Internal)', 25 + doc.getTextWidth(`📄 ${file.originalName}`) + 5, yPos);
+      }
+      yPos += 12;
     });
     
-    // Append each PDF file
-    for (const file of attachedFiles) {
-      try {
-        // Create a new page for each attachment
-        doc.addPage();
-        yPos = 20;
-        
-        // Add header for this attachment
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Attachment: ${file.originalName}`, 20, yPos);
-        yPos += 15;
-        
-        // Add information about the attached file
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Attached document details:', 20, yPos);
-        yPos += 15;
-        
-        // Show file information with clickable link
-        doc.text(`• File: ${file.originalName}`, 25, yPos);
-        yPos += 10;
-        
-        if (file.googleDriveLink) {
-          // For Google Drive files, show link
-          doc.text('• Storage: Google Drive', 25, yPos);
-          yPos += 10;
-          doc.text('• Access: Click link below', 25, yPos);
-          yPos += 20;
-          
-          // Add clickable link box
-          doc.setFillColor(245, 248, 255);
-          doc.rect(20, yPos, 170, 60, 'F');
-          doc.setDrawColor(59, 130, 246);
-          doc.rect(20, yPos, 170, 60);
-          
-          // Add link icon and text
-          doc.setTextColor(59, 130, 246);
-          doc.setFontSize(14);
-          doc.text('🔗', 30, yPos + 25);
-          doc.setFontSize(12);
-          doc.text('View Document on Google Drive', 50, yPos + 25);
-          doc.setFontSize(10);
-          doc.text('Click to open the original document', 105, yPos + 40, { align: 'center' });
-          
-          // Add the actual clickable link
-          doc.link(20, yPos, 170, 60, { url: file.googleDriveLink });
-          
-          // Reset colors
-          doc.setTextColor(0, 0, 0);
-          yPos += 80;
-          
-        } else {
-          // For object storage files, show download info
-          doc.text('• Storage: Internal storage', 25, yPos);
-          yPos += 10;
-          doc.text('• Access: Available in job attachments', 25, yPos);
-          yPos += 20;
-          
-          // Add file representation
-          doc.setFillColor(245, 245, 245);
-          doc.rect(20, yPos, 170, 60, 'F');
-          doc.setDrawColor(200, 200, 200);
-          doc.rect(20, yPos, 170, 60);
-          
-          doc.setTextColor(100, 100, 100);
-          doc.setFontSize(12);
-          doc.text('📄', 100, yPos + 25);
-          doc.setFontSize(10);
-          doc.text('Document attached to job', 105, yPos + 40, { align: 'center' });
-          
-          doc.setTextColor(0, 0, 0);
-          yPos += 80;
-        }
-        
-      } catch (error) {
-        console.error('Error appending PDF:', error);
-        // Continue with next file if one fails
-      }
-    }
+    yPos += 10; // Add some space after attachments
   }
   
   // Save the PDF
