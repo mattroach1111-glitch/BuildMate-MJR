@@ -4,6 +4,7 @@ import { EmailInboxInfo } from "./EmailInboxInfo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -37,6 +38,8 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   const [lastProcessedExpense, setLastProcessedExpense] = useState<ProcessedExpense | null>(null);
   const [pendingExpense, setPendingExpense] = useState<PendingExpense | null>(null);
   const [isAddingToJobSheet, setIsAddingToJobSheet] = useState(false);
+  const [jobAddress, setJobAddress] = useState<string>("");
+  const [clientName, setClientName] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -141,8 +144,12 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
 
   // Create complete job from document
   const createJobFromDocumentMutation = useMutation({
-    mutationFn: async (documentURL: string) => {
-      const response = await apiRequest("POST", "/api/documents/create-job", { documentURL });
+    mutationFn: async (data: { documentURL: string; jobAddress: string; clientName: string }) => {
+      const response = await apiRequest("POST", "/api/documents/create-job", { 
+        documentURL: data.documentURL,
+        jobAddress: data.jobAddress,
+        clientName: data.clientName 
+      });
       return await response.json();
     },
     onSuccess: (data: any) => {
@@ -280,9 +287,27 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       return;
     }
 
+    // Validate inputs
+    if (!jobAddress.trim() || !clientName.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter both job address and client name before uploading.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     for (const file of result.successful) {
       try {
-        await createJobFromDocumentMutation.mutateAsync(file.uploadURL || "");
+        await createJobFromDocumentMutation.mutateAsync({
+          documentURL: file.uploadURL || "",
+          jobAddress: jobAddress.trim(),
+          clientName: clientName.trim()
+        });
+        
+        // Clear inputs after successful creation
+        setJobAddress("");
+        setClientName("");
       } catch (error) {
         console.error("🔴 JOB CREATION ERROR:", error);
         toast({
@@ -494,18 +519,55 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Job Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Job Address</label>
+                  <Input
+                    value={jobAddress}
+                    onChange={(e) => setJobAddress(e.target.value)}
+                    placeholder="e.g. 21 Greenhill Dr"
+                    data-testid="input-job-address"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Client Name</label>
+                  <Input
+                    value={clientName}
+                    onChange={(e) => setClientName(e.target.value)}
+                    placeholder="e.g. John Smith"
+                    data-testid="input-client-name"
+                  />
+                </div>
+              </div>
+
               {/* Upload Section */}
               <div className="space-y-4">
+                {(!jobAddress.trim() || !clientName.trim()) && (
+                  <Alert className="border-orange-200 bg-orange-50">
+                    <AlertCircle className="h-4 w-4 text-orange-600" />
+                    <AlertDescription className="text-orange-800">
+                      Please fill in both job address and client name before uploading
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
                 <DocumentUploader
                   maxNumberOfFiles={1}
                   maxFileSize={10485760}
                   onGetUploadParameters={handleGetUploadParameters}
                   onComplete={handleCreateJobUploadComplete}
-                  buttonClassName="w-full h-12 border-2 border-dashed border-gray-300 hover:border-blue-400 bg-gray-50 hover:bg-blue-50 transition-colors"
+                  buttonClassName={`w-full h-12 border-2 border-dashed transition-colors ${
+                    !jobAddress.trim() || !clientName.trim() 
+                      ? 'border-gray-200 bg-gray-100 cursor-not-allowed' 
+                      : 'border-gray-300 hover:border-blue-400 bg-gray-50 hover:bg-blue-50'
+                  }`}
                 >
                   <div className="flex flex-col items-center gap-2">
-                    <Upload className="h-6 w-6 text-gray-400" />
-                    <span className="text-sm font-medium">Upload Job Cost Sheet</span>
+                    <Upload className={`h-6 w-6 ${!jobAddress.trim() || !clientName.trim() ? 'text-gray-300' : 'text-gray-400'}`} />
+                    <span className={`text-sm font-medium ${!jobAddress.trim() || !clientName.trim() ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Upload Job Cost Sheet
+                    </span>
                     <span className="text-xs text-gray-500">PDF, JPG, PNG (Max 10MB)</span>
                   </div>
                 </DocumentUploader>

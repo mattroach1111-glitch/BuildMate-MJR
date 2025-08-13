@@ -2256,10 +2256,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const { documentURL } = req.body;
+      const { documentURL, jobAddress: manualJobAddress, clientName: manualClientName } = req.body;
       
       if (!documentURL) {
         return res.status(400).json({ error: "Document URL is required" });
+      }
+      
+      if (!manualJobAddress || !manualClientName) {
+        return res.status(400).json({ error: "Job address and client name are required" });
       }
 
       const objectStorageService = new ObjectStorageService();
@@ -2281,42 +2285,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔵 Original AI extracted address:', JSON.stringify(jobData.jobAddress));
       console.log('🔵 Document URL for filename extraction:', documentURL);
       
-      // Create the new job with proper address handling (without auto-adding all employees)
-      // Force extract job name from raw text if AI didn't get it
-      let jobAddress = jobData.jobAddress;
-      let projectName = jobData.projectName;
+      // Use manual inputs provided by user instead of AI extraction
+      const jobAddress = manualJobAddress.trim();
+      const clientName = manualClientName.trim();
+      const projectName = jobAddress; // Use job address as project name
       
-      if (!jobAddress || jobAddress === "Not specified" || jobAddress.length < 3 || jobAddress === "Property Address Not Specified") {
-        // Extract from raw text - look for "21 Greenhill Dr" pattern
-        const addressMatch = jobData.rawText?.match(/\d+\s+[A-Za-z\s]+\s+(Dr|Drive|Street|St|Road|Rd|Ave|Avenue|Place|Pl|Court|Ct)/i);
-        if (addressMatch) {
-          jobAddress = addressMatch[0].trim();
-          console.log('🔵 Found address in rawText:', jobAddress);
-        } else {
-          // Fallback: look for any address-like pattern in filename or document
-          const filenameMatch = documentURL.match(/(\d+[^\/\-]*(?:Dr|Drive|Street|St|Road|Rd|Ave|Avenue))/i);
-          if (filenameMatch) {
-            jobAddress = filenameMatch[1].replace(/%20/g, ' ').trim();
-            console.log('🔵 Found address in filename:', jobAddress);
-          } else {
-            // Last resort: extract from upload filename if it contains "21 Greenhill Dr"
-            const uploadsMatch = documentURL.match(/uploads\/[^\/]*$/);
-            if (uploadsMatch) {
-              // Look in the request body or metadata for original filename
-              jobAddress = "21 Greenhill Dr"; // Known from context
-              console.log('🔵 Using known address as fallback');
-            }
-          }
-        }
-      }
-      
-      if (!projectName || projectName === "Construction Project") {
-        projectName = jobAddress;
-      }
+      console.log('🔵 Using manual inputs - Job Address:', jobAddress, 'Client Name:', clientName);
       
       const newJob = await storage.createJobFromPDF({
         jobAddress: jobAddress,
-        clientName: jobData.clientName || "New Client",
+        clientName: clientName,
         projectName: projectName, 
         status: "job_in_progress",
         builderMargin: "0.00", // Always 0% margin for PDF uploads
