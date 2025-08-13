@@ -2147,51 +2147,55 @@ export default function AdminDashboard() {
                         </div>
                       )}
                       
-                      {/* Color Picker Button */}
-                      <DropdownMenu 
+                      {/* Color Picker Button - Now uses Dialog instead of Dropdown */}
+                      <Dialog 
                         open={colorPickerOpen === groupName} 
                         onOpenChange={(open) => setColorPickerOpen(open ? groupName : null)}
                       >
-                        <DropdownMenuTrigger asChild>
+                        <DialogTrigger asChild>
                           <Button
                             variant="ghost"
                             size="sm"
                             className="h-8 w-8 p-0 hover:bg-white/20"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setColorPickerOpen(colorPickerOpen === groupName ? null : groupName);
+                              setColorPickerOpen(groupName);
                             }}
                             data-testid={`color-picker-${groupName}`}
                           >
                             <Palette className="h-4 w-4" />
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent 
-                          align="end" 
-                          className="w-56 p-2"
+                        </DialogTrigger>
+                        <DialogContent 
+                          className="sm:max-w-md"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <div className="text-sm font-medium mb-2 px-2">Choose Folder Color</div>
-                          <div className="grid grid-cols-4 gap-2">
+                          <DialogHeader>
+                            <DialogTitle>Choose Folder Color</DialogTitle>
+                          </DialogHeader>
+                          <div className="grid grid-cols-4 gap-3 p-4">
                             {allColorThemes.map((theme, index) => (
                               <button
                                 key={theme.name}
-                                className={`w-10 h-10 rounded-lg border-2 transition-all hover:scale-110 ${theme.preview} ${
+                                className={`w-12 h-12 rounded-lg border-2 transition-all hover:scale-105 active:scale-95 ${theme.preview} ${
                                   folderColors[groupName] === index 
                                     ? 'ring-2 ring-offset-2 ring-blue-500' 
                                     : 'border-gray-200 hover:border-gray-300'
                                 }`}
-                                onClick={() => handleColorChange(groupName, index)}
+                                onClick={() => {
+                                  handleColorChange(groupName, index);
+                                  setColorPickerOpen(null); // Close dialog after selection
+                                }}
                                 title={theme.name}
                                 data-testid={`color-option-${theme.name.toLowerCase()}`}
                               />
                             ))}
                           </div>
-                          <div className="text-xs text-muted-foreground mt-2 px-2">
-                            Click a color to customize this folder
+                          <div className="text-sm text-muted-foreground text-center pb-2">
+                            Tap a color to customize this folder
                           </div>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                     
                     {isExpanded && (
