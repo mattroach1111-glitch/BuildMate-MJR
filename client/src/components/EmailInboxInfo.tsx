@@ -225,17 +225,19 @@ export function EmailInboxInfo() {
           </div>
         )}
 
-        {/* Setup Instructions */}
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-          <h4 className="text-sm font-medium text-orange-800 mb-2">📧 Email Setup:</h4>
-          <div className="space-y-2 text-xs text-orange-700">
-            <p>To receive emails automatically, configure your email server to forward emails to:</p>
+        {/* Email Integration Setup */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <h4 className="text-sm font-medium text-blue-800 mb-2">📧 Email Integration Setup:</h4>
+          <div className="space-y-2 text-xs text-blue-700">
+            <p><strong>Using Your @mjrbuilders.com.au Email:</strong></p>
             <ul className="space-y-1 ml-2">
-              <li>• Configure email forwarding from {inboxData.emailAddress}</li>
-              <li>• Set up webhook integration with email service</li>
-              <li>• Test the email processing pipeline</li>
+              <li>• Create a dedicated email: documents@mjrbuilders.com.au</li>
+              <li>• Configure IMAP access in your email hosting (OnlyDomains)</li>
+              <li>• Add email credentials to BuildFlow Pro</li>
+              <li>• Forward invoices to documents@mjrbuilders.com.au</li>
+              <li>• Click "Check for New Emails" for automatic processing</li>
             </ul>
-            <p className="text-orange-600 font-medium">Currently using direct upload method until email forwarding is configured.</p>
+            <p className="text-blue-600 font-medium mt-2">This connects directly to your existing email system.</p>
           </div>
         </div>
 

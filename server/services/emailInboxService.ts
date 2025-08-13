@@ -359,6 +359,76 @@ export class EmailInboxService {
     return processableTypes.includes(contentType.toLowerCase());
   }
 
+  // Manual processing trigger (checks actual email inbox)
+  async processInbox(userId: string): Promise<{ processed: number; errors: string[] }> {
+    try {
+      console.log('📧 Email processing system initialized');
+      
+      // Check for email credentials in environment
+      const emailHost = process.env.EMAIL_HOST;
+      const emailPort = parseInt(process.env.EMAIL_PORT || '993');
+      const emailUser = process.env.EMAIL_USER;
+      const emailPass = process.env.EMAIL_PASS;
+      
+      if (!emailHost || !emailUser || !emailPass) {
+        console.log('❌ Email credentials not configured');
+        return {
+          processed: 0,
+          errors: ['Email credentials not configured. Please add EMAIL_HOST, EMAIL_USER, and EMAIL_PASS environment variables.']
+        };
+      }
+      
+      // Import and create IMAP email service
+      const { ImapEmailService } = await import('./imapEmailService');
+      const emailService = await ImapEmailService.createWithCredentials(
+        emailHost,
+        emailPort,
+        emailUser,
+        emailPass,
+        true // Use TLS
+      );
+      
+      // Fetch unread emails with attachments
+      const unreadEmails = await emailService.getUnreadEmails();
+      console.log(`📧 Found ${unreadEmails.length} unread emails with attachments`);
+      
+      let processed = 0;
+      const errors: string[] = [];
+      
+      // Process each email
+      for (const email of unreadEmails) {
+        try {
+          console.log(`📧 Processing email: ${email.subject}`);
+          const success = await this.processEmail(email);
+          
+          if (success) {
+            // Mark email as read after successful processing
+            await emailService.markAsRead(email.id);
+            processed++;
+          } else {
+            errors.push(`Failed to process email: ${email.subject}`);
+          }
+        } catch (error) {
+          console.error(`Error processing email ${email.id}:`, error);
+          errors.push(`Error processing email: ${error.message}`);
+        }
+      }
+      
+      console.log(`✅ Processed ${processed} emails successfully`);
+      return {
+        processed,
+        errors
+      };
+      
+    } catch (error) {
+      console.error('Error processing inbox:', error);
+      return {
+        processed: 0,
+        errors: [error.message]
+      };
+    }
+  }
+
   // Simulate email polling (in production this would connect to email server)
   async pollForNewEmails(): Promise<EmailMessage[]> {
     // This is a placeholder - in production you would:

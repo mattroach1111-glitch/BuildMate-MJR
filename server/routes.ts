@@ -2664,23 +2664,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Manual email processing trigger (for testing)
-  app.post("/api/email-inbox/process", isAuthenticated, isAdmin, async (req: any, res) => {
+  // Manual email processing trigger
+  app.post("/api/email-inbox/process", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user?.claims?.sub;
       const { EmailInboxService } = await import('./services/emailInboxService');
       const emailService = new EmailInboxService();
+      const result = await emailService.processInbox(userId);
       
-      // This would normally be triggered by incoming emails
-      // For now, return success to indicate the system is ready
-      console.log("📧 Email processing system initialized");
-      
-      res.json({ 
-        message: "Email processing system ready",
-        status: "active"
+      res.json({
+        message: "Email processing completed",
+        ...result
       });
     } catch (error) {
-      console.error("Error initializing email processing:", error);
-      res.status(500).json({ error: "Failed to initialize email processing" });
+      console.error("Error processing emails:", error);
+      res.status(500).json({ error: "Failed to process emails" });
     }
   });
 
