@@ -914,6 +914,23 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     setDefaultHourlyRate(value);
     if (value && !isNaN(parseFloat(value))) {
       debouncedUpdateJobSettings({ defaultHourlyRate: value });
+      
+      // Ask user if they want to update all labor entries with the new rate
+      if (jobDetails && jobDetails.laborEntries.length > 0) {
+        const shouldUpdate = confirm(
+          `Do you want to update all staff hourly rates to $${value}? This will change the rates for all ${jobDetails.laborEntries.length} staff members on this job.`
+        );
+        
+        if (shouldUpdate) {
+          // Update all labor entry rates
+          const newRates: Record<string, string> = {};
+          jobDetails.laborEntries.forEach(entry => {
+            newRates[entry.id] = value;
+          });
+          setLocalLaborRates(newRates);
+          setHasUnsavedRates(true);
+        }
+      }
     }
   };
 
