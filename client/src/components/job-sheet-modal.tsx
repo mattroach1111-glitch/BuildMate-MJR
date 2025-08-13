@@ -639,8 +639,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   // Delete mutations
   const deleteMaterialMutation = useMutation({
     mutationFn: async (materialId: string) => {
-      const response = await apiRequest("DELETE", `/api/materials/${materialId}`);
-      return response.json();
+      await apiRequest("DELETE", `/api/materials/${materialId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
@@ -660,8 +659,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
   const deleteSubTradeMutation = useMutation({
     mutationFn: async (subTradeId: string) => {
-      const response = await apiRequest("DELETE", `/api/subtrades/${subTradeId}`);
-      return response.json();
+      await apiRequest("DELETE", `/api/subtrades/${subTradeId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
@@ -681,8 +679,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
   const deleteOtherCostMutation = useMutation({
     mutationFn: async (otherCostId: string) => {
-      const response = await apiRequest("DELETE", `/api/othercosts/${otherCostId}`);
-      return response.json();
+      await apiRequest("DELETE", `/api/othercosts/${otherCostId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
@@ -702,8 +699,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
   const deleteTipFeeMutation = useMutation({
     mutationFn: async (tipFeeId: string) => {
-      const response = await apiRequest("DELETE", `/api/tipfees/${tipFeeId}`);
-      return response.json();
+      await apiRequest("DELETE", `/api/tipfees/${tipFeeId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
