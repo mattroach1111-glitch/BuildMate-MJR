@@ -33,6 +33,11 @@ interface EmailParams {
   subject: string;
   text?: string;
   html?: string;
+  attachments?: Array<{
+    filename: string;
+    content: Buffer;
+    contentType: string;
+  }>;
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
@@ -55,6 +60,7 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       subject: params.subject,
       text: params.text,
       html: params.html,
+      attachments: params.attachments || [],
     };
 
     const result = await transporter.sendMail(mailOptions);

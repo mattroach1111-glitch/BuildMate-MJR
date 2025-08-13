@@ -8,12 +8,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { generateJobPDF } from "@/lib/pdfGenerator";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { debounce } from "lodash";
-import { Upload, Download, Trash2, FileText, Clock, X, Edit } from "lucide-react";
+import { Upload, Download, Trash2, FileText, Clock, X, Edit, Mail } from "lucide-react";
 import type { Job, LaborEntry, Material, SubTrade, OtherCost, TipFee, JobFile } from "@shared/schema";
 
 interface JobSheetModalProps {
@@ -49,6 +50,12 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const [isAddingNewProjectManager, setIsAddingNewProjectManager] = useState(false);
   const [newProjectManagerName, setNewProjectManagerName] = useState("");
   const [extraHours, setExtraHours] = useState<Record<string, string>>({});
+  
+  // Email PDF dialog state
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [emailRecipient, setEmailRecipient] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
   
   // Editing states for materials, sub-trades, other costs, and tip fees
   const [editingMaterial, setEditingMaterial] = useState<string | null>(null);
@@ -977,6 +984,102 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     }
   };
 
+  // Email PDF functionality
+  const emailPDFMutation = useMutation({
+    mutationFn: async (emailData: { to: string; subject: string; message: string }) => {
+      const response = await apiRequest("POST", `/api/jobs/${jobId}/email-pdf`, emailData);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Job sheet PDF sent successfully",
+      });
+      setIsEmailDialogOpen(false);
+      setEmailRecipient("");
+      setEmailSubject("");
+      setEmailMessage("");
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to send PDF email",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEmailPDF = () => {
+    if (!jobDetails) return;
+    
+    // Pre-fill email subject with job details
+    setEmailSubject(`Job Sheet - ${jobDetails.jobAddress} (${jobDetails.clientName})`);
+    setEmailMessage(`Please find attached the job sheet for:\n\nAddress: ${jobDetails.jobAddress}\nClient: ${jobDetails.clientName}\nProject Manager: ${jobDetails.projectManager || 'N/A'}\n\nBest regards,\nMJR Builders`);
+    setIsEmailDialogOpen(true);
+  };
+
+  const handleSendEmail = () => {
+    if (!emailRecipient.trim()) {
+      toast({
+        title: "Email Required",
+        description: "Please enter a recipient email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailRecipient.trim())) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    emailPDFMutation.mutate({
+      to: emailRecipient.trim(),
+      subject: emailSubject.trim() || `Job Sheet - ${jobDetails?.jobAddress}`,
+      message: emailMessage.trim() || "Please find attached the job sheet PDF.",
+    });
+  };
+
+  useEffect(() => {
+    if (jobDetails) {
+      setBuilderMargin(jobDetails.builderMargin);
+      setDefaultHourlyRate(jobDetails.defaultHourlyRate);
+      // Initialize local labor rates
+      const rates: Record<string, string> = {};
+      jobDetails.laborEntries.forEach(entry => {
+        rates[entry.id] = entry.hourlyRate;
+      });
+      setLocalLaborRates(rates);
+      setHasUnsavedRates(false);
+
+      // Initialize edit form
+      setEditForm({
+        jobAddress: jobDetails.jobAddress || "",
+        clientName: jobDetails.clientName || "",
+        projectName: jobDetails.projectName || "",
+        projectManager: jobDetails.projectManager || "",
+        status: jobDetails.status || "",
+      });
+    }
+  }, [jobDetails]);
+
   const handleEditSave = () => {
     if (!editForm.jobAddress.trim() || !editForm.clientName.trim() || !editForm.projectName.trim()) {
       toast({
@@ -1241,6 +1344,16 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Download PDF
+                  </Button>
+                  <Button 
+                    onClick={handleEmailPDF}
+                    className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
+                    size="sm"
+                    disabled={!jobDetails}
+                    data-testid="button-email-pdf"
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    Email PDF
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -2328,6 +2441,66 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
           )}
         </div>
       </DialogContent>
+      
+      {/* Email PDF Dialog */}
+      <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Email Job Sheet PDF</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="email-recipient">Recipient Email</Label>
+              <Input
+                id="email-recipient"
+                type="email"
+                placeholder="Enter email address"
+                value={emailRecipient}
+                onChange={(e) => setEmailRecipient(e.target.value)}
+                data-testid="input-email-recipient"
+              />
+            </div>
+            <div>
+              <Label htmlFor="email-subject">Subject</Label>
+              <Input
+                id="email-subject"
+                placeholder="Email subject"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                data-testid="input-email-subject"
+              />
+            </div>
+            <div>
+              <Label htmlFor="email-message">Message</Label>
+              <Textarea
+                id="email-message"
+                placeholder="Email message"
+                value={emailMessage}
+                onChange={(e) => setEmailMessage(e.target.value)}
+                rows={4}
+                data-testid="textarea-email-message"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setIsEmailDialogOpen(false)}
+                data-testid="button-cancel-email"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSendEmail}
+                disabled={emailPDFMutation.isPending}
+                data-testid="button-send-email"
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                {emailPDFMutation.isPending ? "Sending..." : "Send PDF"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

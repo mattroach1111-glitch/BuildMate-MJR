@@ -2900,6 +2900,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Email job sheet PDF endpoint
+  app.post("/api/jobs/:id/email-pdf", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const jobId = req.params.id;
+      const { to, subject, message } = req.body;
+
+      if (!to || !to.trim()) {
+        return res.status(400).json({ message: "Recipient email is required" });
+      }
+
+      // Get job details
+      const jobDetails = await storage.getJob(jobId);
+      if (!jobDetails) {
+        return res.status(404).json({ message: "Job not found" });
+      }
+
+      // Get all job data for PDF generation
+      const [laborEntries, materials, subTrades, otherCosts, tipFees, jobFiles, timesheets] = await Promise.all([
+        storage.getLaborEntriesForJob(jobId),
+        storage.getMaterialsForJob(jobId),
+        storage.getSubTradesForJob(jobId),
+        storage.getOtherCostsForJob(jobId),
+        storage.getTipFeesForJob(jobId),
+        storage.getJobFiles(jobId),
+        storage.getJobTimesheets(jobId)
+      ]);
+
+      const jobWithDetails = {
+        ...jobDetails,
+        laborEntries,
+        materials,
+        subTrades,
+        otherCosts,
+        tipFees,
+        timesheets
+      };
+
+      // Generate PDF in memory
+      const { generateJobPDFBuffer } = await import('../client/src/lib/pdfGenerator');
+      
+      const attachmentFiles = jobFiles.map(file => ({
+        id: file.id,
+        originalName: file.originalName,
+        objectPath: file.objectPath,
+        googleDriveLink: file.googleDriveLink
+      }));
+
+      const pdfBuffer = await generateJobPDFBuffer(jobWithDetails, attachmentFiles);
+      
+      // Send email with PDF attachment
+      const { sendEmail } = await import('./services/emailService');
+      
+      const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || "jobs@mjrbuilders.com.au";
+      
+      const emailSuccess = await sendEmail({
+        from: fromEmail,
+        to: to.trim(),
+        subject: subject || `Job Sheet - ${jobDetails.jobAddress}`,
+        text: message || `Please find attached the job sheet for ${jobDetails.jobAddress}.`,
+        html: `<p>${(message || `Please find attached the job sheet for ${jobDetails.jobAddress}.`).replace(/\n/g, '<br>')}</p>`,
+        attachments: [{
+          filename: `JobSheet_${jobDetails.jobAddress.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf'
+        }]
+      });
+
+      if (emailSuccess) {
+        res.json({ message: "Job sheet PDF sent successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to send email" });
+      }
+    } catch (error) {
+      console.error("Error emailing job sheet PDF:", error);
+      res.status(500).json({ message: "Failed to send job sheet PDF" });
+    }
+  });
+
   // Get email processing status and recent activity
   app.get("/api/email-inbox/status", isAuthenticated, async (req: any, res) => {
     try {
