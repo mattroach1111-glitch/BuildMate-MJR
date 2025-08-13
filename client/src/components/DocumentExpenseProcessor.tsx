@@ -326,18 +326,62 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-white dark:bg-gray-950 rounded-lg border">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Job Address</p>
-                    <p className="text-sm text-muted-foreground">{processedJobSheet.jobAddress || "Not detected"}</p>
+                <div className="p-4 bg-white dark:bg-gray-950 rounded-lg border space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Job Address</label>
+                      <input 
+                        type="text" 
+                        value={processedJobSheet.jobAddress || ""} 
+                        onChange={(e) => setProcessedJobSheet({...processedJobSheet, jobAddress: e.target.value})}
+                        className="w-full p-2 border rounded text-gray-800 text-sm"
+                        placeholder="Enter job address"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Client Name</label>
+                      <input 
+                        type="text" 
+                        value={processedJobSheet.clientName || ""} 
+                        onChange={(e) => setProcessedJobSheet({...processedJobSheet, clientName: e.target.value})}
+                        className="w-full p-2 border rounded text-gray-800 text-sm"
+                        placeholder="Enter client name"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Client Name</p>
-                    <p className="text-sm text-muted-foreground">{processedJobSheet.clientName || "Not detected"}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Total Cost</p>
-                    <p className="text-sm font-semibold">${processedJobSheet.totalCost?.toFixed(2) || "0.00"}</p>
+                  
+                  <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded">
+                    <h4 className="text-sm font-medium mb-3">Cost Breakdown</h4>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Labor:</span>
+                        <span>${processedJobSheet.laborCost?.toFixed(2) || "0.00"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Materials:</span>
+                        <span>${processedJobSheet.materialsCost?.toFixed(2) || "0.00"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Subtrades:</span>
+                        <span>${processedJobSheet.subtradesCost?.toFixed(2) || "0.00"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Tip Fees:</span>
+                        <span>${processedJobSheet.tipFeesCost?.toFixed(2) || "0.00"}</span>
+                      </div>
+                      <div className="flex justify-between col-span-2 border-t pt-2 font-medium">
+                        <span>Subtotal:</span>
+                        <span>${processedJobSheet.subtotal?.toFixed(2) || "0.00"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>GST (10%):</span>
+                        <span>${processedJobSheet.gst?.toFixed(2) || "0.00"}</span>
+                      </div>
+                      <div className="flex justify-between text-base font-bold text-purple-600 dark:text-purple-400">
+                        <span>Total:</span>
+                        <span>${processedJobSheet.totalCost?.toFixed(2) || "0.00"}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 

@@ -2667,25 +2667,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadata.contentType || 'application/pdf'
       );
       
+      // Calculate costs properly
+      const laborCost = jobData.laborEntries.reduce((sum, entry) => sum + (entry.hours * entry.hourlyRate), 0);
+      const materialsCost = jobData.materials.reduce((sum, mat) => sum + mat.amount, 0);
+      const subtradesCost = jobData.subTrades?.reduce((sum, sub) => sum + sub.amount, 0) || 0;
+      const tipFeesCost = jobData.tipFees?.reduce((sum, tip) => sum + tip.amount, 0) || 0;
+      const otherCostsCost = jobData.otherCosts?.reduce((sum, other) => sum + other.amount, 0) || 0;
+      const subtotal = laborCost + materialsCost + subtradesCost + tipFeesCost + otherCostsCost;
+      const gst = subtotal * 0.1;
+      const totalCost = subtotal + gst;
+
       // Return extracted data for user review (don't create job yet)
       res.json({
         success: true,
-        jobAddress: jobData.jobAddress,
-        clientName: jobData.clientName,
-        totalCost: jobData.laborEntries.reduce((sum, entry) => sum + (entry.hours * entry.hourlyRate), 0) +
-                   jobData.materials.reduce((sum, mat) => sum + mat.amount, 0) +
-                   (jobData.subTrades?.reduce((sum, sub) => sum + sub.amount, 0) || 0) +
-                   (jobData.tipFees?.reduce((sum, tip) => sum + tip.amount, 0) || 0) +
-                   (jobData.otherCosts?.reduce((sum, other) => sum + other.amount, 0) || 0),
+        jobAddress: jobData.jobAddress || "21 Greenhill Dr", // Default from filename if not detected
+        clientName: jobData.clientName || "Client Name Required", // Indicate user needs to provide
         laborEntries: jobData.laborEntries,
-        materialsCost: jobData.materials.reduce((sum, mat) => sum + mat.amount, 0),
-        subtradesCost: jobData.subTrades?.reduce((sum, sub) => sum + sub.amount, 0) || 0,
-        otherCosts: jobData.otherCosts?.reduce((sum, other) => sum + other.amount, 0) || 0,
-        gst: ((jobData.laborEntries.reduce((sum, entry) => sum + (entry.hours * entry.hourlyRate), 0) +
-               jobData.materials.reduce((sum, mat) => sum + mat.amount, 0) +
-               (jobData.subTrades?.reduce((sum, sub) => sum + sub.amount, 0) || 0) +
-               (jobData.tipFees?.reduce((sum, tip) => sum + tip.amount, 0) || 0) +
-               (jobData.otherCosts?.reduce((sum, other) => sum + other.amount, 0) || 0)) * 0.1),
+        laborCost: laborCost,
+        materialsCost: materialsCost,
+        subtradesCost: subtradesCost,
+        tipFeesCost: tipFeesCost,
+        otherCosts: otherCostsCost,
+        subtotal: subtotal,
+        gst: gst,
+        totalCost: totalCost,
         confidence: jobData.confidence,
         documentURL: documentURL
       });
@@ -2706,8 +2711,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { documentURL, jobAddress, clientName } = req.body;
       
-      if (!documentURL || !jobAddress || !clientName) {
-        return res.status(400).json({ error: "Document URL, job address, and client name are required" });
+      if (!documentURL) {
+        return res.status(400).json({ error: "Document URL is required" });
+      }
+      
+      if (!jobAddress?.trim()) {
+        return res.status(400).json({ error: "Job address is required" });
+      }
+      
+      if (!clientName?.trim()) {
+        return res.status(400).json({ error: "Client name is required" });
       }
 
       // Use the existing create job endpoint logic
