@@ -226,15 +226,32 @@ export class DocumentProcessor {
         extractedData = JSON.parse(aiResponse);
       } catch (parseError) {
         console.error('Failed to parse AI response as JSON:', parseError);
-        // Try to extract JSON from the response if it's wrapped in markdown or other text
-        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          try {
-            extractedData = JSON.parse(jsonMatch[0]);
-          } catch (secondParseError) {
-            throw new Error('AI response was not valid JSON');
+        // Try to extract JSON from markdown code blocks or wrapped text
+        let jsonContent = aiResponse;
+        
+        // Remove markdown code blocks
+        if (aiResponse.includes('```json')) {
+          const jsonMatch = aiResponse.match(/```json\s*([\s\S]*?)\s*```/);
+          if (jsonMatch) {
+            jsonContent = jsonMatch[1];
+          }
+        } else if (aiResponse.includes('```')) {
+          const jsonMatch = aiResponse.match(/```\s*([\s\S]*?)\s*```/);
+          if (jsonMatch) {
+            jsonContent = jsonMatch[1];
           }
         } else {
+          // Fallback to finding JSON object
+          const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            jsonContent = jsonMatch[0];
+          }
+        }
+        
+        try {
+          extractedData = JSON.parse(jsonContent);
+        } catch (secondParseError) {
+          console.error('Second JSON parse failed:', secondParseError);
           throw new Error('AI response was not valid JSON');
         }
       }
@@ -354,15 +371,32 @@ export class DocumentProcessor {
         extractedData = JSON.parse(aiResponse);
       } catch (parseError) {
         console.error('Failed to parse AI response as JSON:', parseError);
-        // Try to extract JSON from the response if it's wrapped in markdown or other text
-        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          try {
-            extractedData = JSON.parse(jsonMatch[0]);
-          } catch (secondParseError) {
-            throw new Error('AI response was not valid JSON');
+        // Try to extract JSON from markdown code blocks or wrapped text
+        let jsonContent = aiResponse;
+        
+        // Remove markdown code blocks
+        if (aiResponse.includes('```json')) {
+          const jsonMatch = aiResponse.match(/```json\s*([\s\S]*?)\s*```/);
+          if (jsonMatch) {
+            jsonContent = jsonMatch[1];
+          }
+        } else if (aiResponse.includes('```')) {
+          const jsonMatch = aiResponse.match(/```\s*([\s\S]*?)\s*```/);
+          if (jsonMatch) {
+            jsonContent = jsonMatch[1];
           }
         } else {
+          // Fallback to finding JSON object
+          const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            jsonContent = jsonMatch[0];
+          }
+        }
+        
+        try {
+          extractedData = JSON.parse(jsonContent);
+        } catch (secondParseError) {
+          console.error('Second JSON parse failed:', secondParseError);
           throw new Error('AI response was not valid JSON');
         }
       }
