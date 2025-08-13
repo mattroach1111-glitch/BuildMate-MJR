@@ -358,7 +358,12 @@ Focus on the primary expense amount. If multiple items, use the total. Be conser
       const gsCommand = `gs -dSAFER -dBATCH -dNOPAUSE -dQUIET -sDEVICE=jpeg -r150 -sOutputFile="${pagePattern}" "${pdfPath}"`;
       
       console.log('🔧 Executing Ghostscript conversion for all pages...');
-      await execAsync(gsCommand);
+      try {
+        await execAsync(gsCommand);
+      } catch (error) {
+        console.error('🔴 Ghostscript conversion failed:', error);
+        throw new Error(`Ghostscript conversion failed: ${error}`);
+      }
       
       // Find all created page files
       const files = await fs.readdir(tempDir);
@@ -381,9 +386,16 @@ Focus on the primary expense amount. If multiple items, use the total. Be conser
       } else {
         // Multiple pages - combine vertically using ImageMagick
         const pageInputs = pageFiles.map(f => `"${path.join(tempDir, f)}"`).join(' ');
-        const combineCommand = `convert ${pageInputs} -append "${outputImagePath}"`;
-        console.log('🔧 Combining pages with ImageMagick...');
-        await execAsync(combineCommand);
+        // Try both magick and convert commands for compatibility
+        let combineCommand = `magick ${pageInputs} -append "${outputImagePath}"`;
+        console.log('🔧 Combining pages with ImageMagick (magick)...');
+        try {
+          await execAsync(combineCommand);
+        } catch (error) {
+          console.log('🔧 Retrying with legacy convert command...');
+          combineCommand = `convert ${pageInputs} -append "${outputImagePath}"`;
+          await execAsync(combineCommand);
+        }
         combinedImageBuffer = await fs.readFile(outputImagePath);
         
         // Clean up individual page files
