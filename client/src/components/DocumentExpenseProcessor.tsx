@@ -577,12 +577,11 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
               {/* Project Manager (Optional) */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Project Manager <span className="text-gray-400">(Optional)</span></label>
-                <Select value={projectManager} onValueChange={setProjectManager}>
+                <Select value={projectManager || undefined} onValueChange={(value) => setProjectManager(value || "")}>
                   <SelectTrigger data-testid="select-project-manager">
-                    <SelectValue placeholder="Select project manager" />
+                    <SelectValue placeholder="Select project manager (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None (optional)</SelectItem>
                     {projectManagers.map((manager) => (
                       <SelectItem key={manager} value={manager}>
                         {manager}
