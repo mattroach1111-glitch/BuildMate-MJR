@@ -172,12 +172,19 @@ export class DocumentProcessor {
       const prompt = `
         Analyze this complete job cost sheet document and extract ALL information to create a new job.
         
+        CRITICAL: For materials, look for a materials list that shows items with dollar amounts.
+        Each line format is typically: "Item description [dollar amount] [vendor] [date]"
+        For example: "Flooring tas oak, framing pine 234 Clennetts 6/8"
+        
+        For materials entries, put the DOLLAR AMOUNT in the "quantity" field and set "rate" to null.
+        Do NOT try to calculate quantity × rate. Use the exact dollar amount shown.
+        
         Return a JSON object with these fields:
         - jobAddress: The job site address
-        - clientName: Client or customer name
+        - clientName: Client or customer name  
         - projectName: Project description or name
         - laborEntries: Array of labor entries with {employeeName, date (YYYY-MM-DD), hours, rate, description}
-        - materials: Array of materials with {description, quantity, rate, vendor?, date?}
+        - materials: Array of materials with {description, quantity (PUT DOLLAR AMOUNT HERE), rate (SET TO NULL), vendor?, date?}
         - subTrades: Array of sub-trades with {description, cost, vendor?, date?}
         - otherCosts: Array of other costs with {description, cost, vendor?, date?}
         - tipFees: Array of tip fees with {description, cost, date?}
@@ -186,11 +193,14 @@ export class DocumentProcessor {
         - endDate: Project completion date (YYYY-MM-DD)
         - confidence: Your confidence level (0.0 to 1.0)
         
-        Extract dates in YYYY-MM-DD format. If no date is available, use null.
-        For labor entries, extract individual employee time entries.
-        For materials/subtrades/costs, include vendor names when available.
-        Calculate reasonable rates from totals if individual rates aren't specified.
+        MATERIALS EXTRACTION EXAMPLES:
+        If you see "Flooring tas oak, framing pine 234 Clennetts 6/8":
+        {"description": "Flooring tas oak, framing pine", "quantity": 234, "rate": null, "vendor": "Clennetts", "date": null}
         
+        If you see "hinges x 7 53 Clennetts 8/8":
+        {"description": "hinges x 7", "quantity": 53, "rate": null, "vendor": "Clennetts", "date": null}
+        
+        Extract ALL materials from the materials list section. Look for multiple pages.
         Always return valid JSON.
       `;
 
