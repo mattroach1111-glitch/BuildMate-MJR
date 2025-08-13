@@ -122,7 +122,8 @@ CRITICAL RULES:
 2. SubTrades = trade services (plastering, plumbing, electrical, painters)
 3. Extract individual items, NEVER extract totals or summary amounts
 4. If you see "Materials $1195" - this is a total, not an item - skip it
-5. "Asbestos removal + test" goes to otherCosts with correct amount`,
+5. ONLY extract items that have actual dollar amounts - ignore line items without costs
+6. If an item like "Asbestos removal + test" has no dollar amount next to it, DO NOT extract it`,
         messages: [{
           role: "user",
           content: [
