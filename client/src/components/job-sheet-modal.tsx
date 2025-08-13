@@ -2467,47 +2467,51 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       
       {/* Email PDF Dialog */}
       <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-sm:max-w-[95vw] max-sm:max-h-[90vh] max-sm:m-2">
           <DialogHeader>
-            <DialogTitle>Email Job Sheet PDF</DialogTitle>
+            <DialogTitle className="text-lg max-sm:text-base">Email Job Sheet PDF</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 max-sm:space-y-3">
             <div>
-              <Label htmlFor="email-recipient">Recipient Email</Label>
+              <Label htmlFor="email-recipient" className="text-sm max-sm:text-xs">Recipient Email</Label>
               <Input
                 id="email-recipient"
                 type="email"
                 placeholder="Enter email address"
                 value={emailRecipient}
                 onChange={(e) => setEmailRecipient(e.target.value)}
+                className="max-sm:text-sm max-sm:h-10"
                 data-testid="input-email-recipient"
               />
             </div>
             <div>
-              <Label htmlFor="email-subject">Subject</Label>
+              <Label htmlFor="email-subject" className="text-sm max-sm:text-xs">Subject</Label>
               <Input
                 id="email-subject"
                 placeholder="Email subject"
                 value={emailSubject}
                 onChange={(e) => setEmailSubject(e.target.value)}
+                className="max-sm:text-sm max-sm:h-10"
                 data-testid="input-email-subject"
               />
             </div>
             <div>
-              <Label htmlFor="email-message">Message</Label>
+              <Label htmlFor="email-message" className="text-sm max-sm:text-xs">Message</Label>
               <Textarea
                 id="email-message"
                 placeholder="Email message"
                 value={emailMessage}
                 onChange={(e) => setEmailMessage(e.target.value)}
                 rows={4}
+                className="max-sm:text-sm max-sm:h-20 resize-none"
                 data-testid="textarea-email-message"
               />
             </div>
-            <div className="flex gap-2 justify-end">
+            <div className="flex gap-2 justify-end max-sm:flex-col max-sm:gap-3">
               <Button
                 variant="outline"
                 onClick={() => setIsEmailDialogOpen(false)}
+                className="max-sm:h-11 max-sm:text-sm"
                 data-testid="button-cancel-email"
               >
                 Cancel
@@ -2515,9 +2519,10 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
               <Button
                 onClick={handleSendEmail}
                 disabled={emailPDFMutation.isPending}
+                className="bg-blue-600 hover:bg-blue-700 max-sm:h-11 max-sm:text-sm"
                 data-testid="button-send-email"
               >
-                <Mail className="h-4 w-4 mr-2" />
+                <Mail className="h-4 w-4 mr-2 max-sm:h-3 max-sm:w-3" />
                 {emailPDFMutation.isPending ? "Sending..." : "Send PDF"}
               </Button>
             </div>
