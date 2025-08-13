@@ -225,6 +225,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   };
 
   const handleUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    console.log("🔴 WRONG HANDLER - Regular upload complete called instead of create job handler");
     console.log("🟢 UPLOAD COMPLETE:", result);
     console.log("🔵 Selected Job ID from state:", selectedJobId);
     console.log("🔵 Selected Job ID from ref:", selectedJobIdRef.current);
@@ -278,6 +279,9 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   };
 
   const handleCreateJobUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    console.log("🟢 CREATE JOB HANDLER CALLED - This is the correct handler!");
+    console.log("🟢 Upload result:", result);
+    
     if (!result.successful || result.successful.length === 0) {
       toast({
         title: "Upload failed",
