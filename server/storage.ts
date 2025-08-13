@@ -1572,6 +1572,7 @@ export class DatabaseStorage implements IStorage {
       .from(emailProcessedDocuments)
       .where(eq(emailProcessedDocuments.status, 'pending'))
       .orderBy(desc(emailProcessedDocuments.createdAt));
+    console.log('📧 Pending documents with subjects:', results.map(r => ({ id: r.id.slice(0,8), filename: r.filename, email_subject: r.emailSubject })));
     return results;
   }
 

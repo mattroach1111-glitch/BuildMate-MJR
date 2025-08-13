@@ -112,7 +112,10 @@ export function EmailProcessingReview() {
       if (!response.ok) {
         throw new Error('Failed to fetch jobs');
       }
-      return response.json();
+      const jobsData = await response.json();
+      console.log('🏢 Frontend jobs loaded:', jobsData?.length, 'jobs');
+      console.log('🏢 Sample job structure:', jobsData?.[0]);
+      return jobsData;
     },
   });
 
@@ -234,16 +237,26 @@ export function EmailProcessingReview() {
                     {doc.email_subject && (
                       <p className="text-xs text-gray-500">From: {doc.email_subject}</p>
                     )}
-                    {doc.email_subject && jobs && (
-                      <div className="text-xs text-blue-600 mt-1">
-                        <span className="font-medium">Auto-detected job:</span> {(() => {
-                          console.log('🔍 Frontend matching for:', doc.email_subject, 'with jobs:', jobs?.length);
+                    <div className="text-xs text-blue-600 mt-1">
+                      <span className="font-medium">Auto-detected job:</span> {(() => {
+                        console.log('🔍 Frontend job matching check:', {
+                          hasEmailSubject: !!doc.email_subject,
+                          emailSubject: doc.email_subject,
+                          hasJobs: !!jobs,
+                          jobsLength: jobs?.length,
+                          jobsAvailable: jobs && jobs.length > 0
+                        });
+                        
+                        if (doc.email_subject && jobs && jobs.length > 0) {
                           const match = getJobFromSubject(doc.email_subject, jobs);
                           console.log('🎯 Frontend match result:', match);
                           return match || 'Will assign to first active job';
-                        })()}
-                      </div>
-                    )}
+                        } else {
+                          console.log('❌ Missing data for job matching');
+                          return 'Will assign to first active job (loading...)';
+                        }
+                      })()}
+                    </div>
                   </div>
                   <Badge variant="outline" className="text-orange-600 border-orange-200">
                     Pending Review
