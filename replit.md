@@ -5,6 +5,7 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 Preferred communication style: Simple, everyday language.
 
 # Recent Changes
+- **August 13, 2025**: Fixed Google Drive integration issue in deployed version by adding automatic PDF upload to Google Drive during job creation process and improved redirect URI handling for production deployments. The system now properly uploads job sheet PDFs to Google Drive folders automatically when jobs are created from uploaded documents.
 - **August 13, 2025**: Restored automatic job creation from PDF uploads without approval step. User confirmed system works well with immediate job creation upon document upload, maintaining full AI processing with labor entries, materials extraction, and Google Drive integration.
 
 # System Architecture

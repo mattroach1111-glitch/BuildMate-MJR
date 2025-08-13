@@ -7,10 +7,27 @@ export class GoogleDriveAuth {
   constructor() {
     // We'll need to set up OAuth2 credentials for Google Drive
     // Users will need to provide their own OAuth2 client ID and secret
+    let redirectUri: string;
+    
+    if (process.env.GOOGLE_REDIRECT_URI) {
+      redirectUri = process.env.GOOGLE_REDIRECT_URI;
+    } else if (process.env.REPLIT_DEPLOYMENT) {
+      // Production deployment on Replit
+      redirectUri = `https://${process.env.REPLIT_DEPLOYMENT}/api/google-drive/callback`;
+    } else if (process.env.REPLIT_DEV_DOMAIN) {
+      // Development environment on Replit
+      redirectUri = `https://${process.env.REPLIT_DEV_DOMAIN}/api/google-drive/callback`;
+    } else {
+      // Local development fallback
+      redirectUri = 'http://localhost:5000/api/google-drive/callback';
+    }
+    
+    console.log(`🔵 Google Drive redirect URI: ${redirectUri}`);
+    
     this.oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI || `https://${process.env.REPLIT_DEV_DOMAIN || 'localhost:5000'}/api/google-drive/callback`
+      redirectUri
     );
   }
 
