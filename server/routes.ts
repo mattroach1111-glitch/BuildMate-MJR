@@ -2811,10 +2811,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      console.log(`💰 Adding expense to job ${targetJobId} with category: ${finalCategory}`);
+      console.log(`📄 Expense data:`, extractedData);
+      
       // Add expense to the specified job based on final category
       let addedExpense;
       switch (finalCategory) {
         case 'materials':
+          console.log(`📦 Creating material for job ${targetJobId}`);
           addedExpense = await storage.createMaterial({
             jobId: targetJobId,
             description: extractedData.description || document.filename,
@@ -2822,9 +2826,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             amount: extractedData.amount?.toString() || '0',
             invoiceDate: extractedData.date || new Date().toISOString().split('T')[0]
           });
+          console.log(`✅ Material created:`, addedExpense?.id);
           break;
           
         case 'subtrades':
+          console.log(`🔧 Creating sub-trade for job ${targetJobId}`);
           addedExpense = await storage.createSubTrade({
             jobId: targetJobId,
             trade: extractedData.vendor || 'Unknown Trade',
@@ -2832,6 +2838,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             amount: extractedData.amount?.toString() || '0',
             invoiceDate: extractedData.date || new Date().toISOString().split('T')[0]
           });
+          console.log(`✅ Sub-trade created:`, addedExpense?.id);
           break;
           
         case 'tip_fees':

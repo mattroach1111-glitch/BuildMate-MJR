@@ -38,22 +38,22 @@ function getJobFromSubject(emailSubject: string, jobs: any[]): string {
       // Check if any significant word from address appears in subject
       for (const word of addressWords) {
         if (word.length > 2 && subjectWords.some(sw => sw.includes(word) || word.includes(sw))) {
-          console.log('✅ Found job match by address:', job.jobAddress);
-          return job.jobAddress;
+          console.log('✅ Frontend found job match by address:', job.jobAddress);
+          return `${job.jobAddress} (${job.clientName || 'Unknown Client'})`;
         }
       }
     }
     
     // Match client name
     if (job.clientName && subject.includes(job.clientName.toLowerCase())) {
-      console.log('✅ Found job match by client:', job.clientName);
-      return job.clientName;
+      console.log('✅ Frontend found job match by client:', job.clientName);
+      return `${job.jobAddress} (${job.clientName})`;
     }
     
     // Match project manager
     if (job.projectManager && subject.includes(job.projectManager.toLowerCase())) {
-      console.log('✅ Found job match by PM:', job.projectManager);
-      return job.projectManager;
+      console.log('✅ Frontend found job match by PM:', job.projectManager);
+      return `${job.jobAddress} (${job.clientName || job.projectManager})`;
     }
   }
   
