@@ -2277,6 +2277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       console.log('🔵 Extracted job data:', JSON.stringify(jobData, null, 2));
+      console.log('🔵 SubTrades extracted:', jobData.subTrades?.length || 0, jobData.subTrades);
       
       // Create the new job with proper address handling (without auto-adding all employees)
       // Force extract job name from raw text if AI didn't get it

@@ -93,6 +93,8 @@ export class DocumentProcessor {
         max_tokens: 2000,
         system: `You are analyzing complete job cost sheets for construction projects to extract all job data for creating new project records.
 
+IMPORTANT: This document may have MULTIPLE PAGES. Analyze the ENTIRE document content thoroughly, including all pages.
+
 Extract ALL information visible in the document and return a JSON object with:
 - jobId: Project identifier or address (check document name/title, often the main header)
 - jobAddress: Property/project address (extract from title/header, e.g., "21 Greenhill Dr")
@@ -179,6 +181,11 @@ SPECIFIC EXAMPLES:
           amount: parseFloat(material.amount) || 0,
           supplier: material.supplier || 'Unknown Supplier',
           date: material.date || new Date().toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit' })
+        })),
+        subTrades: (result.subTrades || []).map((subTrade: any) => ({
+          description: subTrade.description || 'Trade Service',
+          amount: parseFloat(subTrade.amount) || 0,
+          supplier: subTrade.supplier || 'Trade Contractor'
         })),
         tipFees: (result.tipFees || []).map((tip: any) => ({
           description: tip.description || 'Tip Fee',
@@ -346,8 +353,8 @@ Focus on the primary expense amount. If multiple items, use the total. Be conser
       const execAsync = promisify(exec);
       const outputImagePath = path.join(tempDir, `converted_${Date.now()}.jpg`);
       
-      // Use Ghostscript directly for reliable PDF-to-image conversion
-      const gsCommand = `gs -dSAFER -dBATCH -dNOPAUSE -dQUIET -sDEVICE=jpeg -r150 -dFirstPage=1 -dLastPage=1 -sOutputFile="${outputImagePath}" "${pdfPath}"`;
+      // Use Ghostscript directly for reliable PDF-to-image conversion (all pages)
+      const gsCommand = `gs -dSAFER -dBATCH -dNOPAUSE -dQUIET -sDEVICE=jpeg -r150 -sOutputFile="${outputImagePath}" "${pdfPath}"`;
       
       console.log('🔧 Executing Ghostscript conversion...');
       await execAsync(gsCommand);
