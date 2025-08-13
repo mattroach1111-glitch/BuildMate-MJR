@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Clock, FileText, DollarSign, Building } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProcessedDocument {
   id: string;
@@ -19,6 +20,7 @@ interface ProcessedDocument {
 
 export function EmailProcessingReview() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Get pending documents from email processing
   const { data: pendingDocs = [], isLoading, refetch } = useQuery({
@@ -50,11 +52,20 @@ export function EmailProcessingReview() {
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/email-processing/pending'] });
+      toast({
+        title: "Document Approved",
+        description: data.message || `Expense added to job successfully`,
+      });
     },
     onError: (error) => {
       console.error('Error approving document:', error);
+      toast({
+        title: "Approval Failed",
+        description: "Failed to approve document and add to job",
+        variant: "destructive",
+      });
     },
   });
 
@@ -74,9 +85,18 @@ export function EmailProcessingReview() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/email-processing/pending'] });
+      toast({
+        title: "Document Rejected",
+        description: "Document has been removed from review queue",
+      });
     },
     onError: (error) => {
       console.error('Error rejecting document:', error);
+      toast({
+        title: "Rejection Failed",
+        description: "Failed to reject document",
+        variant: "destructive",
+      });
     },
   });
 

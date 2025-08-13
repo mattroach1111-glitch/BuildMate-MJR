@@ -2726,8 +2726,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { jobId } = req.body;
       
-      await storage.approveEmailProcessedDocument(id, jobId);
-      res.json({ success: true });
+      // Get the document data before approving
+      const documents = await storage.getEmailProcessedDocumentsPending();
+      const document = documents.find(doc => doc.id === id);
+      
+      if (!document) {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+
+      // Parse the extracted data
+      const extractedData = JSON.parse(document.extractedData);
+      
+      // If no specific job provided, try to find a matching job or use a default job
+      let targetJobId = jobId;
+      if (!targetJobId) {
+        // For now, let's get the first active job as default
+        // In the future, this could be enhanced with job matching logic
+        const allJobs = await storage.getJobs();
+        const activeJobs = allJobs.filter(job => job.status !== 'ready_for_billing');
+        if (activeJobs.length > 0) {
+          targetJobId = activeJobs[0].id;
+        } else {
+          return res.status(400).json({ 
+            error: 'No active jobs available. Please select a job to add this expense to.' 
+          });
+        }
+      }
+
+      // Add expense to the specified job based on category
+      let addedExpense;
+      switch (extractedData.category) {
+        case 'materials':
+          addedExpense = await storage.createMaterial({
+            jobId: targetJobId,
+            description: extractedData.description || document.filename,
+            supplier: extractedData.vendor || 'Unknown Vendor',
+            amount: extractedData.amount?.toString() || '0',
+            invoiceDate: extractedData.date || new Date().toISOString().split('T')[0]
+          });
+          break;
+          
+        case 'subtrades':
+          addedExpense = await storage.createSubTrade({
+            jobId: targetJobId,
+            trade: extractedData.vendor || 'Unknown Trade',
+            contractor: extractedData.vendor || 'Unknown Contractor',
+            amount: extractedData.amount?.toString() || '0',
+            invoiceDate: extractedData.date || new Date().toISOString().split('T')[0]
+          });
+          break;
+          
+        case 'tip_fees':
+          addedExpense = await storage.createTipFee({
+            jobId: targetJobId,
+            description: extractedData.description || document.filename,
+            amount: extractedData.amount?.toString() || '0'
+          });
+          break;
+          
+        case 'other_costs':
+        default:
+          addedExpense = await storage.createOtherCost({
+            jobId: targetJobId,
+            description: extractedData.description || document.filename,
+            amount: extractedData.amount?.toString() || '0'
+          });
+          break;
+      }
+
+      // Now approve the document with the job ID
+      await storage.approveEmailProcessedDocument(id, targetJobId);
+      
+      res.json({ 
+        success: true, 
+        addedExpense,
+        jobId: targetJobId,
+        category: extractedData.category,
+        message: `Expense added to job as ${extractedData.category}`
+      });
     } catch (error) {
       console.error('Error approving document:', error);
       res.status(500).json({ error: 'Failed to approve document' });
