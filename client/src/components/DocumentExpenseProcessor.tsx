@@ -167,6 +167,22 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     }
   }, [processDocumentMutation]);
 
+  // Handle job sheet upload (direct processing without job selection required)
+  const handleJobSheetUpload = useCallback((result: UploadResult) => {
+    if (result.successful && result.successful.length > 0) {
+      const uploadedFile = result.successful[0];
+      
+      // Process job sheet directly - no job ID required
+      toast({
+        title: "Job sheet uploaded successfully!",
+        description: "Processing job sheet data...",
+      });
+      
+      // TODO: Add job sheet processing logic here  
+      console.log("Job sheet uploaded:", uploadedFile);
+    }
+  }, [toast]);
+
   const handleProcessDocument = () => {
     if (!lastUploadedFile || !selectedJobId) {
       toast({
@@ -222,19 +238,50 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="upload" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="upload" className="flex items-center gap-2">
+      <Tabs defaultValue="jobsheet" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="jobsheet" className="flex items-center gap-2">
+            <Receipt className="h-4 w-4" />
+            Job Sheet Upload
+          </TabsTrigger>
+          <TabsTrigger value="expense" className="flex items-center gap-2">
             <Upload className="h-4 w-4" />
-            Document Upload & Job Sheet Processing
+            Expense Documents
           </TabsTrigger>
           <TabsTrigger value="email" className="flex items-center gap-2">
             <Mail className="h-4 w-4" />
-            Email Processing Status
+            Email Processing
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="upload" className="space-y-6">
+        <TabsContent value="jobsheet" className="space-y-6">
+          {/* Job Sheet Upload - Direct Upload without requiring job selection */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Receipt className="h-5 w-5 text-purple-600" />
+                Job Sheet Upload
+              </CardTitle>
+              <CardDescription>
+                Upload completed job sheets with labor, materials, and costs for AI processing
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DocumentUploader 
+                onComplete={handleJobSheetUpload}
+                getUploadParameters={async () => {
+                  const data = await getUploadUrlMutation.mutateAsync();
+                  return {
+                    method: "PUT" as const,
+                    url: data.uploadURL,
+                  };
+                }}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="expense" className="space-y-6">
           {/* Job Selection Card */}
           <Card>
             <CardHeader>
