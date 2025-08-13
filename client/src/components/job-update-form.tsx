@@ -94,7 +94,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     // If projectManager is specified (from folder context), filter by that
     if (projectManager) {
       filteredJobs = filteredJobs.filter(job => 
-        job.projectName?.toLowerCase().includes(projectManager.toLowerCase())
+        job.projectManager?.toLowerCase().includes(projectManager.toLowerCase())
       );
     }
 
@@ -117,7 +117,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     // If projectManager is specified, filter base jobs first
     if (projectManager) {
       baseJobs = baseJobs.filter(job => 
-        job.projectName?.toLowerCase().includes(projectManager.toLowerCase())
+        job.projectManager?.toLowerCase().includes(projectManager.toLowerCase())
       );
     }
 
@@ -464,7 +464,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-muted-foreground">{job.clientName}</span>
                         <span className="text-xs text-muted-foreground">•</span>
-                        <span className="text-xs text-muted-foreground">PM: {job.projectName}</span>
+                        <span className="text-xs text-muted-foreground">PM: {job.projectManager || job.projectName}</span>
                       </div>
                       <Badge 
                         variant={job.status === 'ready_for_billing' ? 'default' : 'secondary'}

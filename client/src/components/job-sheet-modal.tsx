@@ -86,7 +86,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   });
 
   // Get unique project managers and clients from existing jobs
-  const projectManagers = allJobs ? Array.from(new Set(allJobs.map(job => job.projectName).filter(Boolean))) : [];
+  const projectManagers = allJobs ? Array.from(new Set(allJobs.map(job => job.projectManager || job.projectName).filter(Boolean))) : [];
   const clientNames = allJobs ? Array.from(new Set(allJobs.map(job => job.clientName).filter(Boolean))) : [];
 
   const handleAddClient = () => {

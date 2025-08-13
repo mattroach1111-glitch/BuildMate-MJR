@@ -934,7 +934,7 @@ export default function AdminDashboard() {
           return a.clientName.localeCompare(b.clientName);
           
         case 'manager':
-          return a.projectName.localeCompare(b.projectName);
+          return (a.projectManager || a.projectName).localeCompare(b.projectManager || b.projectName);
           
         case 'status':
           return getStatusPriority(a.status) - getStatusPriority(b.status);
@@ -952,7 +952,7 @@ export default function AdminDashboard() {
     return (
       job.jobAddress.toLowerCase().includes(query) ||
       job.clientName.toLowerCase().includes(query) ||
-      job.projectName.toLowerCase().includes(query) ||
+      (job.projectManager || job.projectName || '').toLowerCase().includes(query) ||
       job.status.toLowerCase().includes(query)
     );
   }) : [];
@@ -1003,7 +1003,7 @@ export default function AdminDashboard() {
       
       // Group other jobs by manager
       const managerGroups = otherJobs.reduce((groups, job) => {
-        const manager = job.projectName || 'Unknown Manager';
+        const manager = job.projectManager || 'Unknown Manager';
         if (!groups[manager]) groups[manager] = [];
         groups[manager].push(job);
         return groups;
@@ -1228,7 +1228,7 @@ export default function AdminDashboard() {
 
   // Helper function to get job card colors based on project manager
   const getJobCardColors = (job: Job) => {
-    const managerName = (job.projectName || '').toLowerCase();
+    const managerName = (job.projectManager || '').toLowerCase();
     if (managerName.includes('will')) {
       return allColorThemes[2]; // Pink for Will's jobs
     } else if (managerName.includes('mark')) {
@@ -1294,7 +1294,7 @@ export default function AdminDashboard() {
   }, [groupBy]);
 
   // Get unique project managers and clients from existing jobs
-  const projectManagers = jobs ? Array.from(new Set(jobs.map(job => job.projectName).filter(Boolean))) : [];
+  const projectManagers = jobs ? Array.from(new Set(jobs.map(job => job.projectManager || job.projectName).filter(Boolean))) : [];
   const clientNames = jobs ? Array.from(new Set(jobs.map(job => job.clientName).filter(Boolean))) : [];
 
   const handleAddProjectManager = () => {
@@ -2487,7 +2487,7 @@ export default function AdminDashboard() {
                           <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
                         </CardHeader>
                         <CardContent className="pt-0">
-                          <p className="text-sm text-muted-foreground mb-2">PM: {job.projectName}</p>
+                          <p className="text-sm text-muted-foreground mb-2">PM: {job.projectManager || job.projectName}</p>
                           <div className="text-xs text-muted-foreground">
                             Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
                           </div>
