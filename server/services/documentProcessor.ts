@@ -134,13 +134,18 @@ export class DocumentProcessor {
     try {
       console.log(`🤖 Analyzing complete job sheet: ${documentURL}`);
 
-      // Fetch the document from object storage using the service
+      // Use object storage service to get the document
       const { ObjectStorageService } = await import('../objectStorage');
       const objectStorageService = new ObjectStorageService();
       
+      // Convert the full URL to a normalized path
       const normalizedPath = objectStorageService.normalizeObjectEntityPath(documentURL);
+      console.log(`🔍 Job sheet normalized path: ${normalizedPath}`);
+      
+      // Get the object file
       const objectFile = await objectStorageService.getObjectEntityFile(normalizedPath);
       
+      // Download the file content
       const [documentBuffer] = await objectFile.download();
       let imageData: string;
       let mediaType = contentType;
@@ -221,7 +226,17 @@ export class DocumentProcessor {
         extractedData = JSON.parse(aiResponse);
       } catch (parseError) {
         console.error('Failed to parse AI response as JSON:', parseError);
-        throw new Error('AI response was not valid JSON');
+        // Try to extract JSON from the response if it's wrapped in markdown or other text
+        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            extractedData = JSON.parse(jsonMatch[0]);
+          } catch (secondParseError) {
+            throw new Error('AI response was not valid JSON');
+          }
+        } else {
+          throw new Error('AI response was not valid JSON');
+        }
       }
 
       // Validate and normalize the extracted data
@@ -246,13 +261,18 @@ export class DocumentProcessor {
     try {
       console.log(`🤖 Analyzing expense document: ${documentURL}`);
 
-      // Fetch the document from object storage using the service
+      // Use object storage service to get the document
       const { ObjectStorageService } = await import('../objectStorage');
       const objectStorageService = new ObjectStorageService();
       
+      // Convert the full URL to a normalized path
       const normalizedPath = objectStorageService.normalizeObjectEntityPath(documentURL);
+      console.log(`🔍 Expense document normalized path: ${normalizedPath}`);
+      
+      // Get the object file
       const objectFile = await objectStorageService.getObjectEntityFile(normalizedPath);
       
+      // Download the file content
       const [documentBuffer] = await objectFile.download();
       let imageData: string;
       let mediaType = contentType;
