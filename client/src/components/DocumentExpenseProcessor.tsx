@@ -320,6 +320,10 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     const currentClientName = clientNameRef.current;
     const currentProjectManager = projectManagerRef.current;
     
+    console.log("🔵 CREATE JOB - Job Address:", currentJobAddress);
+    console.log("🔵 CREATE JOB - Client Name:", currentClientName);
+    console.log("🔵 CREATE JOB - Project Manager:", currentProjectManager);
+    
     if (!currentJobAddress.trim() || !currentClientName.trim()) {
       toast({
         title: "Missing Information",
@@ -583,7 +587,13 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
               {/* Project Manager (Optional) */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Project Manager <span className="text-gray-400">(Optional)</span></label>
-                <Select value={projectManager || undefined} onValueChange={(value) => setProjectManager(value || "")}>
+                <Select 
+                  value={projectManager || undefined} 
+                  onValueChange={(value) => {
+                    console.log("🔵 Project Manager selected:", value);
+                    setProjectManager(value || "");
+                  }}
+                >
                   <SelectTrigger data-testid="select-project-manager">
                     <SelectValue placeholder="Select project manager (optional)" />
                   </SelectTrigger>
