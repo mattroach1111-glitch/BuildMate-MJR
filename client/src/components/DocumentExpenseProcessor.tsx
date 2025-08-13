@@ -213,6 +213,37 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     }
   });
 
+  // Upload file to Google Drive after processing
+  const uploadToGoogleDriveMutation = useMutation({
+    mutationFn: async (data: { jobId: string; fileInfo: any }) => {
+      const response = await apiRequest("POST", "/api/documents/upload-to-drive", {
+        documentURL: data.fileInfo.uploadURL,
+        fileName: data.fileInfo.name,
+        mimeType: data.fileInfo.type,
+        fileSize: data.fileInfo.size,
+        jobId: data.jobId
+      });
+      return await response.json();
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      toast({
+        title: "Google Drive Success", 
+        description: "Document uploaded to Google Drive and linked to job",
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error uploading to Google Drive:', error);
+      toast({
+        title: "Google Drive Upload Failed",
+        description: error.message?.includes('Google Drive not connected') 
+          ? "Please connect your Google Drive account first"
+          : "Failed to upload to Google Drive",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Helper functions for expense review
   const handleCategoryChange = (newCategory: 'materials' | 'subtrades' | 'other_costs' | 'tip_fees') => {
     if (pendingExpense) {
@@ -566,6 +597,40 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
                   Discard
                 </Button>
               </div>
+
+              {/* Google Drive Upload Option */}
+              {lastUploadedFile && selectedJobId && (
+                <div className="pt-3 border-t border-orange-200">
+                  <div className="flex items-center justify-between text-sm text-orange-800 mb-2">
+                    <span>💡 Optional: Save to Google Drive</span>
+                  </div>
+                  <Button
+                    onClick={() => uploadToGoogleDriveMutation.mutate({ 
+                      jobId: selectedJobId, 
+                      fileInfo: lastUploadedFile 
+                    })}
+                    disabled={uploadToGoogleDriveMutation.isPending}
+                    variant="outline" 
+                    size="sm"
+                    className="w-full border-blue-300 text-blue-700 hover:bg-blue-50"
+                    data-testid="button-upload-to-drive"
+                  >
+                    {uploadToGoogleDriveMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Uploading to Drive...
+                      </>
+                    ) : (
+                      <>
+                        🔗 Upload to Google Drive
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Creates clickable links in job sheet PDFs
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

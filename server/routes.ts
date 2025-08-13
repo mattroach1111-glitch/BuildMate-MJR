@@ -2130,6 +2130,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "File not found" });
       }
 
+      // Handle Google Drive files vs object storage files
+      if (file.googleDriveLink) {
+        // For Google Drive files, redirect to the Google Drive link
+        return res.redirect(file.googleDriveLink);
+      }
+
+      if (!file.objectPath) {
+        return res.status(404).json({ message: "File not found - no storage path available" });
+      }
+
       const objectStorageService = new ObjectStorageService();
       const objectFile = await objectStorageService.getObjectEntityFile(file.objectPath);
       
@@ -2230,7 +2240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Document upload endpoints for expense processing
   
-  // Endpoint to get upload URL for expense documents
+  // Endpoint to get upload URL for expense documents (legacy object storage)
   app.post("/api/documents/upload", isAuthenticated, async (req: any, res) => {
     try {
       const objectStorageService = new ObjectStorageService();
@@ -2239,6 +2249,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error getting document upload URL:", error);
       res.status(500).json({ error: "Failed to get upload URL" });
+    }
+  });
+
+  // Endpoint to upload documents directly to Google Drive
+  app.post("/api/documents/upload-to-drive", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || !user.googleDriveTokens) {
+        return res.status(400).json({ 
+          error: "Google Drive not connected. Please connect your Google Drive account first." 
+        });
+      }
+
+      const { documentURL, fileName, mimeType, fileSize, jobId } = req.body;
+      
+      if (!documentURL || !fileName || !jobId) {
+        return res.status(400).json({ error: "Document URL, file name, and job ID are required" });
+      }
+
+      // Verify job exists
+      const job = await storage.getJob(jobId);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+
+      // Download the file from object storage
+      const objectStorageService = new ObjectStorageService();
+      const normalizedPath = objectStorageService.normalizeObjectEntityPath(documentURL);
+      const objectFile = await objectStorageService.getObjectEntityFile(normalizedPath);
+      
+      // Stream the file content to a buffer
+      const stream = objectFile.createReadStream();
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) {
+        chunks.push(chunk);
+      }
+      const fileBuffer = Buffer.concat(chunks);
+
+      // Upload to Google Drive
+      const googleDriveService = new GoogleDriveService();
+      const tokens = JSON.parse(user.googleDriveTokens);
+      googleDriveService.setUserTokens(tokens);
+
+      // Create/find job folder
+      const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`);
+      
+      // Upload file to Google Drive
+      const uploadResult = await googleDriveService.uploadFile(fileName, fileBuffer, mimeType || 'application/octet-stream', jobFolderId || undefined);
+      
+      if (!uploadResult) {
+        return res.status(500).json({ error: "Failed to upload to Google Drive" });
+      }
+
+      // Save file record in database with Google Drive info
+      const fileRecord = await storage.createJobFile({
+        jobId: jobId,
+        fileName: fileName,
+        originalName: fileName,
+        fileSize: fileSize || fileBuffer.length,
+        mimeType: mimeType || 'application/octet-stream',
+        objectPath: null, // No object storage path for Google Drive files
+        googleDriveLink: uploadResult.webViewLink,
+        googleDriveFileId: uploadResult.fileId,
+        uploadedById: userId
+      });
+
+      res.json({
+        success: true,
+        fileId: fileRecord.id,
+        googleDriveLink: uploadResult.webViewLink,
+        message: "Document uploaded to Google Drive successfully"
+      });
+
+    } catch (error) {
+      console.error("Error uploading to Google Drive:", error);
+      res.status(500).json({ error: "Failed to upload document to Google Drive" });
     }
   });
 

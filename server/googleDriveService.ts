@@ -32,6 +32,11 @@ export class GoogleDriveService {
   }
 
   async uploadPDF(fileName: string, pdfBuffer: Buffer, folderId?: string): Promise<string | null> {
+    const result = await this.uploadFile(fileName, pdfBuffer, 'application/pdf', folderId);
+    return result?.webViewLink || null;
+  }
+
+  async uploadFile(fileName: string, fileBuffer: Buffer, mimeType: string, folderId?: string): Promise<{ webViewLink: string; fileId: string } | null> {
     if (!this.isReady()) {
       console.error('Google Drive not authenticated. User needs to connect their Google Drive account.');
       return null;
@@ -40,7 +45,7 @@ export class GoogleDriveService {
     try {
       // Create a readable stream from the buffer
       const stream = new Readable();
-      stream.push(pdfBuffer);
+      stream.push(fileBuffer);
       stream.push(null);
 
       const fileMetadata = {
@@ -49,7 +54,7 @@ export class GoogleDriveService {
       };
 
       const media = {
-        mimeType: 'application/pdf',
+        mimeType: mimeType,
         body: stream,
       };
 
@@ -59,8 +64,11 @@ export class GoogleDriveService {
         fields: 'id,name,webViewLink',
       });
 
-      console.log(`PDF uploaded to Google Drive: ${response.data.name} (ID: ${response.data.id})`);
-      return response.data.webViewLink;
+      console.log(`File uploaded to Google Drive: ${response.data.name} (ID: ${response.data.id})`);
+      return {
+        webViewLink: response.data.webViewLink,
+        fileId: response.data.id
+      };
     } catch (error) {
       console.error('Error uploading to Google Drive:', error);
       return null;

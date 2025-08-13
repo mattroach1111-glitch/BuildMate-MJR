@@ -48,7 +48,7 @@ type JobWithRelations = {
   }>;
 };
 
-export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Array<{id: string, originalName: string, objectPath: string}>) {
+export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Array<{id: string, originalName: string, objectPath: string | null, googleDriveLink?: string | null}>) {
   const doc = new jsPDF();
   const pageHeight = doc.internal.pageSize.height;
   const marginBottom = 20;
@@ -462,102 +462,60 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
         doc.text('Attached document details:', 20, yPos);
         yPos += 15;
         
-        // Convert and embed the actual PDF content
-        try {
-          // Use the backend PDF-to-image conversion service
-          const conversionResponse = await fetch('/api/documents/convert-pdf-to-image', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              objectPath: file.objectPath
-            })
-          });
-
-          if (conversionResponse.ok) {
-            const { base64Image } = await conversionResponse.json();
-            
-            // Show file information
-            doc.text(`• File: ${file.originalName}`, 25, yPos);
-            yPos += 10;
-            doc.text('• Content: Embedded below', 25, yPos);
-            yPos += 20;
-            
-            // Embed the actual PDF content as image
-            try {
-              doc.addImage(base64Image, 'JPEG', 20, yPos, 170, 220);
-              yPos += 230;
-            } catch (imageError) {
-              console.error('Error adding image to PDF:', imageError);
-              // Fallback to file info
-              doc.setFillColor(245, 245, 245);
-              doc.rect(20, yPos, 170, 100, 'F');
-              doc.setDrawColor(200, 200, 200);
-              doc.rect(20, yPos, 170, 100);
-              doc.setTextColor(100, 100, 100);
-              doc.text('PDF content could not be embedded', 105, yPos + 50, { align: 'center' });
-              doc.setTextColor(0, 0, 0);
-              yPos += 110;
-            }
-            
-          } else {
-            throw new Error('Failed to convert PDF to image');
-          }
-        } catch (conversionError) {
-          console.error('Error converting PDF:', conversionError);
+        // Show file information with clickable link
+        doc.text(`• File: ${file.originalName}`, 25, yPos);
+        yPos += 10;
+        
+        if (file.googleDriveLink) {
+          // For Google Drive files, show link
+          doc.text('• Storage: Google Drive', 25, yPos);
+          yPos += 10;
+          doc.text('• Access: Click link below', 25, yPos);
+          yPos += 20;
           
-          // Try to get file info without conversion
-          try {
-            const response = await fetch(`/api/job-files/${file.id}/download`);
-            if (response.ok) {
-              const pdfBytes = await response.arrayBuffer();
-              const sourcePdf = await PDFDocument.load(pdfBytes);
-              const pageCount = sourcePdf.getPageCount();
-              
-              // Show file information
-              doc.text(`• File: ${file.originalName}`, 25, yPos);
-              yPos += 10;
-              doc.text(`• Pages: ${pageCount}`, 25, yPos);
-              yPos += 10;
-              doc.text(`• Size: ${(pdfBytes.byteLength / 1024 / 1024).toFixed(2)} MB`, 25, yPos);
-              yPos += 20;
-              
-              // Add placeholder with file info
-              doc.setFillColor(245, 245, 245);
-              doc.rect(20, yPos, 170, 180, 'F');
-              doc.setDrawColor(200, 200, 200);
-              doc.rect(20, yPos, 170, 180);
-              
-              doc.setTextColor(100, 100, 100);
-              doc.setFontSize(12);
-              doc.text('📄', 100, yPos + 50);
-              doc.setFontSize(10);
-              doc.text(file.originalName, 105, yPos + 70, { align: 'center' });
-              doc.text(`${pageCount} page${pageCount === 1 ? '' : 's'}`, 105, yPos + 85, { align: 'center' });
-              doc.setFontSize(8);
-              doc.text('Content preserved in original file', 105, yPos + 110, { align: 'center' });
-              doc.setTextColor(0, 0, 0);
-              yPos += 190;
-              
-            } else {
-              throw new Error('Failed to fetch file');
-            }
-          } catch (fileError) {
-            console.error('Error fetching file info:', fileError);
-            // Final fallback
-            doc.text(`• File: ${file.originalName}`, 25, yPos);
-            yPos += 10;
-            doc.text('• Status: Available in job attachments', 25, yPos);
-            yPos += 20;
-            
-            doc.setFillColor(250, 250, 250);
-            doc.rect(20, yPos, 170, 100, 'F');
-            doc.setDrawColor(200, 200, 200);
-            doc.rect(20, yPos, 170, 100);
-            doc.text('📄 Document Attached', 105, yPos + 50, { align: 'center' });
-            yPos += 110;
-          }
+          // Add clickable link box
+          doc.setFillColor(245, 248, 255);
+          doc.rect(20, yPos, 170, 60, 'F');
+          doc.setDrawColor(59, 130, 246);
+          doc.rect(20, yPos, 170, 60);
+          
+          // Add link icon and text
+          doc.setTextColor(59, 130, 246);
+          doc.setFontSize(14);
+          doc.text('🔗', 30, yPos + 25);
+          doc.setFontSize(12);
+          doc.text('View Document on Google Drive', 50, yPos + 25);
+          doc.setFontSize(10);
+          doc.text('Click to open the original document', 105, yPos + 40, { align: 'center' });
+          
+          // Add the actual clickable link
+          doc.link(20, yPos, 170, 60, { url: file.googleDriveLink });
+          
+          // Reset colors
+          doc.setTextColor(0, 0, 0);
+          yPos += 80;
+          
+        } else {
+          // For object storage files, show download info
+          doc.text('• Storage: Internal storage', 25, yPos);
+          yPos += 10;
+          doc.text('• Access: Available in job attachments', 25, yPos);
+          yPos += 20;
+          
+          // Add file representation
+          doc.setFillColor(245, 245, 245);
+          doc.rect(20, yPos, 170, 60, 'F');
+          doc.setDrawColor(200, 200, 200);
+          doc.rect(20, yPos, 170, 60);
+          
+          doc.setTextColor(100, 100, 100);
+          doc.setFontSize(12);
+          doc.text('📄', 100, yPos + 25);
+          doc.setFontSize(10);
+          doc.text('Document attached to job', 105, yPos + 40, { align: 'center' });
+          
+          doc.setTextColor(0, 0, 0);
+          yPos += 80;
         }
         
       } catch (error) {

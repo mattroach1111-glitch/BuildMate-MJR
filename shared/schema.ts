@@ -131,7 +131,9 @@ export const jobFiles = pgTable("job_files", {
   originalName: varchar("original_name").notNull(),
   fileSize: integer("file_size").notNull(),
   mimeType: varchar("mime_type").notNull(),
-  objectPath: varchar("object_path").notNull(), // Path in object storage
+  objectPath: varchar("object_path"), // Path in object storage (optional for Google Drive files)
+  googleDriveLink: varchar("google_drive_link"), // Link to file on Google Drive
+  googleDriveFileId: varchar("google_drive_file_id"), // Google Drive file ID
   uploadedById: varchar("uploaded_by_id").notNull().references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
 });

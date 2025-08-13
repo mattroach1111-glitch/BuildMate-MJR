@@ -818,7 +818,13 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   };
 
   const handleDownloadFile = (file: JobFile) => {
-    window.open(`/api/job-files/${file.id}/download`, '_blank');
+    if (file.googleDriveLink) {
+      // For Google Drive files, open the direct link
+      window.open(file.googleDriveLink, '_blank');
+    } else {
+      // For object storage files, use the download endpoint
+      window.open(`/api/job-files/${file.id}/download`, '_blank');
+    }
   };
 
   const handleDeleteFile = (fileId: string) => {
@@ -925,7 +931,8 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       const attachmentFiles = jobFiles.map(file => ({
         id: file.id,
         originalName: file.originalName,
-        objectPath: file.objectPath
+        objectPath: file.objectPath,
+        googleDriveLink: file.googleDriveLink
       }));
       
       await generateJobPDF(jobWithTimesheets, attachmentFiles);
@@ -2249,6 +2256,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   {(file.fileSize / 1024 / 1024).toFixed(2)} MB • {new Date(file.createdAt || '').toLocaleDateString()}
+                                  {file.googleDriveLink && <span className="text-blue-600 ml-2">📎 Google Drive</span>}
                                 </p>
                               </div>
                             </div>
