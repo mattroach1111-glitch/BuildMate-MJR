@@ -44,24 +44,32 @@ export class EmailInboxService {
 
   // Extract job name from email subject
   private extractJobNameFromSubject(subject: string): string | null {
-    // Common patterns:
-    // "Invoice for 21 Greenhill Dr"
-    // "Materials for Hernan Project"
-    // "Expenses - Smith Renovation"
+    console.log(`🔍 Extracting job from subject: "${subject}"`);
     
+    // Enhanced patterns to match more flexible address formats
     const patterns = [
+      // "Invoice for 21 Greenhill Dr" or "Materials for 12 Spud st"
       /(?:for|project|job|site)\s+([^-,\n]+)/i,
+      // "12 Spud st - Invoice" or "21 Greenhill Dr:"
       /^([^-:]+)\s*[-:]/,
+      // Full street addresses with common abbreviations
+      /(\d+\s+[a-zA-Z\s]+(?:street|st|road|rd|drive|dr|avenue|ave|court|ct|place|pl))/i,
+      // Partial street addresses (like "12 Spud st" or "Greenhill Dr")
+      /(\d+\s+[a-zA-Z]+(?:\s+[a-zA-Z]*)?)/i,
+      // Street names with numbers
       /([a-zA-Z\s]+(?:street|st|road|rd|drive|dr|avenue|ave|court|ct|place|pl))/i
     ];
     
     for (const pattern of patterns) {
       const match = subject.match(pattern);
-      if (match) {
-        return match[1].trim();
+      if (match && match[1]) {
+        const extracted = match[1].trim();
+        console.log(`✅ Extracted job reference: "${extracted}"`);
+        return extracted;
       }
     }
     
+    console.log(`❌ No job reference found in subject`);
     return null;
   }
 
@@ -105,9 +113,21 @@ export class EmailInboxService {
   // Find best matching job
   private async findMatchingJob(jobName: string, userId: string): Promise<any | null> {
     try {
+      console.log(`🔍 Looking for job match: "${jobName}"`);
+      
       // Get all jobs for user
       const allJobs = await storage.getJobs();
-      if (!allJobs || allJobs.length === 0) return null;
+      if (!allJobs || allJobs.length === 0) {
+        console.log(`❌ No jobs found in database`);
+        return null;
+      }
+
+      console.log(`📋 Available jobs:`, allJobs.map(j => ({ 
+        id: j.id.slice(0,8), 
+        addr: j.jobAddress, 
+        client: j.clientName, 
+        pm: j.projectManager 
+      })));
 
       // Use fuzzy matching similar to existing system
       const fuzz = await import('fuzzball');
@@ -119,6 +139,7 @@ export class EmailInboxService {
         const jobIdentifiers = [
           job.jobAddress,
           job.clientName,
+          job.projectManager,
           job.projectName,
           `${job.clientName} ${job.jobAddress}`,
           `${job.projectName} ${job.jobAddress}`
@@ -126,9 +147,11 @@ export class EmailInboxService {
         
         for (const identifier of jobIdentifiers) {
           const score = fuzz.ratio(jobName.toLowerCase(), identifier.toLowerCase());
+          console.log(`🔍 Comparing "${jobName}" vs "${identifier}": ${score}%`);
           if (score > bestScore && score >= threshold) {
             bestScore = score;
             bestMatch = job;
+            console.log(`✅ New best match: ${identifier} (${score}%)`);
           }
         }
       }
@@ -238,6 +261,17 @@ export class EmailInboxService {
     
     try {
       console.log(`📧 Processing email from ${emailMessage.from} with ${emailMessage.attachments.length} attachments`);
+      
+      // Check if this email has already been processed
+      const existingLogs = await storage.getEmailProcessingLogs();
+      const alreadyProcessed = existingLogs.find(log => 
+        log.messageId === emailMessage.id && log.status === "completed"
+      );
+      
+      if (alreadyProcessed) {
+        console.log(`📧 Email ${emailMessage.id} already processed, skipping`);
+        return true;
+      }
       
       // Create processing log entry
       const logEntry = await storage.createEmailProcessingLog({
