@@ -920,10 +920,18 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
         ...jobDetails,
         timesheets: jobTimesheets
       };
-      await generateJobPDF(jobWithTimesheets);
+      
+      // Pass attached files to PDF generator
+      const attachmentFiles = jobFiles.map(file => ({
+        id: file.id,
+        originalName: file.originalName,
+        objectPath: file.objectPath
+      }));
+      
+      await generateJobPDF(jobWithTimesheets, attachmentFiles);
       toast({
         title: "Success",
-        description: "PDF downloaded successfully",
+        description: `PDF downloaded with ${attachmentFiles.length} attached document${attachmentFiles.length === 1 ? '' : 's'}`,
       });
     } catch (error) {
       toast({

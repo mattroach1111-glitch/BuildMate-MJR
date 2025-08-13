@@ -47,7 +47,7 @@ type JobWithRelations = {
   }>;
 };
 
-export async function generateJobPDF(job: JobWithRelations) {
+export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Array<{id: string, originalName: string, objectPath: string}>) {
   const doc = new jsPDF();
   const pageHeight = doc.internal.pageSize.height;
   const marginBottom = 20;
@@ -419,6 +419,59 @@ export async function generateJobPDF(job: JobWithRelations) {
     doc.setDrawColor(200, 200, 200);
     for (let i = 0; i < 5; i++) {
       doc.line(20, yPos + (i * 10), 190, yPos + (i * 10));
+    }
+  }
+
+  // Append attached PDF files if any
+  if (attachedFiles && attachedFiles.length > 0) {
+    // Add a new page for attachments section
+    doc.addPage();
+    yPos = 20;
+    
+    // Attachments header
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ATTACHED DOCUMENTS', 105, yPos, { align: 'center' });
+    yPos += 20;
+    
+    // List of attached files
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    attachedFiles.forEach((file, index) => {
+      doc.text(`${index + 1}. ${file.originalName}`, 20, yPos);
+      yPos += 15;
+    });
+    
+    // Append each PDF file
+    for (const file of attachedFiles) {
+      try {
+        // Create a new page for each attachment
+        doc.addPage();
+        yPos = 20;
+        
+        // Add header for this attachment
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Attachment: ${file.originalName}`, 20, yPos);
+        yPos += 15;
+        
+        // Add note about original document
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Original document attached below:', 20, yPos);
+        yPos += 20;
+        
+        // Note: For now, we'll add a placeholder. To embed actual PDFs, 
+        // we would need to fetch the PDF content and use PDF-lib or similar
+        doc.setDrawColor(150, 150, 150);
+        doc.rect(20, yPos, 170, 200);
+        doc.text('[Original PDF document would be embedded here]', 105, yPos + 100, { align: 'center' });
+        doc.text(`Download from: ${file.objectPath}`, 20, yPos + 220);
+        
+      } catch (error) {
+        console.error('Error appending PDF:', error);
+        // Continue with next file if one fails
+      }
     }
   }
   
