@@ -4,6 +4,36 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mobile-optimized timesheet styles */
+@layer base {
+  /* Prevent zoom on input focus for iOS */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  
+  /* Touch-friendly table styles */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+  
+  .touch-pan-x {
+    touch-action: pan-x;
+  }
+  
+  /* Improved scroll behavior for mobile */
+  @media (max-width: 768px) {
+    .overflow-x-auto {
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+  }
+  
+  /* Better button tap targets */
+  button, select, input {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  }
+}
+
 :root {
   --primary: hsl(208.3, 76.2%, 42.2%);
   --primary-foreground: hsl(0, 0%, 100%);

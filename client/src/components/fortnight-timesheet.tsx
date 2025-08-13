@@ -1272,20 +1272,27 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   onClick={saveAllEntries}
                   variant="default"
                   disabled={updateTimesheetMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-green-600 hover:bg-green-700 min-h-[48px] touch-manipulation"
+                  style={{ touchAction: 'manipulation' }}
                   data-testid="button-save-all-timesheet"
                 >
                   <Save className="h-4 w-4 mr-2" />
                   {updateTimesheetMutation.isPending ? 'Saving...' : 'Save All'}
                 </Button>
-                <Button onClick={exportToPDF} variant="outline">
+                <Button 
+                  onClick={exportToPDF} 
+                  variant="outline"
+                  className="min-h-[48px] touch-manipulation"
+                  style={{ touchAction: 'manipulation' }}
+                >
                   <Download className="h-4 w-4 mr-2" />
                   Export PDF
                 </Button>
                 <Button 
                   onClick={clearTimesheet} 
                   variant="outline"
-                  className="text-red-600 hover:text-red-700"
+                  className="text-red-600 hover:text-red-700 min-h-[48px] touch-manipulation"
+                  style={{ touchAction: 'manipulation' }}
                   data-testid="button-clear-timesheet"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
@@ -1298,15 +1305,16 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             </div>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
+            {/* Mobile-optimized table with pinch-to-zoom and touch-friendly controls */}
+            <div className="overflow-x-auto touch-pan-x">
+              <table className="w-full border-collapse min-w-[800px]" style={{ touchAction: 'manipulation' }}>
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-3 font-medium">Date</th>
-                    <th className="text-left p-3 font-medium">Hours</th>
-                    <th className="text-left p-3 font-medium">Job</th>
-                    <th className="text-left p-3 font-medium">Materials/Notes</th>
-                    <th className="text-left p-3 font-medium">Actions</th>
+                    <th className="text-left p-2 sm:p-3 font-medium text-xs sm:text-sm">Date</th>
+                    <th className="text-left p-2 sm:p-3 font-medium text-xs sm:text-sm min-w-[80px]">Hours</th>
+                    <th className="text-left p-2 sm:p-3 font-medium text-xs sm:text-sm min-w-[150px]">Job</th>
+                    <th className="text-left p-2 sm:p-3 font-medium text-xs sm:text-sm min-w-[200px]">Materials/Notes</th>
+                    <th className="text-left p-2 sm:p-3 font-medium text-xs sm:text-sm min-w-[120px]">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1334,7 +1342,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     
                     return entriesToShow.map((entry: any, entryIndex: number) => (
                       <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'weekend-row bg-blue-600 text-white' : ''}`} style={isWeekend ? { backgroundColor: '#1e40af !important', color: 'white !important' } : {}}>
-                        <td className="p-3">
+                        <td className="p-2 sm:p-3 min-w-[120px]">
                           {entryIndex === 0 && (
                             <div className={`font-medium ${isWeekend ? 'text-white' : ''} flex items-center justify-between`}>
                               <div>
@@ -1386,12 +1394,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             </div>
                           )}
                         </td>
-                        <td className="p-3">
+                        <td className="p-2 sm:p-3">
                           <Input
                             type="number"
                             step="0.5"
                             placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "0"}
                             value={entry?.hours || ''}
+                            className={`w-16 sm:w-20 text-sm sm:text-base min-h-[44px] touch-manipulation ${isWeekend ? 'text-white placeholder:text-blue-200 bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}
+                            style={{ touchAction: 'manipulation', fontSize: '16px' }} // Prevent zoom on iOS
                             onChange={(e) => {
                               if (isWeekend && !isWeekendUnlocked(dateKey)) {
                                 console.log(`🚫 STAFF WEEKEND INPUT BLOCKED: ${dateKey} - Weekend is locked!`);
@@ -1421,12 +1431,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 handleCellChange(day, entryIndex, 'hours', e.target.value);
                               }
                             }}
-                            className={`w-20 ${isWeekend ? 'text-white placeholder:text-blue-200 bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}
                             disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))} // Disable for approved entries or locked weekends
                             readOnly={isWeekend && !isWeekendUnlocked(dateKey)} // Make readonly for locked weekends
                           />
                         </td>
-                        <td className="p-3">
+                        <td className="p-2 sm:p-3">
                           <Select
                             value={
                               // Handle custom addresses properly
@@ -1487,7 +1496,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             }}
                             disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))}
                           >
-                            <SelectTrigger className={`min-w-40 ${isWeekend ? 'text-white bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}>
+                            <SelectTrigger className={`min-w-32 sm:min-w-40 text-sm sm:text-base min-h-[44px] touch-manipulation ${isWeekend ? 'text-white bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`} style={{ touchAction: 'manipulation', fontSize: '16px' }}>
                               <SelectValue 
                                 placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "Select job"}
                               />
@@ -1529,11 +1538,13 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             </SelectContent>
                           </Select>
                         </td>
-                        <td className="p-3">
+                        <td className="p-2 sm:p-3">
                           <Input
                             type="text"
                             placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "Materials or notes"}
                             value={entry?.materials || ''}
+                            className={`min-w-28 sm:min-w-32 text-sm sm:text-base min-h-[44px] touch-manipulation ${isWeekend ? 'text-white placeholder:text-blue-200 bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}
+                            style={{ touchAction: 'manipulation', fontSize: '16px' }}
                             onChange={(e) => {
                               if (isWeekend && !isWeekendUnlocked(dateKey)) {
                                 console.log(`🚫 STAFF WEEKEND MATERIALS BLOCKED: ${dateKey} - Weekend is locked!`);
@@ -1549,18 +1560,19 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 handleCellChange(day, entryIndex, 'materials', e.target.value);
                               }
                             }}
-                            className={`min-w-32 ${isWeekend ? 'text-white placeholder:text-blue-200 bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}
                             disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))}
                             readOnly={isWeekend && !isWeekendUnlocked(dateKey)}
                           />
                         </td>
-                        <td className="p-3">
-                          <div className="flex gap-2">
+                        <td className="p-2 sm:p-3">
+                          <div className="flex gap-1 sm:gap-2">
                             {entryIndex === 0 && !isFortnightConfirmed() && !(isWeekend && !isWeekendUnlocked(dateKey)) && (
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => addJobEntry(day)}
+                                className="min-h-[44px] min-w-[44px] touch-manipulation p-2"
+                                style={{ touchAction: 'manipulation' }}
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
@@ -1570,6 +1582,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => removeJobEntry(day, entryIndex)}
+                                className="min-h-[44px] min-w-[44px] touch-manipulation p-2"
+                                style={{ touchAction: 'manipulation' }}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -1580,7 +1594,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   size="sm"
                                   variant="destructive"
                                   onClick={() => deleteSavedEntry(entry.id)}
-                                  className="ml-1"
+                                  className="ml-1 min-h-[44px] min-w-[44px] touch-manipulation p-2"
+                                  style={{ touchAction: 'manipulation' }}
                                   data-testid={`button-delete-entry-${entry.id}`}
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -1594,7 +1609,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                       const address = entry.description.replace('CUSTOM_ADDRESS: ', '');
                                       editCustomAddress(entry.id, address);
                                     }}
-                                    className="ml-1"
+                                    className="ml-1 min-h-[44px] min-w-[44px] touch-manipulation p-2"
+                                    style={{ touchAction: 'manipulation' }}
                                     data-testid={`button-edit-address-${entry.id}`}
                                     title="Edit custom address"
                                   >
