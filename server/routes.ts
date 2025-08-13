@@ -25,6 +25,7 @@ import {
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import * as fuzz from "fuzzball";
+import { randomUUID } from "crypto";
 
 // Admin middleware
 const isAdmin = async (req: any, res: any, next: any) => {
@@ -2547,11 +2548,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const material of jobData.materials) {
         if (material.amount > 0) {
           await storage.createMaterial({
+            id: randomUUID(),
             jobId: newJob.id,
             description: material.description,
-            supplier: material.supplier,
+            supplier: "Building Supplies", // Default supplier for AI-extracted materials
             amount: material.amount.toString(),
-            invoiceDate: material.date
+            invoiceDate: material.date ? new Date(material.date) : null
           });
           materialsCreated++;
         }
