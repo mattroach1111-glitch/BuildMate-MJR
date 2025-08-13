@@ -237,10 +237,8 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   }, [getUploadUrlMutation, toast]);
 
   const handleUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-    console.log("🔴 WRONG HANDLER - Regular upload complete called instead of create job handler");
     console.log("🟢 UPLOAD COMPLETE:", result);
-    console.log("🔵 Selected Job ID from state:", selectedJobId);
-    console.log("🔵 Selected Job ID from ref:", selectedJobIdRef.current);
+    console.log("🔵 Selected Job ID:", selectedJobIdRef.current);
     
     const currentJobId = selectedJobIdRef.current;
     
@@ -291,9 +289,6 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   };
 
   const handleCreateJobUploadComplete = useCallback(async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-    console.log("🟢 CREATE JOB HANDLER CALLED - This is the correct handler!");
-    console.log("🟢 Upload result:", result);
-    
     if (!result.successful || result.successful.length === 0) {
       toast({
         title: "Upload failed",
@@ -307,12 +302,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     const currentJobAddress = jobAddressRef.current;
     const currentClientName = clientNameRef.current;
     
-    // Validate inputs
-    console.log("🔵 CREATE JOB DEBUG - Job Address:", `"${currentJobAddress}"`, "Client Name:", `"${currentClientName}"`);
-    console.log("🔵 CREATE JOB DEBUG - Trimmed Address:", `"${currentJobAddress.trim()}"`, "Trimmed Client:", `"${currentClientName.trim()}"`);
-    
     if (!currentJobAddress.trim() || !currentClientName.trim()) {
-      console.log("🔴 VALIDATION FAILED - Empty fields detected");
       toast({
         title: "Missing Information",
         description: "Please enter both job address and client name before uploading.",
@@ -320,8 +310,6 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       });
       return;
     }
-    
-    console.log("🟢 VALIDATION PASSED - Proceeding with job creation");
 
     for (const file of result.successful) {
       try {
@@ -334,8 +322,13 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
         // Clear inputs after successful creation
         setJobAddress("");
         setClientName("");
+        
+        toast({
+          title: "Job Created Successfully",
+          description: `Created job for ${currentJobAddress} (${currentClientName})`,
+        });
       } catch (error) {
-        console.error("🔴 JOB CREATION ERROR:", error);
+        console.error("Job creation error:", error);
         toast({
           title: "Job creation failed",
           description: "Failed to create job from document",
