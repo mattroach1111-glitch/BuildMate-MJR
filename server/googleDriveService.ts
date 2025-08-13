@@ -64,14 +64,40 @@ export class GoogleDriveService {
         fields: 'id,name,webViewLink',
       });
 
-      console.log(`File uploaded to Google Drive: ${response.data.name} (ID: ${response.data.id})`);
+      const fileId = response.data.id;
+      console.log(`File uploaded to Google Drive: ${response.data.name} (ID: ${fileId})`);
+      
+      // Make the file publicly readable so others can view the job sheet PDFs
+      await this.makeFilePublic(fileId);
+      
       return {
         webViewLink: response.data.webViewLink,
-        fileId: response.data.id
+        fileId: fileId
       };
     } catch (error) {
       console.error('Error uploading to Google Drive:', error);
       return null;
+    }
+  }
+
+  async makeFilePublic(fileId: string): Promise<boolean> {
+    if (!this.isReady()) {
+      return false;
+    }
+
+    try {
+      await this.drive.permissions.create({
+        fileId: fileId,
+        resource: {
+          role: 'reader',
+          type: 'anyone',
+        },
+      });
+      console.log(`File ${fileId} made publicly readable`);
+      return true;
+    } catch (error) {
+      console.error('Error making file public:', error);
+      return false;
     }
   }
 
@@ -93,8 +119,13 @@ export class GoogleDriveService {
         fields: 'id,name',
       });
 
-      console.log(`Folder created: ${response.data.name} (ID: ${response.data.id})`);
-      return response.data.id;
+      const folderId = response.data.id;
+      console.log(`Folder created: ${response.data.name} (ID: ${folderId})`);
+      
+      // Make the folder publicly readable so others can access job documents
+      await this.makeFilePublic(folderId);
+      
+      return folderId;
     } catch (error) {
       console.error('Error creating folder in Google Drive:', error);
       return null;
