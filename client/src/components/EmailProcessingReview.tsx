@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CheckCircle, XCircle, Clock, FileText, DollarSign, Building, Edit } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import * as fuzzball from 'fuzzball';
 
 interface ProcessedDocument {
   id: string;
@@ -39,10 +40,13 @@ function getJobFromSubject(emailSubject: string, jobs: any[]): string {
   let potentialMatches = [];
   
   for (const job of jobs) {
-    // First try perfect exact match
-    if (job.jobAddress && subject.trim() === job.jobAddress.toLowerCase().trim()) {
-      console.log('🎯 Frontend PERFECT match by address:', job.jobAddress);
-      return `${job.jobAddress} (${job.clientName || 'Unknown Client'})`;
+    // First try very close match (95%+ similarity)
+    if (job.jobAddress) {
+      const similarity = fuzzball.ratio(subject.trim(), job.jobAddress.toLowerCase().trim());
+      if (similarity >= 95) {
+        console.log('🎯 Frontend HIGH match by address:', job.jobAddress, `(${similarity}% similarity)`);
+        return `${job.jobAddress} (${job.clientName || 'Unknown Client'})`;
+      }
     }
     
     // Then try substring match
@@ -54,7 +58,7 @@ function getJobFromSubject(emailSubject: string, jobs: any[]): string {
     // Then try partial matching
     if (job.jobAddress) {
       const jobAddr = job.jobAddress.toLowerCase().trim();
-      const addressWords = jobAddr.split(' ').filter(w => w.length > 2);
+      const addressWords = jobAddr.split(' ').filter((w: string) => w.length > 2);
       const subjectWords = subject.split(' ');
       
       console.log(`🔍 Comparing "${subject}" with "${jobAddr}"`);
@@ -103,6 +107,7 @@ export function EmailProcessingReview() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [categoryOverrides, setCategoryOverrides] = useState<Record<string, string>>({});
+  const [jobOverrides, setJobOverrides] = useState<Record<string, string>>({});
 
   // Get pending documents from email processing
   const { data: pendingDocs = [], isLoading, refetch } = useQuery({
@@ -255,25 +260,36 @@ export function EmailProcessingReview() {
                       <p className="text-xs text-gray-500">From: {doc.email_subject}</p>
                     )}
                     <div className="text-xs text-blue-600 mt-1">
-                      <span className="font-medium">Auto-detected job:</span> {(() => {
-                        console.log('🔍 Frontend job matching check:', {
-                          hasEmailSubject: !!doc.email_subject,
-                          emailSubject: doc.email_subject,
-                          emailSubjectFromEmailSubject: doc.emailSubject,
-                          hasJobs: !!jobs,
-                          jobsLength: jobs?.length,
-                          jobsAvailable: jobs && jobs.length > 0
-                        });
-                        
-                        if (doc.email_subject && jobs && jobs.length > 0) {
-                          const match = getJobFromSubject(doc.email_subject, jobs);
-                          console.log('🎯 Frontend match result:', match);
-                          return match || 'Will assign to first active job';
-                        } else {
-                          console.log('❌ Missing data for job matching');
-                          return 'Will assign to first active job (loading...)';
-                        }
-                      })()}
+                      <span className="font-medium">Email subject:</span> {doc.email_subject || 'No subject'}
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">
+                      <span className="font-medium">Job assignment:</span>
+                      <Select 
+                        value={jobOverrides[doc.id] || (() => {
+                          if (doc.email_subject && jobs && jobs.length > 0) {
+                            const match = getJobFromSubject(doc.email_subject, jobs);
+                            if (match) {
+                              // Extract job address from match result
+                              const jobAddress = match.split(' (')[0];
+                              const matchedJob = jobs.find((j: any) => j.jobAddress === jobAddress);
+                              return matchedJob?.id || '';
+                            }
+                          }
+                          return '';
+                        })()} 
+                        onValueChange={(value) => setJobOverrides(prev => ({...prev, [doc.id]: value}))}
+                      >
+                        <SelectTrigger className="w-full h-7 text-xs mt-1">
+                          <SelectValue placeholder="Select job..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {jobs?.map((job: any) => (
+                            <SelectItem key={job.id} value={job.id}>
+                              {job.jobAddress} ({job.clientName})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <Badge variant="outline" className="text-orange-600 border-orange-200">
@@ -316,7 +332,18 @@ export function EmailProcessingReview() {
                     size="sm"
                     onClick={() => approveMutation.mutate({ 
                       docId: doc.id, 
-                      category: categoryOverrides[doc.id] || doc.category 
+                      category: categoryOverrides[doc.id] || doc.category,
+                      jobId: jobOverrides[doc.id] || (() => {
+                        if (doc.email_subject && jobs && jobs.length > 0) {
+                          const match = getJobFromSubject(doc.email_subject, jobs);
+                          if (match) {
+                            const jobAddress = match.split(' (')[0];
+                            const matchedJob = jobs.find((j: any) => j.jobAddress === jobAddress);
+                            return matchedJob?.id;
+                          }
+                        }
+                        return jobs?.[0]?.id; // Fallback to first job
+                      })()
                     })}
                     disabled={approveMutation.isPending}
                     className="bg-green-600 hover:bg-green-700"
