@@ -25,7 +25,6 @@ import {
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import * as fuzz from "fuzzball";
-import { randomUUID } from "crypto";
 
 // Admin middleware
 const isAdmin = async (req: any, res: any, next: any) => {
@@ -2548,12 +2547,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const material of jobData.materials) {
         if (material.amount > 0) {
           await storage.createMaterial({
-            id: randomUUID(),
             jobId: newJob.id,
             description: material.description,
-            supplier: "Building Supplies", // Default supplier for AI-extracted materials
+            supplier: material.supplier,
             amount: material.amount.toString(),
-            invoiceDate: material.date ? new Date(material.date) : null
+            invoiceDate: material.date
           });
           materialsCreated++;
         }
@@ -2641,116 +2639,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: "Failed to create job from document", 
         details: (error as Error).message 
       });
-    }
-  });
-
-  // Job sheet processing endpoint (extracts data for review before job creation)
-  app.post('/api/job-sheets/process', isAuthenticated, async (req: any, res) => {
-    try {
-      const { documentURL } = req.body;
-      
-      if (!documentURL) {
-        return res.status(400).json({ error: 'Document URL is required' });
-      }
-
-      const objectStorageService = new ObjectStorageService();
-      const documentProcessor = new DocumentProcessor();
-      
-      // Get the document file metadata to determine content type
-      const normalizedPath = objectStorageService.normalizeObjectEntityPath(documentURL);
-      const objectFile = await objectStorageService.getObjectEntityFile(normalizedPath);
-      const [metadata] = await objectFile.getMetadata();
-      
-      console.log('Processing job sheet for review:', documentURL);
-      
-      // Process complete job sheet with AI
-      const jobData = await documentProcessor.analyzeCompleteJobSheet(
-        documentURL,
-        metadata.contentType || 'application/pdf'
-      );
-      
-      // Calculate costs properly
-      const laborCost = jobData.laborEntries.reduce((sum, entry) => sum + (entry.hours * entry.hourlyRate), 0);
-      const materialsCost = jobData.materials.reduce((sum, mat) => sum + mat.amount, 0);
-      const subtradesCost = jobData.subTrades?.reduce((sum, sub) => sum + sub.amount, 0) || 0;
-      const tipFeesCost = jobData.tipFees?.reduce((sum, tip) => sum + tip.amount, 0) || 0;
-      const otherCostsCost = jobData.otherCosts?.reduce((sum, other) => sum + other.amount, 0) || 0;
-      const subtotal = laborCost + materialsCost + subtradesCost + tipFeesCost + otherCostsCost;
-      const gst = subtotal * 0.1;
-      const totalCost = subtotal + gst;
-
-      // Return extracted data for user review (don't create job yet)
-      res.json({
-        success: true,
-        jobAddress: jobData.jobAddress || "21 Greenhill Dr", // Default from filename if not detected
-        clientName: jobData.clientName || "Client Name Required", // Indicate user needs to provide
-        laborEntries: jobData.laborEntries,
-        laborCost: laborCost,
-        materialsCost: materialsCost,
-        subtradesCost: subtradesCost,
-        tipFeesCost: tipFeesCost,
-        otherCosts: otherCostsCost,
-        subtotal: subtotal,
-        gst: gst,
-        totalCost: totalCost,
-        confidence: jobData.confidence,
-        documentURL: documentURL
-      });
-      
-    } catch (error) {
-      console.error('Error processing job sheet:', error);
-      res.status(500).json({ error: 'Failed to process job sheet' });
-    }
-  });
-
-  // Job sheet creation endpoint (creates job after user approval)
-  app.post('/api/job-sheets/create', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const { documentURL, jobAddress, clientName } = req.body;
-      
-      if (!documentURL) {
-        return res.status(400).json({ error: "Document URL is required" });
-      }
-      
-      if (!jobAddress?.trim()) {
-        return res.status(400).json({ error: "Job address is required" });
-      }
-      
-      if (!clientName?.trim()) {
-        return res.status(400).json({ error: "Client name is required" });
-      }
-
-      // Use the existing create job endpoint logic
-      const createJobResponse = await fetch(`${req.protocol}://${req.get('host')}/api/documents/create-job`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': req.headers.authorization || '',
-          'Cookie': req.headers.cookie || ''
-        },
-        body: JSON.stringify({
-          documentURL,
-          jobAddress,
-          clientName,
-          projectManager: null
-        })
-      });
-
-      if (!createJobResponse.ok) {
-        throw new Error('Failed to create job');
-      }
-
-      const result = await createJobResponse.json();
-      res.json(result);
-      
-    } catch (error) {
-      console.error('Error creating job from approved job sheet:', error);
-      res.status(500).json({ error: 'Failed to create job' });
     }
   });
 
@@ -3175,43 +3063,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       switch (expenseData.category) {
         case 'materials':
           addedExpense = await storage.createMaterial({
-            id: randomUUID(),
             jobId,
-            description: expenseData.description || "Expense Item",
-            supplier: expenseData.vendor || "Unknown Vendor", // Ensure supplier is never null
-            amount: expenseData.amount?.toString() || "0",
-            invoiceDate: expenseData.date ? new Date(expenseData.date) : null
+            description: expenseData.description,
+            supplier: expenseData.vendor,
+            amount: expenseData.amount.toString(),
+            invoiceDate: expenseData.date
           });
           break;
           
         case 'subtrades':
-        case 'sub_trades':
           addedExpense = await storage.createSubTrade({
-            id: randomUUID(),
             jobId,
-            trade: expenseData.description || "Trade Service",
-            contractor: expenseData.vendor || "Unknown Contractor",
-            amount: expenseData.amount?.toString() || "0",
-            invoiceDate: expenseData.date ? new Date(expenseData.date) : null
+            trade: expenseData.vendor,
+            contractor: expenseData.vendor,
+            amount: expenseData.amount.toString(),
+            invoiceDate: expenseData.date
           });
           break;
           
         case 'tip_fees':
           addedExpense = await storage.createTipFee({
-            id: randomUUID(),
             jobId,
-            description: expenseData.description || "Tip Fee",
-            amount: expenseData.amount?.toString() || "0"
+            description: expenseData.description,
+            amount: expenseData.amount.toString()
           });
           break;
           
         case 'other_costs':
         default:
           addedExpense = await storage.createOtherCost({
-            id: randomUUID(),
             jobId,
-            description: expenseData.description || "Other Cost",
-            amount: expenseData.amount?.toString() || "0"
+            description: expenseData.description,
+            amount: expenseData.amount.toString()
           });
           break;
       }

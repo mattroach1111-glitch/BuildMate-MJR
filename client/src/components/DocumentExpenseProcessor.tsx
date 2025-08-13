@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, CheckCircle, AlertCircle, Loader2, FileText, Receipt, Mail, Inbox, Building2, DollarSign } from "lucide-react";
+import { Upload, CheckCircle, AlertCircle, Loader2, FileText, Receipt, Mail } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { UploadResult } from "@uppy/core";
 
@@ -42,8 +42,6 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   const [clientName, setClientName] = useState<string>("");
   const [projectManager, setProjectManager] = useState<string>("");
   const [lastUploadedFile, setLastUploadedFile] = useState<any>(null);
-  const [isProcessingJobSheet, setIsProcessingJobSheet] = useState(false);
-  const [processedJobSheet, setProcessedJobSheet] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -56,18 +54,22 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   // Update refs whenever values change
   useEffect(() => {
     selectedJobIdRef.current = selectedJobId;
+    console.log("🔵 Job selection changed:", selectedJobId);
   }, [selectedJobId]);
   
   useEffect(() => {
     jobAddressRef.current = jobAddress;
+    console.log("🔵 Job address changed:", jobAddress);
   }, [jobAddress]);
   
   useEffect(() => {
     clientNameRef.current = clientName;
+    console.log("🔵 Client name changed:", clientName);
   }, [clientName]);
   
   useEffect(() => {
     projectManagerRef.current = projectManager;
+    console.log("🔵 Project manager changed:", projectManager);
   }, [projectManager]);
 
   // Fetch jobs for dropdown
@@ -81,11 +83,15 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   // Get upload URL mutation
   const getUploadUrlMutation = useMutation({
     mutationFn: async () => {
+      console.log("🔵 Making API request to /api/documents/upload");
       const response = await apiRequest("POST", "/api/documents/upload");
+      console.log("🔵 API response status:", response.status);
       const data = await response.json();
+      console.log("🔵 API response data:", data);
       return data;
     },
     onError: (error: any) => {
+      console.error("🔴 Upload URL mutation error:", error);
       toast({
         title: "Connection Error",
         description: "Failed to connect to upload service",
@@ -101,6 +107,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       return await response.json();
     },
     onSuccess: (data: any) => {
+      console.log("🔵 Document processed successfully:", data);
       setLastProcessedExpense(data.expenseData);
       
       // Create pending expense for user review
@@ -119,560 +126,672 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     onError: (error: any) => {
       toast({
         title: "Processing failed",
-        description: "Failed to extract data from document",
+        description: error.message || "Failed to process document",
         variant: "destructive",
       });
     },
+    onSettled: () => {
+      setIsProcessing(false);
+    },
   });
 
-  // Add expense to job sheet mutation
+  // Add approved expense to job sheet
   const addToJobSheetMutation = useMutation({
-    mutationFn: async ({ expense, jobId }: { expense: ProcessedExpense; jobId: string }) => {
-      const response = await apiRequest("POST", `/api/jobs/${jobId}/add-expense`, expense);
+    mutationFn: async (expenseData: ProcessedExpense) => {
+      const response = await apiRequest("POST", "/api/documents/add-to-job", { 
+        expenseData,
+        jobId: selectedJobId 
+      });
       return await response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+    onSuccess: async (data: any) => {
+      // Save the uploaded file as a job file attachment if we have one
+      if (lastUploadedFile && selectedJobId) {
+        try {
+          await apiRequest("POST", "/api/job-files", {
+            jobId: selectedJobId,
+            fileName: lastUploadedFile.name || "document.pdf",
+            originalName: lastUploadedFile.name || "document.pdf",
+            fileSize: lastUploadedFile.size || 0,
+            mimeType: lastUploadedFile.type || "application/pdf",
+            objectPath: lastUploadedFile.uploadURL
+          });
+          console.log("✅ Saved document as job file attachment");
+
+          // Automatically upload to Google Drive after saving to job
+          try {
+            await apiRequest("POST", "/api/documents/upload-to-drive", {
+              documentURL: lastUploadedFile.uploadURL,
+              fileName: lastUploadedFile.name,
+              mimeType: lastUploadedFile.type,
+              fileSize: lastUploadedFile.size,
+              jobId: selectedJobId
+            });
+            console.log("✅ Automatically uploaded to Google Drive");
+          } catch (driveError: any) {
+            console.log("ℹ️ Google Drive upload not available:", driveError.message);
+            // Show helpful message about Google Drive connection
+            if (driveError.message?.includes('Google Drive not connected')) {
+              toast({
+                title: "Document Saved", 
+                description: "Document saved to job. Connect Google Drive in Settings for clickable PDF links.",
+              });
+            }
+          }
+
+          setLastUploadedFile(null); // Clear after saving
+        } catch (fileError) {
+          console.error("Failed to save document as job file:", fileError);
+          // Don't fail the entire process if file saving fails
+        }
+      }
+      
+      // Only show Google Drive success if it was actually uploaded
+      const wasUploadedToDrive = lastUploadedFile && selectedJobId;
       toast({
         title: "Added to job sheet!",
-        description: "Expense has been added to the selected job",
+        description: wasUploadedToDrive 
+          ? `${pendingExpense?.vendor} - $${pendingExpense?.amount} added successfully`
+          : `${pendingExpense?.vendor} - $${pendingExpense?.amount} added successfully`,
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", selectedJobId, "files"] });
       setPendingExpense(null);
-      setLastProcessedExpense(null);
-      setIsAddingToJobSheet(false);
       onSuccess?.();
     },
     onError: (error: any) => {
       toast({
-        title: "Error adding to job sheet",
-        description: "Failed to add expense to job",
+        title: "Failed to add to job sheet",
+        description: error.message || "Failed to add expense",
         variant: "destructive",
       });
+    },
+    onSettled: () => {
       setIsAddingToJobSheet(false);
     },
   });
 
-  // Handle file upload completion
-  const handleUploadComplete = useCallback((result: UploadResult) => {
-    if (result.successful && result.successful.length > 0) {
-      const uploadedFile = result.successful[0];
-      setLastUploadedFile(uploadedFile);
-      
-      // Start processing automatically if a job is selected
-      if (selectedJobIdRef.current) {
-        setIsProcessing(true);
-        processDocumentMutation.mutate({
-          documentURL: uploadedFile.uploadURL,
-          jobId: selectedJobIdRef.current
-        });
-      }
-    }
-  }, [processDocumentMutation]);
-
-  // Process job sheet mutation
-  const processJobSheetMutation = useMutation({
-    mutationFn: async (documentURL: string) => {
-      const response = await apiRequest("POST", "/api/job-sheets/process", { documentURL });
+  // Create complete job from document
+  const createJobFromDocumentMutation = useMutation({
+    mutationFn: async (data: { documentURL: string; jobAddress: string; clientName: string; projectManager?: string }) => {
+      const response = await apiRequest("POST", "/api/documents/create-job", { 
+        documentURL: data.documentURL,
+        jobAddress: data.jobAddress,
+        clientName: data.clientName,
+        projectManager: data.projectManager
+      });
       return await response.json();
     },
     onSuccess: (data: any) => {
       toast({
-        title: "Job sheet processed successfully!",
-        description: "Review the extracted job data below",
+        title: "New job created!",
+        description: `${data.job.jobId} created with ${data.summary.laborEntries} labor entries, ${data.summary.materials} materials`,
       });
-      setProcessedJobSheet(data);
-      setIsProcessingJobSheet(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      onSuccess?.();
     },
     onError: (error: any) => {
       toast({
-        title: "Processing failed",
-        description: "Failed to extract data from job sheet",
+        title: "Failed to create job",
+        description: error.message || "Something went wrong",
         variant: "destructive",
       });
-      setIsProcessingJobSheet(false);
+    }
+  });
+
+  // Upload file to Google Drive after processing
+  const uploadToGoogleDriveMutation = useMutation({
+    mutationFn: async (data: { jobId: string; fileInfo: any }) => {
+      const response = await apiRequest("POST", "/api/documents/upload-to-drive", {
+        documentURL: data.fileInfo.uploadURL,
+        fileName: data.fileInfo.name,
+        mimeType: data.fileInfo.type,
+        fileSize: data.fileInfo.size,
+        jobId: data.jobId
+      });
+      return await response.json();
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      toast({
+        title: "Google Drive Success", 
+        description: "Document uploaded to Google Drive and linked to job",
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error uploading to Google Drive:', error);
+      toast({
+        title: "Google Drive Upload Failed",
+        description: error.message?.includes('Google Drive not connected') 
+          ? "Please connect your Google Drive account first"
+          : "Failed to upload to Google Drive",
+        variant: "destructive",
+      });
     },
   });
 
-  // Handle job sheet upload (direct processing without job selection required)
-  const handleJobSheetUpload = useCallback((result: UploadResult) => {
-    if (result.successful && result.successful.length > 0) {
-      const uploadedFile = result.successful[0];
-      
-      toast({
-        title: "Job sheet uploaded successfully!",
-        description: "Processing job sheet data...",
+  // Helper functions for expense review
+  const handleCategoryChange = (newCategory: 'materials' | 'subtrades' | 'other_costs' | 'tip_fees') => {
+    if (pendingExpense) {
+      setPendingExpense({
+        ...pendingExpense,
+        category: newCategory,
       });
-      
-      setIsProcessingJobSheet(true);
-      setProcessedJobSheet(null);
-      processJobSheetMutation.mutate(uploadedFile.uploadURL);
-    }
-  }, [toast, processJobSheetMutation]);
-
-  const handleProcessDocument = () => {
-    if (!lastUploadedFile || !selectedJobId) {
-      toast({
-        title: "Missing information",
-        description: "Please select a job and upload a document first",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsProcessing(true);
-    processDocumentMutation.mutate({
-      documentURL: lastUploadedFile.uploadURL,
-      jobId: selectedJobId
-    });
-  };
-
-  const handleJobSelection = (jobId: string) => {
-    setSelectedJobId(jobId);
-    const selectedJob = jobs.find((job: any) => job.id === jobId);
-    if (selectedJob) {
-      setJobAddress(selectedJob.jobAddress || "");
-      setClientName(selectedJob.clientName || "");
-      setProjectManager(selectedJob.projectManager || "");
     }
   };
 
   const handleApproveExpense = () => {
-    if (!pendingExpense || !selectedJobId) {
+    if (pendingExpense && selectedJobId) {
+      setIsAddingToJobSheet(true);
+      addToJobSheetMutation.mutate(pendingExpense);
+    }
+  };
+
+  const handleRejectExpense = () => {
+    setPendingExpense(null);
+    toast({
+      title: "Expense discarded",
+      description: "The extracted information has been discarded",
+    });
+  };
+
+  const handleGetUploadParameters = useCallback(async (file: any) => {
+    try {
+      console.log("🔵 UPLOAD DEBUG: Getting upload parameters for file:", file);
+      const response: any = await getUploadUrlMutation.mutateAsync();
+      console.log("🔵 UPLOAD DEBUG: Upload URL response:", response);
+      
+      if (!response.uploadURL) {
+        console.error("🔴 UPLOAD ERROR: No upload URL received", response);
+        throw new Error("No upload URL received");
+      }
+      
+      return {
+        method: "PUT" as const,
+        url: response.uploadURL,
+        fields: {},
+        headers: {
+          'Content-Type': file.type || 'application/octet-stream'
+        }
+      };
+    } catch (error: any) {
+      console.error("🔴 UPLOAD ERROR: Failed to get upload parameters:", error);
       toast({
-        title: "Missing information",
-        description: "Please select a job first",
+        title: "Upload setup failed",
+        description: error.message || "Failed to prepare upload",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  }, [getUploadUrlMutation, toast]);
+
+  const handleUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    console.log("🟢 UPLOAD COMPLETE:", result);
+    console.log("🔵 Selected Job ID:", selectedJobIdRef.current);
+    
+    const currentJobId = selectedJobIdRef.current;
+    
+    if (!currentJobId) {
+      console.error("🔴 NO JOB SELECTED - State:", selectedJobId, "Ref:", selectedJobIdRef.current);
+      toast({
+        title: "Job required",
+        description: "Please select a job to add the expense to.",
         variant: "destructive",
       });
       return;
     }
 
-    setIsAddingToJobSheet(true);
-    addToJobSheetMutation.mutate({
-      expense: pendingExpense,
-      jobId: selectedJobId
-    });
+    if (!result.successful || result.successful.length === 0) {
+      console.error("🔴 UPLOAD FAILED: No successful uploads", result);
+      toast({
+        title: "Upload failed",
+        description: "No files were uploaded successfully.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log("🟢 PROCESSING FILES:", result.successful.length);
+    setIsProcessing(true);
+    
+    for (const file of result.successful) {
+      try {
+        console.log("🟢 PROCESSING FILE:", file);
+        console.log("🔵 Document URL:", file.uploadURL);
+        console.log("🔵 Job ID:", currentJobId);
+        
+        // Store the uploaded file info for later saving as job file
+        setLastUploadedFile(file);
+        
+        await processDocumentMutation.mutateAsync({
+          documentURL: file.uploadURL || "",
+          jobId: currentJobId,
+        });
+      } catch (error) {
+        console.error("🔴 PROCESSING ERROR:", error);
+        toast({
+          title: "Processing failed",
+          description: "Failed to process the uploaded document",
+          variant: "destructive",
+        });
+      }
+    }
+    
+    setIsProcessing(false);
   };
 
-  const handleRejectExpense = () => {
-    setPendingExpense(null);
-    setLastProcessedExpense(null);
-    toast({
-      title: "Expense rejected",
-      description: "You can upload a new document to try again",
-    });
+  const handleCreateJobUploadComplete = useCallback(async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    if (!result.successful || result.successful.length === 0) {
+      toast({
+        title: "Upload failed",
+        description: "No files were uploaded successfully.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Use refs to get current values (fixes React closure issue)
+    const currentJobAddress = jobAddressRef.current;
+    const currentClientName = clientNameRef.current;
+    const currentProjectManager = projectManagerRef.current;
+    
+
+    
+    if (!currentJobAddress.trim() || !currentClientName.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter both job address and client name before uploading.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    for (const file of result.successful) {
+      try {
+        const jobResponse = await createJobFromDocumentMutation.mutateAsync({
+          documentURL: file.uploadURL || "",
+          jobAddress: currentJobAddress.trim(),
+          clientName: currentClientName.trim(),
+          projectManager: currentProjectManager.trim() || undefined
+        });
+        
+        // Save the uploaded file as a job file attachment
+        if (jobResponse.job?.id && file.uploadURL) {
+          try {
+            await apiRequest("/api/job-files", "POST", {
+              jobId: jobResponse.job.id,
+              fileName: file.name || "document.pdf",
+              originalName: file.name || "document.pdf",
+              fileSize: file.size || 0,
+              mimeType: file.type || "application/pdf",
+              objectPath: file.uploadURL
+            });
+            console.log("✅ Saved document as job file attachment");
+          } catch (fileError) {
+            console.error("Failed to save document as job file:", fileError);
+            // Don't fail the entire process if file saving fails
+          }
+        }
+        
+        // Clear inputs after successful creation
+        setJobAddress("");
+        setClientName("");
+        setProjectManager("");
+        
+        toast({
+          title: "Job Created Successfully",
+          description: `Created job for ${currentJobAddress} (${currentClientName}) with document attached`,
+        });
+      } catch (error) {
+        console.error("Job creation error:", error);
+        toast({
+          title: "Job creation failed",
+          description: "Failed to create job from document",
+          variant: "destructive",
+        });
+      }
+    }
+  }, [createJobFromDocumentMutation, toast]);
+
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case 'materials': return 'Materials';
+      case 'subtrades': return 'Sub-trades';
+      case 'other_costs': return 'Other Costs';
+      case 'tip_fees': return 'Tip Fees';
+      default: return category;
+    }
+  };
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'materials': return 'bg-blue-100 text-blue-800';
+      case 'subtrades': return 'bg-green-100 text-green-800';
+      case 'other_costs': return 'bg-orange-100 text-orange-800';
+      case 'tip_fees': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="jobsheet" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
-          <TabsTrigger value="jobsheet" className="flex items-center gap-2">
-            <Receipt className="h-4 w-4" />
-            Job Sheet Upload
-          </TabsTrigger>
-          <TabsTrigger value="expense" className="flex items-center gap-2">
+      <Tabs defaultValue="upload" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="upload" className="flex items-center gap-2">
             <Upload className="h-4 w-4" />
-            Expense Documents
+            Add Expenses
+          </TabsTrigger>
+          <TabsTrigger value="create-job" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Create New Job
           </TabsTrigger>
           <TabsTrigger value="email" className="flex items-center gap-2">
             <Mail className="h-4 w-4" />
             Email Processing
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="jobsheet" className="space-y-6">
-          {/* Job Sheet Upload - Direct Upload without requiring job selection */}
-          <Card>
+        
+        <TabsContent value="upload">
+          <Card className="w-full max-w-2xl">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Receipt className="h-5 w-5 text-purple-600" />
-                Job Sheet Upload
+                <Receipt className="h-5 w-5" />
+                Document Expense Processor
               </CardTitle>
               <CardDescription>
-                Upload completed job sheets with labor, materials, and costs for AI processing
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DocumentUploader 
-                onComplete={handleJobSheetUpload}
-                getUploadParameters={async () => {
-                  const data = await getUploadUrlMutation.mutateAsync();
-                  return {
-                    method: "PUT" as const,
-                    url: data.uploadURL,
-                  };
-                }}
-              />
-              
-              {isProcessingJobSheet && !processedJobSheet && (
-                <div className="mt-4 flex items-center gap-2 text-purple-600">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Processing job sheet with AI...</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Job Sheet Review Card */}
-          {processedJobSheet && (
-            <Card className="border-purple-200 bg-purple-50 dark:bg-purple-950/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-purple-800 dark:text-purple-200">
-                  <AlertCircle className="h-5 w-5" />
-                  Review Extracted Job Sheet Data
-                </CardTitle>
-                <CardDescription className="text-purple-700 dark:text-purple-300">
-                  Please review the job information extracted by AI and approve or reject
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="p-4 bg-white dark:bg-gray-950 rounded-lg border space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Job Address</label>
-                      <input 
-                        type="text" 
-                        value={processedJobSheet.jobAddress || ""} 
-                        onChange={(e) => setProcessedJobSheet({...processedJobSheet, jobAddress: e.target.value})}
-                        className="w-full p-2 border rounded text-gray-800 text-sm"
-                        placeholder="Enter job address"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Client Name</label>
-                      <input 
-                        type="text" 
-                        value={processedJobSheet.clientName || ""} 
-                        onChange={(e) => setProcessedJobSheet({...processedJobSheet, clientName: e.target.value})}
-                        className="w-full p-2 border rounded text-gray-800 text-sm"
-                        placeholder="Enter client name"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded">
-                    <h4 className="text-sm font-medium mb-3">Cost Breakdown</h4>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Labor:</span>
-                        <span>${processedJobSheet.laborCost?.toFixed(2) || "0.00"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Materials:</span>
-                        <span>${processedJobSheet.materialsCost?.toFixed(2) || "0.00"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Subtrades:</span>
-                        <span>${processedJobSheet.subtradesCost?.toFixed(2) || "0.00"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Tip Fees:</span>
-                        <span>${processedJobSheet.tipFeesCost?.toFixed(2) || "0.00"}</span>
-                      </div>
-                      <div className="flex justify-between col-span-2 border-t pt-2 font-medium">
-                        <span>Subtotal:</span>
-                        <span>${processedJobSheet.subtotal?.toFixed(2) || "0.00"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>GST (10%):</span>
-                        <span>${processedJobSheet.gst?.toFixed(2) || "0.00"}</span>
-                      </div>
-                      <div className="flex justify-between text-base font-bold text-purple-600 dark:text-purple-400">
-                        <span>Total:</span>
-                        <span>${processedJobSheet.totalCost?.toFixed(2) || "0.00"}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {processedJobSheet.laborEntries && processedJobSheet.laborEntries.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Labor Entries ({processedJobSheet.laborEntries.length})</p>
-                    <div className="space-y-1">
-                      {processedJobSheet.laborEntries.slice(0, 3).map((entry: any, index: number) => (
-                        <div key={index} className="text-sm text-muted-foreground">
-                          {entry.employeeName}: {entry.hoursWorked}h @ ${entry.hourlyRate}/hr = ${entry.totalCost?.toFixed(2)}
-                        </div>
-                      ))}
-                      {processedJobSheet.laborEntries.length > 3 && (
-                        <div className="text-sm text-muted-foreground">
-                          ...and {processedJobSheet.laborEntries.length - 3} more entries
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Materials</p>
-                    <p className="text-sm text-muted-foreground">${processedJobSheet.materialsCost?.toFixed(2) || "0.00"}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Sub-trades</p>
-                    <p className="text-sm text-muted-foreground">${processedJobSheet.subtradesCost?.toFixed(2) || "0.00"}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Other Costs</p>
-                    <p className="text-sm text-muted-foreground">${processedJobSheet.otherCosts?.toFixed(2) || "0.00"}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">GST</p>
-                    <p className="text-sm text-muted-foreground">${processedJobSheet.gst?.toFixed(2) || "0.00"}</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setProcessedJobSheet(null);
-                      setIsProcessingJobSheet(false);
-                      toast({
-                        title: "Job sheet rejected",
-                        description: "You can upload a new job sheet to try again",
-                      });
-                    }}
-                    className="flex-1"
-                  >
-                    Reject
-                  </Button>
-                  <Button
-                    onClick={async () => {
-                      try {
-                        const response = await apiRequest("POST", "/api/job-sheets/create", {
-                          documentURL: processedJobSheet.documentURL,
-                          jobAddress: processedJobSheet.jobAddress,
-                          clientName: processedJobSheet.clientName
-                        });
-                        
-                        if (response.ok) {
-                          toast({
-                            title: "Job created successfully!",
-                            description: "Job sheet has been processed and job created",
-                          });
-                          setProcessedJobSheet(null);
-                          setIsProcessingJobSheet(false);
-                          queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
-                        } else {
-                          throw new Error("Failed to create job");
-                        }
-                      } catch (error) {
-                        toast({
-                          title: "Failed to create job",
-                          description: "Please try again or contact support",
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                    className="flex-1 bg-purple-600 hover:bg-purple-700"
-                  >
-                    Approve & Create Job
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="expense" className="space-y-6">
-          {/* Job Selection Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-blue-600" />
-                Job Selection
-              </CardTitle>
-              <CardDescription>
-                Select which job this document expense should be added to
+                Upload bills, invoices, and receipts to automatically extract expense information and add to job sheets
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+        {/* Job Selection */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Select Job</label>
+          <Select value={selectedJobId} onValueChange={setSelectedJobId}>
+            <SelectTrigger data-testid="select-job">
+              <SelectValue placeholder="Choose a job to add expenses to" />
+            </SelectTrigger>
+            <SelectContent>
+              {(jobs as any[]).map((job: any) => (
+                <SelectItem key={job.id} value={job.id} data-testid={`job-option-${job.id}`}>
+                  {job.jobAddress} - {job.clientName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Upload Area */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Upload Documents</label>
+          <Alert className="border-green-200 bg-green-50">
+            <AlertCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              <strong>PDF Support Enabled!</strong> Upload PDF invoices and bills directly. AI will automatically convert and analyze them for expense extraction.
+            </AlertDescription>
+          </Alert>
+          <DocumentUploader
+            maxNumberOfFiles={3}
+            maxFileSize={26214400} // 25MB
+            onGetUploadParameters={handleGetUploadParameters}
+            onComplete={handleUploadComplete}
+            buttonClassName="w-full h-16 border-2 border-dashed border-gray-300 hover:border-gray-400 bg-gray-50 hover:bg-gray-100"
+          >
+            <div className="flex flex-col items-center gap-2 text-gray-600">
+              <Upload className="h-6 w-6" />
+              <span className="text-sm">Upload Bills & Invoices</span>
+              <span className="text-xs">PDF, JPG, PNG (max 25MB) • Drag & Drop!</span>
+            </div>
+          </DocumentUploader>
+        </div>
+
+        {/* Processing Status */}
+        {isProcessing && (
+          <Alert>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <AlertDescription>
+              Processing document with AI to extract expense information...
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Pending Expense Review */}
+        {pendingExpense && !isProcessing && (
+          <Card className="border-orange-200 bg-orange-50">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-orange-800">
+                <AlertCircle className="h-4 w-4" />
+                Review Extracted Information
+              </CardTitle>
+              <CardDescription className="text-orange-700">
+                Please review and confirm the details before adding to job sheet
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div><strong>Vendor:</strong> {pendingExpense.vendor}</div>
+                <div><strong>Amount:</strong> ${pendingExpense.amount.toFixed(2)}</div>
+                <div className="col-span-2"><strong>Description:</strong> {pendingExpense.description}</div>
+                <div><strong>Date:</strong> {pendingExpense.date}</div>
+                <div><strong>Confidence:</strong> {Math.round(pendingExpense.confidence * 100)}%</div>
+              </div>
+              
+              {/* Category Selection */}
               <div className="space-y-2">
-                <label htmlFor="job-select" className="text-sm font-medium">
-                  Select Job:
-                </label>
-                <Select value={selectedJobId} onValueChange={handleJobSelection}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a job..." />
+                <label className="text-sm font-medium text-orange-800">Category</label>
+                <Select 
+                  value={pendingExpense.category} 
+                  onValueChange={handleCategoryChange}
+                >
+                  <SelectTrigger className="border-orange-200">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {jobs.map((job: any) => (
-                      <SelectItem key={job.id} value={job.id}>
-                        {job.jobAddress} - {job.clientName}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="materials">Materials</SelectItem>
+                    <SelectItem value="subtrades">Sub-trades</SelectItem>
+                    <SelectItem value="other_costs">Other Costs</SelectItem>
+                    <SelectItem value="tip_fees">Tip Fees</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-
-              {selectedJobId && (
-                <div className="grid grid-cols-3 gap-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border">
-                  <div>
-                    <p className="text-sm font-medium text-blue-800 dark:text-blue-200">Job Address</p>
-                    <p className="text-sm text-blue-600 dark:text-blue-300">{jobAddress}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-blue-800 dark:text-blue-200">Client</p>
-                    <p className="text-sm text-blue-600 dark:text-blue-300">{clientName}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-blue-800 dark:text-blue-200">Project Manager</p>
-                    <p className="text-sm text-blue-600 dark:text-blue-300">{projectManager || "Not assigned"}</p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Document Upload Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5 text-green-600" />
-                Document Upload
-              </CardTitle>
-              <CardDescription>
-                Upload invoices, receipts, or other expense documents for AI processing
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DocumentUploader 
-                onComplete={handleUploadComplete}
-                getUploadParameters={async () => {
-                  const data = await getUploadUrlMutation.mutateAsync();
-                  return {
-                    method: "PUT" as const,
-                    url: data.uploadURL,
-                  };
-                }}
-              />
               
-              {lastUploadedFile && !selectedJobId && (
-                <Alert className="mt-4">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Please select a job above before processing the uploaded document.
-                  </AlertDescription>
-                </Alert>
-              )}
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-2">
+                <Button 
+                  onClick={handleApproveExpense}
+                  disabled={isAddingToJobSheet || !selectedJobId}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  data-testid="button-approve-expense"
+                >
+                  {isAddingToJobSheet ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Adding to Job Sheet...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Add to Job Sheet
+                    </>
+                  )}
+                </Button>
+                <Button 
+                  onClick={handleRejectExpense}
+                  variant="outline"
+                  className="border-red-300 text-red-700 hover:bg-red-50"
+                  data-testid="button-reject-expense"
+                >
+                  Discard
+                </Button>
+              </div>
 
-              {lastUploadedFile && selectedJobId && !pendingExpense && (
-                <div className="mt-4 space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-green-600">
-                    <CheckCircle className="h-4 w-4" />
-                    Document uploaded: {lastUploadedFile.name}
+              {/* Google Drive Upload Option */}
+              {lastUploadedFile && selectedJobId && (
+                <div className="pt-3 border-t border-orange-200">
+                  <div className="flex items-center justify-between text-sm text-orange-800 mb-2">
+                    <span>💡 Optional: Save to Google Drive</span>
                   </div>
-                  <Button 
-                    onClick={handleProcessDocument}
-                    disabled={isProcessing}
-                    className="w-full"
+                  <Button
+                    onClick={() => uploadToGoogleDriveMutation.mutate({ 
+                      jobId: selectedJobId, 
+                      fileInfo: lastUploadedFile 
+                    })}
+                    disabled={uploadToGoogleDriveMutation.isPending}
+                    variant="outline" 
+                    size="sm"
+                    className="w-full border-blue-300 text-blue-700 hover:bg-blue-50"
+                    data-testid="button-upload-to-drive"
                   >
-                    {isProcessing ? (
+                    {uploadToGoogleDriveMutation.isPending ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing with AI...
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Uploading to Drive...
                       </>
                     ) : (
                       <>
-                        <Receipt className="mr-2 h-4 w-4" />
-                        Process Document
+                        🔗 Upload to Google Drive
                       </>
                     )}
                   </Button>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Creates clickable links in job sheet PDFs
+                  </p>
                 </div>
               )}
             </CardContent>
           </Card>
+        )}
 
-          {/* Pending Expense Review Card */}
-          {pendingExpense && (
-            <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-orange-800 dark:text-orange-200">
-                  <AlertCircle className="h-5 w-5" />
-                  Review Extracted Expense
-                </CardTitle>
-                <CardDescription className="text-orange-700 dark:text-orange-300">
-                  Please review the information extracted by AI and approve or reject
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1 text-sm font-medium">
-                      <Building2 className="h-3 w-3" />
-                      Vendor
-                    </div>
-                    <p className="text-sm">{pendingExpense.vendor}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1 text-sm font-medium">
-                      <DollarSign className="h-3 w-3" />
-                      Amount
-                    </div>
-                    <p className="text-sm font-semibold">${pendingExpense.amount.toFixed(2)}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Category</p>
-                    <Badge variant="outline">{pendingExpense.category}</Badge>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Confidence</p>
-                    <Badge variant={pendingExpense.confidence > 0.8 ? "default" : "secondary"}>
-                      {Math.round(pendingExpense.confidence * 100)}%
-                    </Badge>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Description</p>
-                  <p className="text-sm text-muted-foreground">{pendingExpense.description}</p>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <Button
-                    variant="outline"
-                    onClick={handleRejectExpense}
-                    className="flex-1"
-                  >
-                    Reject
-                  </Button>
-                  <Button
-                    onClick={handleApproveExpense}
-                    disabled={isAddingToJobSheet}
-                    className="flex-1"
-                  >
-                    {isAddingToJobSheet ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Adding to Job Sheet...
-                      </>
-                    ) : (
-                      "Approve & Add to Job Sheet"
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+        {/* Instructions */}
+        <div className="text-xs text-gray-500 space-y-1">
+          <div className="flex items-center gap-1">
+            <FileText className="h-3 w-3" />
+            Supported formats: PDF, JPG, PNG, GIF, BMP, TIFF
+          </div>
+          <div>• AI will automatically categorize expenses as Materials, Sub-trades, Tip Fees, or Other Costs</div>
+          <div>• Review and confirm extracted information before adding to job sheet</div>
+          <div>• Change category if needed, then click "Add to Job Sheet" to approve</div>
+        </div>
+            </CardContent>
+          </Card>
         </TabsContent>
-
-        <TabsContent value="email" className="space-y-4">
-          <Card>
+        
+        <TabsContent value="create-job">
+          <Card className="w-full max-w-2xl">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Inbox className="h-5 w-5 text-green-600" />
-                Email Inbox Status
+                <FileText className="h-5 w-5" />
+                Create Job from Cost Sheet
               </CardTitle>
               <CardDescription>
-                Monitor automatic email processing from documents@mjrbuilders.com.au
+                Upload complete job cost sheets (PDFs with labor, materials, and costs) to automatically create new jobs with all data
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <EmailInboxInfo />
+            <CardContent className="space-y-4">
+              {/* Job Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Job Address</label>
+                  <Input
+                    value={jobAddress}
+                    onChange={(e) => setJobAddress(e.target.value)}
+                    placeholder="e.g. 21 Greenhill Dr"
+                    data-testid="input-job-address"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Client Name</label>
+                  <Input
+                    value={clientName}
+                    onChange={(e) => setClientName(e.target.value)}
+                    placeholder="e.g. John Smith"
+                    data-testid="input-client-name"
+                  />
+                </div>
+              </div>
+              
+              {/* Project Manager (Optional) */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Project Manager <span className="text-gray-400">(Optional)</span></label>
+                <Select 
+                  value={projectManager || undefined} 
+                  onValueChange={(value) => setProjectManager(value || "")}
+                >
+                  <SelectTrigger data-testid="select-project-manager">
+                    <SelectValue placeholder="Select project manager (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projectManagers.length > 0 ? (
+                      projectManagers.map((manager) => (
+                        <SelectItem key={manager} value={manager}>
+                          {manager}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-managers" disabled>No managers available</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+
+              </div>
+
+              {/* Upload Section */}
+              <div className="space-y-4">
+                {(!jobAddress.trim() || !clientName.trim()) && (
+                  <Alert className="border-orange-200 bg-orange-50">
+                    <AlertCircle className="h-4 w-4 text-orange-600" />
+                    <AlertDescription className="text-orange-800">
+                      Please fill in both job address and client name before uploading
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                <DocumentUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={10485760}
+                  onGetUploadParameters={handleGetUploadParameters}
+                  onComplete={handleCreateJobUploadComplete}
+                  buttonClassName={`w-full h-12 border-2 border-dashed transition-colors ${
+                    !jobAddress.trim() || !clientName.trim() 
+                      ? 'border-gray-200 bg-gray-100 cursor-not-allowed' 
+                      : 'border-gray-300 hover:border-blue-400 bg-gray-50 hover:bg-blue-50'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <Upload className={`h-6 w-6 ${!jobAddress.trim() || !clientName.trim() ? 'text-gray-300' : 'text-gray-400'}`} />
+                    <span className={`text-sm font-medium ${!jobAddress.trim() || !clientName.trim() ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Upload Job Cost Sheet
+                    </span>
+                    <span className="text-xs text-gray-500">PDF, JPG, PNG (Max 10MB)</span>
+                  </div>
+                </DocumentUploader>
+
+                {createJobFromDocumentMutation.isPending && (
+                  <Alert>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <AlertDescription>
+                      Processing job cost sheet and creating complete job with all labor, materials, and costs...
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+
+              {/* Instructions */}
+              <div className="text-xs text-gray-500 space-y-1">
+                <div className="flex items-center gap-1">
+                  <FileText className="h-3 w-3" />
+                  Perfect for migrating existing job data during initial setup
+                </div>
+                <div>• Upload complete job cost sheets with labor hours, materials list, and costs</div>
+                <div>• AI will extract all labor entries, materials, tip fees, and other costs</div>
+                <div>• Automatically creates new job with all extracted data and relationships</div>
+                <div>• Includes automatic 6% consumables calculation and employee matching</div>
+              </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="email">
+          <EmailInboxInfo />
         </TabsContent>
       </Tabs>
     </div>
