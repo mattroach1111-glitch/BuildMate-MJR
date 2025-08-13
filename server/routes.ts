@@ -2642,6 +2642,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Job sheet processing endpoint (extracts data for review before job creation)
+  app.post('/api/job-sheets/process', isAuthenticated, async (req: any, res) => {
+    try {
+      const { documentURL } = req.body;
+      
+      if (!documentURL) {
+        return res.status(400).json({ error: 'Document URL is required' });
+      }
+
+      const objectStorageService = new ObjectStorageService();
+      const documentProcessor = new DocumentProcessor();
+      
+      // Get the document file metadata to determine content type
+      const normalizedPath = objectStorageService.normalizeObjectEntityPath(documentURL);
+      const objectFile = await objectStorageService.getObjectEntityFile(normalizedPath);
+      const [metadata] = await objectFile.getMetadata();
+      
+      console.log('Processing job sheet for review:', documentURL);
+      
+      // Process complete job sheet with AI
+      const jobData = await documentProcessor.analyzeCompleteJobSheet(
+        documentURL,
+        metadata.contentType || 'application/pdf'
+      );
+      
+      // Return extracted data for user review (don't create job yet)
+      res.json({
+        success: true,
+        jobAddress: jobData.jobAddress,
+        clientName: jobData.clientName,
+        totalCost: jobData.laborEntries.reduce((sum, entry) => sum + (entry.hours * entry.hourlyRate), 0) +
+                   jobData.materials.reduce((sum, mat) => sum + mat.amount, 0) +
+                   (jobData.subTrades?.reduce((sum, sub) => sum + sub.amount, 0) || 0) +
+                   (jobData.tipFees?.reduce((sum, tip) => sum + tip.amount, 0) || 0) +
+                   (jobData.otherCosts?.reduce((sum, other) => sum + other.amount, 0) || 0),
+        laborEntries: jobData.laborEntries,
+        materialsCost: jobData.materials.reduce((sum, mat) => sum + mat.amount, 0),
+        subtradesCost: jobData.subTrades?.reduce((sum, sub) => sum + sub.amount, 0) || 0,
+        otherCosts: jobData.otherCosts?.reduce((sum, other) => sum + other.amount, 0) || 0,
+        gst: ((jobData.laborEntries.reduce((sum, entry) => sum + (entry.hours * entry.hourlyRate), 0) +
+               jobData.materials.reduce((sum, mat) => sum + mat.amount, 0) +
+               (jobData.subTrades?.reduce((sum, sub) => sum + sub.amount, 0) || 0) +
+               (jobData.tipFees?.reduce((sum, tip) => sum + tip.amount, 0) || 0) +
+               (jobData.otherCosts?.reduce((sum, other) => sum + other.amount, 0) || 0)) * 0.1),
+        confidence: jobData.confidence,
+        documentURL: documentURL
+      });
+      
+    } catch (error) {
+      console.error('Error processing job sheet:', error);
+      res.status(500).json({ error: 'Failed to process job sheet' });
+    }
+  });
+
+  // Job sheet creation endpoint (creates job after user approval)
+  app.post('/api/job-sheets/create', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { documentURL, jobAddress, clientName } = req.body;
+      
+      if (!documentURL || !jobAddress || !clientName) {
+        return res.status(400).json({ error: "Document URL, job address, and client name are required" });
+      }
+
+      // Use the existing create job endpoint logic
+      const createJobResponse = await fetch(`${req.protocol}://${req.get('host')}/api/documents/create-job`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': req.headers.authorization || '',
+          'Cookie': req.headers.cookie || ''
+        },
+        body: JSON.stringify({
+          documentURL,
+          jobAddress,
+          clientName,
+          projectManager: null
+        })
+      });
+
+      if (!createJobResponse.ok) {
+        throw new Error('Failed to create job');
+      }
+
+      const result = await createJobResponse.json();
+      res.json(result);
+      
+    } catch (error) {
+      console.error('Error creating job from approved job sheet:', error);
+      res.status(500).json({ error: 'Failed to create job' });
+    }
+  });
+
   // Endpoint to serve uploaded documents
   app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
     const objectStorageService = new ObjectStorageService();

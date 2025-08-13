@@ -129,4 +129,115 @@ export class DocumentProcessor {
       return { error: error.message || 'Failed to process document' };
     }
   }
+
+  async analyzeCompleteJobSheet(documentURL: string, contentType: string = 'application/pdf') {
+    try {
+      console.log(`🤖 Analyzing complete job sheet: ${documentURL}`);
+
+      // Fetch the document from object storage
+      const response = await fetch(documentURL);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch document: ${response.statusText}`);
+      }
+
+      const documentBuffer = await response.arrayBuffer();
+      let imageData: string;
+      let mediaType = contentType;
+
+      // Convert PDF to image if needed
+      if (contentType === 'application/pdf') {
+        try {
+          const { convertPdfToImage } = await import('../utils/pdfConverter');
+          const imageBuffer = await convertPdfToImage(Buffer.from(documentBuffer));
+          imageData = imageBuffer.toString('base64');
+          mediaType = 'image/jpeg';
+          console.log(`📄 Converted PDF to image for AI analysis`);
+        } catch (pdfError) {
+          console.error('PDF conversion error:', pdfError);
+          throw new Error('Failed to convert PDF for processing');
+        }
+      } else {
+        imageData = Buffer.from(documentBuffer).toString('base64');
+      }
+
+      const prompt = `
+        Analyze this complete job sheet/cost summary document and extract ALL job information.
+        
+        Return a JSON object with these fields:
+        - jobAddress: The job/property address
+        - clientName: The client/customer name
+        - laborEntries: Array of labor entries with {employeeName: string, hours: number, hourlyRate: number}
+        - materials: Array of material costs with {description: string, amount: number}
+        - subTrades: Array of subcontractor costs with {description: string, amount: number}
+        - tipFees: Array of tip/dump fees with {description: string, amount: number}
+        - otherCosts: Array of other costs with {description: string, amount: number}
+        - confidence: Your confidence level (0.0 to 1.0)
+        
+        Extract ALL itemized costs, labor hours, and rates accurately. 
+        If any section is empty, return an empty array.
+        Ensure all monetary amounts are numbers, not strings.
+        If you cannot extract clear information, set confidence to 0.0.
+        Always return valid JSON.
+      `;
+
+      // Ensure we have a valid media type
+      if (!['image/jpeg', 'image/png', 'image/jpg'].includes(mediaType)) {
+        throw new Error(`Unsupported image format: ${mediaType}`);
+      }
+
+      // Normalize media type
+      const normalizedMediaType = mediaType === 'image/jpg' ? 'image/jpeg' : mediaType;
+
+      console.log(`🖼️ Sending ${normalizedMediaType} image to AI for job sheet analysis`);
+
+      const response_ai = await this.anthropic.messages.create({
+        model: DEFAULT_MODEL_STR,
+        max_tokens: 2048,
+        messages: [{
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: prompt
+            },
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: normalizedMediaType as "image/jpeg" | "image/png",
+                data: imageData
+              }
+            }
+          ]
+        }]
+      });
+
+      const aiResponse = response_ai.content[0].text;
+      console.log(`🤖 AI Response for job sheet:`, aiResponse);
+
+      let extractedData;
+      try {
+        extractedData = JSON.parse(aiResponse);
+      } catch (parseError) {
+        console.error('Failed to parse AI response as JSON:', parseError);
+        throw new Error('AI response was not valid JSON');
+      }
+
+      // Validate and normalize the extracted data
+      return {
+        jobAddress: extractedData.jobAddress || '',
+        clientName: extractedData.clientName || '',
+        laborEntries: extractedData.laborEntries || [],
+        materials: extractedData.materials || [],
+        subTrades: extractedData.subTrades || [],
+        tipFees: extractedData.tipFees || [],
+        otherCosts: extractedData.otherCosts || [],
+        confidence: extractedData.confidence || 0.5
+      };
+
+    } catch (error) {
+      console.error('Error analyzing job sheet with AI:', error);
+      throw error;
+    }
+  }
 }

@@ -42,6 +42,8 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   const [clientName, setClientName] = useState<string>("");
   const [projectManager, setProjectManager] = useState<string>("");
   const [lastUploadedFile, setLastUploadedFile] = useState<any>(null);
+  const [isProcessingJobSheet, setIsProcessingJobSheet] = useState(false);
+  const [processedJobSheet, setProcessedJobSheet] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -167,21 +169,45 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     }
   }, [processDocumentMutation]);
 
+  // Process job sheet mutation
+  const processJobSheetMutation = useMutation({
+    mutationFn: async (documentURL: string) => {
+      const response = await apiRequest("POST", "/api/job-sheets/process", { documentURL });
+      return await response.json();
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Job sheet processed successfully!",
+        description: "Review the extracted job data below",
+      });
+      setProcessedJobSheet(data);
+      setIsProcessingJobSheet(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Processing failed",
+        description: "Failed to extract data from job sheet",
+        variant: "destructive",
+      });
+      setIsProcessingJobSheet(false);
+    },
+  });
+
   // Handle job sheet upload (direct processing without job selection required)
   const handleJobSheetUpload = useCallback((result: UploadResult) => {
     if (result.successful && result.successful.length > 0) {
       const uploadedFile = result.successful[0];
       
-      // Process job sheet directly - no job ID required
       toast({
         title: "Job sheet uploaded successfully!",
         description: "Processing job sheet data...",
       });
       
-      // TODO: Add job sheet processing logic here  
-      console.log("Job sheet uploaded:", uploadedFile);
+      setIsProcessingJobSheet(true);
+      setProcessedJobSheet(null);
+      processJobSheetMutation.mutate(uploadedFile.uploadURL);
     }
-  }, [toast]);
+  }, [toast, processJobSheetMutation]);
 
   const handleProcessDocument = () => {
     if (!lastUploadedFile || !selectedJobId) {
@@ -277,8 +303,132 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
                   };
                 }}
               />
+              
+              {isProcessingJobSheet && !processedJobSheet && (
+                <div className="mt-4 flex items-center gap-2 text-purple-600">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Processing job sheet with AI...</span>
+                </div>
+              )}
             </CardContent>
           </Card>
+
+          {/* Job Sheet Review Card */}
+          {processedJobSheet && (
+            <Card className="border-purple-200 bg-purple-50 dark:bg-purple-950/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-purple-800 dark:text-purple-200">
+                  <AlertCircle className="h-5 w-5" />
+                  Review Extracted Job Sheet Data
+                </CardTitle>
+                <CardDescription className="text-purple-700 dark:text-purple-300">
+                  Please review the job information extracted by AI and approve or reject
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-white dark:bg-gray-950 rounded-lg border">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Job Address</p>
+                    <p className="text-sm text-muted-foreground">{processedJobSheet.jobAddress || "Not detected"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Client Name</p>
+                    <p className="text-sm text-muted-foreground">{processedJobSheet.clientName || "Not detected"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Total Cost</p>
+                    <p className="text-sm font-semibold">${processedJobSheet.totalCost?.toFixed(2) || "0.00"}</p>
+                  </div>
+                </div>
+
+                {processedJobSheet.laborEntries && processedJobSheet.laborEntries.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Labor Entries ({processedJobSheet.laborEntries.length})</p>
+                    <div className="space-y-1">
+                      {processedJobSheet.laborEntries.slice(0, 3).map((entry: any, index: number) => (
+                        <div key={index} className="text-sm text-muted-foreground">
+                          {entry.employeeName}: {entry.hoursWorked}h @ ${entry.hourlyRate}/hr = ${entry.totalCost?.toFixed(2)}
+                        </div>
+                      ))}
+                      {processedJobSheet.laborEntries.length > 3 && (
+                        <div className="text-sm text-muted-foreground">
+                          ...and {processedJobSheet.laborEntries.length - 3} more entries
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Materials</p>
+                    <p className="text-sm text-muted-foreground">${processedJobSheet.materialsCost?.toFixed(2) || "0.00"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Sub-trades</p>
+                    <p className="text-sm text-muted-foreground">${processedJobSheet.subtradesCost?.toFixed(2) || "0.00"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Other Costs</p>
+                    <p className="text-sm text-muted-foreground">${processedJobSheet.otherCosts?.toFixed(2) || "0.00"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">GST</p>
+                    <p className="text-sm text-muted-foreground">${processedJobSheet.gst?.toFixed(2) || "0.00"}</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setProcessedJobSheet(null);
+                      setIsProcessingJobSheet(false);
+                      toast({
+                        title: "Job sheet rejected",
+                        description: "You can upload a new job sheet to try again",
+                      });
+                    }}
+                    className="flex-1"
+                  >
+                    Reject
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      try {
+                        const response = await apiRequest("POST", "/api/job-sheets/create", {
+                          documentURL: processedJobSheet.documentURL,
+                          jobAddress: processedJobSheet.jobAddress,
+                          clientName: processedJobSheet.clientName
+                        });
+                        
+                        if (response.ok) {
+                          toast({
+                            title: "Job created successfully!",
+                            description: "Job sheet has been processed and job created",
+                          });
+                          setProcessedJobSheet(null);
+                          setIsProcessingJobSheet(false);
+                          queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+                        } else {
+                          throw new Error("Failed to create job");
+                        }
+                      } catch (error) {
+                        toast({
+                          title: "Failed to create job",
+                          description: "Please try again or contact support",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    className="flex-1 bg-purple-600 hover:bg-purple-700"
+                  >
+                    Approve & Create Job
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="expense" className="space-y-6">
