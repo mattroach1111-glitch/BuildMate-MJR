@@ -242,6 +242,7 @@ export function EmailProcessingReview() {
                         console.log('🔍 Frontend job matching check:', {
                           hasEmailSubject: !!doc.email_subject,
                           emailSubject: doc.email_subject,
+                          emailSubjectFromEmailSubject: doc.emailSubject,
                           hasJobs: !!jobs,
                           jobsLength: jobs?.length,
                           jobsAvailable: jobs && jobs.length > 0

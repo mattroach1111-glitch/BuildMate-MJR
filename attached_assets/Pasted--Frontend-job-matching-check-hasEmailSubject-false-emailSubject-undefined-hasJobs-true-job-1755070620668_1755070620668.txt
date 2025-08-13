@@ -1,0 +1,24 @@
+🔍 Frontend job matching check: {hasEmailSubject: false, emailSubject: undefined, hasJobs: true, jobsLength: 14, jobsAvailable: true}
+Console.js:61 ❌ Missing data for job matching
+Console.js:61 🔍 Frontend job matching check: {hasEmailSubject: false, emailSubject: undefined, hasJobs: true, jobsLength: 14, jobsAvailable: true}
+Console.js:61 ❌ Missing data for job matching
+Console.js:61 🔍 Frontend job matching check: {hasEmailSubject: false, emailSubject: undefined, hasJobs: true, jobsLength: 14, jobsAvailable: true}
+Console.js:61 ❌ Missing data for job matching
+Console.js:61 🔍 Frontend job matching check: {hasEmailSubject: false, emailSubject: undefined, hasJobs: true, jobsLength: 14, jobsAvailable: true}
+Console.js:61 ❌ Missing data for job matching
+Console.js:61 🔍 Frontend job matching check: {hasEmailSubject: false, emailSubject: undefined, hasJobs: true, jobsLength: 14, jobsAvailable: true}
+Console.js:61 ❌ Missing data for job matching
+Console.js:61 🔍 Frontend job matching check: {hasEmailSubject: false, emailSubject: undefined, hasJobs: true, jobsLength: 14, jobsAvailable: true}
+Console.js:61 ❌ Missing data for job matching
+Console.js:61 🔍 Frontend job matching check: {hasEmailSubject: false, emailSubject: undefined, hasJobs: true, jobsLength: 14, jobsAvailable: true}
+Console.js:61 ❌ Missing data for job matching
+Console.js:61 🔍 Frontend job matching check: {hasEmailSubject: false, emailSubject: undefined, hasJobs: true, jobsLength: 14, jobsAvailable: true}
+Console.js:61 ❌ Missing data for job matching
+Console.js:61 🔍 Frontend job matching check: {hasEmailSubject: false, emailSubject: undefined, hasJobs: true, jobsLength: 14, jobsAvailable: true}
+Console.js:61 ❌ Missing data for job matching
+Console.js:61 🔍 Frontend job matching check: {hasEmailSubject: false, emailSubject: undefined, hasJobs: true, jobsLength: 14, jobsAvailable: true}
+Console.js:61 ❌ Missing data for job matching
+Console.js:61 🔍 Frontend job matching check: {hasEmailSubject: false, emailSubject: undefined, hasJobs: true, jobsLength: 14, jobsAvailable: true}
+Console.js:61 ❌ Missing data for job matching
+Console.js:61 🔍 Frontend job matching check: {hasEmailSubject: false, emailSubject: undefined, hasJobs: true, jobsLength: 14, jobsAvailable: true}
+Console.js:61 ❌ Missing data for job matching

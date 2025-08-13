@@ -2765,7 +2765,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/email-processing/pending', isAuthenticated, async (req: any, res) => {
     try {
       const documents = await storage.getEmailProcessedDocumentsPending();
-      res.json(documents);
+      // Ensure email_subject field is properly mapped for frontend
+      const mappedDocuments = documents.map(doc => ({
+        ...doc,
+        email_subject: doc.emailSubject // Explicitly map the field
+      }));
+      console.log('📧 Sending to frontend:', mappedDocuments.map(d => ({ id: d.id.slice(0,8), email_subject: d.email_subject })));
+      res.json(mappedDocuments);
     } catch (error) {
       console.error('Error getting pending documents:', error);
       res.status(500).json({ error: 'Failed to get pending documents' });
