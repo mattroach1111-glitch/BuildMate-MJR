@@ -11,11 +11,12 @@ export async function convertPdfToImage(pdfBuffer: Buffer): Promise<Buffer> {
     // Write PDF buffer to temporary file
     await writeFile(tempPdfPath, pdfBuffer);
 
-    // Convert PDF to image using ImageMagick
+    // Convert ALL pages of PDF to a single vertical image using ImageMagick
     return new Promise((resolve, reject) => {
       const convert = spawn('convert', [
         '-density', '150',
-        `${tempPdfPath}[0]`, // Only convert first page
+        tempPdfPath, // Convert ALL pages (removed [0])
+        '-append', // Vertically append all pages
         '-quality', '90',
         '-background', 'white',
         '-alpha', 'remove',
