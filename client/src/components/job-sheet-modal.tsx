@@ -191,7 +191,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     if (editingTipFee) {
       updateTipFeeMutation.mutate({
         id: editingTipFee,
-        ...editTipFeeForm,
+        data: editTipFeeForm,
       });
     }
   };

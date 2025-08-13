@@ -327,12 +327,30 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
 
     for (const file of result.successful) {
       try {
-        await createJobFromDocumentMutation.mutateAsync({
+        const jobResponse = await createJobFromDocumentMutation.mutateAsync({
           documentURL: file.uploadURL || "",
           jobAddress: currentJobAddress.trim(),
           clientName: currentClientName.trim(),
           projectManager: currentProjectManager.trim() || undefined
         });
+        
+        // Save the uploaded file as a job file attachment
+        if (jobResponse.job?.id && file.uploadURL) {
+          try {
+            await apiRequest("/api/job-files", "POST", {
+              jobId: jobResponse.job.id,
+              fileName: file.name || "document.pdf",
+              originalName: file.name || "document.pdf",
+              fileSize: file.size || 0,
+              mimeType: file.type || "application/pdf",
+              objectPath: file.uploadURL
+            });
+            console.log("✅ Saved document as job file attachment");
+          } catch (fileError) {
+            console.error("Failed to save document as job file:", fileError);
+            // Don't fail the entire process if file saving fails
+          }
+        }
         
         // Clear inputs after successful creation
         setJobAddress("");
@@ -341,7 +359,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
         
         toast({
           title: "Job Created Successfully",
-          description: `Created job for ${currentJobAddress} (${currentClientName})`,
+          description: `Created job for ${currentJobAddress} (${currentClientName}) with document attached`,
         });
       } catch (error) {
         console.error("Job creation error:", error);
