@@ -41,6 +41,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     jobAddress: "",
     clientName: "",
     projectName: "",
+    projectManager: "",
     status: "",
   });
   const [isAddingNewClient, setIsAddingNewClient] = useState(false);
@@ -99,7 +100,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
   const handleAddProjectManager = () => {
     if (newProjectManagerName.trim()) {
-      setEditForm(prev => ({ ...prev, projectName: newProjectManagerName.trim() }));
+      setEditForm(prev => ({ ...prev, projectManager: newProjectManagerName.trim() }));
       setNewProjectManagerName("");
       setIsAddingNewProjectManager(false);
     }
@@ -119,7 +120,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       setIsAddingNewProjectManager(true);
       setNewProjectManagerName("");
     } else {
-      setEditForm(prev => ({ ...prev, projectName: value }));
+      setEditForm(prev => ({ ...prev, projectManager: value }));
     }
   };
 
@@ -846,6 +847,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
         jobAddress: jobDetails.jobAddress || "",
         clientName: jobDetails.clientName || "",
         projectName: jobDetails.projectName || "",
+        projectManager: jobDetails.projectManager || "",
         status: jobDetails.status || "",
       });
     }
@@ -989,6 +991,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       jobAddress: editForm.jobAddress.trim(),
       clientName: editForm.clientName.trim(),
       projectName: editForm.projectName.trim(),
+      projectManager: editForm.projectManager?.trim() || null,
       status: editForm.status as "new_job" | "job_in_progress" | "job_complete" | "ready_for_billing",
     });
     setIsEditing(false);
@@ -1000,6 +1003,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
         jobAddress: jobDetails.jobAddress || "",
         clientName: jobDetails.clientName || "",
         projectName: jobDetails.projectName || "",
+        projectManager: jobDetails.projectManager || "",
         status: jobDetails.status || "",
       });
     }
@@ -1151,7 +1155,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       <Label className="text-sm font-medium">Project Manager</Label>
                       <div className="mt-1 space-y-2">
                         {!isAddingNewProjectManager ? (
-                          <Select onValueChange={handleProjectManagerChange} value={editForm.projectName}>
+                          <Select onValueChange={handleProjectManagerChange} value={editForm.projectManager}>
                             <SelectTrigger data-testid="select-edit-manager">
                               <SelectValue placeholder="Select or add project manager" />
                             </SelectTrigger>
