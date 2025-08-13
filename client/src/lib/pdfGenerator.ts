@@ -433,27 +433,31 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
     doc.text('ATTACHED DOCUMENTS', 20, yPos);
     yPos += 12;
     
-    // List of attached files as compact links
-    doc.setFontSize(10);
+    // List of attached files with better readability
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
     attachedFiles.forEach((file, index) => {
-      checkPageBreak(15);
+      checkPageBreak(20);
       
       if (file.googleDriveLink) {
-        // Google Drive file - compact clickable link
-        doc.setTextColor(59, 130, 246);
-        doc.text(`🔗 ${file.originalName}`, 25, yPos);
-        doc.link(25, yPos - 3, doc.getTextWidth(`🔗 ${file.originalName}`), 8, { url: file.googleDriveLink });
-        doc.setTextColor(0, 0, 0);
-        doc.text('(Google Drive)', 25 + doc.getTextWidth(`🔗 ${file.originalName}`) + 5, yPos);
-      } else {
-        // Internal storage file
+        // Google Drive file - larger, more readable clickable link
+        doc.setTextColor(0, 100, 200); // Darker blue for better readability
+        const linkText = `• ${file.originalName}`;
+        doc.text(linkText, 25, yPos);
+        doc.link(25, yPos - 4, doc.getTextWidth(linkText), 10, { url: file.googleDriveLink });
         doc.setTextColor(100, 100, 100);
-        doc.text(`📄 ${file.originalName}`, 25, yPos);
+        doc.text('(Click to open in Google Drive)', 25, yPos + 8);
         doc.setTextColor(0, 0, 0);
-        doc.text('(Internal)', 25 + doc.getTextWidth(`📄 ${file.originalName}`) + 5, yPos);
+        yPos += 18;
+      } else {
+        // Internal storage file - show as available internally
+        doc.setTextColor(80, 80, 80);
+        doc.text(`• ${file.originalName}`, 25, yPos);
+        doc.setTextColor(100, 100, 100);
+        doc.text('(Available in system)', 25, yPos + 8);
+        doc.setTextColor(0, 0, 0);
+        yPos += 18;
       }
-      yPos += 12;
     });
     
     yPos += 10; // Add some space after attachments

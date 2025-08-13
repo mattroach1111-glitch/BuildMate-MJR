@@ -2700,6 +2700,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('🔵 No existing file record found, creating new one');
           // No existing file record, create a new one
           const currentUser = await storage.getUser(req.user.claims.sub);
+          
+          // Get file metadata first
+          const [fileMetadata] = await objectFile.getMetadata();
+          
           if (currentUser?.googleDriveTokens) {
             console.log('🔵 Google Drive connected, uploading job sheet PDF...');
             
@@ -2726,7 +2730,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (uploadResult) {
               console.log(`✅ Job sheet uploaded to Google Drive: ${uploadResult.webViewLink}`);
               
-              await storage.createJobFile({
+              // Create single file record with both object storage and Google Drive info
+              const createdFile = await storage.createJobFile({
                 jobId: newJob.id,
                 fileName: fileName,
                 originalName: fileName,
@@ -2737,28 +2742,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 googleDriveFileId: uploadResult.fileId,
                 uploadedById: req.user.claims.sub
               });
+              console.log(`🔵 Created single file record with ID: ${createdFile.id}`);
               
               googleDriveResult = {
                 link: uploadResult.webViewLink,
                 fileId: uploadResult.fileId
               };
+            } else {
+              // Google Drive upload failed, create object storage only record
+              const createdFile = await storage.createJobFile({
+                jobId: newJob.id,
+                fileName: fileName,
+                originalName: fileName,
+                fileSize: parseInt(fileMetadata.size || '0'),
+                mimeType: metadata.contentType || 'application/pdf',
+                objectPath: normalizedPath,
+                googleDriveLink: null,
+                googleDriveFileId: null,
+                uploadedById: req.user.claims.sub
+              });
+              console.log(`🔵 Created object storage only file record with ID: ${createdFile.id}`);
             }
           } else {
             console.log('🔵 Google Drive not connected, creating file record for object storage only');
             
-            const [metadata] = await objectFile.getMetadata();
-            
-            await storage.createJobFile({
+            const createdFile = await storage.createJobFile({
               jobId: newJob.id,
               fileName: fileName,
               originalName: fileName,
-              fileSize: parseInt(metadata.size || '0'),
+              fileSize: parseInt(fileMetadata.size || '0'),
               mimeType: metadata.contentType || 'application/pdf',
               objectPath: normalizedPath,
               googleDriveLink: null,
               googleDriveFileId: null,
               uploadedById: req.user.claims.sub
             });
+            console.log(`🔵 Created object storage file record with ID: ${createdFile.id}`);
           }
         }
       } catch (error) {
