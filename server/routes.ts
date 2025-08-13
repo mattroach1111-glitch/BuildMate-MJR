@@ -2735,30 +2735,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Look for exact address patterns - require exact matching
-      const addressPattern = /(\d+)\s+([A-Za-z\s]+(?:st|street|rd|road|ave|avenue|dr|drive|pl|place|ct|court))/i;
-      const subjectMatch = emailSubject.match(addressPattern);
+      // Look for address patterns - handle both full and partial addresses
+      const subject = emailSubject.toLowerCase();
       
-      if (subjectMatch) {
-        const subjectNumber = subjectMatch[1];
-        const subjectStreet = subjectMatch[2].toLowerCase().trim();
-        
-        console.log(`🔍 Backend extracting address: "${subjectNumber} ${subjectStreet}"`);
-        
-        // Find jobs with exact address match
-        for (const job of allJobs) {
-          if (job.jobAddress) {
-            const jobMatch = job.jobAddress.match(addressPattern);
-            if (jobMatch) {
-              const jobNumber = jobMatch[1];
-              const jobStreet = jobMatch[2].toLowerCase().trim();
+      // Find jobs with address matching
+      for (const job of allJobs) {
+        if (job.jobAddress) {
+          const jobAddr = job.jobAddress.toLowerCase().trim();
+          
+          // Extract street number and name from job address (must have street type)
+          const jobMatch = jobAddr.match(/(\d+)\s+([A-Za-z\s]+?)\s+(st|street|rd|road|ave|avenue|dr|drive|pl|place|ct|court)/i);
+          
+          if (jobMatch) {
+            const jobNumber = jobMatch[1];
+            const jobStreet = jobMatch[2].toLowerCase().trim();
+            
+            // Try full address match first
+            const subjectFullMatch = subject.match(/(\d+)\s+([A-Za-z\s]+?)\s+(st|street|rd|road|ave|avenue|dr|drive|pl|place|ct|court)/i);
+            
+            if (subjectFullMatch) {
+              const subjectNumber = subjectFullMatch[1];
+              const subjectStreet = subjectFullMatch[2].toLowerCase().trim();
               
-              // Require exact street number AND street name match
               if (subjectNumber === jobNumber && 
                   (subjectStreet === jobStreet || 
                    fuzz.ratio(subjectStreet, jobStreet) >= 90)) {
-                console.log(`✅ Backend EXACT address match: "${emailSubject}" -> "${job.jobAddress}"`);
+                console.log(`✅ Backend FULL address match: "${emailSubject}" -> "${job.jobAddress}"`);
                 return job.id;
+              }
+            } else {
+              // Try partial address match (number + street name without type)
+              const subjectPartialMatch = subject.match(/(\d+)\s+([A-Za-z]+(?:\s+[A-Za-z]+)*)/i);
+              
+              if (subjectPartialMatch) {
+                const subjectNumber = subjectPartialMatch[1];
+                const subjectStreet = subjectPartialMatch[2].toLowerCase().trim();
+                
+                if (subjectNumber === jobNumber && 
+                    (subjectStreet === jobStreet || 
+                     fuzz.ratio(subjectStreet, jobStreet) >= 90)) {
+                  console.log(`✅ Backend PARTIAL address match: "${emailSubject}" -> "${job.jobAddress}"`);
+                  return job.id;
+                }
               }
             }
           }

@@ -55,28 +55,52 @@ function getJobFromSubject(emailSubject: string, jobs: any[]): string {
       }
     }
     
-    // Enhanced address pattern matching - require street number AND street name to match
+    // Enhanced address pattern matching - handle both full and partial addresses
     if (job.jobAddress) {
       const jobAddr = job.jobAddress.toLowerCase().trim();
       
-      // Extract street number and name from both subject and job address
-      const subjectMatch = subject.match(/(\d+)\s+([a-zA-Z\s]+(?:st|street|rd|road|ave|avenue|dr|drive|pl|place|ct|court))/i);
-      const jobMatch = jobAddr.match(/(\d+)\s+([a-zA-Z\s]+(?:st|street|rd|road|ave|avenue|dr|drive|pl|place|ct|court))/i);
+      // Extract street number and name from job address (must have street type)
+      const jobMatch = jobAddr.match(/(\d+)\s+([a-zA-Z\s]+?)\s+(st|street|rd|road|ave|avenue|dr|drive|pl|place|ct|court)/i);
       
-      if (subjectMatch && jobMatch) {
-        const subjectNumber = subjectMatch[1];
-        const subjectStreet = subjectMatch[2].toLowerCase().trim();
+      if (jobMatch) {
         const jobNumber = jobMatch[1];
         const jobStreet = jobMatch[2].toLowerCase().trim();
+        const jobType = jobMatch[3].toLowerCase();
         
-        console.log(`🔍 Address comparison: "${subjectNumber} ${subjectStreet}" vs "${jobNumber} ${jobStreet}"`);
+        // Try to extract full address from subject (with street type)
+        const subjectFullMatch = subject.match(/(\d+)\s+([a-zA-Z\s]+?)\s+(st|street|rd|road|ave|avenue|dr|drive|pl|place|ct|court)/i);
         
-        // Both street number AND street name must match exactly
-        if (subjectNumber === jobNumber && 
-            (subjectStreet === jobStreet || 
-             fuzzball.ratio(subjectStreet, jobStreet) >= 90)) {
-          console.log('✅ Frontend EXACT address match:', job.jobAddress);
-          potentialMatches.push({ job, priority: 1, type: 'exact_address' });
+        if (subjectFullMatch) {
+          const subjectNumber = subjectFullMatch[1];
+          const subjectStreet = subjectFullMatch[2].toLowerCase().trim();
+          
+          console.log(`🔍 Full address comparison: "${subjectNumber} ${subjectStreet}" vs "${jobNumber} ${jobStreet}"`);
+          
+          // Both street number AND street name must match exactly
+          if (subjectNumber === jobNumber && 
+              (subjectStreet === jobStreet || 
+               fuzzball.ratio(subjectStreet, jobStreet) >= 90)) {
+            console.log('✅ Frontend EXACT full address match:', job.jobAddress);
+            potentialMatches.push({ job, priority: 1, type: 'exact_address' });
+          }
+        } else {
+          // Try partial address match (number + street name without type)
+          const subjectPartialMatch = subject.match(/(\d+)\s+([a-zA-Z]+(?:\s+[a-zA-Z]+)*)/i);
+          
+          if (subjectPartialMatch) {
+            const subjectNumber = subjectPartialMatch[1];
+            const subjectStreet = subjectPartialMatch[2].toLowerCase().trim();
+            
+            console.log(`🔍 Partial address comparison: "${subjectNumber} ${subjectStreet}" vs "${jobNumber} ${jobStreet} ${jobType}"`);
+            
+            // Check if subject matches job number and street name (without street type)
+            if (subjectNumber === jobNumber && 
+                (subjectStreet === jobStreet || 
+                 fuzzball.ratio(subjectStreet, jobStreet) >= 90)) {
+              console.log('✅ Frontend PARTIAL address match:', job.jobAddress);
+              potentialMatches.push({ job, priority: 2, type: 'partial_address' });
+            }
+          }
         }
       }
     }
