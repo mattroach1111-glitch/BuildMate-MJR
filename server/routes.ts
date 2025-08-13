@@ -2535,7 +2535,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               jobId: newJob.id,
               staffId: employeeId,
               hoursLogged: laborEntry.hours.toString(),
-              hourlyRate: laborEntry.hourlyRate.toString()
+              hourlyRate: (laborEntry.rate || laborEntry.hourlyRate || 64).toString()
             });
           }
           laborEntriesCreated++;
@@ -2545,12 +2545,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add materials (only individual supply items)
       let materialsCreated = 0;
       for (const material of jobData.materials) {
-        if (material.amount > 0) {
+        const materialAmount = material.quantity * material.rate;
+        if (materialAmount > 0) {
           await storage.createMaterial({
             jobId: newJob.id,
             description: material.description,
-            supplier: material.supplier,
-            amount: material.amount.toString(),
+            supplier: material.vendor || 'Unknown Supplier',
+            amount: materialAmount.toString(),
             invoiceDate: material.date
           });
           materialsCreated++;
@@ -2561,12 +2562,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let subTradesCreated = 0;
       if (jobData.subTrades) {
         for (const subTrade of jobData.subTrades) {
-          if (subTrade.amount > 0) {
+          if (subTrade.cost > 0) {
             await storage.createSubTrade({
               jobId: newJob.id,
               trade: subTrade.description,
-              contractor: subTrade.supplier || "Trade Service",
-              amount: subTrade.amount.toString()
+              contractor: subTrade.vendor || "Trade Service",
+              amount: subTrade.cost.toString()
             });
             subTradesCreated++;
           }
@@ -2576,11 +2577,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add tip fees if any
       if (jobData.tipFees) {
         for (const tipFee of jobData.tipFees) {
-          if (tipFee.amount > 0) {
+          if (tipFee.cost > 0) {
             await storage.createTipFee({
               jobId: newJob.id,
               description: tipFee.description,
-              amount: tipFee.amount.toString()
+              amount: tipFee.cost.toString()
             });
           }
         }
@@ -2589,7 +2590,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add other costs if any (only if amount > 0)
       if (jobData.otherCosts) {
         for (const otherCost of jobData.otherCosts) {
-          if (otherCost.amount > 0) {
+          if (otherCost.cost > 0) {
             await storage.createOtherCost({
               jobId: newJob.id,
               description: otherCost.description,
