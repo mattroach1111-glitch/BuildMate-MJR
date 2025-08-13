@@ -40,6 +40,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   const [isAddingToJobSheet, setIsAddingToJobSheet] = useState(false);
   const [jobAddress, setJobAddress] = useState<string>("");
   const [clientName, setClientName] = useState<string>("");
+  const [projectManager, setProjectManager] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -47,6 +48,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   const selectedJobIdRef = useRef(selectedJobId);
   const jobAddressRef = useRef(jobAddress);
   const clientNameRef = useRef(clientName);
+  const projectManagerRef = useRef(projectManager);
   
   // Update refs whenever values change
   useEffect(() => {
@@ -63,6 +65,11 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     clientNameRef.current = clientName;
     console.log("🔵 Client name changed:", clientName);
   }, [clientName]);
+  
+  useEffect(() => {
+    projectManagerRef.current = projectManager;
+    console.log("🔵 Project manager changed:", projectManager);
+  }, [projectManager]);
 
   // Fetch jobs for dropdown
   const { data: jobs = [] } = useQuery({
@@ -156,11 +163,12 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
 
   // Create complete job from document
   const createJobFromDocumentMutation = useMutation({
-    mutationFn: async (data: { documentURL: string; jobAddress: string; clientName: string }) => {
+    mutationFn: async (data: { documentURL: string; jobAddress: string; clientName: string; projectManager?: string }) => {
       const response = await apiRequest("POST", "/api/documents/create-job", { 
         documentURL: data.documentURL,
         jobAddress: data.jobAddress,
-        clientName: data.clientName 
+        clientName: data.clientName,
+        projectManager: data.projectManager
       });
       return await response.json();
     },
@@ -301,6 +309,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     // Use refs to get current values (fixes React closure issue)
     const currentJobAddress = jobAddressRef.current;
     const currentClientName = clientNameRef.current;
+    const currentProjectManager = projectManagerRef.current;
     
     if (!currentJobAddress.trim() || !currentClientName.trim()) {
       toast({
@@ -316,12 +325,14 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
         await createJobFromDocumentMutation.mutateAsync({
           documentURL: file.uploadURL || "",
           jobAddress: currentJobAddress.trim(),
-          clientName: currentClientName.trim()
+          clientName: currentClientName.trim(),
+          projectManager: currentProjectManager.trim() || undefined
         });
         
         // Clear inputs after successful creation
         setJobAddress("");
         setClientName("");
+        setProjectManager("");
         
         toast({
           title: "Job Created Successfully",
@@ -558,6 +569,17 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
                     data-testid="input-client-name"
                   />
                 </div>
+              </div>
+              
+              {/* Project Manager (Optional) */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Project Manager <span className="text-gray-400">(Optional)</span></label>
+                <Input
+                  value={projectManager}
+                  onChange={(e) => setProjectManager(e.target.value)}
+                  placeholder="e.g. Mark Thompson"
+                  data-testid="input-project-manager"
+                />
               </div>
 
               {/* Upload Section */}

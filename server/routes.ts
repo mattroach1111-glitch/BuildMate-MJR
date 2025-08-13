@@ -2256,7 +2256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const { documentURL, jobAddress: manualJobAddress, clientName: manualClientName } = req.body;
+      const { documentURL, jobAddress: manualJobAddress, clientName: manualClientName, projectManager } = req.body;
       
       if (!documentURL) {
         return res.status(400).json({ error: "Document URL is required" });
@@ -2295,7 +2295,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newJob = await storage.createJobFromPDF({
         jobAddress: jobAddress,
         clientName: clientName,
-        projectName: projectName, 
+        projectName: projectName,
+        projectManager: projectManager || null,
         status: "job_in_progress",
         builderMargin: "0.00", // Always 0% margin for PDF uploads
         defaultHourlyRate: "64.00"
