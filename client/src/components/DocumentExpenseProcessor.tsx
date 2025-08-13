@@ -288,7 +288,11 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     }
 
     // Validate inputs
+    console.log("🔵 CREATE JOB DEBUG - Job Address:", `"${jobAddress}"`, "Client Name:", `"${clientName}"`);
+    console.log("🔵 CREATE JOB DEBUG - Trimmed Address:", `"${jobAddress.trim()}"`, "Trimmed Client:", `"${clientName.trim()}"`);
+    
     if (!jobAddress.trim() || !clientName.trim()) {
+      console.log("🔴 VALIDATION FAILED - Empty fields detected");
       toast({
         title: "Missing Information",
         description: "Please enter both job address and client name before uploading.",
@@ -296,6 +300,8 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       });
       return;
     }
+    
+    console.log("🟢 VALIDATION PASSED - Proceeding with job creation");
 
     for (const file of result.successful) {
       try {
