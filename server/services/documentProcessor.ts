@@ -126,53 +126,7 @@ export class DocumentProcessor {
 
     } catch (error) {
       console.error('Error processing document with AI:', error);
-      return { error: (error as Error).message || 'Failed to process document' };
-    }
-  }
-
-  async analyzeCompleteJobSheet(documentURL: string, contentType: string) {
-    try {
-      console.log(`🤖 Analyzing complete job sheet: ${documentURL}`);
-
-      // For now, return basic structure that allows manual job creation to work
-      // The manual inputs (job address, client name) will be used instead
-      return {
-        jobAddress: "Manual Entry Required",
-        clientName: "Manual Entry Required", 
-        projectName: "Manual Entry Required",
-        jobDate: new Date().toISOString().split('T')[0],
-        laborEntries: [],
-        materials: [],
-        subTrades: [],
-        otherCosts: [],
-        tipFees: [],
-        builderMargin: 0,
-        totalCost: 0,
-        confidence: 0.0
-      };
-
-    } catch (error) {
-      console.error('Error analyzing job sheet:', error);
-      throw error;
-    }
-  }
-
-  async analyzeExpenseDocument(fileData: string, mimeType: string) {
-    // This just delegates to the existing processDocumentEmail method
-    return this.processDocumentEmail({
-      fileData,
-      fileName: 'expense-document',
-      mimeType
-    });
-  }
-
-  async convertPdfToImage(pdfBuffer: Buffer): Promise<Buffer> {
-    try {
-      const { convertPdfToImage } = await import('../utils/pdfConverter');
-      return await convertPdfToImage(pdfBuffer);
-    } catch (error) {
-      console.error('PDF conversion error:', error);
-      throw error;
+      return { error: error.message || 'Failed to process document' };
     }
   }
 }

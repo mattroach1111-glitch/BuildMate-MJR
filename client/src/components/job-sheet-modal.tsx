@@ -731,7 +731,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       mimeType: string; 
       objectPath: string; 
     }) => {
-      return await apiRequest("POST", "/api/job-files", fileData);
+      return await apiRequest("/api/job-files", "POST", fileData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId, "files"] });
@@ -762,7 +762,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
   const deleteFileMutation = useMutation({
     mutationFn: async (fileId: string) => {
-      return await apiRequest("DELETE", `/api/job-files/${fileId}`);
+      return await apiRequest(`/api/job-files/${fileId}`, "DELETE");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId, "files"] });
