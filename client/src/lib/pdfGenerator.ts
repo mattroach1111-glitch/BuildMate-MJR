@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import { PDFDocument } from 'pdf-lib';
 
 type JobWithRelations = {
   id: string;
@@ -455,18 +456,68 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
         doc.text(`Attachment: ${file.originalName}`, 20, yPos);
         yPos += 15;
         
-        // Add note about original document
+        // Add information about the attached file
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text('Original document attached below:', 20, yPos);
-        yPos += 20;
+        doc.text('Attached document details:', 20, yPos);
+        yPos += 15;
         
-        // Note: For now, we'll add a placeholder. To embed actual PDFs, 
-        // we would need to fetch the PDF content and use PDF-lib or similar
-        doc.setDrawColor(150, 150, 150);
-        doc.rect(20, yPos, 170, 200);
-        doc.text('[Original PDF document would be embedded here]', 105, yPos + 100, { align: 'center' });
-        doc.text(`Download from: ${file.objectPath}`, 20, yPos + 220);
+        // Try to fetch file info
+        try {
+          const response = await fetch(`/api/job-files/${file.id}/download`);
+          if (response.ok) {
+            const pdfBytes = await response.arrayBuffer();
+            const sourcePdf = await PDFDocument.load(pdfBytes);
+            const pageCount = sourcePdf.getPageCount();
+            
+            // Show file information
+            doc.text(`• File: ${file.originalName}`, 25, yPos);
+            yPos += 10;
+            doc.text(`• Pages: ${pageCount}`, 25, yPos);
+            yPos += 10;
+            doc.text(`• Size: ${(pdfBytes.byteLength / 1024 / 1024).toFixed(2)} MB`, 25, yPos);
+            yPos += 20;
+            
+            // Add a visual representation
+            doc.setFillColor(245, 245, 245);
+            doc.rect(20, yPos, 170, 180, 'F');
+            
+            doc.setDrawColor(200, 200, 200);
+            doc.rect(20, yPos, 170, 180);
+            
+            // Add file icon representation
+            doc.setTextColor(100, 100, 100);
+            doc.setFontSize(14);
+            doc.text('📄', 100, yPos + 50);
+            doc.setFontSize(10);
+            doc.text(file.originalName, 105, yPos + 70, { align: 'center' });
+            doc.text(`${pageCount} page${pageCount === 1 ? '' : 's'}`, 105, yPos + 85, { align: 'center' });
+            
+            doc.setFontSize(8);
+            doc.text('This document has been attached to the job.', 105, yPos + 110, { align: 'center' });
+            doc.text('Access the original file from the job sheet attachments.', 105, yPos + 125, { align: 'center' });
+            
+            // Reset text color
+            doc.setTextColor(0, 0, 0);
+            
+          } else {
+            throw new Error('Failed to fetch PDF file');
+          }
+        } catch (fetchError) {
+          console.error('Error fetching PDF file:', fetchError);
+          // Fallback display
+          doc.text(`• File: ${file.originalName}`, 25, yPos);
+          yPos += 10;
+          doc.text('• Status: Available in job attachments', 25, yPos);
+          yPos += 20;
+          
+          doc.setFillColor(250, 250, 250);
+          doc.rect(20, yPos, 170, 100, 'F');
+          doc.setDrawColor(200, 200, 200);
+          doc.rect(20, yPos, 170, 100);
+          doc.text('📄 Document Attached', 105, yPos + 50, { align: 'center' });
+          doc.text('View original file in job attachments', 105, yPos + 65, { align: 'center' });
+        }
         
       } catch (error) {
         console.error('Error appending PDF:', error);
