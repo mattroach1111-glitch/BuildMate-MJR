@@ -1,4 +1,4 @@
-import { pdf2pic } from 'pdf2pic';
+import pdf2pic from 'pdf2pic';
 import fs from 'fs/promises';
 import path from 'path';
 import { randomUUID } from 'crypto';
@@ -56,6 +56,6 @@ export async function convertPdfToImage(pdfBuffer: Buffer): Promise<Buffer> {
     }
     
     console.error('PDF conversion error:', error);
-    throw new Error(`Failed to convert PDF to image: ${error.message}`);
+    throw new Error(`Failed to convert PDF to image: ${(error as Error).message}`);
   }
 }
