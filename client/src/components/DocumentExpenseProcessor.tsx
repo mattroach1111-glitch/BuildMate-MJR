@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { DocumentUploader } from "./DocumentUploader";
 import { EmailInboxInfo } from "./EmailInboxInfo";
 import { Button } from "@/components/ui/button";
@@ -194,7 +194,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     });
   };
 
-  const handleGetUploadParameters = async (file: any) => {
+  const handleGetUploadParameters = useCallback(async (file: any) => {
     try {
       console.log("🔵 UPLOAD DEBUG: Getting upload parameters for file:", file);
       const response: any = await getUploadUrlMutation.mutateAsync();
@@ -222,7 +222,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       });
       throw error;
     }
-  };
+  }, [getUploadUrlMutation, toast]);
 
   const handleUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
     console.log("🔴 WRONG HANDLER - Regular upload complete called instead of create job handler");
@@ -278,7 +278,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     setIsProcessing(false);
   };
 
-  const handleCreateJobUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+  const handleCreateJobUploadComplete = useCallback(async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
     console.log("🟢 CREATE JOB HANDLER CALLED - This is the correct handler!");
     console.log("🟢 Upload result:", result);
     
@@ -327,7 +327,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
         });
       }
     }
-  };
+  }, [jobAddress, clientName, createJobFromDocumentMutation, toast]);
 
   const getCategoryLabel = (category: string) => {
     switch (category) {
