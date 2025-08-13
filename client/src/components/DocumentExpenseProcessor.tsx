@@ -78,6 +78,10 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
 
   // Get unique project managers from existing jobs
   const projectManagers = jobs ? Array.from(new Set((jobs as any[]).map(job => job.projectManager).filter(Boolean))) : [];
+  
+  // Debug logging
+  console.log("🔵 DEBUG: Jobs data:", jobs);
+  console.log("🔵 DEBUG: Project managers found:", projectManagers);
 
   // Get upload URL mutation
   const getUploadUrlMutation = useMutation({
