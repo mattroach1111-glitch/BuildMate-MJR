@@ -213,16 +213,16 @@ export default function StaffTimesheet() {
 
   return (
     <PageLayout title="Daily Timesheet Entries">
-      <div className="max-w-6xl mx-auto p-4 main-container touch-pan-y" data-scroll-container>
-        <Card className="timesheet-container">
+      <div className="max-w-6xl mx-auto p-4">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               Daily Timesheet Entries
             </CardTitle>
           </CardHeader>
-          <CardContent className="touch-pan-y">
-            <div className="overflow-x-auto touch-pan-x">
+          <CardContent>
+            <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b">
