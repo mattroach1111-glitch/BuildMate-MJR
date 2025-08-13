@@ -10,7 +10,8 @@ import {
   Settings,
   LogOut,
   Menu,
-  Building2
+  Building2,
+  List
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -43,6 +44,7 @@ export default function Navigation({ title, subtitle }: NavigationProps) {
 
   const navigationItems = isAdmin ? [
     { icon: LayoutDashboard, label: "Dashboard", path: "/", active: location === "/" },
+    { icon: List, label: "All Jobs", path: "/jobs", active: location === "/jobs" },
     { icon: FileText, label: "Timesheet", path: "/timesheet", active: location === "/timesheet" },
   ] : [
     { icon: FileText, label: "Daily Timesheet", path: "/", active: location === "/" || location === "/timesheet" },

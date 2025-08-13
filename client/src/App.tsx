@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { NotificationPopup } from "@/components/notification-popup";
 import Landing from "@/pages/landing";
 import AdminDashboard from "@/pages/admin-dashboard";
+import { JobsList } from "@/pages/jobs-list";
 import NotFound from "@/pages/not-found";
 import FortnightTimesheetView from "@/pages/fortnight-timesheet-view";
 import StaffTimesheet from "@/pages/staff-timesheet";
@@ -30,6 +31,7 @@ function Router() {
         <>
           <Route path="/" component={AdminDashboard} />
           <Route path="/admin" component={AdminDashboard} />
+          <Route path="/jobs" component={JobsList} />
           <Route path="/timesheet" component={FortnightTimesheetView} />
           <Route path="/staff" component={AdminDashboard} />
         </>
