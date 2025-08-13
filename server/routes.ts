@@ -2842,20 +2842,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           break;
           
         case 'tip_fees':
+          console.log(`🚛 Creating tip fee for job ${targetJobId}`);
           addedExpense = await storage.createTipFee({
             jobId: targetJobId,
             description: extractedData.description || document.filename,
             amount: extractedData.amount?.toString() || '0'
           });
+          console.log(`✅ Tip fee created:`, addedExpense?.id);
           break;
           
         case 'other_costs':
         default:
+          console.log(`📋 Creating other cost for job ${targetJobId}`);
           addedExpense = await storage.createOtherCost({
             jobId: targetJobId,
             description: extractedData.description || document.filename,
             amount: extractedData.amount?.toString() || '0'
           });
+          console.log(`✅ Other cost created:`, addedExpense?.id);
           break;
       }
 
