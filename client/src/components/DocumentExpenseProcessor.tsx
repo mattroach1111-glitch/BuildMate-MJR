@@ -591,6 +591,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
                   value={projectManager || undefined} 
                   onValueChange={(value) => {
                     console.log("🔵 Project Manager selected:", value);
+                    console.log("🔵 Setting project manager to:", value);
                     setProjectManager(value || "");
                   }}
                 >
@@ -598,13 +599,20 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
                     <SelectValue placeholder="Select project manager (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    {projectManagers.map((manager) => (
-                      <SelectItem key={manager} value={manager}>
-                        {manager}
-                      </SelectItem>
-                    ))}
+                    {projectManagers.length > 0 ? (
+                      projectManagers.map((manager) => (
+                        <SelectItem key={manager} value={manager}>
+                          {manager}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-managers" disabled>No managers available</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
+                <div className="text-xs text-gray-500">
+                  Current value: "{projectManager}" | Available: [{projectManagers.join(", ")}]
+                </div>
               </div>
 
               {/* Upload Section */}
