@@ -102,12 +102,16 @@ Extract ALL information visible in the document and return a JSON object with:
   * employeeName: Staff member name
   * hours: Hours worked (as number)
   * hourlyRate: Rate per hour (as number, extract from rate column)
-- materials: Array of ONLY individual material/supply items from the detailed list (NOT including trade services):
-  * description: Item description (e.g., "ply brace", "coveralls", "insulation batts")
+- materials: Array of ONLY physical supply items from the detailed list at bottom (NOT trade services):
+  * Examples: "ply brace", "coveralls", "insulation batts", "joint compound", "pine", "nails"
+  * These are items you buy from suppliers like Bunnings/Clennetts
+  * description: Item description
   * amount: Cost as number (extract individual amounts, not totals)
   * supplier: Supplier name (e.g., "Bunnings", "Clennetts") 
   * date: Date in DD/MM format if visible, otherwise current date
-- subTrades: Array of trade services (e.g., "plastering", "plumbing", "electrical", "painters"):
+- subTrades: Array of trade services (work done by contractors):
+  * Examples: "plastering" (from Knauf), "plumbing", "electrical", "painters"  
+  * These are services, not physical items
   * description: Trade service description
   * amount: Cost as number
   * supplier: Trade company name if visible
@@ -118,13 +122,18 @@ Extract ALL information visible in the document and return a JSON object with:
 - rawText: All visible text content
 
 CRITICAL RULES:
-1. Materials = individual supply items only (ply, coveralls, insulation, etc.)
-2. SubTrades = trade services (plastering, plumbing, electrical, painters)  
+1. Materials = ONLY physical supply items from the bottom detailed list (ply, coveralls, insulation, etc.)
+2. SubTrades = trade services - IMPORTANT: "plastering $7,192 Knauf" goes to subTrades, NOT materials
 3. Extract individual items, NEVER extract totals or summary amounts
 4. If you see "Materials $1195" - this is a total, not an item - skip it
 5. ONLY extract items that have actual dollar amounts - DO NOT extract items with $0 or no amount
 6. For jobAddress: extract the main header/title from the document (e.g., "21 Greenhill Dr")
-7. For projectName: use the same address/title as project name`,
+7. For projectName: use the same address/title as project name
+
+SPECIFIC EXAMPLES:
+- "plastering $7,192.00 Knauf" → subTrades (NOT materials)
+- "ply brace 71 Clennetts" → materials
+- "coveralls 13 Bunnings" → materials`,
         messages: [{
           role: "user",
           content: [
