@@ -43,14 +43,26 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Use ref to capture current selectedJobId value in callbacks  
+  // Use refs to capture current values in callbacks  
   const selectedJobIdRef = useRef(selectedJobId);
+  const jobAddressRef = useRef(jobAddress);
+  const clientNameRef = useRef(clientName);
   
-  // Update ref whenever selectedJobId changes
+  // Update refs whenever values change
   useEffect(() => {
     selectedJobIdRef.current = selectedJobId;
     console.log("🔵 Job selection changed:", selectedJobId);
   }, [selectedJobId]);
+  
+  useEffect(() => {
+    jobAddressRef.current = jobAddress;
+    console.log("🔵 Job address changed:", jobAddress);
+  }, [jobAddress]);
+  
+  useEffect(() => {
+    clientNameRef.current = clientName;
+    console.log("🔵 Client name changed:", clientName);
+  }, [clientName]);
 
   // Fetch jobs for dropdown
   const { data: jobs = [] } = useQuery({
@@ -291,11 +303,15 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       return;
     }
 
-    // Validate inputs
-    console.log("🔵 CREATE JOB DEBUG - Job Address:", `"${jobAddress}"`, "Client Name:", `"${clientName}"`);
-    console.log("🔵 CREATE JOB DEBUG - Trimmed Address:", `"${jobAddress.trim()}"`, "Trimmed Client:", `"${clientName.trim()}"`);
+    // Use refs to get current values (fixes React closure issue)
+    const currentJobAddress = jobAddressRef.current;
+    const currentClientName = clientNameRef.current;
     
-    if (!jobAddress.trim() || !clientName.trim()) {
+    // Validate inputs
+    console.log("🔵 CREATE JOB DEBUG - Job Address:", `"${currentJobAddress}"`, "Client Name:", `"${currentClientName}"`);
+    console.log("🔵 CREATE JOB DEBUG - Trimmed Address:", `"${currentJobAddress.trim()}"`, "Trimmed Client:", `"${currentClientName.trim()}"`);
+    
+    if (!currentJobAddress.trim() || !currentClientName.trim()) {
       console.log("🔴 VALIDATION FAILED - Empty fields detected");
       toast({
         title: "Missing Information",
@@ -311,8 +327,8 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       try {
         await createJobFromDocumentMutation.mutateAsync({
           documentURL: file.uploadURL || "",
-          jobAddress: jobAddress.trim(),
-          clientName: clientName.trim()
+          jobAddress: currentJobAddress.trim(),
+          clientName: currentClientName.trim()
         });
         
         // Clear inputs after successful creation
@@ -327,7 +343,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
         });
       }
     }
-  }, [jobAddress, clientName, createJobFromDocumentMutation, toast]);
+  }, [createJobFromDocumentMutation, toast]);
 
   const getCategoryLabel = (category: string) => {
     switch (category) {
