@@ -987,7 +987,30 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   // Email PDF functionality
   const emailPDFMutation = useMutation({
     mutationFn: async (emailData: { to: string; subject: string; message: string }) => {
-      const response = await apiRequest("POST", `/api/jobs/${jobId}/email-pdf`, emailData);
+      // Generate PDF client-side first
+      if (!jobDetails) throw new Error("Job details not available");
+      
+      const jobWithTimesheets = {
+        ...jobDetails,
+        timesheets: jobTimesheets
+      };
+      
+      const attachmentFiles = jobFiles.map(file => ({
+        id: file.id,
+        originalName: file.originalName,
+        objectPath: file.objectPath,
+        googleDriveLink: file.googleDriveLink
+      }));
+      
+      // Generate PDF as base64 data
+      const { generateJobPDFBase64 } = await import("@/lib/pdfGenerator");
+      const pdfBase64 = await generateJobPDFBase64(jobWithTimesheets, attachmentFiles);
+      
+      // Send email data with PDF
+      const response = await apiRequest("POST", `/api/jobs/${jobId}/email-pdf`, {
+        ...emailData,
+        pdfData: pdfBase64
+      });
       return response.json();
     },
     onSuccess: () => {

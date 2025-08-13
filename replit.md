@@ -5,6 +5,7 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 Preferred communication style: Simple, everyday language.
 
 # Recent Changes
+- **August 13, 2025**: Implemented complete "Email PDF" functionality for job sheets. Added blue "Email PDF" button next to "Download PDF" in job sheet modal. Features email dialog with recipient input, subject auto-fill, custom message field, client-side PDF generation, and server-side email sending with PDF attachment via jobs@mjrbuilders.com.au. Includes email validation, loading states, success/error notifications, and proper error handling.
 - **August 13, 2025**: Fixed project manager update functionality in job sheet editing. The form now correctly maps the projectManager field instead of projectName, properly initializes with existing values, and successfully saves changes to the database with immediate dashboard reflection.
 - **August 13, 2025**: Fixed critical job creation and grouping bugs: (1) Project manager was incorrectly being set to job name during document processing - now properly uses provided project manager or null, (2) Manual project manager changes now trigger immediate UI re-grouping with proper useMemo dependencies, ensuring accurate job organization in admin dashboard.
 - **August 13, 2025**: Enhanced document preview functionality with preview buttons (Eye icons) for both expense uploads and email attachments, supporting PDFs with navigation controls and images with zoom/rotate capabilities.
@@ -57,6 +58,7 @@ Preferred communication style: Simple, everyday language.
 - **Client/Project Manager Filtered Email Updates**: Granular filtering for job updates, updated email subjects with client/PM names, and visual filtering badges.
 - **Multiple Email Recipient Support**: For job updates with comma-separated addresses, smart email suggestions, and persistence.
 - **Job Update Email System**: Fully operational using Onlydomains.com Titan email service.
+- **Email PDF Functionality**: Complete job sheet PDF email system with blue "Email PDF" button, email dialog for recipient/subject/message input, client-side PDF generation, server-side email delivery with attachment support, and comprehensive error handling.
 - **Timesheet Workflow**: Separation of draft (`Save All`) and submitted (`Submit Timesheet`) entries to prevent premature approval. Prevents duplicate timesheet entries.
 - **Timesheet Validation**: Low hours warning for submission if total hours < 76, leave type validation requiring hours > 0, and completion validation requiring all Monday-Friday entries to be filled. Allows multiple entries on unlocked weekend days.
 - **Custom Address Display**: Correct display of custom addresses in admin dashboard.

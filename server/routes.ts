@@ -2909,7 +2909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const jobId = req.params.id;
-      const { to, subject, message } = req.body;
+      const { to, subject, message, pdfData } = req.body;
 
       if (!to || !to.trim()) {
         return res.status(400).json({ message: "Recipient email is required" });
@@ -2942,17 +2942,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timesheets
       };
 
-      // Generate PDF in memory
-      const { generateJobPDFBuffer } = await import('../client/src/lib/pdfGenerator');
+      // PDF generation will be handled on the client side
+      // We'll receive the PDF data in the request body
+      const { pdfData } = req.body;
       
-      const attachmentFiles = jobFiles.map(file => ({
-        id: file.id,
-        originalName: file.originalName,
-        objectPath: file.objectPath,
-        googleDriveLink: file.googleDriveLink
-      }));
+      if (!pdfData) {
+        return res.status(400).json({ message: "PDF data is required" });
+      }
 
-      const pdfBuffer = await generateJobPDFBuffer(jobWithDetails, attachmentFiles);
+      // Convert base64 PDF data to buffer
+      const pdfBuffer = Buffer.from(pdfData, 'base64');
       
       // Send email with PDF attachment
       const { sendEmail } = await import('./services/emailService');

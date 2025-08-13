@@ -467,6 +467,300 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
   doc.save(`${job.jobAddress.replace(/[^a-zA-Z0-9]/g, '-')}-job-sheet.pdf`);
 }
 
+// Function to generate PDF as base64 string for email attachments
+export async function generateJobPDFBase64(job: JobWithRelations, attachedFiles?: Array<{id: string, originalName: string, objectPath: string | null, googleDriveLink?: string | null}>): Promise<string> {
+  const doc = new jsPDF();
+  const pageHeight = doc.internal.pageSize.height;
+  const marginBottom = 20;
+  
+  // Function to check if we need a new page
+  const checkPageBreak = (requiredSpace: number = 20) => {
+    if (yPos + requiredSpace > pageHeight - marginBottom) {
+      doc.addPage();
+      yPos = 20;
+      return true;
+    }
+    return false;
+  };
+  
+  let yPos = 30;
+
+  // Header - centered like Excel
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text('JOB COST SHEET', 105, 20, { align: 'center' });
+  
+  // Job details - top left
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Job: ${job.jobAddress}`, 20, 35);
+  doc.text(`Client: ${job.clientName}`, 20, 42);
+  doc.text(`Project: ${job.projectName || 'N/A'}`, 20, 49);
+  doc.text(`Status: ${job.status}`, 20, 56);
+  
+  yPos = 70;
+
+  // LABOUR SECTION
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('LABOUR', 20, yPos);
+  yPos += 15;
+
+  if (job.laborEntries && job.laborEntries.length > 0) {
+    // Table headers
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Staff Member', 25, yPos);
+    doc.text('Rate', 90, yPos);
+    doc.text('Hours', 120, yPos);
+    doc.text('Total', 150, yPos);
+    yPos += 3;
+    doc.line(20, yPos, 190, yPos);
+    yPos += 8;
+
+    doc.setFont('helvetica', 'normal');
+    let laborTotal = 0;
+    
+    job.laborEntries.forEach((entry) => {
+      checkPageBreak();
+      
+      const rate = parseFloat(entry.hourlyRate);
+      const hours = parseFloat(entry.hoursLogged);
+      const total = rate * hours;
+      laborTotal += total;
+
+      const staffName = entry.staff?.name || 'Unassigned Staff';
+      doc.text(staffName, 25, yPos);
+      doc.text(`$${rate.toFixed(2)}`, 90, yPos);
+      doc.text(`${hours.toFixed(1)}h`, 120, yPos);
+      doc.text(`$${total.toFixed(2)}`, 150, yPos);
+      yPos += 8;
+    });
+
+    yPos += 5;
+    doc.line(140, yPos, 180, yPos);
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Labour Total:', 105, yPos);
+    doc.text(`$${laborTotal.toFixed(2)}`, 150, yPos);
+    yPos += 20;
+  } else {
+    doc.setFont('helvetica', 'normal');
+    doc.text('No labour entries', 25, yPos);
+    yPos += 20;
+  }
+
+  // MATERIALS SECTION
+  checkPageBreak(50);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('MATERIALS', 20, yPos);
+  yPos += 15;
+
+  if (job.materials && job.materials.length > 0) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Description', 25, yPos);
+    doc.text('Supplier', 90, yPos);
+    doc.text('Date', 130, yPos);
+    doc.text('Amount', 160, yPos);
+    yPos += 3;
+    doc.line(20, yPos, 190, yPos);
+    yPos += 8;
+
+    doc.setFont('helvetica', 'normal');
+    let materialsTotal = 0;
+    
+    job.materials.forEach((material) => {
+      checkPageBreak();
+      
+      const amount = parseFloat(material.amount);
+      materialsTotal += amount;
+
+      const description = material.description.length > 30 ? material.description.substring(0, 27) + '...' : material.description;
+      const supplier = material.supplier.length > 18 ? material.supplier.substring(0, 15) + '...' : material.supplier;
+      const date = material.invoiceDate || 'N/A';
+
+      doc.text(description, 25, yPos);
+      doc.text(supplier, 90, yPos);
+      doc.text(date, 130, yPos);
+      doc.text(`$${amount.toFixed(2)}`, 160, yPos);
+      yPos += 8;
+    });
+
+    yPos += 5;
+    doc.line(140, yPos, 180, yPos);
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Materials Total:', 105, yPos);
+    doc.text(`$${materialsTotal.toFixed(2)}`, 160, yPos);
+    yPos += 20;
+  } else {
+    doc.setFont('helvetica', 'normal');
+    doc.text('No materials', 25, yPos);
+    yPos += 20;
+  }
+
+  // SUB TRADES SECTION
+  checkPageBreak(50);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('SUB TRADES', 20, yPos);
+  yPos += 15;
+
+  if (job.subTrades && job.subTrades.length > 0) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Trade', 25, yPos);
+    doc.text('Contractor', 70, yPos);
+    doc.text('Date', 130, yPos);
+    doc.text('Amount', 160, yPos);
+    yPos += 3;
+    doc.line(20, yPos, 190, yPos);
+    yPos += 8;
+
+    doc.setFont('helvetica', 'normal');
+    let subTradesTotal = 0;
+    
+    job.subTrades.forEach((subTrade) => {
+      checkPageBreak();
+      
+      const amount = parseFloat(subTrade.amount);
+      subTradesTotal += amount;
+
+      const trade = subTrade.trade.length > 20 ? subTrade.trade.substring(0, 17) + '...' : subTrade.trade;
+      const contractor = subTrade.contractor.length > 25 ? subTrade.contractor.substring(0, 22) + '...' : subTrade.contractor;
+      const date = subTrade.invoiceDate || 'N/A';
+
+      doc.text(trade, 25, yPos);
+      doc.text(contractor, 70, yPos);
+      doc.text(date, 130, yPos);
+      doc.text(`$${amount.toFixed(2)}`, 160, yPos);
+      yPos += 8;
+    });
+
+    yPos += 5;
+    doc.line(140, yPos, 180, yPos);
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Sub Trades Total:', 105, yPos);
+    doc.text(`$${subTradesTotal.toFixed(2)}`, 160, yPos);
+    yPos += 20;
+  } else {
+    doc.setFont('helvetica', 'normal');
+    doc.text('No sub trades', 25, yPos);
+    yPos += 20;
+  }
+
+  // OTHER COSTS SECTION
+  checkPageBreak(50);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('OTHER COSTS', 20, yPos);
+  yPos += 15;
+
+  if (job.otherCosts && job.otherCosts.length > 0) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Description', 25, yPos);
+    doc.text('Amount', 160, yPos);
+    yPos += 3;
+    doc.line(20, yPos, 190, yPos);
+    yPos += 8;
+
+    doc.setFont('helvetica', 'normal');
+    let otherCostsTotal = 0;
+    
+    job.otherCosts.forEach((cost) => {
+      checkPageBreak();
+      
+      const amount = parseFloat(cost.amount);
+      otherCostsTotal += amount;
+
+      const description = cost.description.length > 50 ? cost.description.substring(0, 47) + '...' : cost.description;
+
+      doc.text(description, 25, yPos);
+      doc.text(`$${amount.toFixed(2)}`, 160, yPos);
+      yPos += 8;
+    });
+
+    yPos += 5;
+    doc.line(140, yPos, 180, yPos);
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Other Costs Total:', 105, yPos);
+    doc.text(`$${otherCostsTotal.toFixed(2)}`, 160, yPos);
+    yPos += 20;
+  } else {
+    doc.setFont('helvetica', 'normal');
+    doc.text('No other costs', 25, yPos);
+    yPos += 20;
+  }
+
+  // Calculate totals
+  let subtotal = 0;
+  if (job.laborEntries) subtotal += job.laborEntries.reduce((sum, entry) => sum + (parseFloat(entry.hourlyRate) * parseFloat(entry.hoursLogged)), 0);
+  if (job.materials) subtotal += job.materials.reduce((sum, material) => sum + parseFloat(material.amount), 0);
+  if (job.subTrades) subtotal += job.subTrades.reduce((sum, subTrade) => sum + parseFloat(subTrade.amount), 0);
+  if (job.otherCosts) subtotal += job.otherCosts.reduce((sum, cost) => sum + parseFloat(cost.amount), 0);
+
+  const marginPercent = parseFloat(job.builderMargin || "0");
+  const marginAmount = subtotal * (marginPercent / 100);
+  const subtotalWithMargin = subtotal + marginAmount;
+  const gstAmount = subtotalWithMargin * 0.1;
+  const finalTotal = subtotalWithMargin + gstAmount;
+
+  // TOTALS SECTION
+  checkPageBreak(100);
+  yPos += 10;
+  
+  // Subtotal line
+  yPos += 5;
+  doc.line(25, yPos, 190, yPos);
+  yPos += 10;
+  
+  doc.setFont('helvetica', 'bold');
+  doc.text('SUBTOTAL:', 25, yPos);
+  doc.text(`$${subtotal.toFixed(2)}`, 160, yPos, { align: 'right' });
+  yPos += 12;
+
+  // Builder margin if applicable
+  if (marginPercent > 0) {
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Builder Margin (${job.builderMargin}%):`, 25, yPos);
+    doc.text(`$${marginAmount.toFixed(2)}`, 160, yPos, { align: 'right' });
+    yPos += 8;
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('Subtotal with Margin:', 25, yPos);
+    doc.text(`$${subtotalWithMargin.toFixed(2)}`, 160, yPos, { align: 'right' });
+    yPos += 12;
+  }
+
+  // GST
+  doc.setFont('helvetica', 'normal');
+  doc.text('GST (10%):', 25, yPos);
+  doc.text(`$${gstAmount.toFixed(2)}`, 160, yPos, { align: 'right' });
+  yPos += 12;
+
+  // Final total line
+  doc.line(25, yPos, 190, yPos);
+  yPos += 12;
+
+  // Final total - highlighted
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(220, 20, 60); // Deep red
+  doc.text('TOTAL (inc GST):', 25, yPos);
+  doc.text(`$${finalTotal.toFixed(2)}`, 160, yPos, { align: 'right' });
+  
+  // Reset color
+  doc.setTextColor(0, 0, 0);
+
+  // Return PDF as base64 string instead of saving
+  return doc.output('datauristring').split(',')[1]; // Remove data:application/pdf;filename=generated.pdf;base64, prefix
+}
+
 type JobListItem = {
   id: string;
   jobAddress: string;
