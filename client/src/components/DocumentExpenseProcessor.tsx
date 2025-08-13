@@ -32,6 +32,16 @@ interface PendingExpense extends ProcessedExpense {
   approved: boolean;
 }
 
+interface PendingJobCreation {
+  documentURL: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  jobAddress: string;
+  clientName: string;
+  projectManager?: string;
+}
+
 export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessorProps) {
   const [selectedJobId, setSelectedJobId] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -42,6 +52,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   const [clientName, setClientName] = useState<string>("");
   const [projectManager, setProjectManager] = useState<string>("");
   const [lastUploadedFile, setLastUploadedFile] = useState<any>(null);
+  const [pendingJobCreation, setPendingJobCreation] = useState<PendingJobCreation | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -295,6 +306,64 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     });
   };
 
+  // Job creation approval functions
+  const handleApproveJobCreation = async () => {
+    if (!pendingJobCreation) return;
+
+    try {
+      const jobResponse = await createJobFromDocumentMutation.mutateAsync({
+        documentURL: pendingJobCreation.documentURL,
+        jobAddress: pendingJobCreation.jobAddress,
+        clientName: pendingJobCreation.clientName,
+        projectManager: pendingJobCreation.projectManager
+      });
+      
+      // Save the uploaded file as a job file attachment
+      if (jobResponse.job?.id && pendingJobCreation.documentURL) {
+        try {
+          await apiRequest("POST", "/api/job-files", {
+            jobId: jobResponse.job.id,
+            fileName: pendingJobCreation.fileName,
+            originalName: pendingJobCreation.fileName,
+            fileSize: pendingJobCreation.fileSize,
+            mimeType: pendingJobCreation.fileType,
+            objectPath: pendingJobCreation.documentURL
+          });
+          console.log("✅ Saved document as job file attachment");
+        } catch (fileError) {
+          console.error("Failed to save document as job file:", fileError);
+          // Don't fail the entire process if file saving fails
+        }
+      }
+      
+      // Clear inputs and pending job after successful creation
+      setJobAddress("");
+      setClientName("");
+      setProjectManager("");
+      setPendingJobCreation(null);
+      
+      toast({
+        title: "Job Created Successfully",
+        description: `Created job for ${pendingJobCreation.jobAddress} (${pendingJobCreation.clientName}) with document attached`,
+      });
+    } catch (error) {
+      console.error("Job creation error:", error);
+      toast({
+        title: "Job creation failed",
+        description: "Failed to create job from document",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRejectJobCreation = () => {
+    setPendingJobCreation(null);
+    toast({
+      title: "Job creation cancelled",
+      description: "The uploaded document has been discarded",
+    });
+  };
+
   const handleGetUploadParameters = useCallback(async (file: any) => {
     try {
       console.log("🔵 UPLOAD DEBUG: Getting upload parameters for file:", file);
@@ -395,8 +464,6 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     const currentClientName = clientNameRef.current;
     const currentProjectManager = projectManagerRef.current;
     
-
-    
     if (!currentJobAddress.trim() || !currentClientName.trim()) {
       toast({
         title: "Missing Information",
@@ -406,52 +473,23 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       return;
     }
 
-    for (const file of result.successful) {
-      try {
-        const jobResponse = await createJobFromDocumentMutation.mutateAsync({
-          documentURL: file.uploadURL || "",
-          jobAddress: currentJobAddress.trim(),
-          clientName: currentClientName.trim(),
-          projectManager: currentProjectManager.trim() || undefined
-        });
-        
-        // Save the uploaded file as a job file attachment
-        if (jobResponse.job?.id && file.uploadURL) {
-          try {
-            await apiRequest("POST", "/api/job-files", {
-              jobId: jobResponse.job.id,
-              fileName: file.name || "document.pdf",
-              originalName: file.name || "document.pdf",
-              fileSize: file.size || 0,
-              mimeType: file.type || "application/pdf",
-              objectPath: file.uploadURL
-            });
-            console.log("✅ Saved document as job file attachment");
-          } catch (fileError) {
-            console.error("Failed to save document as job file:", fileError);
-            // Don't fail the entire process if file saving fails
-          }
-        }
-        
-        // Clear inputs after successful creation
-        setJobAddress("");
-        setClientName("");
-        setProjectManager("");
-        
-        toast({
-          title: "Job Created Successfully",
-          description: `Created job for ${currentJobAddress} (${currentClientName}) with document attached`,
-        });
-      } catch (error) {
-        console.error("Job creation error:", error);
-        toast({
-          title: "Job creation failed",
-          description: "Failed to create job from document",
-          variant: "destructive",
-        });
-      }
-    }
-  }, [createJobFromDocumentMutation, toast]);
+    // Instead of immediately creating the job, set up pending job creation for approval
+    const file = result.successful[0]; // Take first file for now
+    setPendingJobCreation({
+      documentURL: file.uploadURL || "",
+      fileName: file.name || "document.pdf",
+      fileSize: file.size || 0,
+      fileType: file.type || "application/pdf",
+      jobAddress: currentJobAddress.trim(),
+      clientName: currentClientName.trim(),
+      projectManager: currentProjectManager.trim() || undefined
+    });
+
+    toast({
+      title: "Document Uploaded",
+      description: "Review the job details below and click 'Create Job' to proceed.",
+    });
+  }, [toast]);
 
   const getCategoryLabel = (category: string) => {
     switch (category) {
@@ -552,6 +590,82 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
               Processing document with AI to extract expense information...
             </AlertDescription>
           </Alert>
+        )}
+
+        {/* Job Creation Approval Card */}
+        {pendingJobCreation && (
+          <Card className="border-blue-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="text-blue-800 flex items-center gap-2">
+                <CheckCircle className="h-5 w-5" />
+                Approve Job Creation
+              </CardTitle>
+              <CardDescription className="text-blue-600">
+                Review the job details and click 'Create Job' to proceed with automatic processing
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 p-4 bg-white rounded-lg border">
+                <div>
+                  <div className="text-sm font-medium text-gray-600">Job Address</div>
+                  <div className="text-lg font-semibold">{pendingJobCreation.jobAddress}</div>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-gray-600">Client Name</div>
+                  <div className="text-lg font-semibold">{pendingJobCreation.clientName}</div>
+                </div>
+                {pendingJobCreation.projectManager && (
+                  <div>
+                    <div className="text-sm font-medium text-gray-600">Project Manager</div>
+                    <div className="text-lg font-semibold">{pendingJobCreation.projectManager}</div>
+                  </div>
+                )}
+                <div>
+                  <div className="text-sm font-medium text-gray-600">Document</div>
+                  <div className="text-sm">{pendingJobCreation.fileName}</div>
+                </div>
+              </div>
+              
+              <div className="text-sm text-blue-700 bg-blue-100 p-3 rounded-lg">
+                <div className="font-medium mb-1">What happens next:</div>
+                <ul className="space-y-1 text-xs">
+                  <li>• AI will analyze the document and extract all job data</li>
+                  <li>• Creates labor entries, materials, sub-trades, and costs</li>
+                  <li>• Document will be saved to the job and uploaded to Google Drive</li>
+                  <li>• Includes automatic employee matching and consumables calculation</li>
+                </ul>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleApproveJobCreation}
+                  disabled={createJobFromDocumentMutation.isPending}
+                  className="flex-1"
+                  data-testid="button-approve-job-creation"
+                >
+                  {createJobFromDocumentMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Creating Job...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Create Job
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleRejectJobCreation}
+                  disabled={createJobFromDocumentMutation.isPending}
+                  data-testid="button-reject-job-creation"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Pending Expense Review */}
