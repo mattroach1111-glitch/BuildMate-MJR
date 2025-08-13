@@ -237,7 +237,7 @@ export function EmailInboxInfo() {
               <li>• Forward invoices to documents@mjrbuilders.com.au</li>
               <li>• Click "Check for New Emails" for automatic processing</li>
             </ul>
-            <p className="text-blue-600 font-medium mt-2">This connects directly to your existing email system.</p>
+            <p className="text-blue-600 font-medium mt-2">✅ Email credentials configured! Ready to test connection.</p>
           </div>
         </div>
 
