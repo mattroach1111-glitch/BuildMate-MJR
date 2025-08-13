@@ -272,10 +272,14 @@ export class EmailInboxService {
       const extractedJobName = this.extractJobNameFromSubject(emailMessage.subject);
       let targetJob = null;
       
+      console.log(`🔍 Extracted job name from subject "${emailMessage.subject}": ${extractedJobName || 'none'}`);
+      
       if (extractedJobName) {
         targetJob = await this.findMatchingJob(extractedJobName, targetUser.id);
         if (targetJob) {
           console.log(`🎯 Matched job: ${targetJob.jobAddress}`);
+        } else {
+          console.log(`❌ No matching job found for: ${extractedJobName}`);
         }
       }
       
