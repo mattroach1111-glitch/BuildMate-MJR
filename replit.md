@@ -4,6 +4,9 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 # User Preferences
 Preferred communication style: Simple, everyday language.
 
+# Recent Changes
+- **August 13, 2025**: Restored automatic job creation from PDF uploads without approval step. User confirmed system works well with immediate job creation upon document upload, maintaining full AI processing with labor entries, materials extraction, and Google Drive integration.
+
 # System Architecture
 
 ## Frontend Architecture
@@ -45,7 +48,7 @@ Preferred communication style: Simple, everyday language.
 - **Tip Fees**: Comprehensive system with automatic 20% cartage calculation.
 - **Inline Editing**: For job sheet items (materials, sub-trades, other costs) with edit/delete buttons, inline forms, save/cancel options, confirmation dialogs, and automatic data refresh.
 - **AI Document Processing**: AI-powered expense extraction for all document types (PDF, JPG, PNG) including drag-and-drop upload, intelligent categorization, vendor/amount extraction, automatic PDF-to-image conversion, and integration. Includes a document review system allowing category selection and approval.
-- **Job Creation from PDF**: Comprehensive system for creating jobs from PDF documents with authentic data extraction, including labor entries, materials, sub-trades, tip fees, and automatic consumables calculation. Features fuzzy employee and client matching.
+- **Job Creation from PDF**: Comprehensive system for creating jobs from PDF documents with authentic data extraction, including labor entries, materials, sub-trades, tip fees, and automatic consumables calculation. Features fuzzy employee and client matching. Operates automatically upon upload without approval steps (as per user preference).
 - **Permanent Delete Functionality**: Two-tier job deletion (soft delete to folder, then permanent delete) with API endpoint, confirmation dialogs, and complete removal of all associated data.
 - **Client/Project Manager Filtered Email Updates**: Granular filtering for job updates, updated email subjects with client/PM names, and visual filtering badges.
 - **Multiple Email Recipient Support**: For job updates with comma-separated addresses, smart email suggestions, and persistence.
