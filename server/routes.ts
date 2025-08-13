@@ -1564,8 +1564,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               const fileName = `timesheet-${userEmployee.name}-${fortnightStart}-${fortnightEnd}.pdf`;
               
-              // Create or find BuildFlow Pro folder in Google Drive
-              const buildFlowFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro Timesheets');
+              // Create main BuildFlow Pro folder first
+              const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
+              
+              // Create or find Timesheets folder inside BuildFlow Pro
+              const buildFlowFolderId = await googleDriveService.findOrCreateFolder('Timesheets', mainFolderId);
               
               // Upload PDF to Google Drive
               driveLink = await googleDriveService.uploadPDF(fileName, pdfBuffer, buildFlowFolderId || undefined);
@@ -1592,7 +1595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         message: isAdmin 
           ? (googleDriveConnected && driveLink 
-              ? "Timesheet approved successfully. PDF generated and saved to your Google Drive in 'BuildFlow Pro Timesheets' folder."
+              ? "Timesheet approved successfully. PDF generated and saved to your Google Drive in 'BuildFlow Pro/Timesheets' folder."
               : googleDriveConnected 
                 ? "Timesheet approved successfully. PDF generated but Google Drive upload failed."
                 : "Timesheet approved successfully. Connect Google Drive to automatically save PDFs.")
@@ -2374,8 +2377,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tokens = JSON.parse(user.googleDriveTokens);
       googleDriveService.setUserTokens(tokens);
 
-      // Create/find job folder
-      const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`);
+      // Create main BuildFlow Pro folder first
+      const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
+      
+      // Create/find job folder inside BuildFlow Pro folder
+      const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId);
       
       // Upload file to Google Drive
       const uploadResult = await googleDriveService.uploadFile(fileName, fileBuffer, mimeType || 'application/octet-stream', jobFolderId || undefined);
@@ -2687,7 +2693,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const tokens = JSON.parse(currentUser.googleDriveTokens);
             googleDriveService.setUserTokens(tokens);
 
-            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${jobAddress}`);
+            // Create main BuildFlow Pro folder first
+            const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
+            
+            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${jobAddress}`, mainFolderId);
             
             const uploadResult = await googleDriveService.uploadFile(
               fileName, 
@@ -2738,7 +2747,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const tokens = JSON.parse(currentUser.googleDriveTokens);
             googleDriveService.setUserTokens(tokens);
 
-            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${jobAddress}`);
+            // Create main BuildFlow Pro folder first
+            const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
+            
+            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${jobAddress}`, mainFolderId);
             
             const uploadResult = await googleDriveService.uploadFile(
               fileName, 
@@ -3254,8 +3266,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const tokens = JSON.parse(user.googleDriveTokens);
             googleDriveService.setUserTokens(tokens);
             
+            // Create main BuildFlow Pro folder first
+            const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
+            
             // Create/find job folder
-            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`);
+            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId);
             
             // Upload file to Google Drive
             const uploadResult = await googleDriveService.uploadFile(
