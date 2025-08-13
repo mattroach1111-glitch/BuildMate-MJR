@@ -262,14 +262,21 @@ export class EmailInboxService {
     try {
       console.log(`📧 Processing email from ${emailMessage.from} with ${emailMessage.attachments.length} attachments`);
       
-      // Check if this email has already been processed
+      // Check if this email has already been processed OR if any documents from this email exist
       const existingLogs = await storage.getEmailProcessingLogs();
       const alreadyProcessed = existingLogs.find(log => 
-        log.messageId === emailMessage.id && log.status === "completed"
+        (log.messageId === emailMessage.id && log.status === "completed") ||
+        (log.fromEmail === emailMessage.from && log.subject === emailMessage.subject)
       );
       
-      if (alreadyProcessed) {
-        console.log(`📧 Email ${emailMessage.id} already processed, skipping`);
+      // Also check if documents with this email subject already exist
+      const existingDocs = await storage.getEmailProcessedDocuments();
+      const docsFromThisEmail = existingDocs.find(doc => 
+        doc.emailSubject === emailMessage.subject && doc.emailFrom === emailMessage.from
+      );
+      
+      if (alreadyProcessed || docsFromThisEmail) {
+        console.log(`📧 Email already processed (${emailMessage.subject}), skipping`);
         return true;
       }
       

@@ -215,7 +215,7 @@ export function EmailProcessingReview() {
                     )}
                     {doc.email_subject && jobs && (
                       <div className="text-xs text-blue-600 mt-1">
-                        <span className="font-medium">Auto-detected job:</span> {getJobFromSubject(doc.email_subject, jobs) || 'Will use first active job'}
+                        <span className="font-medium">Auto-detected job:</span> {getJobFromSubject(doc.email_subject, jobs) || 'Will assign to first active job'}
                       </div>
                     )}
                   </div>

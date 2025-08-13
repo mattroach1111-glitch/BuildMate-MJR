@@ -40,7 +40,7 @@ import {
   type InsertEmailProcessedDocument,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sum, ne, gte, lte, sql, isNull, or, ilike, inArray } from "drizzle-orm";
+import { eq, and, desc, sum, ne, gte, lte, lt, sql, isNull, or, ilike, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -167,6 +167,7 @@ export interface IStorage {
   getEmailProcessedDocumentsPending(): Promise<EmailProcessedDocument[]>;
   approveEmailProcessedDocument(id: string, jobId?: string): Promise<void>;
   rejectEmailProcessedDocument(id: string): Promise<void>;
+  deleteOldRejectedEmailDocuments(cutoffTime: Date): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1575,6 +1576,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async approveEmailProcessedDocument(id: string, jobId?: string): Promise<void> {
+    console.log(`📋 Approving document ${id} for job ${jobId}`);
     await db.update(emailProcessedDocuments)
       .set({ 
         status: 'approved',
@@ -1582,15 +1584,29 @@ export class DatabaseStorage implements IStorage {
         processedAt: new Date()
       })
       .where(eq(emailProcessedDocuments.id, id));
+    console.log(`✅ Document ${id} approved and assigned to job ${jobId}`);
   }
 
   async rejectEmailProcessedDocument(id: string): Promise<void> {
+    console.log(`❌ Rejecting document ${id}`);
     await db.update(emailProcessedDocuments)
       .set({ 
         status: 'rejected',
         processedAt: new Date()
       })
       .where(eq(emailProcessedDocuments.id, id));
+    console.log(`✅ Document ${id} rejected`);
+  }
+
+  // Delete old rejected email processed documents  
+  async deleteOldRejectedEmailDocuments(cutoffTime: Date): Promise<void> {
+    console.log(`🧹 Cleaning up rejected documents older than ${cutoffTime}`);
+    const result = await db.delete(emailProcessedDocuments)
+      .where(and(
+        eq(emailProcessedDocuments.status, 'rejected'),
+        lt(emailProcessedDocuments.processedAt, cutoffTime)
+      ));
+    console.log(`✅ Cleaned up old rejected documents`);
   }
 
 
