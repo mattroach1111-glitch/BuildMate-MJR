@@ -84,6 +84,7 @@ export interface IStorage {
   updateLaborEntry(id: string, entry: Partial<InsertLaborEntry>): Promise<LaborEntry>;
   deleteLaborEntry(id: string): Promise<void>;
   updateLaborHoursFromTimesheet(staffId: string, jobId: string): Promise<void>;
+  updateAllLaborRatesForJob(jobId: string, newHourlyRate: string): Promise<void>;
   
   // Material operations
   getMaterialsForJob(jobId: string): Promise<Material[]>;
@@ -684,6 +685,21 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     return updatedEntry;
+  }
+
+  async updateAllLaborRatesForJob(jobId: string, newHourlyRate: string): Promise<void> {
+    console.log(`[LABOR_RATE_UPDATE] Updating all labor rates for job ${jobId} to ${newHourlyRate}`);
+    
+    // Update all labor entries for this job with the new hourly rate
+    await db
+      .update(laborEntries)
+      .set({ 
+        hourlyRate: newHourlyRate, 
+        updatedAt: new Date() 
+      })
+      .where(eq(laborEntries.jobId, jobId));
+    
+    console.log(`[LABOR_RATE_UPDATE] Updated all labor rates for job ${jobId}`);
   }
 
   // Material operations
