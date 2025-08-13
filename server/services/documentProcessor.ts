@@ -321,7 +321,7 @@ Focus on the primary expense amount. If multiple items, use the total. Be conser
   /**
    * Convert PDF to image using pdf2pic with ImageMagick backend
    */
-  private async convertPdfToImage(documentURL: string): Promise<string> {
+  public async convertPdfToImage(documentURL: string): Promise<string> {
     const tempDir = tmpdir();
     const pdfFileName = `pdf_${Date.now()}.pdf`;
     const pdfPath = path.join(tempDir, pdfFileName);

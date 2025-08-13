@@ -2242,6 +2242,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint to convert PDF to image for embedding in job sheet PDFs
+  app.post("/api/documents/convert-pdf-to-image", isAuthenticated, async (req: any, res) => {
+    try {
+      const { objectPath } = req.body;
+      
+      if (!objectPath) {
+        return res.status(400).json({ error: "Object path is required" });
+      }
+
+      const documentProcessor = new DocumentProcessor();
+      
+      // Use the existing PDF-to-image conversion method
+      const base64Image = await documentProcessor.convertPdfToImage(objectPath);
+      
+      res.json({ 
+        success: true,
+        base64Image: base64Image
+      });
+      
+    } catch (error) {
+      console.error("Error converting PDF to image:", error);
+      res.status(500).json({ error: "Failed to convert PDF to image" });
+    }
+  });
+
   // Endpoint to process uploaded document and extract expense data
   app.post("/api/documents/process", isAuthenticated, async (req: any, res) => {
     try {
