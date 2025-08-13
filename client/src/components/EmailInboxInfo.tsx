@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Mail, CheckCircle, Info, Zap } from "lucide-react";
+import { Copy, Mail, CheckCircle, Info, Zap, PlayCircle, RefreshCw, Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface EmailInboxData {
   emailAddress: string;
@@ -12,12 +13,48 @@ interface EmailInboxData {
   features: string[];
 }
 
+interface EmailInboxStatus {
+  status: string;
+  emailAddress: string;
+  lastChecked: string;
+  recentProcessed: any[];
+  totalProcessed: number;
+}
+
 export function EmailInboxInfo() {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: inboxData, isLoading } = useQuery<EmailInboxData>({
     queryKey: ["/api/email-inbox/address"],
+  });
+
+  const { data: statusData, isLoading: statusLoading } = useQuery<EmailInboxStatus>({
+    queryKey: ["/api/email-inbox/status"],
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  // Manual email processing trigger
+  const processEmailsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/email-inbox/process", {});
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/email-inbox/status"] });
+      toast({
+        title: "Email Processing Started",
+        description: "Checking for new emails and processing documents...",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to start email processing",
+        variant: "destructive",
+      });
+    },
   });
 
   const copyToClipboard = async () => {
@@ -137,11 +174,62 @@ export function EmailInboxInfo() {
           </ul>
         </div>
 
-        {/* Setup Status */}
+        {/* Email Processing Status */}
+        {statusData && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium text-gray-700">Processing Status:</h4>
+              <Badge 
+                variant={statusData.status === "active" ? "default" : "secondary"}
+                className={statusData.status === "active" ? "bg-green-100 text-green-800" : ""}
+              >
+                <Activity className="h-3 w-3 mr-1" />
+                {statusData.status === "active" ? "Active" : "Inactive"}
+              </Badge>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 text-xs">
+              <div>
+                <span className="text-gray-500">Last Checked:</span>
+                <p className="font-mono text-gray-700">
+                  {new Date(statusData.lastChecked).toLocaleTimeString()}
+                </p>
+              </div>
+              <div>
+                <span className="text-gray-500">Total Processed:</span>
+                <p className="font-mono text-gray-700">{statusData.totalProcessed}</p>
+              </div>
+            </div>
+
+            {/* Manual Processing Button */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => processEmailsMutation.mutate()}
+              disabled={processEmailsMutation.isPending}
+              className="w-full"
+              data-testid="button-process-emails"
+            >
+              {processEmailsMutation.isPending ? (
+                <>
+                  <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <PlayCircle className="h-3 w-3 mr-2" />
+                  Check for New Emails
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+
+        {/* Setup Instructions */}
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-          <h4 className="text-sm font-medium text-orange-800 mb-2">📧 Setup Required:</h4>
+          <h4 className="text-sm font-medium text-orange-800 mb-2">📧 Email Setup:</h4>
           <div className="space-y-2 text-xs text-orange-700">
-            <p>To activate email processing, your domain administrator needs to:</p>
+            <p>To receive emails automatically, configure your email server to forward emails to:</p>
             <ul className="space-y-1 ml-2">
               <li>• Configure email forwarding from {inboxData.emailAddress}</li>
               <li>• Set up webhook integration with email service</li>

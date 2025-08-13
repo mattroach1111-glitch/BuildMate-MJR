@@ -311,6 +311,26 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
+// Email processing tracking table
+export const emailProcessingLogs = pgTable("email_processing_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  messageId: varchar("message_id").notNull(),
+  fromEmail: varchar("from_email").notNull(),
+  toEmail: varchar("to_email").notNull(),
+  subject: varchar("subject").notNull(),
+  attachmentCount: integer("attachment_count").notNull().default(0),
+  processedCount: integer("processed_count").notNull().default(0),
+  status: varchar("status", { enum: ["processing", "completed", "failed"] }).notNull().default("processing"),
+  jobMatched: varchar("job_matched"), // ID of matched job
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertEmailProcessingLogSchema = createInsertSchema(emailProcessingLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -334,3 +354,5 @@ export type JobFile = typeof jobFiles.$inferSelect;
 export type InsertJobFile = z.infer<typeof insertJobFileSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type EmailProcessingLog = typeof emailProcessingLogs.$inferSelect;
+export type InsertEmailProcessingLog = z.infer<typeof insertEmailProcessingLogSchema>;

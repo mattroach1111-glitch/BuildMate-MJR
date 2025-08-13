@@ -10,6 +10,7 @@ import {
   timesheetEntries,
   jobFiles,
   notifications,
+  emailProcessingLogs,
   type User,
   type UpsertUser,
   type Employee,
@@ -32,6 +33,8 @@ import {
   type InsertJobFile,
   type Notification,
   type InsertNotification,
+  type EmailProcessingLog,
+  type InsertEmailProcessingLog,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sum, ne, gte, lte, sql, isNull, or, ilike, inArray } from "drizzle-orm";
@@ -148,6 +151,12 @@ export interface IStorage {
   createNotification(notification: InsertNotification): Promise<Notification>;
   markNotificationAsRead(id: string): Promise<void>;
   dismissNotification(id: string): Promise<void>;
+
+  // Email processing operations
+  getEmailProcessingLogs(): Promise<EmailProcessingLog[]>;
+  createEmailProcessingLog(log: InsertEmailProcessingLog): Promise<EmailProcessingLog>;
+  updateEmailProcessingLogStatus(id: string, status: "processing" | "completed" | "failed", errorMessage?: string): Promise<void>;
+  getRecentEmailProcessingActivity(limit?: number): Promise<EmailProcessingLog[]>;
   getActiveNotifications(userId: string): Promise<Notification[]>;
 }
 
@@ -1502,6 +1511,44 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(desc(notifications.scheduledFor));
+  }
+
+  // Email processing operations implementation
+  async getEmailProcessingLogs(): Promise<EmailProcessingLog[]> {
+    return await db
+      .select()
+      .from(emailProcessingLogs)
+      .orderBy(desc(emailProcessingLogs.createdAt));
+  }
+
+  async createEmailProcessingLog(log: InsertEmailProcessingLog): Promise<EmailProcessingLog> {
+    const [created] = await db
+      .insert(emailProcessingLogs)
+      .values(log)
+      .returning();
+    return created;
+  }
+
+  async updateEmailProcessingLogStatus(
+    id: string, 
+    status: "processing" | "completed" | "failed", 
+    errorMessage?: string
+  ): Promise<void> {
+    await db
+      .update(emailProcessingLogs)
+      .set({ 
+        status,
+        errorMessage: errorMessage || null
+      })
+      .where(eq(emailProcessingLogs.id, id));
+  }
+
+  async getRecentEmailProcessingActivity(limit: number = 10): Promise<EmailProcessingLog[]> {
+    return await db
+      .select()
+      .from(emailProcessingLogs)
+      .orderBy(desc(emailProcessingLogs.createdAt))
+      .limit(limit);
   }
 }
 
