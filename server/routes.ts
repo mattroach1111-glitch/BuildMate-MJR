@@ -47,6 +47,52 @@ const isAdmin = async (req: any, res: any, next: any) => {
 };
 
 // Simple and accurate employee matching function
+const findBestClientMatch = async (clientName: string, threshold: number = 80): Promise<{ client: string, score: number } | null> => {
+  try {
+    const allJobs = await storage.getJobs();
+    if (!allJobs || allJobs.length === 0) {
+      return null;
+    }
+
+    const allClients = Array.from(new Set(allJobs.map(job => job.clientName).filter(Boolean)));
+    const cleanName = clientName.toLowerCase().trim();
+    console.log(`🔍 Looking for client: "${clientName}"`);
+
+    // Step 1: Try exact match first
+    for (const client of allClients) {
+      if (client.toLowerCase().trim() === cleanName) {
+        console.log(`✅ EXACT CLIENT MATCH: "${clientName}" -> "${client}"`);
+        return { client, score: 100 };
+      }
+    }
+
+    // Step 2: Try partial/fuzzy match with simple ratio
+    let bestMatch = null;
+    let bestScore = 0;
+
+    for (const client of allClients) {
+      const score = fuzz.ratio(cleanName, client.toLowerCase().trim());
+      console.log(`🔍 Fuzzy client: "${clientName}" vs "${client}" = ${score}%`);
+      
+      if (score >= threshold && score > bestScore) {
+        bestScore = score;
+        bestMatch = client;
+      }
+    }
+
+    if (bestMatch) {
+      console.log(`✅ FUZZY CLIENT MATCH: "${clientName}" -> "${bestMatch}" (${bestScore}%)`);
+      return { client: bestMatch, score: bestScore };
+    }
+
+    console.log(`❌ NO CLIENT MATCH FOUND for "${clientName}" above ${threshold}% threshold`);
+    return null;
+  } catch (error) {
+    console.error("Error in fuzzy client matching:", error);
+    return null;
+  }
+};
+
 const findBestEmployeeMatch = async (employeeName: string, threshold: number = 80): Promise<{ employee: any, score: number } | null> => {
   try {
     const allEmployees = await storage.getEmployees();
@@ -2287,8 +2333,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Use manual inputs provided by user instead of AI extraction
       const jobAddress = manualJobAddress.trim();
-      const clientName = manualClientName.trim();
+      let clientName = manualClientName.trim();
       const projectName = jobAddress; // Use job address as project name
+      
+      // Try fuzzy matching for client name (80% threshold)
+      const clientMatch = await findBestClientMatch(clientName, 80);
+      if (clientMatch) {
+        clientName = clientMatch.client;
+        console.log(`🔵 Using fuzzy matched client name: "${manualClientName}" -> "${clientName}" (${clientMatch.score}% match)`);
+      } else {
+        console.log(`🔵 Using new client name: "${clientName}"`);
+      }
       
       console.log('🔵 Using manual inputs - Job Address:', jobAddress, 'Client Name:', clientName);
       

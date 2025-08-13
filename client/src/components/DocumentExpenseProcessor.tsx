@@ -77,7 +77,13 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   });
 
   // Get unique project managers from existing jobs  
-  const projectManagers = jobs ? Array.from(new Set((jobs as any[]).map(job => job.projectManager || job.projectName).filter(Boolean))) : [];
+  const projectManagers = jobs ? Array.from(new Set((jobs as any[]).map(job => {
+    const manager = job.projectManager || job.projectName;
+    console.log(`🔵 Job ${job.id}: projectManager="${job.projectManager}", projectName="${job.projectName}", using="${manager}"`);
+    return manager;
+  }).filter(Boolean))) : [];
+  
+  console.log("🔵 Available project managers for dropdown:", projectManagers);
 
   // Get upload URL mutation
   const getUploadUrlMutation = useMutation({
