@@ -3175,38 +3175,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       switch (expenseData.category) {
         case 'materials':
           addedExpense = await storage.createMaterial({
+            id: randomUUID(),
             jobId,
-            description: expenseData.description,
-            supplier: expenseData.vendor,
-            amount: expenseData.amount.toString(),
-            invoiceDate: expenseData.date
+            description: expenseData.description || "Expense Item",
+            supplier: expenseData.vendor || "Unknown Vendor", // Ensure supplier is never null
+            amount: expenseData.amount?.toString() || "0",
+            invoiceDate: expenseData.date ? new Date(expenseData.date) : null
           });
           break;
           
         case 'subtrades':
+        case 'sub_trades':
           addedExpense = await storage.createSubTrade({
+            id: randomUUID(),
             jobId,
-            trade: expenseData.vendor,
-            contractor: expenseData.vendor,
-            amount: expenseData.amount.toString(),
-            invoiceDate: expenseData.date
+            trade: expenseData.description || "Trade Service",
+            contractor: expenseData.vendor || "Unknown Contractor",
+            amount: expenseData.amount?.toString() || "0",
+            invoiceDate: expenseData.date ? new Date(expenseData.date) : null
           });
           break;
           
         case 'tip_fees':
           addedExpense = await storage.createTipFee({
+            id: randomUUID(),
             jobId,
-            description: expenseData.description,
-            amount: expenseData.amount.toString()
+            description: expenseData.description || "Tip Fee",
+            amount: expenseData.amount?.toString() || "0"
           });
           break;
           
         case 'other_costs':
         default:
           addedExpense = await storage.createOtherCost({
+            id: randomUUID(),
             jobId,
-            description: expenseData.description,
-            amount: expenseData.amount.toString()
+            description: expenseData.description || "Other Cost",
+            amount: expenseData.amount?.toString() || "0"
           });
           break;
       }
