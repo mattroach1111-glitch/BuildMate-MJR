@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, XCircle, Clock, FileText, DollarSign, Building, Edit } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, FileText, DollarSign, Building, Edit, Eye } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { DocumentPreviewModal } from './DocumentPreviewModal';
 import * as fuzzball from 'fuzzball';
 
 interface ProcessedDocument {
@@ -136,6 +137,12 @@ export function EmailProcessingReview() {
   const { toast } = useToast();
   const [categoryOverrides, setCategoryOverrides] = useState<Record<string, string>>({});
   const [jobOverrides, setJobOverrides] = useState<Record<string, string>>({});
+  const [previewDoc, setPreviewDoc] = useState<{
+    url: string;
+    filename: string;
+    mimeType?: string;
+    fileSize?: number;
+  } | null>(null);
 
   // Get pending documents from email processing
   const { data: pendingDocs = [], isLoading, refetch } = useQuery({
@@ -368,6 +375,22 @@ export function EmailProcessingReview() {
                 </div>
 
                 <div className="flex gap-2 pt-2">
+                  {doc.attachmentURL && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setPreviewDoc({
+                        url: doc.attachmentURL,
+                        filename: doc.filename,
+                        mimeType: doc.mimeType,
+                        fileSize: doc.fileSize
+                      })}
+                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      Preview
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     onClick={() => approveMutation.mutate({ 
@@ -414,6 +437,18 @@ export function EmailProcessingReview() {
           }
         })}
       </CardContent>
+      
+      {/* Document Preview Modal */}
+      {previewDoc && (
+        <DocumentPreviewModal
+          isOpen={true}
+          onClose={() => setPreviewDoc(null)}
+          documentUrl={previewDoc.url}
+          filename={previewDoc.filename}
+          mimeType={previewDoc.mimeType}
+          fileSize={previewDoc.fileSize}
+        />
+      )}
     </Card>
   );
 }

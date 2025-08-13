@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { DocumentUploader } from "./DocumentUploader";
+import { DocumentPreviewModal } from "./DocumentPreviewModal";
 import { EmailInboxInfo } from "./EmailInboxInfo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, CheckCircle, AlertCircle, Loader2, FileText, Receipt, Mail } from "lucide-react";
+import { Upload, CheckCircle, AlertCircle, Loader2, FileText, Receipt, Mail, Eye } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { UploadResult } from "@uppy/core";
 
@@ -44,6 +45,12 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   const [clientName, setClientName] = useState<string>("");
   const [projectManager, setProjectManager] = useState<string>("");
   const [lastUploadedFile, setLastUploadedFile] = useState<any>(null);
+  const [previewDoc, setPreviewDoc] = useState<{
+    url: string;
+    filename: string;
+    mimeType?: string;
+    fileSize?: number;
+  } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -600,6 +607,22 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
               
               {/* Action Buttons */}
               <div className="flex gap-2 pt-2">
+                {lastUploadedFile?.uploadURL && (
+                  <Button 
+                    onClick={() => setPreviewDoc({
+                      url: lastUploadedFile.uploadURL,
+                      filename: lastUploadedFile.name,
+                      mimeType: lastUploadedFile.type,
+                      fileSize: lastUploadedFile.size
+                    })}
+                    variant="outline"
+                    className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                    data-testid="button-preview-document"
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    Preview
+                  </Button>
+                )}
                 <Button 
                   onClick={handleApproveExpense}
                   disabled={isAddingToJobSheet || !selectedJobId}
@@ -798,6 +821,18 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
           <EmailInboxInfo />
         </TabsContent>
       </Tabs>
+      
+      {/* Document Preview Modal */}
+      {previewDoc && (
+        <DocumentPreviewModal
+          isOpen={true}
+          onClose={() => setPreviewDoc(null)}
+          documentUrl={previewDoc.url}
+          filename={previewDoc.filename}
+          mimeType={previewDoc.mimeType}
+          fileSize={previewDoc.fileSize}
+        />
+      )}
     </div>
   );
 }
