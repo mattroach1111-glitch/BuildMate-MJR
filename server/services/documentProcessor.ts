@@ -126,7 +126,51 @@ export class DocumentProcessor {
 
     } catch (error) {
       console.error('Error processing document with AI:', error);
-      return { error: error.message || 'Failed to process document' };
+      return { error: (error as Error).message || 'Failed to process document' };
+    }
+  }
+
+  async analyzeCompleteJobSheet(documentURL: string, contentType: string) {
+    try {
+      console.log(`🤖 Analyzing complete job sheet: ${documentURL}`);
+
+      // For now, let's provide a basic structure that matches what the code expects
+      // This can be enhanced later with proper AI analysis
+      return {
+        jobAddress: "AI Analysis Pending",
+        clientName: "Unknown Client", 
+        projectName: "AI Analysis Pending",
+        laborEntries: [],
+        materials: [],
+        subTrades: [],
+        otherCosts: [],
+        tipFees: [],
+        builderMargin: 0,
+        totalCost: 0
+      };
+
+    } catch (error) {
+      console.error('Error analyzing job sheet:', error);
+      throw error;
+    }
+  }
+
+  async analyzeExpenseDocument(fileData: string, mimeType: string) {
+    // This just delegates to the existing processDocumentEmail method
+    return this.processDocumentEmail({
+      fileData,
+      fileName: 'expense-document',
+      mimeType
+    });
+  }
+
+  async convertPdfToImage(pdfBuffer: Buffer): Promise<Buffer> {
+    try {
+      const { convertPdfToImage } = await import('../utils/pdfConverter');
+      return await convertPdfToImage(pdfBuffer);
+    } catch (error) {
+      console.error('PDF conversion error:', error);
+      throw error;
     }
   }
 }
