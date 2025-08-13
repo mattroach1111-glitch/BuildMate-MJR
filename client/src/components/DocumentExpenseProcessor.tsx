@@ -41,6 +41,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   const [jobAddress, setJobAddress] = useState<string>("");
   const [clientName, setClientName] = useState<string>("");
   const [projectManager, setProjectManager] = useState<string>("");
+  const [lastUploadedFile, setLastUploadedFile] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -143,12 +144,32 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       });
       return await response.json();
     },
-    onSuccess: (data: any) => {
+    onSuccess: async (data: any) => {
+      // Save the uploaded file as a job file attachment if we have one
+      if (lastUploadedFile && selectedJobId) {
+        try {
+          await apiRequest("/api/job-files", "POST", {
+            jobId: selectedJobId,
+            fileName: lastUploadedFile.name || "document.pdf",
+            originalName: lastUploadedFile.name || "document.pdf",
+            fileSize: lastUploadedFile.size || 0,
+            mimeType: lastUploadedFile.type || "application/pdf",
+            objectPath: lastUploadedFile.uploadURL
+          });
+          console.log("✅ Saved document as job file attachment");
+          setLastUploadedFile(null); // Clear after saving
+        } catch (fileError) {
+          console.error("Failed to save document as job file:", fileError);
+          // Don't fail the entire process if file saving fails
+        }
+      }
+      
       toast({
         title: "Added to job sheet!",
         description: `${pendingExpense?.vendor} - $${pendingExpense?.amount} added successfully`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", selectedJobId, "files"] });
       setPendingExpense(null);
       onSuccess?.();
     },
@@ -281,6 +302,9 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
         console.log("🟢 PROCESSING FILE:", file);
         console.log("🔵 Document URL:", file.uploadURL);
         console.log("🔵 Job ID:", currentJobId);
+        
+        // Store the uploaded file info for later saving as job file
+        setLastUploadedFile(file);
         
         await processDocumentMutation.mutateAsync({
           documentURL: file.uploadURL || "",
