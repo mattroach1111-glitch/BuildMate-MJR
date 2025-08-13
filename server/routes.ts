@@ -193,36 +193,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Google Drive authentication routes
   app.get('/api/google-drive/auth-url', isAuthenticated, async (req: any, res) => {
     try {
-      const googleDriveService = new GoogleDriveService();
-      const authUrl = googleDriveService.getAuthUrl();
+      const googleAuth = new GoogleDriveAuth();
+      const authUrl = googleAuth.getAuthUrl();
+      console.log("🔵 Generated Google Drive auth URL:", authUrl);
       res.json({ authUrl });
     } catch (error) {
-      console.error("Error generating Google Drive auth URL:", error);
+      console.error("🔴 Error generating Google Drive auth URL:", error);
       res.status(500).json({ message: "Failed to generate auth URL" });
     }
   });
 
-  app.get('/api/google-drive/callback', isAuthenticated, async (req: any, res) => {
+  app.get('/api/google-drive/callback', async (req: any, res) => {
     try {
-      const { code } = req.query;
+      const { code, state } = req.query;
+      console.log("🔵 Google Drive callback received:", { code: !!code, state });
+      
       if (!code) {
-        return res.status(400).json({ message: "Authorization code required" });
+        console.error("🔴 No authorization code in callback");
+        return res.redirect('/?tab=settings&google_drive_error=no_code');
+      }
+
+      // For callback, we need to get user from session or state
+      // Since this is a callback from Google, we may not have the authenticated user context
+      // Let's try to get the user session
+      if (!req.user || !req.user.claims || !req.user.claims.sub) {
+        console.error("🔴 No authenticated user in callback");
+        return res.redirect('/?tab=settings&google_drive_error=no_user');
       }
 
       const googleAuth = new GoogleDriveAuth();
       const tokens = await googleAuth.getTokens(code as string);
+      console.log("🔵 Google Drive tokens received:", { hasAccessToken: !!tokens.access_token, hasRefreshToken: !!tokens.refresh_token });
       
       // Store tokens in user's database record using the authenticated user ID
       const userId = req.user.claims.sub;
       await storage.updateUserGoogleDriveTokens(userId, JSON.stringify(tokens));
       
-      console.log(`Google Drive tokens saved for user ${userId}`);
+      console.log(`✅ Google Drive tokens saved for user ${userId}`);
       
       // Redirect back to the admin dashboard settings tab
       res.redirect('/?tab=settings&google_drive_connected=true');
     } catch (error) {
-      console.error("Error handling Google Drive callback:", error);
-      res.redirect('/?tab=settings&google_drive_error=true');
+      console.error("🔴 Error handling Google Drive callback:", error);
+      res.redirect('/?tab=settings&google_drive_error=callback_failed');
     }
   });
 

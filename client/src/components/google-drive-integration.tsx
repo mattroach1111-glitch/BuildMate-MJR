@@ -25,9 +25,12 @@ export function GoogleDriveIntegration() {
   const getAuthUrlMutation = useMutation({
     mutationFn: async (): Promise<{ authUrl: string }> => {
       const response = await fetch("/api/google-drive/auth-url");
-      return await response.json();
+      const data = await response.json();
+      console.log("🔵 Google Drive auth URL response:", data);
+      return data;
     },
     onSuccess: (data) => {
+      console.log("🔵 Opening Google OAuth window with URL:", data.authUrl);
       // Open Google OAuth in new window
       const authWindow = window.open(
         data.authUrl,
@@ -42,14 +45,16 @@ export function GoogleDriveIntegration() {
         if (authWindow?.closed) {
           clearInterval(checkClosed);
           setIsConnecting(false);
+          console.log("🔵 Google OAuth window closed, refreshing status...");
           // Refresh status after a delay to allow for callback processing
           setTimeout(() => {
             queryClient.invalidateQueries({ queryKey: ["/api/google-drive/status"] });
-          }, 2000);
+          }, 3000); // Increased delay
         }
       }, 1000);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("🔴 Error initiating Google Drive connection:", error);
       toast({
         title: "Error",
         description: "Failed to initiate Google Drive connection",
