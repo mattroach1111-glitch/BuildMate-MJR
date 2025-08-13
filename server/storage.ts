@@ -1575,6 +1575,13 @@ export class DatabaseStorage implements IStorage {
     return results;
   }
 
+  async getEmailProcessedDocuments(): Promise<any[]> {
+    console.log('📧 Getting all email processed documents');
+    const results = await db.select().from(emailProcessedDocuments);
+    console.log(`📧 Found ${results.length} email processed documents`);
+    return results;
+  }
+
   async approveEmailProcessedDocument(id: string, jobId?: string): Promise<void> {
     console.log(`📋 Approving document ${id} for job ${jobId}`);
     await db.update(emailProcessedDocuments)
