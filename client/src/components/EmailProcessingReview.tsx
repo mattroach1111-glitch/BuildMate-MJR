@@ -285,31 +285,69 @@ export function EmailProcessingReview() {
           <Badge variant="secondary">{pendingDocs.length} pending</Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
         {pendingDocs.map((doc: any) => {
           try {
             return (
-              <div key={doc.id} className="border rounded-lg p-4 space-y-3">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-blue-600" />
-                      <span className="font-medium">{doc.filename || 'Unknown File'}</span>
+              <div key={doc.id} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-3">
+                {/* Header with file name and status */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-blue-600" />
+                    <span className="font-medium text-sm">{doc.filename || 'Unknown File'}</span>
+                  </div>
+                  <Badge variant="outline" className="text-orange-600 border-orange-200 text-xs">
+                    Pending
+                  </Badge>
+                </div>
+
+                {/* Email subject - cleaner display */}
+                {doc.email_subject && (
+                  <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-950/20 p-2 rounded border-l-2 border-blue-200">
+                    <span className="font-medium">From email:</span> {doc.email_subject}
+                  </div>
+                )}
+
+                {/* Main info grid - simplified */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Vendor:</span>
+                      <span className="font-medium">{doc.vendor || 'Unknown'}</span>
                     </div>
-                    {doc.email_subject && (
-                      <p className="text-xs text-gray-500">From: {doc.email_subject}</p>
-                    )}
-                    <div className="text-xs text-blue-600 mt-1">
-                      <span className="font-medium">Email subject:</span> {doc.email_subject || 'No subject'}
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Amount:</span>
+                      <span className="font-medium text-green-600">${(parseFloat(doc.amount) || 0).toFixed(2)}</span>
                     </div>
-                    <div className="text-xs text-gray-600 mt-1">
-                      <span className="font-medium">Job assignment:</span>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Category:</span>
+                      <Select 
+                        value={categoryOverrides[doc.id] || doc.category || 'other_costs'} 
+                        onValueChange={(value) => setCategoryOverrides(prev => ({...prev, [doc.id]: value}))}
+                      >
+                        <SelectTrigger className="w-24 h-7 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="materials">Materials</SelectItem>
+                          <SelectItem value="subtrades">Sub-trades</SelectItem>
+                          <SelectItem value="tip_fees">Tip Fees</SelectItem>
+                          <SelectItem value="other_costs">Other Costs</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {/* Job assignment - simplified */}
+                    <div className="space-y-1">
+                      <span className="text-xs text-muted-foreground">Assign to job:</span>
                       <Select 
                         value={jobOverrides[doc.id] || (() => {
                           if (doc.email_subject && jobs && jobs.length > 0) {
                             const match = getJobFromSubject(doc.email_subject, jobs);
                             if (match) {
-                              // Extract job address from match result
                               const jobAddress = match.split(' (')[0];
                               const matchedJob = jobs.find((j: any) => j.jobAddress === jobAddress);
                               return matchedJob?.id || '';
@@ -319,7 +357,7 @@ export function EmailProcessingReview() {
                         })()} 
                         onValueChange={(value) => setJobOverrides(prev => ({...prev, [doc.id]: value}))}
                       >
-                        <SelectTrigger className="w-full h-7 text-xs mt-1">
+                        <SelectTrigger className="w-full h-8 text-xs">
                           <SelectValue placeholder="Select job..." />
                         </SelectTrigger>
                         <SelectContent>
@@ -332,42 +370,10 @@ export function EmailProcessingReview() {
                       </Select>
                     </div>
                   </div>
-                  <Badge variant="outline" className="text-orange-600 border-orange-200">
-                    Pending Review
-                  </Badge>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Building className="h-3 w-3 text-gray-500" />
-                    <span className="text-gray-600">Vendor:</span>
-                    <span className="font-medium">{doc.vendor || 'Unknown'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-3 w-3 text-gray-500" />
-                    <span className="text-gray-600">Amount:</span>
-                    <span className="font-medium">${(parseFloat(doc.amount) || 0).toFixed(2)}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-600">Category:</span>
-                    <Select 
-                      value={categoryOverrides[doc.id] || doc.category || 'other_costs'} 
-                      onValueChange={(value) => setCategoryOverrides(prev => ({...prev, [doc.id]: value}))}
-                    >
-                      <SelectTrigger className="w-32 h-7 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="materials">Materials</SelectItem>
-                        <SelectItem value="subtrades">Sub-trades</SelectItem>
-                        <SelectItem value="tip_fees">Tip Fees</SelectItem>
-                        <SelectItem value="other_costs">Other Costs</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-2">
+                {/* Action buttons - cleaner layout */}
+                <div className="flex gap-2 pt-1 border-t border-gray-200 dark:border-gray-700">
                   <Button
                     size="sm"
                     onClick={() => approveMutation.mutate({ 
@@ -382,21 +388,21 @@ export function EmailProcessingReview() {
                             return matchedJob?.id;
                           }
                         }
-                        return jobs?.[0]?.id; // Fallback to first job
+                        return jobs?.[0]?.id;
                       })()
                     })}
                     disabled={approveMutation.isPending}
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-green-600 hover:bg-green-700 text-xs"
                   >
                     <CheckCircle className="h-3 w-3 mr-1" />
-                    Approve
+                    Approve & Add to Job
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => rejectMutation.mutate(doc.id)}
                     disabled={rejectMutation.isPending}
-                    className="text-red-600 border-red-200 hover:bg-red-50"
+                    className="text-red-600 border-red-200 hover:bg-red-50 text-xs"
                   >
                     <XCircle className="h-3 w-3 mr-1" />
                     Reject
