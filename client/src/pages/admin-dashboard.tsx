@@ -3538,6 +3538,7 @@ export default function AdminDashboard() {
           {/* Document Processing Tab */}
           <TabsContent value="documents" className="space-y-6">
             <DocumentExpenseProcessor />
+            <EmailProcessingReview />
           </TabsContent>
         </Tabs>
 

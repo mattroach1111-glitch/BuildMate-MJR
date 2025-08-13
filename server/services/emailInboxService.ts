@@ -73,24 +73,20 @@ export class EmailInboxService {
       // Convert to base64 for AI processing
       const base64Content = attachment.content.toString('base64');
       
-      const response = await fetch('http://localhost:5000/api/documents/process', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fileData: base64Content,
-          fileName: attachment.filename,
-          mimeType: attachment.contentType
-        })
+      // Process document directly using AI service instead of API call
+      const { DocumentProcessor } = await import('./documentProcessor');
+      const processor = new DocumentProcessor();
+      
+      const result = await processor.processDocumentEmail({
+        fileData: base64Content,
+        fileName: attachment.filename,
+        mimeType: attachment.contentType
       });
       
-      if (!response.ok) {
-        console.error(`Failed to process document: ${response.statusText}`);
+      if (!result || result.error) {
+        console.error(`Failed to process document: ${result?.error || 'Unknown error'}`);
         return null;
       }
-      
-      const result = await response.json();
       return {
         filename: attachment.filename,
         vendor: result.vendor || 'Unknown Vendor',
@@ -306,7 +302,7 @@ export class EmailInboxService {
           await storage.createEmailProcessedDocument({
             filename: processed.filename,
             vendor: processed.vendor,
-            amount: processed.amount,
+            amount: Number(processed.amount),
             category: processed.category,
             status: 'pending',
             emailSubject: emailMessage.subject,
@@ -349,7 +345,7 @@ export class EmailInboxService {
     } catch (error) {
       console.error('Error processing email:', error);
       if (logId) {
-        await storage.updateEmailProcessingLogStatus(logId, "failed", error.message);
+        await storage.updateEmailProcessingLogStatus(logId, "failed", String(error));
       }
       return false;
     }
@@ -422,7 +418,7 @@ export class EmailInboxService {
           }
         } catch (error) {
           console.error(`Error processing email ${email.id}:`, error);
-          errors.push(`Error processing email: ${error.message}`);
+          errors.push(`Error processing email: ${String(error)}`);
         }
       }
       
@@ -436,7 +432,7 @@ export class EmailInboxService {
       console.error('Error processing inbox:', error);
       return {
         processed: 0,
-        errors: [error.message]
+        errors: [String(error)]
       };
     }
   }
