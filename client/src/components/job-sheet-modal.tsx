@@ -910,8 +910,12 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     setDefaultHourlyRate(value);
     if (value && !isNaN(parseFloat(value))) {
       debouncedUpdateJobSettings({ defaultHourlyRate: value });
-      
-      // Ask user if they want to update all labor entries with the new rate
+    }
+  };
+
+  // Debounced function to ask about updating all labor rates
+  const debouncedAskAboutBulkUpdate = useCallback(
+    debounce((value: string) => {
       if (jobDetails && jobDetails.laborEntries.length > 0) {
         const shouldUpdate = confirm(
           `Do you want to update all staff hourly rates to $${value}? This will change the rates for all ${jobDetails.laborEntries.length} staff members on this job.`
@@ -927,6 +931,15 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
           setHasUnsavedRates(true);
         }
       }
+    }, 1000), // Wait 1 second after user stops typing
+    [jobDetails]
+  );
+
+  const handleDefaultRateInput = (value: string) => {
+    handleDefaultRateChange(value);
+    // Only ask about bulk update if the value is valid and not empty
+    if (value && !isNaN(parseFloat(value)) && parseFloat(value) > 0) {
+      debouncedAskAboutBulkUpdate(value);
     }
   };
 
@@ -2178,7 +2191,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                         id="defaultHourlyRate"
                         type="number"
                         value={defaultHourlyRate}
-                        onChange={(e) => handleDefaultRateChange(e.target.value)}
+                        onChange={(e) => handleDefaultRateInput(e.target.value)}
                         className="text-lg"
                         data-testid="input-default-hourly-rate"
                       />
