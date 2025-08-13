@@ -2855,7 +2855,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let targetJobId = jobId;
       if (!targetJobId) {
         // Try to extract job information from email subject
-        targetJobId = await extractJobFromEmailSubject(document.email_subject, storage);
+        targetJobId = await extractJobFromEmailSubject(document.emailSubject, storage);
         
         // If still no job, use the first active job as default
         if (!targetJobId) {
