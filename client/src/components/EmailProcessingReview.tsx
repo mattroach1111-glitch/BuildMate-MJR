@@ -158,9 +158,21 @@ export function EmailProcessingReview() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/email-processing/pending'] });
+      
+      // Create enhanced success message with file attachment and Google Drive info
+      let description = data.message || `Expense added to job successfully`;
+      
+      if (data.fileAttached && data.googleDriveUploaded) {
+        description += ` Document saved and uploaded to Google Drive.`;
+      } else if (data.fileAttached) {
+        description += ` Document saved as file attachment.`;
+      } else if (data.googleDriveUploaded) {
+        description += ` Document uploaded to Google Drive.`;
+      }
+      
       toast({
         title: "Document Approved",
-        description: data.message || `Expense added to job successfully`,
+        description,
       });
     },
     onError: (error) => {

@@ -348,6 +348,8 @@ export class EmailInboxService {
             emailSubject: emailMessage.subject,
             emailFrom: emailMessage.from,
             extractedData: JSON.stringify(processed),
+            attachmentContent: attachment.content.toString('base64'), // Store original attachment for Google Drive upload
+            mimeType: attachment.contentType, // Store MIME type for proper file handling
             userId: targetUser.id
           });
           

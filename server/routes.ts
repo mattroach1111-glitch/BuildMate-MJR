@@ -2869,6 +2869,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
           break;
       }
 
+      // Save file attachment to job and upload to Google Drive (if connected)
+      let fileRecord = null;
+      let googleDriveResult = null;
+      
+      try {
+        // Get the original document file from email processing attachments
+        const fileName = document.filename;
+        const mimeType = document.filename.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream';
+        
+        // For email attachments, we need to find the original attachment file
+        // The document filename should correspond to an email attachment file
+        console.log(`📎 Attempting to save email attachment: ${fileName}`);
+        
+        // First, try to save as job file attachment from object storage
+        try {
+          // Create a job file record for the email attachment
+          fileRecord = await storage.createJobFile({
+            jobId: targetJobId,
+            fileName: fileName,
+            originalName: fileName,
+            fileSize: document.attachmentContent ? Buffer.from(document.attachmentContent, 'base64').length : 0,
+            mimeType: document.mimeType || mimeType,
+            objectPath: null, // Email attachments are not in object storage initially
+            googleDriveLink: null,
+            googleDriveFileId: null,
+            uploadedById: req.user.claims.sub
+          });
+          console.log(`📎 Job file record created: ${fileRecord.id}`);
+        } catch (fileError) {
+          console.log(`⚠️ Could not create job file record: ${fileError.message}`);
+        }
+
+        // Try to upload to Google Drive if user has it connected
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
+        
+        if (user && user.googleDriveTokens) {
+          try {
+            console.log(`☁️ Uploading to Google Drive: ${fileName}`);
+            
+            // Get job for folder naming
+            const job = await storage.getJob(targetJobId);
+            
+            // Get the actual attachment content from the stored base64 data
+            let fileBuffer;
+            if (document.attachmentContent) {
+              fileBuffer = Buffer.from(document.attachmentContent, 'base64');
+              console.log(`📎 Using stored attachment content (${fileBuffer.length} bytes)`);
+            } else {
+              // Fallback - create a small text file with document info
+              const fallbackContent = `Email Document: ${fileName}\nFrom: ${document.emailFrom || 'unknown'}\nSubject: ${document.emailSubject || 'unknown'}\nVendor: ${document.vendor}\nAmount: $${document.amount}\nCategory: ${finalCategory}`;
+              fileBuffer = Buffer.from(fallbackContent, 'utf8');
+              console.log(`⚠️ No attachment content stored, using fallback text file`);
+            }
+            
+            const googleDriveService = new GoogleDriveService();
+            const tokens = JSON.parse(user.googleDriveTokens);
+            googleDriveService.setUserTokens(tokens);
+            
+            // Create/find job folder
+            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`);
+            
+            // Upload file to Google Drive
+            const uploadResult = await googleDriveService.uploadFile(
+              fileName, 
+              fileBuffer, 
+              document.mimeType || mimeType, 
+              jobFolderId || undefined
+            );
+            
+            if (uploadResult && fileRecord) {
+              // Update the file record with Google Drive info
+              await storage.updateJobFile(fileRecord.id, {
+                googleDriveLink: uploadResult.webViewLink,
+                googleDriveFileId: uploadResult.fileId
+              });
+              googleDriveResult = uploadResult;
+              console.log(`☁️ File uploaded to Google Drive: ${uploadResult.webViewLink}`);
+            }
+          } catch (driveError) {
+            console.log(`⚠️ Google Drive upload failed: ${driveError.message}`);
+          }
+        } else {
+          console.log(`ℹ️ Google Drive not connected for user ${userId}`);
+        }
+      } catch (attachmentError) {
+        console.log(`⚠️ File attachment processing failed: ${attachmentError.message}`);
+      }
+
       // Now approve the document with the job ID
       await storage.approveEmailProcessedDocument(id, targetJobId);
       
@@ -2877,7 +2966,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         addedExpense,
         jobId: targetJobId,
         category: finalCategory,
-        message: `Expense added to job as ${finalCategory}`
+        fileAttached: !!fileRecord,
+        googleDriveUploaded: !!googleDriveResult,
+        googleDriveLink: googleDriveResult?.webViewLink,
+        message: `Expense added to job as ${finalCategory}${fileRecord ? ' with file attachment' : ''}${googleDriveResult ? ' and uploaded to Google Drive' : ''}`
       });
     } catch (error) {
       console.error('Error approving document:', error);

@@ -535,6 +535,15 @@ export class DatabaseStorage implements IStorage {
     return createdFile;
   }
 
+  async updateJobFile(id: string, updates: Partial<InsertJobFile>): Promise<JobFile> {
+    const [updatedFile] = await db
+      .update(jobFiles)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(jobFiles.id, id))
+      .returning();
+    return updatedFile;
+  }
+
   async deleteJobFile(id: string): Promise<void> {
     await db.delete(jobFiles).where(eq(jobFiles.id, id));
   }

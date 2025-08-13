@@ -342,6 +342,8 @@ export const emailProcessedDocuments = pgTable("email_processed_documents", {
   emailSubject: varchar("email_subject"),
   emailFrom: varchar("email_from"),
   extractedData: text("extracted_data"), // JSON string of full extracted data
+  attachmentContent: text("attachment_content"), // Base64 encoded attachment content for later processing
+  mimeType: varchar("mime_type"), // MIME type of the attachment
   userId: varchar("user_id").notNull().references(() => users.id),
   jobId: varchar("job_id").references(() => jobs.id),
   createdAt: timestamp("created_at").defaultNow(),
