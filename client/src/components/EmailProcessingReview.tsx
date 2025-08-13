@@ -21,26 +21,47 @@ interface ProcessedDocument {
 
 // Helper function to match job from email subject
 function getJobFromSubject(emailSubject: string, jobs: any[]): string {
-  if (!emailSubject || !jobs) return '';
+  if (!emailSubject || !jobs) {
+    console.log('❌ Frontend: Missing data', { emailSubject, jobsAvailable: !!jobs, jobsLength: jobs?.length });
+    return '';
+  }
   
   const subject = emailSubject.toLowerCase();
-  console.log('🔍 Matching email subject:', subject);
-  console.log('🔍 Available jobs:', jobs?.map(j => ({ addr: j.jobAddress, client: j.clientName, pm: j.projectManager })));
+  console.log('🔍 Frontend matching email subject:', subject);
+  console.log('🔍 Available jobs for matching:', jobs?.map(j => ({ 
+    id: j.id?.slice(0,8), 
+    addr: j.jobAddress, 
+    client: j.clientName, 
+    pm: j.projectManager 
+  })));
   
-  // Look for job address patterns (more flexible matching)
+  // Look for job address patterns (exact and partial matching)
   for (const job of jobs) {
-    // Match job address with partial matching
+    // First try exact match
+    if (job.jobAddress && subject.includes(job.jobAddress.toLowerCase())) {
+      console.log('✅ Frontend exact match by address:', job.jobAddress);
+      return `${job.jobAddress} (${job.clientName || 'Unknown Client'})`;
+    }
+    
+    // Then try partial matching
     if (job.jobAddress) {
-      const jobAddr = job.jobAddress.toLowerCase();
-      const addressWords = jobAddr.split(' ');
+      const jobAddr = job.jobAddress.toLowerCase().trim();
+      const addressWords = jobAddr.split(' ').filter(w => w.length > 2);
       const subjectWords = subject.split(' ');
       
-      // Check if any significant word from address appears in subject
+      console.log(`🔍 Comparing "${subject}" with "${jobAddr}"`);
+      
+      // Check if significant words from address appear in subject
+      let matchCount = 0;
       for (const word of addressWords) {
-        if (word.length > 2 && subjectWords.some(sw => sw.includes(word) || word.includes(sw))) {
-          console.log('✅ Frontend found job match by address:', job.jobAddress);
-          return `${job.jobAddress} (${job.clientName || 'Unknown Client'})`;
+        if (subjectWords.some(sw => sw.includes(word) || word.includes(sw))) {
+          matchCount++;
         }
+      }
+      
+      if (matchCount >= Math.max(1, Math.floor(addressWords.length * 0.6))) {
+        console.log('✅ Frontend partial match by address:', job.jobAddress, `(${matchCount}/${addressWords.length} words)`);
+        return `${job.jobAddress} (${job.clientName || 'Unknown Client'})`;
       }
     }
     
@@ -215,7 +236,12 @@ export function EmailProcessingReview() {
                     )}
                     {doc.email_subject && jobs && (
                       <div className="text-xs text-blue-600 mt-1">
-                        <span className="font-medium">Auto-detected job:</span> {getJobFromSubject(doc.email_subject, jobs) || 'Will assign to first active job'}
+                        <span className="font-medium">Auto-detected job:</span> {(() => {
+                          console.log('🔍 Frontend matching for:', doc.email_subject, 'with jobs:', jobs?.length);
+                          const match = getJobFromSubject(doc.email_subject, jobs);
+                          console.log('🎯 Frontend match result:', match);
+                          return match || 'Will assign to first active job';
+                        })()}
                       </div>
                     )}
                   </div>
