@@ -2692,7 +2692,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Calculate total processed count
       const totalProcessed = allLogs.filter(log => log.status === "completed").length;
-      const lastChecked = allLogs.length > 0 ? allLogs[0].createdAt : new Date();
+      const lastChecked = allLogs.length > 0 ? allLogs[allLogs.length - 1].createdAt : new Date();
       
       // Use the actual email address from environment or default
       const emailAddress = process.env.EMAIL_USER || "documents@mjrbuilders.com.au";
@@ -2700,7 +2700,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         status: "active",
         emailAddress,
-        lastChecked: lastChecked.toISOString(),
+        lastChecked: new Date(lastChecked).toISOString(),
         recentProcessed: recentActivity,
         totalProcessed
       });
