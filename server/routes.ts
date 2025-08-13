@@ -2279,13 +2279,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔵 Extracted job data:', JSON.stringify(jobData, null, 2));
       
       // Create the new job with proper address handling (without auto-adding all employees)
-      const jobAddress = jobData.jobAddress || jobData.projectName || "21 Greenhill Dr";
+      const jobAddress = jobData.jobAddress || "21 Greenhill Dr";
       const newJob = await storage.createJobFromPDF({
         jobAddress: jobAddress,
         clientName: jobData.clientName || "New Client",
-        projectName: jobData.projectName || "Construction Project", 
+        projectName: jobData.projectName || jobAddress || "Construction Project", 
         status: "job_in_progress",
-        builderMargin: (jobData.builderMargin || 35).toString(),
+        builderMargin: "0", // Always 0% margin for PDF uploads
         defaultHourlyRate: "64.00"
       });
 

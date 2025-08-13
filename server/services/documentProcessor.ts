@@ -95,9 +95,9 @@ export class DocumentProcessor {
 
 Extract ALL information visible in the document and return a JSON object with:
 - jobId: Project identifier or address (check document name/title, often the main header)
-- jobAddress: Property/project address (if visible, could be in title like "21 Greenhill Dr")
+- jobAddress: Property/project address (extract from title/header, e.g., "21 Greenhill Dr")
 - clientName: Client name (if visible, otherwise use "New Client")
-- projectName: Project name/description (if visible, otherwise use address or document title)
+- projectName: Project name/description (use the main header/title as project name, e.g., "21 Greenhill Dr")
 - laborEntries: Array of all labor entries with:
   * employeeName: Staff member name
   * hours: Hours worked (as number)
