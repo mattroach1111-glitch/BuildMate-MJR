@@ -188,6 +188,15 @@ export class DocumentProcessor {
         - subTrades: Array of sub-trades with {description, cost, vendor?, date?}
         - otherCosts: Array of other costs with {description, cost, vendor?, date?}
         - tipFees: Array of tip fees with {description, cost, date?}
+        
+        CRITICAL RULES:
+        - Do NOT extract GST, tax, VAT, or any tax amounts as cost items
+        - Do NOT extract "total" amounts or "sub-total" amounts as cost items  
+        - Do NOT extract the final invoice total as a cost item
+        - Only extract actual materials, labor, sub-trades, and legitimate expenses
+        - Skip any line that contains "GST", "tax", "total", "sub-total", "invoice total"
+        
+        If you see "GST $425.20" or "Total inc gst $4,677.20" - DO NOT extract these.
         - totalCost: Total estimated job cost
         - startDate: Project start date (YYYY-MM-DD)
         - endDate: Project completion date (YYYY-MM-DD)
