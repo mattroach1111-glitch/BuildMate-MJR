@@ -146,12 +146,18 @@ export class EmailInboxService {
         ].filter(Boolean);
         
         for (const identifier of jobIdentifiers) {
-          const score = fuzz.ratio(jobName.toLowerCase(), identifier.toLowerCase());
+          const score = fuzz.ratio(jobName.toLowerCase().trim(), identifier.toLowerCase().trim());
           console.log(`🔍 Comparing "${jobName}" vs "${identifier}": ${score}%`);
           if (score > bestScore && score >= threshold) {
             bestScore = score;
             bestMatch = job;
             console.log(`✅ New best match: ${identifier} (${score}%)`);
+          }
+          
+          // Also check for exact match or very close match
+          if (jobName.toLowerCase().trim() === identifier.toLowerCase().trim() || score >= 95) {
+            console.log(`🎯 Found exact/near-exact match: "${jobName}" -> "${identifier}" (${score}%)`);
+            return job;
           }
         }
       }
