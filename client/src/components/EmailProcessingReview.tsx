@@ -24,20 +24,40 @@ function getJobFromSubject(emailSubject: string, jobs: any[]): string {
   if (!emailSubject || !jobs) return '';
   
   const subject = emailSubject.toLowerCase();
+  console.log('🔍 Matching email subject:', subject);
+  console.log('🔍 Available jobs:', jobs?.map(j => ({ addr: j.jobAddress, client: j.clientName, pm: j.projectManager })));
   
-  // Look for job address patterns
+  // Look for job address patterns (more flexible matching)
   for (const job of jobs) {
-    if (job.jobAddress && subject.includes(job.jobAddress.toLowerCase())) {
-      return job.jobAddress;
+    // Match job address with partial matching
+    if (job.jobAddress) {
+      const jobAddr = job.jobAddress.toLowerCase();
+      const addressWords = jobAddr.split(' ');
+      const subjectWords = subject.split(' ');
+      
+      // Check if any significant word from address appears in subject
+      for (const word of addressWords) {
+        if (word.length > 2 && subjectWords.some(sw => sw.includes(word) || word.includes(sw))) {
+          console.log('✅ Found job match by address:', job.jobAddress);
+          return job.jobAddress;
+        }
+      }
     }
+    
+    // Match client name
     if (job.clientName && subject.includes(job.clientName.toLowerCase())) {
+      console.log('✅ Found job match by client:', job.clientName);
       return job.clientName;
     }
+    
+    // Match project manager
     if (job.projectManager && subject.includes(job.projectManager.toLowerCase())) {
+      console.log('✅ Found job match by PM:', job.projectManager);
       return job.projectManager;
     }
   }
   
+  console.log('❌ No job match found');
   return '';
 }
 
