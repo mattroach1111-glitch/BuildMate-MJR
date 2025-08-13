@@ -77,13 +77,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   });
 
   // Get unique project managers from existing jobs  
-  const projectManagers = jobs ? Array.from(new Set((jobs as any[]).map(job => {
-    const manager = job.projectManager || job.projectName;
-    console.log(`🔵 Job ${job.id}: projectManager="${job.projectManager}", projectName="${job.projectName}", using="${manager}"`);
-    return manager;
-  }).filter(Boolean))) : [];
-  
-  console.log("🔵 Available project managers for dropdown:", projectManagers);
+  const projectManagers = jobs ? Array.from(new Set((jobs as any[]).map(job => job.projectManager || job.projectName).filter(Boolean))) : [];
 
   // Get upload URL mutation
   const getUploadUrlMutation = useMutation({
@@ -320,9 +314,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     const currentClientName = clientNameRef.current;
     const currentProjectManager = projectManagerRef.current;
     
-    console.log("🔵 CREATE JOB - Job Address:", currentJobAddress);
-    console.log("🔵 CREATE JOB - Client Name:", currentClientName);
-    console.log("🔵 CREATE JOB - Project Manager:", currentProjectManager);
+
     
     if (!currentJobAddress.trim() || !currentClientName.trim()) {
       toast({
@@ -589,11 +581,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
                 <label className="text-sm font-medium">Project Manager <span className="text-gray-400">(Optional)</span></label>
                 <Select 
                   value={projectManager || undefined} 
-                  onValueChange={(value) => {
-                    console.log("🔵 Project Manager selected:", value);
-                    console.log("🔵 Setting project manager to:", value);
-                    setProjectManager(value || "");
-                  }}
+                  onValueChange={(value) => setProjectManager(value || "")}
                 >
                   <SelectTrigger data-testid="select-project-manager">
                     <SelectValue placeholder="Select project manager (optional)" />
@@ -610,9 +598,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
                     )}
                   </SelectContent>
                 </Select>
-                <div className="text-xs text-gray-500">
-                  Current value: "{projectManager}" | Available: [{projectManagers.join(", ")}]
-                </div>
+
               </div>
 
               {/* Upload Section */}
