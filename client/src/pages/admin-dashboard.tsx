@@ -963,7 +963,8 @@ export default function AdminDashboard() {
   const sortedJobs = sortJobsBy(filteredJobs, sortBy);
 
   // Group filtered jobs by client or project manager
-  const groupedJobs = sortedJobs ? (() => {
+  const groupedJobs = useMemo(() => {
+    if (!sortedJobs) return {};
     if (groupBy === 'none') return { 'All Jobs': sortedJobs };
     
     // Separate ready for billing jobs
@@ -1021,7 +1022,7 @@ export default function AdminDashboard() {
     }
     
     return {};
-  })() : {};
+  }, [sortedJobs, groupBy, sortBy]);
 
   const toggleClientExpanded = (client: string) => {
     const newExpanded = new Set(expandedClients);

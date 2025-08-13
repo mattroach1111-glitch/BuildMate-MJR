@@ -126,7 +126,7 @@ export class DocumentProcessor {
 
     } catch (error) {
       console.error('Error processing document with AI:', error);
-      return { error: error.message || 'Failed to process document' };
+      return { error: error instanceof Error ? error.message : 'Failed to process document' };
     }
   }
 

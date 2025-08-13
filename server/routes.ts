@@ -2511,6 +2511,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let clientName = manualClientName.trim();
       const projectName = jobAddress; // Use job address as project name
       
+      // Use provided project manager or default to null (not job address)
+      const finalProjectManager = projectManager?.trim() || null;
+      
       // Try fuzzy matching for client name (80% threshold)
       const clientMatch = await findBestClientMatch(clientName, 80);
       if (clientMatch) {
@@ -2526,7 +2529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         jobAddress: jobAddress,
         clientName: clientName,
         projectName: projectName,
-        projectManager: projectManager || null,
+        projectManager: finalProjectManager,
         status: "job_in_progress",
         builderMargin: "0.00", // Always 0% margin for PDF uploads
         defaultHourlyRate: "64.00"
