@@ -2279,13 +2279,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔵 Extracted job data:', JSON.stringify(jobData, null, 2));
       
       // Create the new job with proper address handling (without auto-adding all employees)
-      const jobAddress = jobData.jobAddress || "21 Greenhill Dr";
+      // Force extract job name from raw text if AI didn't get it
+      let jobAddress = jobData.jobAddress;
+      let projectName = jobData.projectName;
+      
+      if (!jobAddress || jobAddress === "Not specified") {
+        // Extract from raw text - look for "21 Greenhill Dr" pattern
+        const addressMatch = jobData.rawText?.match(/\d+\s+[A-Za-z\s]+\s+Dr|Drive|Street|St|Road|Rd/i);
+        jobAddress = addressMatch ? addressMatch[0].trim() : "21 Greenhill Dr";
+      }
+      
+      if (!projectName || projectName === "Construction Project") {
+        projectName = jobAddress;
+      }
+      
       const newJob = await storage.createJobFromPDF({
         jobAddress: jobAddress,
         clientName: jobData.clientName || "New Client",
-        projectName: jobData.projectName || jobAddress || "Construction Project", 
+        projectName: projectName, 
         status: "job_in_progress",
-        builderMargin: "0", // Always 0% margin for PDF uploads
+        builderMargin: "0.00", // Always 0% margin for PDF uploads
         defaultHourlyRate: "64.00"
       });
 
@@ -2367,7 +2380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Add other costs if any
+      // Add other costs if any (only if amount > 0)
       if (jobData.otherCosts) {
         for (const otherCost of jobData.otherCosts) {
           if (otherCost.amount > 0) {

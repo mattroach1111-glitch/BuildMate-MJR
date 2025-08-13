@@ -119,11 +119,12 @@ Extract ALL information visible in the document and return a JSON object with:
 
 CRITICAL RULES:
 1. Materials = individual supply items only (ply, coveralls, insulation, etc.)
-2. SubTrades = trade services (plastering, plumbing, electrical, painters)
+2. SubTrades = trade services (plastering, plumbing, electrical, painters)  
 3. Extract individual items, NEVER extract totals or summary amounts
 4. If you see "Materials $1195" - this is a total, not an item - skip it
-5. ONLY extract items that have actual dollar amounts - ignore line items without costs
-6. If an item like "Asbestos removal + test" has no dollar amount next to it, DO NOT extract it`,
+5. ONLY extract items that have actual dollar amounts - DO NOT extract items with $0 or no amount
+6. For jobAddress: extract the main header/title from the document (e.g., "21 Greenhill Dr")
+7. For projectName: use the same address/title as project name`,
         messages: [{
           role: "user",
           content: [
