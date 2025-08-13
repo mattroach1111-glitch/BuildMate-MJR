@@ -36,11 +36,19 @@ function getJobFromSubject(emailSubject: string, jobs: any[]): string {
   })));
   
   // Look for job address patterns (exact and partial matching)
+  let potentialMatches = [];
+  
   for (const job of jobs) {
-    // First try exact match
-    if (job.jobAddress && subject.includes(job.jobAddress.toLowerCase())) {
-      console.log('✅ Frontend exact match by address:', job.jobAddress);
+    // First try perfect exact match
+    if (job.jobAddress && subject.trim() === job.jobAddress.toLowerCase().trim()) {
+      console.log('🎯 Frontend PERFECT match by address:', job.jobAddress);
       return `${job.jobAddress} (${job.clientName || 'Unknown Client'})`;
+    }
+    
+    // Then try substring match
+    if (job.jobAddress && subject.includes(job.jobAddress.toLowerCase())) {
+      console.log('✅ Frontend exact substring match by address:', job.jobAddress);
+      potentialMatches.push({ job, priority: 2, type: 'substring' });
     }
     
     // Then try partial matching
@@ -61,21 +69,30 @@ function getJobFromSubject(emailSubject: string, jobs: any[]): string {
       
       if (matchCount >= Math.max(1, Math.floor(addressWords.length * 0.6))) {
         console.log('✅ Frontend partial match by address:', job.jobAddress, `(${matchCount}/${addressWords.length} words)`);
-        return `${job.jobAddress} (${job.clientName || 'Unknown Client'})`;
+        potentialMatches.push({ job, priority: 3, type: 'partial', score: matchCount });
       }
     }
     
     // Match client name
     if (job.clientName && subject.includes(job.clientName.toLowerCase())) {
       console.log('✅ Frontend found job match by client:', job.clientName);
-      return `${job.jobAddress} (${job.clientName})`;
+      potentialMatches.push({ job, priority: 4, type: 'client' });
     }
     
     // Match project manager
     if (job.projectManager && subject.includes(job.projectManager.toLowerCase())) {
       console.log('✅ Frontend found job match by PM:', job.projectManager);
-      return `${job.jobAddress} (${job.clientName || job.projectManager})`;
+      potentialMatches.push({ job, priority: 5, type: 'pm' });
     }
+  }
+  
+  // Return best match if any found
+  if (potentialMatches.length > 0) {
+    // Sort by priority (lower number = higher priority)
+    potentialMatches.sort((a, b) => a.priority - b.priority);
+    const bestMatch = potentialMatches[0];
+    console.log(`🎯 Frontend match result: ${bestMatch.job.jobAddress} (${bestMatch.type} match, priority ${bestMatch.priority})`);
+    return `${bestMatch.job.jobAddress} (${bestMatch.job.clientName || 'Unknown Client'})`;
   }
   
   console.log('❌ No job match found');
