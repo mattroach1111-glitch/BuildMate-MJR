@@ -1006,7 +1006,7 @@ export default function AdminDashboard() {
       
       // Group other jobs by manager
       const managerGroups = otherJobs.reduce((groups, job) => {
-        const manager = job.projectManager || 'Unknown Manager';
+        const manager = job.projectManager || '📝 Unassigned Jobs';
         if (!groups[manager]) groups[manager] = [];
         groups[manager].push(job);
         return groups;
