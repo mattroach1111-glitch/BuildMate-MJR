@@ -2251,6 +2251,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user notification preferences
+  app.put('/api/user/notification-preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const { preferences } = req.body;
+      const userId = req.user?.claims?.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+      
+      // Validate preferences structure
+      if (!preferences || typeof preferences !== 'object') {
+        return res.status(400).json({ message: 'Invalid preferences format' });
+      }
+      
+      // Update user preferences
+      await storage.updateUserNotificationPreferences(userId, JSON.stringify(preferences));
+      
+      res.json({ message: 'Notification preferences updated successfully' });
+    } catch (error) {
+      console.error('Error updating notification preferences:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   // Document upload endpoints for expense processing
   
   // Endpoint to get upload URL for expense documents (legacy object storage)

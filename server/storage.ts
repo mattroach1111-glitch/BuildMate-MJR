@@ -205,6 +205,16 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id));
   }
 
+  async updateUserNotificationPreferences(userId: string, preferences: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ 
+        emailNotificationPreferences: preferences,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+  }
+
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.createdAt));
   }

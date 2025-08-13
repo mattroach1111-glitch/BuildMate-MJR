@@ -36,6 +36,7 @@ export const users = pgTable("users", {
   googleDriveTokens: text("google_drive_tokens"), // Store encrypted tokens as JSON
   employeeId: varchar("employee_id").references(() => employees.id, { onDelete: "set null" }), // Link to existing employee
   isAssigned: boolean("is_assigned").notNull().default(false), // Whether user has been assigned to an employee
+  emailNotificationPreferences: text("email_notification_preferences").default('{"documentProcessing":true,"jobUpdates":true,"timesheetReminders":true}'), // JSON string of notification preferences
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

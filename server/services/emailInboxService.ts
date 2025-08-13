@@ -372,13 +372,22 @@ export class EmailInboxService {
         jobMatched: targetJob?.id
       });
       
-      // Send confirmation email
+      // Check if user wants email confirmations (optional based on preferences)
       if (processedDocuments.length > 0) {
-        await this.sendConfirmationEmail(
-          emailMessage.from,
-          processedDocuments,
-          targetJob?.jobAddress
-        );
+        const userPreferences = targetUser.emailNotificationPreferences ? 
+          JSON.parse(targetUser.emailNotificationPreferences) : 
+          { documentProcessing: true }; // Default to true for backwards compatibility
+        
+        if (userPreferences.documentProcessing) {
+          await this.sendConfirmationEmail(
+            emailMessage.from,
+            processedDocuments,
+            targetJob?.jobAddress
+          );
+          console.log(`✅ Confirmation email sent to ${emailMessage.from}`);
+        } else {
+          console.log(`📧 Email confirmation disabled for user ${targetUser.email}`);
+        }
       }
       
       console.log(`✅ Processed ${processedDocuments.length} documents from email`);

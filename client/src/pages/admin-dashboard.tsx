@@ -23,7 +23,7 @@ import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 import { JobProgressVisualization } from "@/components/JobProgressVisualization";
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw, Grid3X3, List, Settings, UserPlus, Download, Edit, BarChart3, DollarSign, TrendingUp, Building2 } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw, Grid3X3, List, Settings, UserPlus, Download, Edit, BarChart3, DollarSign, TrendingUp, Building2, Bell } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
@@ -38,6 +38,7 @@ import { generateJobListPDF } from "@/lib/pdfGenerator";
 import JobUpdateDialog from "@/components/job-update-form";
 import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor";
 import { EmailProcessingReview } from "@/components/EmailProcessingReview";
+import { NotificationSettings } from "@/components/NotificationSettings";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -1493,6 +1494,10 @@ export default function AdminDashboard() {
               <DropdownMenuItem onClick={() => setActiveTab("documents")} data-testid="menu-documents">
                 <FileText className="h-4 w-4 mr-2" />
                 Document Processing
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveTab("notifications")} data-testid="menu-notifications">
+                <Bell className="h-4 w-4 mr-2" />
+                Notification Settings
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setActiveTab("settings")} data-testid="menu-settings">
                 <Settings className="h-4 w-4 mr-2" />
@@ -3539,6 +3544,14 @@ export default function AdminDashboard() {
           <TabsContent value="documents" className="space-y-6">
             <DocumentExpenseProcessor />
             <EmailProcessingReview />
+          </TabsContent>
+          
+          <TabsContent value="notifications" className="space-y-6">
+            <h2 className="text-xl font-semibold">Notification Settings</h2>
+            <p className="text-muted-foreground">
+              Control your email notification preferences and choose alternative notification methods.
+            </p>
+            <NotificationSettings />
           </TabsContent>
         </Tabs>
 
