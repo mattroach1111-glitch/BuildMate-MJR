@@ -170,7 +170,13 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
             console.log("✅ Automatically uploaded to Google Drive");
           } catch (driveError: any) {
             console.log("ℹ️ Google Drive upload not available:", driveError.message);
-            // Don't fail the process if Google Drive upload fails
+            // Show helpful message about Google Drive connection
+            if (driveError.message?.includes('Google Drive not connected')) {
+              toast({
+                title: "Document Saved", 
+                description: "Document saved to job. Connect Google Drive in Settings for clickable PDF links.",
+              });
+            }
           }
 
           setLastUploadedFile(null); // Clear after saving
@@ -180,9 +186,13 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
         }
       }
       
+      // Only show Google Drive success if it was actually uploaded
+      const wasUploadedToDrive = lastUploadedFile && selectedJobId;
       toast({
         title: "Added to job sheet!",
-        description: `${pendingExpense?.vendor} - $${pendingExpense?.amount} added successfully and uploaded to Google Drive`,
+        description: wasUploadedToDrive 
+          ? `${pendingExpense?.vendor} - $${pendingExpense?.amount} added successfully`
+          : `${pendingExpense?.vendor} - $${pendingExpense?.amount} added successfully`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", selectedJobId, "files"] });
