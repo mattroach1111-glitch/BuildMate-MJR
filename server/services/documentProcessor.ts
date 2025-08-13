@@ -57,6 +57,17 @@ export class DocumentProcessor {
         Always return valid JSON.
       `;
 
+      // Ensure we have a valid media type
+      if (!['image/jpeg', 'image/png', 'image/jpg'].includes(mediaType)) {
+        console.error(`Invalid media type for AI processing: ${mediaType}`);
+        return { error: `Unsupported image format: ${mediaType}` };
+      }
+
+      // Normalize media type
+      const normalizedMediaType = mediaType === 'image/jpg' ? 'image/jpeg' : mediaType;
+
+      console.log(`🖼️ Sending ${normalizedMediaType} image to AI for processing`);
+
       const response = await this.anthropic.messages.create({
         model: DEFAULT_MODEL_STR,
         max_tokens: 1024,
@@ -71,7 +82,7 @@ export class DocumentProcessor {
               type: "image",
               source: {
                 type: "base64",
-                media_type: mediaType as "image/jpeg" | "image/png",
+                media_type: normalizedMediaType as "image/jpeg" | "image/png",
                 data: imageData
               }
             }
@@ -89,7 +100,17 @@ export class DocumentProcessor {
         extractedData = JSON.parse(textContent.text);
       } catch (parseError) {
         console.error('Failed to parse AI response as JSON:', textContent.text);
-        return { error: 'AI response was not valid JSON' };
+        // Try to extract JSON from the response if it's wrapped in markdown or other text
+        const jsonMatch = textContent.text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            extractedData = JSON.parse(jsonMatch[0]);
+          } catch (secondParseError) {
+            return { error: 'AI response was not valid JSON' };
+          }
+        } else {
+          return { error: 'AI response was not valid JSON' };
+        }
       }
 
       console.log(`✅ AI extraction successful:`, extractedData);

@@ -356,12 +356,14 @@ export class EmailInboxService {
     const processableTypes = [
       'application/pdf',
       'image/jpeg',
-      'image/jpg',
+      'image/jpg', 
       'image/png',
       'image/gif'
     ];
     
-    return processableTypes.includes(contentType.toLowerCase());
+    const isProcessable = processableTypes.includes(contentType.toLowerCase());
+    console.log(`🔍 File type check: ${contentType} -> ${isProcessable ? 'PROCESSABLE' : 'SKIPPED'}`);
+    return isProcessable;
   }
 
   // Manual processing trigger (checks actual email inbox)
