@@ -52,10 +52,7 @@ export function NotificationSettings() {
 
   const updatePreferencesMutation = useMutation({
     mutationFn: async (newPrefs: NotificationPreferences) => {
-      return apiRequest('/api/user/notification-preferences', {
-        method: 'PUT',
-        body: JSON.stringify({ preferences: newPrefs }),
-      });
+      return apiRequest('PUT', '/api/user/notification-preferences', { preferences: newPrefs });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
