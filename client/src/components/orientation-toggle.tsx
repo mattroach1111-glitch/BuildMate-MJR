@@ -24,44 +24,13 @@ export function OrientationToggle() {
 
   useEffect(() => {
     if (isLandscapeForced) {
-      // Apply landscape transformation to the root element
-      const root = document.getElementById('root');
-      if (root) {
-        const vh = window.innerHeight;
-        const vw = window.innerWidth;
-        
-        // Transform and center the root container
-        root.style.transform = 'rotate(90deg)';
-        root.style.transformOrigin = 'center center';
-        root.style.width = `${vh}px`;
-        root.style.height = `${vw}px`;
-        root.style.position = 'fixed';
-        root.style.top = '50%';
-        root.style.left = '50%';
-        root.style.marginTop = `${-vw/2}px`;
-        root.style.marginLeft = `${-vh/2}px`;
-      }
-      
-      // Prevent scrolling on body
-      document.body.style.overflow = 'hidden';
+      // Apply landscape mode via CSS class only
       document.documentElement.classList.add('landscape-mode');
+      document.body.classList.add('landscape-mode');
     } else {
-      // Reset everything
-      const root = document.getElementById('root');
-      if (root) {
-        root.style.transform = '';
-        root.style.transformOrigin = '';
-        root.style.width = '';
-        root.style.height = '';
-        root.style.position = '';
-        root.style.top = '';
-        root.style.left = '';
-        root.style.marginTop = '';
-        root.style.marginLeft = '';
-      }
-      
-      document.body.style.overflow = '';
+      // Remove landscape mode
       document.documentElement.classList.remove('landscape-mode');
+      document.body.classList.remove('landscape-mode');
     }
   }, [isLandscapeForced]);
 

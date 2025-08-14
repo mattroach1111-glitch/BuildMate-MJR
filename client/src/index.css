@@ -185,16 +185,29 @@ html.landscape-mode {
   overflow: hidden;
 }
 
-html.landscape-mode body {
-  transition: transform 0.3s ease-in-out;
+body.landscape-mode {
   overflow: hidden;
+  width: 100vh;
+  height: 100vw;
+  transform: rotate(90deg);
+  transform-origin: center center;
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 
-/* Allow scrolling within the rotated content */
-html.landscape-mode #root {
+html.landscape-mode body.landscape-mode {
+  top: calc((100vh - 100vw) / 2);
+  left: calc((100vw - 100vh) / 2);
+}
+
+/* Allow proper scrolling in landscape mode */
+body.landscape-mode #root {
   overflow-y: auto !important;
   overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch !important;
+  height: 100% !important;
+  width: 100% !important;
 }
 
 /* Hover states for dropdown items */
@@ -305,13 +318,11 @@ html.landscape-mode textarea {
   /* Ensure mobile scrolling works everywhere */
   body, html {
     -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-y !important;
   }
   
   /* Fix scrolling in specific areas */
   [data-radix-dialog-content] {
     -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-y !important;
   }
   
   /* Remove tap highlight on mobile */
