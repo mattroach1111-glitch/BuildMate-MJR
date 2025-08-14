@@ -72,10 +72,9 @@ export function OrientationToggle() {
     setIsLandscapeForced(!isLandscapeForced);
   };
 
-  // Show on mobile devices and small screens (for testing, always show if screen is narrow)
-  if (!isMobile && window.innerWidth > 768) {
-    return null;
-  }
+  // For testing - always show the button
+  // Later we can add back mobile-only detection
+  console.log('Rendering orientation toggle - isMobile:', isMobile);
 
   return (
     <Button
@@ -85,7 +84,8 @@ export function OrientationToggle() {
       className={cn(
         "fixed bottom-4 right-4 z-50 shadow-lg",
         "bg-white hover:bg-gray-50 border border-gray-300",
-        isLandscapeForced && "bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+        isLandscapeForced && "bg-blue-600 hover:bg-blue-700 text-white border-blue-600",
+        "min-w-[100px] h-10" // Ensure button is visible
       )}
       title={isLandscapeForced ? "Switch to Portrait" : "Switch to Landscape"}
       data-testid="button-orientation-toggle"
