@@ -41,7 +41,6 @@ import { EmailProcessingReview } from "@/components/EmailProcessingReview";
 import { NotificationSettings } from "@/components/NotificationSettings";
 
 import { AdminSettings } from "@/components/AdminSettings";
-import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -3011,12 +3010,6 @@ export default function AdminDashboard() {
                                     return entry.jobAddress || 'Unknown Job';
                                   })()} • {entry.clientName} • {parseFloat(entry.hours || 0)}h
                                 </div>
-                                {/* Display materials/notes if available */}
-                                {entry.materials && !(!entry.jobAddress && entry.materials && ['sick-leave', 'personal-leave', 'annual-leave', 'rdo'].includes(entry.materials)) && (
-                                  <div className="text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 rounded-md px-2 py-1 mt-1">
-                                    <strong>Materials/Notes:</strong> {entry.materials}
-                                  </div>
-                                )}
                                 {entry.updatedAt && entry.updatedAt !== entry.createdAt && (
                                   <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">
                                     Last updated: {format(parseISO(entry.updatedAt), 'dd/MM/yyyy HH:mm')}

@@ -1449,75 +1449,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get staff for push notification targeting
-  app.get("/api/staff", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      if (user?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const staffForTimesheets = await storage.getStaffForTimesheets();
-      console.log('Staff API returning:', staffForTimesheets);
-      res.json(staffForTimesheets);
-    } catch (error) {
-      console.error("Error fetching staff for push notifications:", error);
-      res.status(500).json({ message: "Failed to fetch staff" });
-    }
-  });
-
-  // Send instant push notification
-  app.post("/api/admin/send-instant-notification", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      if (user?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const { message, targetStaff, selectedStaff } = req.body;
-
-      if (!message || !message.trim()) {
-        return res.status(400).json({ message: "Message is required" });
-      }
-
-      if (targetStaff === 'selected' && (!selectedStaff || selectedStaff.length === 0)) {
-        return res.status(400).json({ message: "At least one staff member must be selected" });
-      }
-
-      // Here you would integrate with your actual push notification service
-      // For now, we'll just log the notification and return success
-      console.log('📱 INSTANT PUSH NOTIFICATION:');
-      console.log('Message:', message);
-      console.log('Target Staff:', targetStaff);
-      console.log('Selected Staff:', targetStaff === 'selected' ? selectedStaff : 'ALL STAFF');
-
-      // In a real implementation, you would:
-      // 1. Get the push notification tokens for the target staff
-      // 2. Send the notification using your push service (Firebase, OneSignal, etc.)
-      // 3. Log the notification in the database for tracking
-      
-      // Simulate sending notification
-      const targetStaffCount = targetStaff === 'all' 
-        ? (await storage.getStaffForTimesheets()).length 
-        : selectedStaff.length;
-
-      console.log(`✅ Instant notification sent to ${targetStaffCount} staff member(s)`);
-
-      res.json({ 
-        message: "Instant notification sent successfully",
-        targetCount: targetStaffCount,
-        sentAt: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error("Error sending instant push notification:", error);
-      res.status(500).json({ message: "Failed to send notification" });
-    }
-  });
-
   app.post("/api/timesheet", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -2497,30 +2428,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: 'Notification preferences updated successfully' });
     } catch (error) {
       console.error('Error updating notification preferences:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  });
-
-  app.put('/api/user/push-notification-settings', isAuthenticated, async (req: any, res) => {
-    try {
-      const { settings } = req.body;
-      const userId = req.user?.claims?.sub;
-      
-      if (!userId) {
-        return res.status(401).json({ message: 'Unauthorized' });
-      }
-      
-      // Validate settings structure
-      if (!settings || typeof settings !== 'object') {
-        return res.status(400).json({ message: 'Invalid settings format' });
-      }
-      
-      // Update user push notification settings
-      await storage.updateUserPushNotificationSettings(userId, JSON.stringify(settings));
-      
-      res.json({ message: 'Push notification settings updated successfully' });
-    } catch (error) {
-      console.error('Error updating push notification settings:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   });
