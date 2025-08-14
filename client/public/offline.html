@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuildFlow Pro - Offline</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 40px 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .logo {
+            font-size: 48px;
+            margin-bottom: 20px;
+            display: block;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+        
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            opacity: 0.9;
+        }
+        
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        
+        .retry-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .retry-btn:hover {
+            background: #2563eb;
+        }
+        
+        .features {
+            margin-top: 32px;
+            text-align: left;
+        }
+        
+        .features h3 {
+            font-size: 18px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        
+        .features ul {
+            list-style: none;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .features li {
+            margin: 8px 0;
+            padding-left: 24px;
+            position: relative;
+        }
+        
+        .features li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <span class="logo">🏗️</span>
+        <h1>BuildFlow Pro</h1>
+        <p>You're currently offline, but don't worry - your work is saved locally.</p>
+        
+        <div class="status">
+            <span>🔴</span>
+            <span>No internet connection</span>
+        </div>
+        
+        <button class="retry-btn" onclick="window.location.reload()">
+            Try Again
+        </button>
+        
+        <div class="features">
+            <h3>Available Offline:</h3>
+            <ul>
+                <li>View cached job sheets</li>
+                <li>Enter timesheet data</li>
+                <li>View employee information</li>
+                <li>Access recent documents</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Auto-reload when connection is restored
+        window.addEventListener('online', () => {
+            window.location.reload();
+        });
+        
+        // Check connection status
+        function updateStatus() {
+            const status = document.querySelector('.status span:last-child');
+            if (navigator.onLine) {
+                status.textContent = 'Connection restored';
+                status.parentElement.style.background = 'rgba(16, 185, 129, 0.2)';
+                status.parentElement.style.color = '#6ee7b7';
+                status.previousElementSibling.textContent = '🟢';
+                setTimeout(() => window.location.reload(), 1500);
+            }
+        }
+        
+        window.addEventListener('online', updateStatus);
+        setInterval(() => {
+            fetch('/api/health', { 
+                method: 'HEAD',
+                cache: 'no-cache'
+            }).then(() => {
+                if (navigator.onLine) updateStatus();
+            }).catch(() => {});
+        }, 5000);
+    </script>
+</body>
+</html>

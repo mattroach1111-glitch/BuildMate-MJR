@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1f2937"/>
+      <stop offset="100%" style="stop-color:#374151"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" rx="64" fill="url(#bg)"/>
+  
+  <!-- Main icon elements -->
+  <g transform="translate(80,80)">
+    <!-- Construction bars -->
+    <rect x="50" y="100" width="220" height="16" rx="8" fill="#fbbf24"/>
+    <rect x="50" y="130" width="260" height="16" rx="8" fill="#f59e0b"/>
+    <rect x="50" y="160" width="180" height="16" rx="8" fill="#d97706"/>
+    
+    <!-- Header blocks -->
+    <rect x="50" y="50" width="100" height="32" rx="4" fill="#10b981"/>
+    <rect x="170" y="50" width="100" height="32" rx="4" fill="#3b82f6"/>
+    
+    <!-- Main app area -->
+    <rect x="50" y="200" width="240" height="50" rx="8" fill="#6366f1"/>
+    <text x="170" y="230" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="bold">BuildFlow</text>
+    
+    <!-- Status indicators -->
+    <circle cx="80" cy="280" r="20" fill="#06b6d4"/>
+    <circle cx="140" cy="280" r="20" fill="#84cc16"/>
+    <circle cx="200" cy="280" r="20" fill="#f59e0b"/>
+    <circle cx="260" cy="280" r="20" fill="#ef4444"/>
+    
+    <!-- Tool icon -->
+    <path d="M50 320 L90 320 L90 340 L110 340 L110 360 L90 360 L90 380 L50 380 Z" fill="#9ca3af"/>
+    <path d="M320 50 L340 50 L340 90 L360 90 L360 110 L340 110 L340 90 L320 90 Z" fill="#9ca3af"/>
+  </g>
+</svg>
