@@ -11,12 +11,14 @@ import FortnightTimesheetView from "@/pages/fortnight-timesheet-view";
 import StaffTimesheet from "@/pages/staff-timesheet";
 
 function Router() {
-  const { data: user, isLoading } = useQuery({
+  console.log('Router component rendering');
+  const { data: user, isLoading, error } = useQuery({
     queryKey: ["/api/auth/user"],
     retry: false,
     staleTime: 30000,
   });
   
+  console.log('Router state:', { user, isLoading, error });
   const isAuthenticated = !!user;
 
   if (isLoading) {
@@ -52,16 +54,17 @@ function Router() {
 }
 
 function AppContent() {
+  console.log('AppContent component rendering');
   return (
     <TooltipProvider>
       <Toaster />
       <Router />
-
     </TooltipProvider>
   );
 }
 
 function App() {
+  console.log('App component rendering');
   return (
     <QueryClientProvider client={queryClient}>
       <AppContent />

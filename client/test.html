@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Page</title>
+</head>
+<body>
+    <h1>Test Page Loading</h1>
+    <div id="test-root">React should load here</div>
+    <script>
+        console.log('Simple HTML test page loaded');
+        fetch('/api/auth/user')
+            .then(res => res.json())
+            .then(data => {
+                console.log('API response:', data);
+                document.getElementById('test-root').innerHTML = '<p>API working: ' + JSON.stringify(data) + '</p>';
+            })
+            .catch(err => {
+                console.error('API error:', err);
+                document.getElementById('test-root').innerHTML = '<p>API error: ' + err.message + '</p>';
+            });
+    </script>
+</body>
+</html>
