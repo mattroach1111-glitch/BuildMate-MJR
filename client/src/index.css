@@ -172,7 +172,21 @@ table tr.weekend-row button {
     .hidden-text-xs span {
       display: none;
     }
-    
+}
+
+/* Landscape mode adjustments */
+html.landscape-mode {
+  overflow: hidden;
+}
+
+html.landscape-mode body {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Ensure proper positioning for landscape content */
+html.landscape-mode .fixed {
+  position: absolute;
+}
     /* Larger tap targets */
     .tap-target {
       min-height: 48px;

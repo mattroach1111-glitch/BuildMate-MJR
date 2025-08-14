@@ -24,24 +24,33 @@ export function OrientationToggle() {
 
   useEffect(() => {
     if (isLandscapeForced) {
-      // Force landscape orientation
+      // Force landscape orientation with proper positioning
+      const vh = window.innerHeight;
+      const vw = window.innerWidth;
+      
       document.body.style.transform = 'rotate(90deg)';
       document.body.style.transformOrigin = 'center center';
-      document.body.style.width = '100vh';
-      document.body.style.height = '100vw';
+      document.body.style.width = `${vh}px`;
+      document.body.style.height = `${vw}px`;
       document.body.style.position = 'fixed';
-      document.body.style.top = '0';
-      document.body.style.left = '0';
+      document.body.style.top = `${(vh - vw) / 2}px`;
+      document.body.style.left = `${(vw - vh) / 2}px`;
       document.body.style.overflow = 'hidden';
+      document.body.style.margin = '0';
+      document.body.style.padding = '0';
       
       // Adjust the root container
       const root = document.getElementById('root');
       if (root) {
-        root.style.width = '100vh';
-        root.style.height = '100vw';
+        root.style.width = `${vh}px`;
+        root.style.height = `${vw}px`;
         root.style.overflow = 'auto';
         root.style.transform = 'none';
+        root.style.position = 'relative';
       }
+      
+      // Add landscape class to html for additional styling
+      document.documentElement.classList.add('landscape-mode');
     } else {
       // Reset to normal orientation
       document.body.style.transform = '';
@@ -52,6 +61,8 @@ export function OrientationToggle() {
       document.body.style.top = '';
       document.body.style.left = '';
       document.body.style.overflow = '';
+      document.body.style.margin = '';
+      document.body.style.padding = '';
       
       const root = document.getElementById('root');
       if (root) {
@@ -59,7 +70,11 @@ export function OrientationToggle() {
         root.style.height = '';
         root.style.overflow = '';
         root.style.transform = '';
+        root.style.position = '';
       }
+      
+      // Remove landscape class
+      document.documentElement.classList.remove('landscape-mode');
     }
   }, [isLandscapeForced]);
 
@@ -78,10 +93,12 @@ export function OrientationToggle() {
       size="sm"
       variant={isLandscapeForced ? "default" : "outline"}
       className={cn(
-        "fixed bottom-4 right-4 z-50 shadow-lg",
+        "fixed z-50 shadow-lg transition-all duration-200",
         "bg-white hover:bg-gray-50 border border-gray-300",
         isLandscapeForced && "bg-blue-600 hover:bg-blue-700 text-white border-blue-600",
-        "min-w-[100px] h-10" // Ensure button is visible
+        "min-w-[100px] h-10",
+        // Position based on orientation
+        isLandscapeForced ? "bottom-4 left-4" : "bottom-4 right-4"
       )}
       title={isLandscapeForced ? "Switch to Portrait" : "Switch to Landscape"}
       data-testid="button-orientation-toggle"
