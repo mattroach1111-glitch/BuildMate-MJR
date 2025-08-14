@@ -1,0 +1,8 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="512" height="512" rx="85" fill="#3b82f6"/>
+<path d="M171 139H341V171H171V139Z" fill="white"/>
+<path d="M128 203H384V235H128V203Z" fill="white"/>
+<path d="M149 267H363V299H149V267Z" fill="white"/>
+<path d="M192 331H320V363H192V331Z" fill="white"/>
+<text x="256" y="420" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="42" font-weight="bold">BuildFlow</text>
+</svg>
