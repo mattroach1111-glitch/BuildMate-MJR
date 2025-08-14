@@ -81,9 +81,9 @@ export function OrientationToggle() {
                   dropdown.style.visibility = 'visible';
                   dropdown.style.opacity = '1';
                   dropdown.style.position = 'fixed';
-                  dropdown.style.top = '10px';
-                  dropdown.style.right = '10px';
-                  dropdown.style.left = 'auto';
+                  dropdown.style.top = '20px';
+                  dropdown.style.left = '20px';
+                  dropdown.style.right = 'auto';
                   dropdown.style.transform = 'none';
                   dropdown.style.zIndex = '9999';
                   
