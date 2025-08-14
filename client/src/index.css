@@ -186,19 +186,15 @@ html.landscape-mode {
 }
 
 body.landscape-mode {
-  overflow: hidden;
+  overflow: auto;
   width: 100vh;
   height: 100vw;
   transform: rotate(90deg);
   transform-origin: center center;
   position: fixed;
-  top: 0;
-  left: 0;
-}
-
-html.landscape-mode body.landscape-mode {
   top: calc((100vh - 100vw) / 2);
   left: calc((100vw - 100vh) / 2);
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Allow proper scrolling in landscape mode */
@@ -208,6 +204,15 @@ body.landscape-mode #root {
   -webkit-overflow-scrolling: touch !important;
   height: 100% !important;
   width: 100% !important;
+}
+
+/* Fix portal positioning in landscape mode */
+html.landscape-mode [data-radix-dropdown-menu-content],
+html.landscape-mode [data-radix-popover-content],
+html.landscape-mode [data-radix-dialog-content],
+html.landscape-mode [data-radix-select-content] {
+  transform: rotate(-90deg) !important;
+  transform-origin: center center !important;
 }
 
 /* Hover states for dropdown items */
