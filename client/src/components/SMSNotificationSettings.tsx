@@ -64,7 +64,7 @@ export function SMSNotificationSettings() {
     },
   });
 
-  // Test SMS mutation
+  // Test SMS mutation (email-to-SMS method)
   const testSMSMutation = useMutation({
     mutationFn: async (phoneNum: string) => {
       const response = await fetch('/api/user/test-sms', {
@@ -73,7 +73,7 @@ export function SMSNotificationSettings() {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ phoneNumber: phoneNum }),
+        body: JSON.stringify({ phoneNumber: phoneNum, method: 'email' }),
       });
       
       if (!response.ok) {
