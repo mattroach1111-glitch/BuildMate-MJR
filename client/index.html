@@ -50,37 +50,15 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx?v=1.0.2"></script>
+    <script type="module" src="/src/main.tsx"></script>
     
     <!-- PWA Service Worker Registration -->
     <script>
-      // AGGRESSIVE CACHE BUSTING
-      const cacheVersion = Date.now();
-      console.log('🔄 CACHE BUST VERSION:', cacheVersion);
-      
-      // Clear all browser caches aggressively  
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(registrations => {
-          registrations.forEach(registration => registration.unregister());
-        });
-      }
-      
-      // Clear all caches
-      if ('caches' in window) {
-        caches.keys().then(names => {
-          names.forEach(name => caches.delete(name));
-        });
-      }
-      
-      // Force reload if needed
-      if (!window.location.search.includes('bust=' + cacheVersion)) {
-        const separator = window.location.search ? '&' : '?';
-        window.location.replace(window.location.pathname + window.location.search + separator + 'bust=' + cacheVersion);
-      }
+      console.log('BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed');
       
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js?v=' + cacheVersion)
+          navigator.serviceWorker.register('/sw.js')
             .then((registration) => {
               console.log('✅ BuildFlow Pro Service Worker registered:', registration.scope);
             })
