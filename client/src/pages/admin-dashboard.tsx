@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-// useAuth removed - using direct useQuery
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -38,10 +38,10 @@ import { generateJobListPDF } from "@/lib/pdfGenerator";
 import JobUpdateDialog from "@/components/job-update-form";
 import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor";
 import { EmailProcessingReview } from "@/components/EmailProcessingReview";
-
+import { NotificationSettings } from "@/components/NotificationSettings";
 
 import { AdminSettings } from "@/components/AdminSettings";
-
+import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -63,12 +63,7 @@ const adminTimesheetFormSchema = insertTimesheetEntrySchema.extend({
 });
 
 export default function AdminDashboard() {
-  const { data: user, isLoading } = useQuery({
-    queryKey: ["/api/auth/user"],
-    retry: false,
-    staleTime: 30000,
-  });
-  const isAuthenticated = !!user;
+  const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [location] = useLocation();
   const { 
@@ -3560,8 +3555,9 @@ export default function AdminDashboard() {
           <TabsContent value="notifications" className="space-y-6">
             <h2 className="text-xl font-semibold">Notification Settings</h2>
             <p className="text-muted-foreground">
-              Notification system temporarily disabled. Contact support for configuration.
+              Control your email notification preferences and choose alternative notification methods.
             </p>
+            <NotificationSettings />
           </TabsContent>
 
 

@@ -43,14 +43,13 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
-// Simple direct initialization - the proxy approach was causing issues
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "returnNull" }),
+      queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 30000,
+      staleTime: Infinity,
       retry: false,
     },
     mutations: {

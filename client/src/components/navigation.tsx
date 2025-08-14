@@ -1,8 +1,7 @@
-// useAuth removed - using direct useQuery
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
 import { 
   LayoutDashboard, 
   FileText, 
@@ -29,12 +28,7 @@ interface NavigationProps {
 }
 
 export default function Navigation({ title, subtitle }: NavigationProps) {
-  const { data: user } = useQuery({
-    queryKey: ["/api/auth/user"],
-    retry: false,
-    staleTime: 30000,
-  });
-  const isAuthenticated = !!user;
+  const { user, isAuthenticated } = useAuth();
   const [location, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 

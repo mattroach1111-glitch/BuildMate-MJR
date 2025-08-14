@@ -1,8 +1,10 @@
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-// NO USEAUTH IMPORTS - REMOVED TO FIX REACT HOOKS ERRORS
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { useAuth } from "@/hooks/useAuth";
+import { NotificationPopup } from "@/components/notification-popup";
 import Landing from "@/pages/landing";
 import AdminDashboard from "@/pages/admin-dashboard";
 import { JobsList } from "@/pages/jobs-list";
@@ -10,25 +12,8 @@ import NotFound from "@/pages/not-found";
 import FortnightTimesheetView from "@/pages/fortnight-timesheet-view";
 import StaffTimesheet from "@/pages/staff-timesheet";
 
-// Register service worker for PWA
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').then(registration => {
-    console.log('Service Worker registered successfully:', registration);
-  }).catch(error => {
-    console.log('Service Worker registration failed:', error);
-  });
-}
-
 function Router() {
-  console.log('Router component rendering');
-  const { data: user, isLoading, error } = useQuery({
-    queryKey: ["/api/auth/user"],
-    retry: false,
-    staleTime: 30000,
-  });
-  
-  console.log('Router state:', { user, isLoading, error });
-  const isAuthenticated = !!user;
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -63,16 +48,18 @@ function Router() {
 }
 
 function AppContent() {
-  console.log('AppContent component rendering');
+  const { user } = useAuth();
+  
   return (
-    <div>
+    <TooltipProvider>
+      <Toaster />
       <Router />
-    </div>
+      <NotificationPopup userEmail={(user as any)?.email} />
+    </TooltipProvider>
   );
 }
 
 function App() {
-  console.log('App component rendering with restored QueryClient');
   return (
     <QueryClientProvider client={queryClient}>
       <AppContent />

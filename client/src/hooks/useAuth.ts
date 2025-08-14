@@ -1,8 +1,17 @@
-// This file intentionally left empty - useAuth hook has been completely removed
-// All components now use direct useQuery calls for authentication
-// If you see this file being imported, remove that import and use:
-// const { data: user } = useQuery({ queryKey: ["/api/auth/user"] })
+import { useQuery } from "@tanstack/react-query";
 
 export function useAuth() {
-  throw new Error("useAuth is deprecated - use useQuery directly");
+  const { data: user, isLoading, refetch } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+    // Reduce stale time to refresh user role changes more quickly
+    staleTime: 30000, // 30 seconds instead of Infinity
+  });
+
+  return {
+    user,
+    isLoading,
+    isAuthenticated: !!user,
+    refetch, // Expose refetch for manual role updates
+  };
 }
