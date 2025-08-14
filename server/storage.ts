@@ -380,6 +380,15 @@ export class DatabaseStorage implements IStorage {
       invoiceDate: new Date().toISOString().split('T')[0], // Today's date
     });
     
+    // Apply automatic hours for employees with auto hours enabled
+    try {
+      await this.applyAutomaticHours(createdJob.id);
+      console.log('✅ Applied automatic hours during job creation');
+    } catch (autoHoursError) {
+      console.error('Error applying automatic hours during job creation:', autoHoursError);
+      // Don't fail job creation if auto hours fails
+    }
+    
     return createdJob;
   }
 
