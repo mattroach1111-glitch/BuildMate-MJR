@@ -41,6 +41,7 @@ import { EmailProcessingReview } from "@/components/EmailProcessingReview";
 import { NotificationSettings } from "@/components/NotificationSettings";
 
 import { AdminSettings } from "@/components/AdminSettings";
+import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
