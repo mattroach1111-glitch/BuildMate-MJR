@@ -11,92 +11,47 @@
   "lang": "en-AU",
   "icons": [
     {
-      "src": "/icon-72x72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "maskable any"
+      "src": "/icon.svg",
+      "sizes": "72x72 96x96 128x128 144x144 152x152 192x192 384x384 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-      "src": "/icon-96x96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icon-128x128.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icon-144x144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icon-152x152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icon-192x192.png",
+      "src": "/icon.svg",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable any"
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     },
     {
-      "src": "/icon-384x384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icon-512x512.png",
+      "src": "/icon.svg",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable any"
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshot-mobile-1.png",
-      "type": "image/png",
-      "sizes": "390x844",
-      "form_factor": "narrow",
-      "label": "BuildFlow Pro Dashboard"
-    },
-    {
-      "src": "/screenshot-desktop-1.png",
-      "type": "image/png", 
-      "sizes": "1280x720",
-      "form_factor": "wide",
-      "label": "BuildFlow Pro Admin Panel"
-    }
-  ],
+
   "shortcuts": [
     {
       "name": "Create New Job",
       "short_name": "New Job",
-      "url": "/jobs/new",
+      "url": "/",
       "icons": [
         {
-          "src": "/shortcut-new-job.png",
+          "src": "/icon.svg",
           "sizes": "96x96",
-          "type": "image/png"
+          "type": "image/svg+xml"
         }
       ]
     },
     {
       "name": "Timesheet Entry",
       "short_name": "Timesheet",
-      "url": "/timesheet",
+      "url": "/",
       "icons": [
         {
-          "src": "/shortcut-timesheet.png",
+          "src": "/icon.svg",
           "sizes": "96x96", 
-          "type": "image/png"
+          "type": "image/svg+xml"
         }
       ]
     }

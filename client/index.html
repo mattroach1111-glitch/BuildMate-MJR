@@ -48,6 +48,101 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('✅ BuildFlow Pro Service Worker registered:', registration.scope);
+            })
+            .catch((error) => {
+              console.log('❌ Service Worker registration failed:', error);
+            });
+        });
+      }
+
+      // PWA Install Prompt Handler
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('📱 Install prompt available');
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Show custom install button/banner
+        const installBanner = document.createElement('div');
+        installBanner.id = 'install-banner';
+        installBanner.innerHTML = `
+          <div style="
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            background: linear-gradient(135deg, #1f2937, #374151); 
+            color: white; 
+            padding: 12px; 
+            text-align: center; 
+            z-index: 10000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+          ">
+            <span>🏗️ Install BuildFlow Pro as an app for the best experience</span>
+            <button id="install-btn" style="
+              background: #3b82f6; 
+              color: white; 
+              border: none; 
+              padding: 8px 16px; 
+              border-radius: 6px; 
+              font-weight: 600;
+              cursor: pointer;
+            ">Install App</button>
+            <button id="dismiss-btn" style="
+              background: transparent; 
+              color: #9ca3af; 
+              border: 1px solid #4b5563; 
+              padding: 8px 12px; 
+              border-radius: 6px; 
+              cursor: pointer;
+            ">Dismiss</button>
+          </div>
+        `;
+        
+        document.body.appendChild(installBanner);
+        document.body.style.paddingTop = '60px';
+        
+        document.getElementById('install-btn').addEventListener('click', () => {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+              console.log('✅ User accepted the install prompt');
+            }
+            deferredPrompt = null;
+            installBanner.remove();
+            document.body.style.paddingTop = '0';
+          });
+        });
+        
+        document.getElementById('dismiss-btn').addEventListener('click', () => {
+          installBanner.remove();
+          document.body.style.paddingTop = '0';
+        });
+      });
+
+      // App installed handler
+      window.addEventListener('appinstalled', () => {
+        console.log('🎉 BuildFlow Pro installed successfully!');
+        const banner = document.getElementById('install-banner');
+        if (banner) {
+          banner.remove();
+          document.body.style.paddingTop = '0';
+        }
+      });
+    </script>
+    
     <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
   </body>
