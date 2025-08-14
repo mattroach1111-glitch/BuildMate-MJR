@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationPopup } from "@/components/notification-popup";
 import { SamsungRotationWarning } from "./components/SamsungRotationWarning";
-import { PushNotificationService } from "@/lib/pushNotifications";
+import { pushNotificationService } from "@/lib/pushNotifications";
 import { useEffect } from "react";
 import Landing from "@/pages/landing";
 import AdminDashboard from "@/pages/admin-dashboard";
@@ -58,7 +58,7 @@ function AppContent() {
     if (isAuthenticated && user) {
       const autoRegister = async () => {
         try {
-          const notificationService = PushNotificationService.getInstance();
+          const notificationService = pushNotificationService;
           
           // Check if notifications are already granted
           if (Notification.permission === 'granted') {
