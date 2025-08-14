@@ -50,6 +50,14 @@ function Router() {
   );
 }
 
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppContent />
+    </QueryClientProvider>
+  );
+}
+
 function AppContent() {
   const { user, isAuthenticated } = useAuth();
   
@@ -81,14 +89,6 @@ function AppContent() {
       <Router />
       <NotificationPopup userEmail={(user as any)?.email} />
     </TooltipProvider>
-  );
-}
-
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AppContent />
-    </QueryClientProvider>
   );
 }
 
