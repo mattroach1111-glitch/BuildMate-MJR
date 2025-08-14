@@ -1,0 +1,21 @@
+(index):36  GET https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/@vite/client net::ERR_ABORTED 502 (Bad Gateway)
+App.tsx:21  GET https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/src/components/ui/toaster.tsx net::ERR_ABORTED 502 (Bad Gateway)
+(index):29  GET https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/@react-refresh net::ERR_ABORTED 502 (Bad Gateway)
+App.tsx:22  GET https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/src/components/ui/tooltip.tsx net::ERR_ABORTED 502 (Bad Gateway)
+App.tsx:19  GET https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/src/lib/queryClient.ts net::ERR_ABORTED 502 (Bad Gateway)
+(index):1 Error while trying to use the following icon from the Manifest: https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/icon-192x192.png (Download error or resource isn't a valid image)
+App.tsx:24  GET https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/src/components/notification-popup.tsx net::ERR_ABORTED 502 (Bad Gateway)
+App.tsx:25  GET https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/src/components/SamsungRotationWarning.tsx net::ERR_ABORTED 502 (Bad Gateway)
+App.tsx:23  GET https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/src/hooks/useAuth.ts net::ERR_ABORTED 502 (Bad Gateway)
+App.tsx:26  GET https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/src/lib/notifications.ts net::ERR_ABORTED 502 (Bad Gateway)
+App.tsx:29  GET https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/src/pages/admin-dashboard.tsx net::ERR_ABORTED 502 (Bad Gateway)
+App.tsx:28  GET https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/src/pages/landing.tsx net::ERR_ABORTED 502 (Bad Gateway)
+App.tsx:30  GET https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/src/pages/jobs-list.tsx net::ERR_ABORTED 502 (Bad Gateway)
+App.tsx:31  GET https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/src/pages/not-found.tsx net::ERR_ABORTED 502 (Bad Gateway)
+icon-192x192.svg:1  GET https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/icon-192x192.svg 502 (Bad Gateway)
+App.tsx:32  GET https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/src/pages/fortnight-timesheet-view.tsx net::ERR_ABORTED 502 (Bad Gateway)
+icon-512x512.png:1  GET https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/icon-512x512.png 502 (Bad Gateway)
+Image
+M @ content.js:1
+O @ content.js:1
+(anonymous) @ content.js:1
