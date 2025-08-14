@@ -232,30 +232,27 @@ html.landscape-mode [data-state="open"][role="dialog"] {
   max-height: 90% !important;
 }
 
-/* Fix dropdown menus in landscape mode */
-html.landscape-mode [data-radix-popper-content-wrapper],
-html.landscape-mode [role="menu"],
-html.landscape-mode [role="listbox"],
-html.landscape-mode .dropdown-content {
+/* Fix dropdown menus in landscape mode - override Radix positioning */
+html.landscape-mode [data-radix-popper-content-wrapper] {
   transform: rotate(-90deg) !important;
   transform-origin: center center !important;
+  position: fixed !important;
 }
 
-/* Ensure dropdowns appear near their triggers */
-html.landscape-mode [data-side="bottom"] {
-  transform: rotate(-90deg) translate(0, 10px) !important;
+/* Ensure dropdown menus stay close to their triggers */
+html.landscape-mode [data-radix-dropdown-menu-content],
+html.landscape-mode [data-radix-select-content] {
+  position: absolute !important;
+  transform: rotate(-90deg) !important;
+  transform-origin: center center !important;
+  max-height: 200px !important;
+  overflow-y: auto !important;
 }
 
-html.landscape-mode [data-side="top"] {
-  transform: rotate(-90deg) translate(0, -10px) !important;
-}
-
-html.landscape-mode [data-side="right"] {
-  transform: rotate(-90deg) translate(10px, 0) !important;
-}
-
-html.landscape-mode [data-side="left"] {
-  transform: rotate(-90deg) translate(-10px, 0) !important;
+/* Prevent dropdowns from being positioned at viewport edges */
+html.landscape-mode [role="menu"] {
+  position: static !important;
+  transform: none !important;
 }
 
 /* Ensure buttons and interactive elements remain clickable */
