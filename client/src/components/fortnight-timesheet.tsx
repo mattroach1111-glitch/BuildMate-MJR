@@ -10,7 +10,7 @@ import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft, Users, Plus, 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, addDays, parseISO } from "date-fns";
-import { useAuth } from "@/hooks/useAuth";
+// useAuth removed - using direct useQuery
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -24,7 +24,11 @@ interface FortnightTimesheetProps {
 }
 
 export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: FortnightTimesheetProps) {
-  const { user } = useAuth();
+  const { data: user } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+    staleTime: 30000,
+  });
   const { toast } = useToast();
   const [selectedEmployee, setSelectedEmployee] = useState<string>(selectedEmployeeId || "");
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);

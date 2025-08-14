@@ -1,13 +1,18 @@
 import { FortnightTimesheet } from "@/components/fortnight-timesheet";
-import { useAuth } from "@/hooks/useAuth";
+// useAuth removed - using direct useQuery
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import PageLayout from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function FortnightTimesheetView() {
-  const { user } = useAuth();
+  const { data: user } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+    staleTime: 30000,
+  });
   const [, setLocation] = useLocation();
   const [employeeId, setEmployeeId] = useState<string>("");
   const [isAdminView, setIsAdminView] = useState<boolean>(false);

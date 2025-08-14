@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+// useAuth removed - using direct useQuery
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -63,7 +63,12 @@ const adminTimesheetFormSchema = insertTimesheetEntrySchema.extend({
 });
 
 export default function AdminDashboard() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { data: user, isLoading } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+    staleTime: 30000,
+  });
+  const isAuthenticated = !!user;
   const { toast } = useToast();
   const [location] = useLocation();
   const { 

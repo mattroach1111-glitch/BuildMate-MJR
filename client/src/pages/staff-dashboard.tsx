@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+// useAuth removed - using direct useQuery
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -31,7 +31,12 @@ interface StaffDashboardProps {
 }
 
 export default function StaffDashboard({ isAdminView = false }: StaffDashboardProps) {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { data: user, isLoading } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+    staleTime: 30000,
+  });
+  const isAuthenticated = !!user;
   const { toast } = useToast();
   const { 
     showWelcome, 

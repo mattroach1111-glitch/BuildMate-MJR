@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { X, ChevronLeft, ChevronRight, Play, CheckCircle } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+// useAuth removed - using direct useQuery
+import { useQuery } from "@tanstack/react-query";
 
 interface TourStep {
   id: string;
@@ -132,7 +133,11 @@ const staffTourSteps: TourStep[] = [
 ];
 
 export function OnboardingTour({ isOpen, onClose, onComplete }: OnboardingTourProps) {
-  const { user } = useAuth();
+  const { data: user } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+    staleTime: 30000,
+  });
   const [currentStep, setCurrentStep] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   
@@ -313,7 +318,11 @@ export function OnboardingTour({ isOpen, onClose, onComplete }: OnboardingTourPr
 
 // Welcome animation component for first-time users
 export function WelcomeAnimation({ onComplete }: { onComplete: () => void }) {
-  const { user } = useAuth();
+  const { data: user } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+    staleTime: 30000,
+  });
   const isAdmin = (user as any)?.role === "admin";
 
   return (
