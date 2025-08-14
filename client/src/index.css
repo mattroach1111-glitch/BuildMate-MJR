@@ -232,9 +232,14 @@ html.landscape-mode [data-state="open"][role="dialog"] {
   max-height: 90% !important;
 }
 
-/* Simple dropdown fix for landscape mode - just ensure visibility */
+/* Complete override for dropdowns in landscape mode */
 html.landscape-mode [data-radix-dropdown-menu-content] {
-  position: fixed !important;
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
   z-index: 9999 !important;
   background: white !important;
   border: 1px solid #ccc !important;
@@ -242,6 +247,13 @@ html.landscape-mode [data-radix-dropdown-menu-content] {
   box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
   max-height: 300px !important;
   overflow-y: auto !important;
+  margin-top: 4px !important;
+  min-width: 120px !important;
+}
+
+/* Ensure the dropdown trigger button is positioned relatively */
+html.landscape-mode [data-radix-dropdown-menu-trigger] {
+  position: relative !important;
 }
 
 /* Ensure buttons and interactive elements remain clickable */

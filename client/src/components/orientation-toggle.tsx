@@ -73,36 +73,12 @@ export function OrientationToggle() {
                 node.style.pointerEvents = 'auto';
               }
               
-              // Make dropdowns visible and position them correctly in landscape
+              // Simple dropdown visibility fix - let CSS handle positioning
               const dropdownContent = node.querySelector('[data-radix-dropdown-menu-content]');
               if (dropdownContent instanceof HTMLElement) {
                 dropdownContent.style.display = 'block';
                 dropdownContent.style.visibility = 'visible';
                 dropdownContent.style.opacity = '1';
-                
-                // Try multiple methods to position near trigger
-                setTimeout(() => {
-                  // Try different trigger selectors
-                  let trigger = document.querySelector('[data-state="open"]') ||
-                               document.querySelector('[aria-expanded="true"]') ||
-                               document.querySelector('button:focus') ||
-                               document.querySelector('.lucide-more-horizontal')?.closest('button');
-                  
-                  if (trigger instanceof HTMLElement) {
-                    const rect = trigger.getBoundingClientRect();
-                    dropdownContent.style.position = 'fixed';
-                    dropdownContent.style.top = `${Math.min(rect.bottom + 5, window.innerHeight - 200)}px`;
-                    dropdownContent.style.left = `${Math.min(rect.left, window.innerWidth - 200)}px`;
-                    dropdownContent.style.transform = 'none';
-                    dropdownContent.style.maxWidth = '180px';
-                  } else {
-                    // Fallback: position in upper left
-                    dropdownContent.style.position = 'fixed';
-                    dropdownContent.style.top = '20px';
-                    dropdownContent.style.left = '20px';
-                    dropdownContent.style.transform = 'none';
-                  }
-                }, 50);
               }
             }
           });
