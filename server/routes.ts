@@ -2432,6 +2432,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put('/api/user/push-notification-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const { settings } = req.body;
+      const userId = req.user?.claims?.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+      
+      // Validate settings structure
+      if (!settings || typeof settings !== 'object') {
+        return res.status(400).json({ message: 'Invalid settings format' });
+      }
+      
+      // Update user push notification settings
+      await storage.updateUserPushNotificationSettings(userId, JSON.stringify(settings));
+      
+      res.json({ message: 'Push notification settings updated successfully' });
+    } catch (error) {
+      console.error('Error updating push notification settings:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   // Document upload endpoints for expense processing
   
   // Endpoint to get upload URL for expense documents (legacy object storage)

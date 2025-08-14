@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Bell, Mail, FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Bell, Mail, FileText, Clock, CheckCircle, AlertCircle, Smartphone } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,6 +17,15 @@ interface NotificationPreferences {
   timesheetReminders: boolean;
 }
 
+interface PushNotificationSettings {
+  timesheetReminders: {
+    enabled: boolean;
+    time: string;
+    days: string[];
+    timezone: string;
+  };
+}
+
 export function NotificationSettings() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -22,6 +33,14 @@ export function NotificationSettings() {
     documentProcessing: true,
     jobUpdates: true,
     timesheetReminders: true,
+  });
+  const [pushSettings, setPushSettings] = useState<PushNotificationSettings>({
+    timesheetReminders: {
+      enabled: true,
+      time: "17:00",
+      days: ["monday", "tuesday", "wednesday", "thursday", "friday"],
+      timezone: "Australia/Sydney"
+    }
   });
 
   // Get current user and notification preferences
@@ -48,6 +67,14 @@ export function NotificationSettings() {
         console.error('Error parsing notification preferences:', error);
       }
     }
+    if (user?.pushNotificationSettings) {
+      try {
+        const pushSettings = JSON.parse(user.pushNotificationSettings);
+        setPushSettings(pushSettings);
+      } catch (error) {
+        console.error('Error parsing push notification settings:', error);
+      }
+    }
   }, [user]);
 
   const updatePreferencesMutation = useMutation({
@@ -71,10 +98,55 @@ export function NotificationSettings() {
     },
   });
 
+  const updatePushSettingsMutation = useMutation({
+    mutationFn: async (newSettings: PushNotificationSettings) => {
+      return apiRequest('PUT', '/api/user/push-notification-settings', { settings: newSettings });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      toast({
+        title: "Settings Updated",
+        description: "Your push notification settings have been saved.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update push notification settings. Please try again.",
+        variant: "destructive",
+      });
+      console.error('Error updating push settings:', error);
+    },
+  });
+
   const handlePreferenceChange = (key: keyof NotificationPreferences, value: boolean) => {
     const newPrefs = { ...preferences, [key]: value };
     setPreferences(newPrefs);
     updatePreferencesMutation.mutate(newPrefs);
+  };
+
+  const handlePushSettingChange = (key: string, value: any) => {
+    const newSettings = { ...pushSettings };
+    if (key.includes('.')) {
+      const [parentKey, childKey] = key.split('.');
+      newSettings[parentKey as keyof PushNotificationSettings] = {
+        ...newSettings[parentKey as keyof PushNotificationSettings],
+        [childKey]: value
+      } as any;
+    } else {
+      (newSettings as any)[key] = value;
+    }
+    setPushSettings(newSettings);
+    updatePushSettingsMutation.mutate(newSettings);
+  };
+
+  const handleDayToggle = (day: string) => {
+    const currentDays = pushSettings.timesheetReminders.days;
+    const newDays = currentDays.includes(day) 
+      ? currentDays.filter(d => d !== day)
+      : [...currentDays, day];
+    
+    handlePushSettingChange('timesheetReminders.days', newDays);
   };
 
   return (
@@ -167,6 +239,116 @@ export function NotificationSettings() {
             disabled={updatePreferencesMutation.isPending}
           />
         </div>
+
+        <Separator />
+
+        {/* Push Notification Settings */}
+        <Card className="border-purple-200 bg-purple-50/30 dark:bg-purple-950/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-purple-800 dark:text-purple-200">
+              <Smartphone className="h-5 w-5" />
+              Push Notification Settings
+            </CardTitle>
+            <p className="text-sm text-purple-700 dark:text-purple-300">
+              Configure mobile push notifications for timesheet reminders
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Timesheet Push Reminders */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Clock className="h-5 w-5 text-purple-500" />
+                  <div>
+                    <Label className="text-base font-medium">Daily Timesheet Reminders</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Send push notifications to remind staff to complete timesheets
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  data-testid="switch-push-timesheet-reminders"
+                  checked={pushSettings.timesheetReminders.enabled}
+                  onCheckedChange={(checked) => handlePushSettingChange('timesheetReminders.enabled', checked)}
+                  disabled={updatePushSettingsMutation.isPending}
+                />
+              </div>
+
+              {pushSettings.timesheetReminders.enabled && (
+                <div className="ml-8 space-y-4 p-4 bg-white dark:bg-gray-900 rounded-lg border">
+                  {/* Time Setting */}
+                  <div className="space-y-2">
+                    <Label htmlFor="reminder-time" className="text-sm font-medium">
+                      Reminder Time
+                    </Label>
+                    <Input
+                      id="reminder-time"
+                      type="time"
+                      value={pushSettings.timesheetReminders.time}
+                      onChange={(e) => handlePushSettingChange('timesheetReminders.time', e.target.value)}
+                      className="w-32"
+                      data-testid="input-reminder-time"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Time is in {pushSettings.timesheetReminders.timezone} timezone
+                    </p>
+                  </div>
+
+                  {/* Days Selection */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Reminder Days</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
+                        <Button
+                          key={day}
+                          size="sm"
+                          variant={pushSettings.timesheetReminders.days.includes(day) ? "default" : "outline"}
+                          onClick={() => handleDayToggle(day)}
+                          data-testid={`button-day-${day}`}
+                          className="capitalize"
+                        >
+                          {day.substring(0, 3)}
+                        </Button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Select which days to send timesheet reminders
+                    </p>
+                  </div>
+
+                  {/* Timezone Setting */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Timezone</Label>
+                    <Select
+                      value={pushSettings.timesheetReminders.timezone}
+                      onValueChange={(value) => handlePushSettingChange('timesheetReminders.timezone', value)}
+                    >
+                      <SelectTrigger className="w-48" data-testid="select-timezone">
+                        <SelectValue placeholder="Select timezone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Australia/Sydney">Australia/Sydney</SelectItem>
+                        <SelectItem value="Australia/Melbourne">Australia/Melbourne</SelectItem>
+                        <SelectItem value="Australia/Brisbane">Australia/Brisbane</SelectItem>
+                        <SelectItem value="Australia/Perth">Australia/Perth</SelectItem>
+                        <SelectItem value="Australia/Adelaide">Australia/Adelaide</SelectItem>
+                        <SelectItem value="Australia/Darwin">Australia/Darwin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Push Notification Status */}
+            {updatePushSettingsMutation.isPending && (
+              <div className="flex items-center gap-2 text-sm text-purple-600">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-500"></div>
+                Saving push notification settings...
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Separator />
 
