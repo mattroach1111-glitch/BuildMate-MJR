@@ -1,33 +1,28 @@
-// Minimal Service Worker - Troubleshooting Mode
-console.log('Service Worker: Troubleshooting mode active');
-
-// Immediately skip waiting and take control
-self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing...');
+// Force unregister all service workers
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activating...');
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      console.log('Service Worker: Clearing all caches');
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          return caches.delete(cacheName);
-        })
-      );
-    }).then(() => {
-      console.log('Service Worker: Taking control of clients');
+    Promise.all([
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            console.log('Deleting cache:', cacheName);
+            return caches.delete(cacheName);
+          })
+        );
+      }),
+      self.registration.unregister()
+    ]).then(() => {
+      console.log('Service worker unregistered');
       return self.clients.claim();
     })
   );
 });
 
-// Don't intercept fetch requests - let everything go to network
-self.addEventListener('fetch', (event) => {
-  // No caching, no interception - just let requests pass through
+// Block all fetch requests from service worker
+self.addEventListener('fetch', () => {
   return;
 });
-
-console.log('Service Worker: Setup complete');
