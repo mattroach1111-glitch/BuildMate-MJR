@@ -180,34 +180,42 @@ table tr.weekend-row button {
     }
   }
 
-/* Landscape mode adjustments - FIXED VIEWPORT AND SCROLLING */
+/* Landscape mode adjustments - FULL VIEWPORT WITH SMOOTH SCROLLING */
 html.landscape-mode {
-  overflow: auto !important; /* Allow scrolling on html */
+  overflow: hidden !important; /* Prevent double scrollbars */
+  height: 100vh !important;
+  width: 100vw !important;
 }
 
 body.landscape-mode {
-  /* Use transform without changing positioning */
-  transform: rotate(90deg) !important;
-  transform-origin: center center !important;
+  /* Full viewport rotation with proper centering */
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vh !important;
+  height: 100vw !important;
+  transform: rotate(90deg) translate3d(calc((100vw - 100vh) / 2), calc((100vh - 100vw) / 2), 0) !important;
+  transform-origin: 0 0 !important;
   
-  /* Keep natural dimensions and positioning */
-  position: static !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  margin: 0 !important;
-  
-  /* Enable smooth scrolling */
-  overflow: auto !important;
+  /* Smooth momentum scrolling */
+  overflow-y: scroll !important;
+  overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch !important;
-  touch-action: pan-y pan-x !important;
+  scroll-behavior: smooth !important;
+  
+  /* Optimize rendering performance */
+  will-change: transform !important;
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
 }
 
-/* Root container maintains natural flow */
+/* Root container fills full rotated space */
 body.landscape-mode #root {
   width: 100% !important;
   min-height: 100vh !important;
   overflow: visible !important;
   -webkit-overflow-scrolling: touch !important;
+  transform: translateZ(0) !important; /* Force hardware acceleration */
 }
 
 /* Fix portal positioning in landscape mode */
