@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Bell, Mail, FileText, Clock, CheckCircle, AlertCircle, Smartphone, Users, Send, MessageSquare } from 'lucide-react';
+import { Bell, Mail, FileText, Clock, CheckCircle, AlertCircle, Smartphone, Users, Send, MessageSquare, TestTube } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { pushNotificationService } from '@/lib/pushNotifications';

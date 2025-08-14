@@ -73,6 +73,45 @@ export class PushNotificationService {
     return permission === 'granted';
   }
 
+  // Test notification (for debugging)
+  async sendTestNotification(): Promise<boolean> {
+    try {
+      const response = await fetch('/api/test-push-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: 'Test Notification',
+          message: 'This is a test push notification from BuildFlow Pro',
+          userIds: ['test-user']
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Test notification API response:', result);
+        
+        // Show browser notification
+        this.showNotification('Test Notification', {
+          body: 'This is a test push notification from BuildFlow Pro',
+          icon: '/icon-192x192.png',
+          badge: '/icon-192x192.png',
+          tag: 'test-notification',
+          requireInteraction: true
+        });
+        
+        return true;
+      }
+      
+      console.error('Test notification failed:', await response.text());
+      return false;
+    } catch (error) {
+      console.error('Error sending test notification:', error);
+      return false;
+    }
+  }
+
   // Show timesheet reminder notification
   showTimesheetReminder(): void {
     this.showNotification('Timesheet Reminder', {

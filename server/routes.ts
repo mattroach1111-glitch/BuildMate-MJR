@@ -1518,6 +1518,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test push notification endpoint (for debugging)
+  app.post("/api/test-push-notification", async (req, res) => {
+    try {
+      const { title, message, userIds } = req.body;
+      
+      console.log('🧪 TEST PUSH NOTIFICATION:');
+      console.log('Title:', title);
+      console.log('Message:', message);
+      console.log('User IDs:', userIds);
+      
+      // Simulate a real push notification
+      res.json({
+        success: true,
+        message: "Test notification processed",
+        title,
+        body: message,
+        targetUsers: userIds?.length || 0,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error in test push notification:", error);
+      res.status(500).json({ error: "Test notification failed" });
+    }
+  });
+
   app.post("/api/timesheet", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

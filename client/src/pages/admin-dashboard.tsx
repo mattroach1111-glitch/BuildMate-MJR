@@ -39,6 +39,7 @@ import JobUpdateDialog from "@/components/job-update-form";
 import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor";
 import { EmailProcessingReview } from "@/components/EmailProcessingReview";
 import { NotificationSettings } from "@/components/NotificationSettings";
+import { TestNotificationButton } from '@/components/TestNotificationButton';
 
 import { AdminSettings } from "@/components/AdminSettings";
 import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
@@ -3520,6 +3521,22 @@ export default function AdminDashboard() {
                       >
                         {resetDatabaseMutation.isPending ? "Resetting..." : "Reset Database"}
                       </Button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Push Notification Testing */}
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-purple-100 rounded-full p-2">
+                      <Bell className="h-4 w-4 text-purple-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-purple-800 mb-1">Push Notification Testing</h4>
+                      <p className="text-sm text-purple-700 mb-3">
+                        Test the push notification system to verify it's working correctly.
+                      </p>
+                      <TestNotificationButton />
                     </div>
                   </div>
                 </div>
