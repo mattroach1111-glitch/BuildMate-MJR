@@ -529,12 +529,13 @@ export class DatabaseStorage implements IStorage {
       .from(laborEntries)
       .where(eq(laborEntries.jobId, jobId));
 
-    // Calculate subtotal INCLUDING labor (the full job sheet total)
+    // Calculate subtotal INCLUDING labor AND tip fees (the full job sheet total)
     const subtotal = 
       (parseFloat(laborCost.total || "0")) +
       (parseFloat(materialsCost.total || "0")) +
       (parseFloat(subTradesCost.total || "0")) +
-      (parseFloat(otherCostsCost.total || "0"));
+      (parseFloat(otherCostsCost.total || "0")) +
+      (parseFloat(tipFeesCost.total || "0"));
 
     // Apply builder margin (same as frontend calculation)
     const marginPercent = parseFloat(job.builderMargin || "0") / 100;
@@ -546,7 +547,7 @@ export class DatabaseStorage implements IStorage {
     const finalTotal = subtotalWithMargin + gstAmount;
 
     console.log(`💰 Job total cost calculation (FULL JOB SHEET TOTAL):
-    - Subtotal: Labor($${laborCost.total || "0"}) + Materials($${materialsCost.total || "0"}) + SubTrades($${subTradesCost.total || "0"}) + OtherCosts($${otherCostsCost.total || "0"}) = $${subtotal}
+    - Subtotal: Labor($${laborCost.total || "0"}) + Materials($${materialsCost.total || "0"}) + SubTrades($${subTradesCost.total || "0"}) + OtherCosts($${otherCostsCost.total || "0"}) + TipFees($${tipFeesCost.total || "0"}) = $${subtotal}
     - Builder Margin (${job.builderMargin || "0"}%): $${marginAmount.toFixed(2)}
     - Subtotal with Margin: $${subtotalWithMargin.toFixed(2)}
     - GST (10%): $${gstAmount.toFixed(2)}
