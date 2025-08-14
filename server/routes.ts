@@ -754,6 +754,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const laborEntry = await storage.addExtraHoursToLaborEntry(req.params.id, extraHours);
+      
+      // Recalculate auto hours when labor costs change (affects total job cost)
+      if (laborEntry.jobId) {
+        try {
+          console.log(`🔄 Starting automatic hours recalculation for job ${laborEntry.jobId} after labor hours update`);
+          await storage.applyAutomaticHours(laborEntry.jobId);
+          console.log(`✅ Recalculated automatic hours for job ${laborEntry.jobId} after labor hours update`);
+        } catch (autoHoursError) {
+          console.error('❌ Error recalculating automatic hours after labor hours update:', autoHoursError);
+        }
+      }
+      
       res.json(laborEntry);
     } catch (error) {
       console.error("Error adding extra hours:", error);
@@ -773,6 +785,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         jobId: req.params.jobId,
       });
       const entry = await storage.createLaborEntry(validatedData);
+      
+      // Recalculate auto hours when new labor entries are added (affects total job cost)
+      try {
+        console.log(`🔄 Starting automatic hours recalculation for job ${req.params.jobId} after labor entry creation`);
+        await storage.applyAutomaticHours(req.params.jobId);
+        console.log(`✅ Recalculated automatic hours for job ${req.params.jobId} after labor entry creation`);
+      } catch (autoHoursError) {
+        console.error('❌ Error recalculating automatic hours after labor entry creation:', autoHoursError);
+      }
+      
       res.status(201).json(entry);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -792,6 +814,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertLaborEntrySchema.partial().parse(req.body);
       const entry = await storage.updateLaborEntry(req.params.id, validatedData);
+      
+      // Recalculate auto hours when labor entries are updated (affects total job cost)
+      if ((validatedData.hoursLogged || validatedData.hourlyRate) && entry.jobId) {
+        try {
+          console.log(`🔄 Starting automatic hours recalculation for job ${entry.jobId} after labor entry update`);
+          await storage.applyAutomaticHours(entry.jobId);
+          console.log(`✅ Recalculated automatic hours for job ${entry.jobId} after labor entry update`);
+        } catch (autoHoursError) {
+          console.error('❌ Error recalculating automatic hours after labor entry update:', autoHoursError);
+        }
+      }
+      
       res.json(entry);
     } catch (error) {
       if (error instanceof z.ZodError) {
