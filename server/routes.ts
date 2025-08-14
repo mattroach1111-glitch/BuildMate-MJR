@@ -3114,6 +3114,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Password validation endpoint
+  app.post("/api/validate-admin-password", isAuthenticated, async (req: any, res) => {
+    try {
+      const { password } = req.body;
+      
+      if (!password || typeof password !== 'string') {
+        return res.status(400).json({ message: "Password is required" });
+      }
+
+      // Check if user is admin
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // Simple password check - in production, you might want to hash this
+      const adminPassword = process.env.ADMIN_PASSWORD || "admin123"; // Default for testing
+      const isValid = password === adminPassword;
+      
+      res.json({ valid: isValid });
+    } catch (error) {
+      console.error("Error validating admin password:", error);
+      res.status(500).json({ message: "Failed to validate password" });
+    }
+  });
+
   // Email job sheet PDF endpoint
   app.post("/api/jobs/:id/email-pdf", isAuthenticated, async (req: any, res) => {
     try {

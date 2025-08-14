@@ -70,6 +70,9 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   // Hours editing state
   const [editingHours, setEditingHours] = useState<string | null>(null);
   const [editHoursForm, setEditHoursForm] = useState<{hoursLogged: string}>({hoursLogged: ""});
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [passwordForEdit, setPasswordForEdit] = useState("");
+  const [pendingEditEntry, setPendingEditEntry] = useState<LaborEntry | null>(null);
 
   const { data: jobDetails, isLoading } = useQuery<JobDetails>({
     queryKey: ["/api/jobs", jobId],
@@ -1177,10 +1180,49 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     setIsEditing(false);
   };
 
+  // Password validation mutation
+  const validatePasswordMutation = useMutation({
+    mutationFn: async (password: string) => {
+      const response = await apiRequest("POST", "/api/validate-admin-password", {
+        password,
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      if (data.valid && pendingEditEntry) {
+        setShowPasswordDialog(false);
+        setPasswordForEdit("");
+        setEditingHours(pendingEditEntry.id);
+        setEditHoursForm({ hoursLogged: pendingEditEntry.hoursLogged });
+        setPendingEditEntry(null);
+      } else {
+        toast({
+          title: "Error",
+          description: "Invalid password",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to validate password",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Hours editing handlers
-  const handleStartEditHours = (laborEntry: LaborEntry) => {
-    setEditingHours(laborEntry.id);
-    setEditHoursForm({ hoursLogged: laborEntry.hoursLogged });
+  const handleStartEditHours = (laborEntry: LaborEntry & { hoursSource?: string }) => {
+    // Check if hours came from timesheet - require password
+    if (laborEntry.hoursSource === "timesheet") {
+      setPendingEditEntry(laborEntry);
+      setShowPasswordDialog(true);
+    } else {
+      // Manual hours can be edited freely
+      setEditingHours(laborEntry.id);
+      setEditHoursForm({ hoursLogged: laborEntry.hoursLogged });
+    }
   };
 
   const handleSaveHours = (laborEntryId: string) => {
@@ -1635,15 +1677,31 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                               </div>
                             ) : (
                               <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-600 font-medium" data-testid={`text-labor-hours-${entry.id}`}>
-                                  {entry.hoursLogged} hrs
-                                </span>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-sm text-gray-600 font-medium" data-testid={`text-labor-hours-${entry.id}`}>
+                                    {entry.hoursLogged} hrs
+                                  </span>
+                                  {(entry as any).hoursSource === "timesheet" && (
+                                    <span className="text-xs bg-blue-100 text-blue-700 px-1 py-0.5 rounded" title="Hours from approved timesheet">
+                                      T
+                                    </span>
+                                  )}
+                                </div>
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  onClick={() => handleStartEditHours(entry)}
-                                  className="h-6 w-6 p-0 hover:bg-primary/10"
+                                  onClick={() => handleStartEditHours(entry as any)}
+                                  className={`h-6 w-6 p-0 hover:bg-primary/10 ${
+                                    (entry as any).hoursSource === "timesheet" 
+                                      ? "text-orange-600 hover:text-orange-700" 
+                                      : ""
+                                  }`}
                                   data-testid={`button-edit-hours-${entry.id}`}
+                                  title={
+                                    (entry as any).hoursSource === "timesheet" 
+                                      ? "Timesheet hours - password required to edit" 
+                                      : "Edit hours"
+                                  }
                                 >
                                   <Edit className="h-3 w-3" />
                                 </Button>
@@ -2636,6 +2694,57 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
               >
                 <Mail className="h-4 w-4 mr-2 max-sm:h-3 max-sm:w-3" />
                 {emailPDFMutation.isPending ? "Sending..." : "Send PDF"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Password Dialog for Timesheet Hours */}
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg">Password Required</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              These hours came from an approved timesheet. Enter the admin password to edit them.
+            </p>
+            <div>
+              <Label htmlFor="admin-password">Admin Password</Label>
+              <Input
+                id="admin-password"
+                type="password"
+                placeholder="Enter password"
+                value={passwordForEdit}
+                onChange={(e) => setPasswordForEdit(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && passwordForEdit.trim()) {
+                    validatePasswordMutation.mutate(passwordForEdit);
+                  }
+                }}
+                data-testid="input-admin-password"
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowPasswordDialog(false);
+                  setPasswordForEdit("");
+                  setPendingEditEntry(null);
+                }}
+                data-testid="button-cancel-password"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => validatePasswordMutation.mutate(passwordForEdit)}
+                disabled={validatePasswordMutation.isPending || !passwordForEdit.trim()}
+                data-testid="button-validate-password"
+              >
+                {validatePasswordMutation.isPending ? "Validating..." : "Confirm"}
               </Button>
             </div>
           </div>

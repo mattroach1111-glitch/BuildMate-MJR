@@ -92,6 +92,7 @@ export const laborEntries = pgTable("labor_entries", {
   staffId: varchar("staff_id").notNull().references(() => employees.id),
   hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }).notNull(),
   hoursLogged: decimal("hours_logged", { precision: 10, scale: 2 }).notNull().default("0"),
+  hoursSource: varchar("hours_source", { length: 20 }).notNull().default("manual"), // 'manual' or 'timesheet'
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

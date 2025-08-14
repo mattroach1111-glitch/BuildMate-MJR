@@ -787,6 +787,7 @@ export class DatabaseStorage implements IStorage {
         staffId: laborEntries.staffId,
         hourlyRate: laborEntries.hourlyRate,
         hoursLogged: laborEntries.hoursLogged,
+        hoursSource: laborEntries.hoursSource,
         createdAt: laborEntries.createdAt,
         updatedAt: laborEntries.updatedAt,
         staff: {
@@ -865,7 +866,11 @@ export class DatabaseStorage implements IStorage {
     // Update labor entry hours using the employee ID (not user ID)
     const updateResult = await db
       .update(laborEntries)
-      .set({ hoursLogged: totalHours.toString(), updatedAt: new Date() })
+      .set({ 
+        hoursLogged: totalHours.toString(), 
+        hoursSource: "timesheet",
+        updatedAt: new Date() 
+      })
       .where(
         and(
           eq(laborEntries.staffId, employeeId), // Use employee ID for labor entries
