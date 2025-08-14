@@ -32,13 +32,15 @@ export function OrientationToggle() {
       const translateX = (vw - vh) / 2;
       const translateY = (vh - vw) / 2;
       
-      document.body.style.transform = `translate(${translateX}px, ${translateY}px) rotate(90deg)`;
-      document.body.style.transformOrigin = 'center center';
+      document.body.style.transform = 'rotate(90deg)';
+      document.body.style.transformOrigin = '50% 50%';
       document.body.style.width = `${vh}px`;
       document.body.style.height = `${vw}px`;
       document.body.style.position = 'fixed';
-      document.body.style.top = '0';
-      document.body.style.left = '0';
+      document.body.style.top = '50%';
+      document.body.style.left = '50%';
+      document.body.style.marginTop = `${-vw / 2}px`;
+      document.body.style.marginLeft = `${-vh / 2}px`;
       document.body.style.overflow = 'hidden';
       document.body.style.margin = '0';
       document.body.style.padding = '0';
@@ -67,6 +69,8 @@ export function OrientationToggle() {
       document.body.style.overflow = '';
       document.body.style.margin = '';
       document.body.style.padding = '';
+      document.body.style.marginTop = '';
+      document.body.style.marginLeft = '';
       
       const root = document.getElementById('root');
       if (root) {
