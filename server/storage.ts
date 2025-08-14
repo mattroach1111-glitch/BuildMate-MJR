@@ -381,6 +381,7 @@ export class DatabaseStorage implements IStorage {
     });
     
     // Apply automatic hours for employees with auto hours enabled
+    // (This happens after all initial job setup is complete)
     try {
       await this.applyAutomaticHours(createdJob.id);
       console.log('✅ Applied automatic hours during job creation');

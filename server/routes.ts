@@ -852,6 +852,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertMaterialSchema.partial().parse(req.body);
       const material = await storage.updateMaterial(req.params.id, validatedData);
+      
+      // Recalculate auto hours when material costs change (affects bonus hours)
+      if (validatedData.amount && material.jobId) {
+        try {
+          await storage.applyAutomaticHours(material.jobId);
+          console.log(`✅ Recalculated automatic hours for job ${material.jobId} after material update`);
+        } catch (autoHoursError) {
+          console.error('Error recalculating automatic hours after material update:', autoHoursError);
+          // Don't fail the material update if auto hours fails
+        }
+      }
+      
       res.json(material);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -936,6 +948,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertTipFeeSchema.partial().parse(req.body);
       const tipFee = await storage.updateTipFee(req.params.id, validatedData);
+      
+      // Recalculate auto hours when tip fee costs change (affects bonus hours)
+      if ((validatedData.totalAmount || validatedData.cartageAmount || validatedData.dumpFee) && tipFee.jobId) {
+        try {
+          await storage.applyAutomaticHours(tipFee.jobId);
+          console.log(`✅ Recalculated automatic hours for job ${tipFee.jobId} after tip fee update`);
+        } catch (autoHoursError) {
+          console.error('Error recalculating automatic hours after tip fee update:', autoHoursError);
+        }
+      }
+      
       res.json(tipFee);
     } catch (error) {
       console.error("Error updating tip fee:", error);
@@ -990,6 +1013,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertSubTradeSchema.partial().parse(req.body);
       const subTrade = await storage.updateSubTrade(req.params.id, validatedData);
+      
+      // Recalculate auto hours when subtrade costs change (affects bonus hours)
+      if (validatedData.amount && subTrade.jobId) {
+        try {
+          await storage.applyAutomaticHours(subTrade.jobId);
+          console.log(`✅ Recalculated automatic hours for job ${subTrade.jobId} after subtrade update`);
+        } catch (autoHoursError) {
+          console.error('Error recalculating automatic hours after subtrade update:', autoHoursError);
+        }
+      }
+      
       res.json(subTrade);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1047,6 +1081,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertOtherCostSchema.partial().parse(req.body);
       const otherCost = await storage.updateOtherCost(req.params.id, validatedData);
+      
+      // Recalculate auto hours when other costs change (affects bonus hours)
+      if (validatedData.amount && otherCost.jobId) {
+        try {
+          await storage.applyAutomaticHours(otherCost.jobId);
+          console.log(`✅ Recalculated automatic hours for job ${otherCost.jobId} after other cost update`);
+        } catch (autoHoursError) {
+          console.error('Error recalculating automatic hours after other cost update:', autoHoursError);
+        }
+      }
+      
       res.json(otherCost);
     } catch (error) {
       if (error instanceof z.ZodError) {
