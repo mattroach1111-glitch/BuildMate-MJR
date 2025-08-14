@@ -421,8 +421,14 @@ export class DatabaseStorage implements IStorage {
       .where(eq(employees.autoHoursEnabled, true));
 
     if (employeesWithAutoHours.length === 0) {
+      console.log('🚫 No employees have automatic hours enabled. Skipping auto hours calculation.');
       return; // No employees have auto hours enabled
     }
+    
+    console.log(`🔄 Applying automatic hours for ${employeesWithAutoHours.length} employees with auto hours enabled`);
+    employeesWithAutoHours.forEach(emp => 
+      console.log(`  • ${emp.name} (${emp.id.slice(0,8)}) - enabled: ${emp.autoHoursEnabled}`)
+    );
 
     // Calculate total job cost INCLUDING labor (the full job sheet total with GST)
     const totalCost = await this.calculateJobTotalCostIncludingLabor(jobId);
