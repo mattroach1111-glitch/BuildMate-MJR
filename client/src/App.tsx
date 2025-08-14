@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationPopup } from "@/components/notification-popup";
 import { PWAInstallPrompt } from "./components/pwa-install-prompt";
+import { OrientationToggle } from "./components/orientation-toggle";
 import Landing from "@/pages/landing";
 import AdminDashboard from "@/pages/admin-dashboard";
 import { JobsList } from "@/pages/jobs-list";
@@ -57,6 +58,7 @@ function AppContent() {
       <Router />
       <NotificationPopup userEmail={(user as any)?.email} />
       {isAuthenticated && <PWAInstallPrompt />}
+      <OrientationToggle />
     </TooltipProvider>
   );
 }
