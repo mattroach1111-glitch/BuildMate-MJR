@@ -232,6 +232,32 @@ html.landscape-mode [data-state="open"][role="dialog"] {
   max-height: 90% !important;
 }
 
+/* Fix dropdown menus in landscape mode */
+html.landscape-mode [data-radix-popper-content-wrapper],
+html.landscape-mode [role="menu"],
+html.landscape-mode [role="listbox"],
+html.landscape-mode .dropdown-content {
+  transform: rotate(-90deg) !important;
+  transform-origin: center center !important;
+}
+
+/* Ensure dropdowns appear near their triggers */
+html.landscape-mode [data-side="bottom"] {
+  transform: rotate(-90deg) translate(0, 10px) !important;
+}
+
+html.landscape-mode [data-side="top"] {
+  transform: rotate(-90deg) translate(0, -10px) !important;
+}
+
+html.landscape-mode [data-side="right"] {
+  transform: rotate(-90deg) translate(10px, 0) !important;
+}
+
+html.landscape-mode [data-side="left"] {
+  transform: rotate(-90deg) translate(-10px, 0) !important;
+}
+
 /* Ensure buttons and interactive elements remain clickable */
 html.landscape-mode button,
 html.landscape-mode [role="button"],
