@@ -180,21 +180,24 @@ table tr.weekend-row button {
     }
   }
 
-/* Landscape mode adjustments */
+/* Landscape mode adjustments - FIXED VERSION */
 html.landscape-mode {
-  overflow: hidden;
+  overflow: auto !important; /* CHANGED: Allow scrolling */
+  height: 100vh !important;
+  width: 100vw !important;
 }
 
 body.landscape-mode {
-  overflow: auto;
-  width: 100vh;
-  height: 100vw;
-  transform: rotate(90deg);
-  transform-origin: center center;
-  position: fixed;
-  top: calc((100vh - 100vw) / 2);
-  left: calc((100vw - 100vh) / 2);
-  -webkit-overflow-scrolling: touch;
+  overflow: auto !important; /* CHANGED: Enable scrolling */
+  width: 100vh !important;
+  height: 100vw !important;
+  transform: rotate(90deg) !important;
+  transform-origin: center center !important;
+  position: fixed !important;
+  top: calc((100vh - 100vw) / 2) !important;
+  left: calc((100vw - 100vh) / 2) !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: manipulation !important; /* ADDED: Better touch */
 }
 
 /* Allow proper scrolling in landscape mode */
@@ -204,6 +207,7 @@ body.landscape-mode #root {
   -webkit-overflow-scrolling: touch !important;
   height: 100% !important;
   width: 100% !important;
+  touch-action: manipulation !important; /* ADDED: Better touch */
 }
 
 /* Fix portal positioning in landscape mode */

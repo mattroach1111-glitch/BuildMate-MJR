@@ -1,5 +1,5 @@
-// BuildFlow Pro Service Worker
-const CACHE_NAME = 'buildflow-pro-v1.0.1-' + Date.now();
+// BuildFlow Pro Service Worker - LANDSCAPE SCROLLING FIXED
+const CACHE_NAME = 'buildflow-pro-v1.0.2-' + Date.now();
 const OFFLINE_URL = '/offline.html';
 
 // Files to cache for offline functionality
