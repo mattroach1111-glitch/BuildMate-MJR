@@ -61,33 +61,31 @@ function App() {
 function AppContent() {
   const { user, isAuthenticated } = useAuth();
   
-  // Auto-register for push notifications when user is authenticated
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      const autoRegister = async () => {
-        try {
-          // Check if notifications are already granted
-          if (Notification.permission === 'granted') {
-            // Silently register for push notifications without showing any UI
-            await notificationService.registerForPush();
-            console.log('Auto-registered for push notifications');
-          }
-        } catch (error) {
-          // Silently fail - don't show errors to user
-          console.log('Auto-registration for push notifications failed:', error);
-        }
-      };
+  // Temporarily disable auto-registration to isolate the issue
+  // useEffect(() => {
+  //   if (isAuthenticated && user) {
+  //     const autoRegister = async () => {
+  //       try {
+  //         // Check if notifications are already granted
+  //         if (Notification.permission === 'granted') {
+  //           // Silently register for push notifications without showing any UI
+  //           await notificationService.registerForPush();
+  //           console.log('Auto-registered for push notifications');
+  //         }
+  //       } catch (error) {
+  //         // Silently fail - don't show errors to user
+  //         console.log('Auto-registration for push notifications failed:', error);
+  //       }
+  //     };
 
-      autoRegister();
-    }
-  }, [isAuthenticated, user]);
+  //     autoRegister();
+  //   }
+  // }, [isAuthenticated, user]);
   
   return (
     <TooltipProvider>
-      <SamsungRotationWarning />
       <Toaster />
       <Router />
-      <NotificationPopup userEmail={(user as any)?.email} />
     </TooltipProvider>
   );
 }
