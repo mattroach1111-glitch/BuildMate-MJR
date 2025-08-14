@@ -2390,18 +2390,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ error: "Failed to upload to Google Drive" });
       }
 
-      // Save file record in database with Google Drive info
-      const fileRecord = await storage.createJobFile({
-        jobId: jobId,
-        fileName: fileName,
-        originalName: fileName,
-        fileSize: fileSize || fileBuffer.length,
-        mimeType: mimeType || 'application/octet-stream',
-        objectPath: null, // No object storage path for Google Drive files
-        googleDriveLink: uploadResult.webViewLink,
-        googleDriveFileId: uploadResult.fileId,
-        uploadedById: userId
-      });
+      // Find existing file record and update it with Google Drive info
+      const existingFile = await storage.findExistingJobFile(jobId, fileName, documentURL);
+      
+      let fileRecord;
+      if (existingFile) {
+        // Update existing file record with Google Drive info
+        fileRecord = await storage.updateJobFile(existingFile.id, {
+          googleDriveLink: uploadResult.webViewLink,
+          googleDriveFileId: uploadResult.fileId
+        });
+        console.log(`✅ Updated existing file record ${existingFile.id} with Google Drive link`);
+      } else {
+        // Create new file record if none exists (fallback case)
+        fileRecord = await storage.createJobFile({
+          jobId: jobId,
+          fileName: fileName,
+          originalName: fileName,
+          fileSize: fileSize || fileBuffer.length,
+          mimeType: mimeType || 'application/octet-stream',
+          objectPath: documentURL, // Keep the object storage path
+          googleDriveLink: uploadResult.webViewLink,
+          googleDriveFileId: uploadResult.fileId,
+          uploadedById: userId
+        });
+        console.log(`✅ Created new file record with Google Drive link`);
+      }
 
       res.json({
         success: true,
