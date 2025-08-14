@@ -232,20 +232,20 @@ html.landscape-mode [data-state="open"][role="dialog"] {
   max-height: 90% !important;
 }
 
-/* Simplified approach - position dropdowns in landscape viewport */
+/* Position dropdowns in accessible location for landscape */
 html.landscape-mode [data-radix-dropdown-menu-content],
 html.landscape-mode [data-radix-select-content],
 html.landscape-mode [data-radix-popover-content] {
   position: fixed !important;
-  top: 20vh !important;
-  left: 30vw !important;
+  top: 100px !important;
+  left: 100px !important;
   right: auto !important;
   bottom: auto !important;
   transform: rotate(-90deg) !important;
   transform-origin: top left !important;
   z-index: 9999 !important;
   background: white !important;
-  border: 3px solid #00ff00 !important;
+  border: 3px solid #0066ff !important;
   border-radius: 8px !important;
   box-shadow: 0 10px 40px rgba(0,0,0,0.4) !important;
   max-height: 150px !important;
