@@ -14,6 +14,7 @@ import { Bell, Mail, FileText, Clock, CheckCircle, AlertCircle, Smartphone, User
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { notificationService } from '@/lib/notifications';
+import { MobileNotificationTest } from '@/components/MobileNotificationTest';
 
 interface NotificationPreferences {
   documentProcessing: boolean;

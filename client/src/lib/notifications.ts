@@ -145,19 +145,28 @@ class SimpleNotificationService implements NotificationService {
 
   private async sendSubscriptionToServer(subscription: PushSubscription): Promise<void> {
     try {
+      const subscriptionData = subscription.toJSON();
+      console.log('Sending subscription data to server:', subscriptionData);
+      
       const response = await fetch('/api/push-subscription', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(subscription.toJSON())
+        body: JSON.stringify(subscriptionData)
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send subscription to server');
+        const errorText = await response.text();
+        console.error('Server response error:', response.status, errorText);
+        throw new Error(`Failed to send subscription to server: ${response.status} ${errorText}`);
       }
+      
+      const result = await response.json();
+      console.log('Subscription sent successfully:', result);
     } catch (error) {
       console.error('Error sending subscription to server:', error);
+      throw error; // Re-throw to catch in registerForPush
     }
   }
 

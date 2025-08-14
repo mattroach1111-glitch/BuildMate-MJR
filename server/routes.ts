@@ -3774,7 +3774,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const subscription = req.body;
-      console.log('Received subscription data:', JSON.stringify(subscription, null, 2));
+      console.log('📱 Received subscription data:', JSON.stringify(subscription, null, 2));
+      console.log('📱 User Agent:', req.headers['user-agent']);
+      console.log('📱 User ID:', userId);
       
       if (!subscription || !subscription.endpoint || !subscription.keys?.p256dh || !subscription.keys?.auth) {
         console.log('Subscription validation failed - missing required fields');

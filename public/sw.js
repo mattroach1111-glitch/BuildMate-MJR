@@ -46,6 +46,7 @@ self.addEventListener('activate', (event) => {
 // Handle push notifications
 self.addEventListener('push', (event) => {
   console.log('Service Worker: Push event received', event);
+  console.log('Service Worker: User agent', navigator.userAgent);
   
   let title = 'BuildFlow Pro';
   let body = 'New notification from BuildFlow Pro';

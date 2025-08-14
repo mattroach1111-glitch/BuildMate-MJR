@@ -42,6 +42,7 @@ import { NotificationSettings } from "@/components/NotificationSettings";
 import { TestNotificationButton } from '@/components/TestNotificationButton';
 import { NotificationDebugger } from '@/components/NotificationDebugger';
 import { DesktopNotificationTest } from '@/components/DesktopNotificationTest';
+import { MobileNotificationTest } from '@/components/MobileNotificationTest';
 
 import { AdminSettings } from "@/components/AdminSettings";
 import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
@@ -3590,6 +3591,7 @@ export default function AdminDashboard() {
               </p>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <DesktopNotificationTest />
+                <MobileNotificationTest />
                 <div className="space-y-4">
                   <NotificationDebugger />
                   <div className="flex gap-2">
