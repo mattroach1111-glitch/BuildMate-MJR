@@ -73,13 +73,24 @@ export function OrientationToggle() {
                 node.style.pointerEvents = 'auto';
               }
               
-              // Simple dropdown visibility fix - let CSS handle positioning
-              const dropdownContent = node.querySelector('[data-radix-dropdown-menu-content]');
-              if (dropdownContent instanceof HTMLElement) {
-                dropdownContent.style.display = 'block';
-                dropdownContent.style.visibility = 'visible';
-                dropdownContent.style.opacity = '1';
-              }
+              // Force dropdowns to fixed position and ensure visibility
+              const dropdowns = node.querySelectorAll('[data-radix-dropdown-menu-content], [data-radix-select-content], [data-radix-popover-content]');
+              dropdowns.forEach(dropdown => {
+                if (dropdown instanceof HTMLElement) {
+                  dropdown.style.display = 'block';
+                  dropdown.style.visibility = 'visible';
+                  dropdown.style.opacity = '1';
+                  dropdown.style.position = 'fixed';
+                  dropdown.style.top = '80px';
+                  dropdown.style.right = '20px';
+                  dropdown.style.left = 'auto';
+                  dropdown.style.transform = 'none';
+                  dropdown.style.zIndex = '9999';
+                  
+                  // Add a subtle animation
+                  dropdown.style.animation = 'fadeIn 0.2s ease-out';
+                }
+              });
             }
           });
         });

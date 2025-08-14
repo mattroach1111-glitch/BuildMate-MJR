@@ -232,28 +232,41 @@ html.landscape-mode [data-state="open"][role="dialog"] {
   max-height: 90% !important;
 }
 
-/* Complete override for dropdowns in landscape mode */
-html.landscape-mode [data-radix-dropdown-menu-content] {
-  position: absolute !important;
-  top: 100% !important;
-  left: 0 !important;
-  right: auto !important;
+/* Force all dropdowns to appear in a fixed location in landscape mode */
+html.landscape-mode [data-radix-dropdown-menu-content],
+html.landscape-mode [data-radix-select-content],
+html.landscape-mode [data-radix-popover-content] {
+  position: fixed !important;
+  top: 80px !important;
+  right: 20px !important;
+  left: auto !important;
   bottom: auto !important;
   transform: none !important;
   z-index: 9999 !important;
   background: white !important;
-  border: 1px solid #ccc !important;
-  border-radius: 6px !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  border: 2px solid #2563eb !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.25) !important;
   max-height: 300px !important;
   overflow-y: auto !important;
-  margin-top: 4px !important;
-  min-width: 120px !important;
+  min-width: 160px !important;
+  max-width: 240px !important;
+  padding: 4px !important;
 }
 
-/* Ensure the dropdown trigger button is positioned relatively */
-html.landscape-mode [data-radix-dropdown-menu-trigger] {
-  position: relative !important;
+/* Make dropdown items more touch-friendly in landscape */
+html.landscape-mode [data-radix-dropdown-menu-content] > * {
+  min-height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 8px 12px !important;
+  cursor: pointer !important;
+  border-radius: 4px !important;
+}
+
+/* Hover states for dropdown items */
+html.landscape-mode [data-radix-dropdown-menu-content] > *:hover {
+  background-color: #f1f5f9 !important;
 }
 
 /* Ensure buttons and interactive elements remain clickable */
