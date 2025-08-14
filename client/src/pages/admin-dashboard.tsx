@@ -38,10 +38,10 @@ import { generateJobListPDF } from "@/lib/pdfGenerator";
 import JobUpdateDialog from "@/components/job-update-form";
 import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor";
 import { EmailProcessingReview } from "@/components/EmailProcessingReview";
-import { NotificationSettings } from "@/components/NotificationSettings";
+
 
 import { AdminSettings } from "@/components/AdminSettings";
-import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
+
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -3555,9 +3555,8 @@ export default function AdminDashboard() {
           <TabsContent value="notifications" className="space-y-6">
             <h2 className="text-xl font-semibold">Notification Settings</h2>
             <p className="text-muted-foreground">
-              Control your email notification preferences and choose alternative notification methods.
+              Notification system temporarily disabled. Contact support for configuration.
             </p>
-            <NotificationSettings />
           </TabsContent>
 
 
