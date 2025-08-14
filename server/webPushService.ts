@@ -75,7 +75,7 @@ export class WebPushService {
   }
 
   // Send push notification to specific users
-  async sendNotificationToUsers(userIds: string[], title: string, body: string, data?: any): Promise<{ success: number; failed: number }> {
+  async sendNotificationToUsers(userIds: string[], notification: { title: string; body: string; data?: any }): Promise<{ success: number; failed: number }> {
     const subscriptions = await this.getUserSubscriptions(userIds);
     
     if (subscriptions.length === 0) {
@@ -84,11 +84,11 @@ export class WebPushService {
     }
 
     const payload = JSON.stringify({
-      title,
-      body,
+      title: notification.title,
+      body: notification.body,
       icon: '/icon-192x192.png',
       badge: '/icon-192x192.png',
-      data: data || {},
+      data: notification.data || {},
       timestamp: Date.now()
     });
 
@@ -117,7 +117,7 @@ export class WebPushService {
   }
 
   // Send notification to all subscribed users
-  async sendNotificationToAll(title: string, body: string, data?: any): Promise<{ success: number; failed: number }> {
+  async sendNotificationToAllUsers(notification: { title: string; body: string; data?: any }): Promise<{ success: number; failed: number }> {
     const subscriptions = await this.getUserSubscriptions();
     
     if (subscriptions.length === 0) {
@@ -126,7 +126,7 @@ export class WebPushService {
     }
 
     const userIds = subscriptions.map(sub => sub.userId);
-    return this.sendNotificationToUsers(userIds, title, body, data);
+    return this.sendNotificationToUsers(userIds, notification);
   }
 
   // Remove a user's push subscription

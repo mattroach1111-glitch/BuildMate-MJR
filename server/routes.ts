@@ -1489,19 +1489,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "At least one staff member must be selected" });
       }
 
-      // Here you would integrate with your actual push notification service
-      // For now, we'll just log the notification and return success
-      console.log('📱 INSTANT PUSH NOTIFICATION:');
+      console.log('📱 SENDING INSTANT PUSH NOTIFICATION:');
       console.log('Message:', message);
       console.log('Target Staff:', targetStaff);
       console.log('Selected Staff:', targetStaff === 'selected' ? selectedStaff : 'ALL STAFF');
 
-      // In a real implementation, you would:
-      // 1. Get the push notification tokens for the target staff
-      // 2. Send the notification using your push service (Firebase, OneSignal, etc.)
-      // 3. Log the notification in the database for tracking
+      // Get target user IDs based on selected staff
+      let targetUserIds: string[] = [];
+      if (targetStaff === 'selected' && selectedStaff) {
+        targetUserIds = selectedStaff.map((staff: any) => staff.userId).filter(Boolean);
+        console.log('Target User IDs:', targetUserIds);
+      }
+
+      // Send actual push notifications using webPushService
+      try {
+        if (targetStaff === 'all') {
+          await webPushService.sendNotificationToAllUsers({
+            title: 'BuildFlow Pro Alert',
+            body: message,
+            data: {
+              type: 'instant',
+              timestamp: Date.now()
+            }
+          });
+          console.log('✅ Push notification sent to all users');
+        } else {
+          await webPushService.sendNotificationToUsers(targetUserIds, {
+            title: 'BuildFlow Pro Alert',
+            body: message,
+            data: {
+              type: 'instant',
+              timestamp: Date.now()
+            }
+          });
+          console.log(`✅ Push notification sent to ${targetUserIds.length} selected user(s)`);
+        }
+      } catch (pushError) {
+        console.error('Push notification error:', pushError);
+        // Continue execution - don't fail if push notifications fail
+      }
       
-      // Simulate sending notification
       const targetStaffCount = targetStaff === 'all' 
         ? (await storage.getStaffForTimesheets()).length 
         : selectedStaff.length;
@@ -3719,23 +3746,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Push notification endpoints
   
   // Get VAPID public key
-  app.get("/api/push/vapid-key", (req, res) => {
+  app.get("/api/vapid-public-key", (req, res) => {
     res.json({ publicKey: webPushService.getVapidPublicKey() });
   });
 
+  // Test endpoint to check push subscriptions
+  app.get("/api/push-subscription-test", isAuthenticated, async (req: any, res) => {
+    try {
+      const subscriptions = await webPushService.getUserSubscriptions();
+      res.json({ 
+        hasSubscription: subscriptions.length > 0,
+        count: subscriptions.length,
+        subscriptions: subscriptions.map(s => ({ userId: s.userId, endpoint: s.subscription.endpoint }))
+      });
+    } catch (error) {
+      console.error("Error checking push subscriptions:", error);
+      res.status(500).json({ error: "Failed to check subscriptions" });
+    }
+  });
+
   // Subscribe to push notifications
-  app.post("/api/push/subscribe", isAuthenticated, async (req: any, res) => {
+  app.post("/api/push-subscription", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const { subscription } = req.body;
+      const subscription = req.body;
       if (!subscription || !subscription.endpoint) {
         return res.status(400).json({ message: "Invalid subscription data" });
       }
 
+      console.log('Storing push subscription for user:', userId);
       await webPushService.subscribeUser(userId, subscription);
       res.json({ message: "Push subscription successful" });
     } catch (error) {

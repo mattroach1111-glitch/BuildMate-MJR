@@ -91,6 +91,27 @@ export function DesktopNotificationTest() {
           ? 'Successfully registered for push notifications' 
           : 'Failed to register for push notifications (check console for details)'
       });
+      
+      // Test 5: Check if subscription was saved to server
+      if (pushSuccess) {
+        try {
+          const response = await fetch('/api/push-subscription-test');
+          const result = await response.json();
+          testResults.push({
+            step: 'Server Subscription Check',
+            success: result.hasSubscription,
+            message: result.hasSubscription 
+              ? `Found ${result.count} push subscription(s) in database`
+              : 'No push subscriptions found in database'
+          });
+        } catch (error) {
+          testResults.push({
+            step: 'Server Subscription Check',
+            success: false,
+            message: `Error checking server: ${error.message}`
+          });
+        }
+      }
     } catch (error) {
       testResults.push({
         step: 'Push Registration',
