@@ -4,6 +4,7 @@
   "description": "Mobile-first construction management system for job costing, billing, and workforce management",
   "start_url": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "minimal-ui"],
   "background_color": "#f8fafc",
   "theme_color": "#3b82f6",
   "orientation": "any",

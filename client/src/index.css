@@ -24,12 +24,29 @@
   html, body {
     height: 100vh;
     overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Force orientation support in Samsung Internet */
+  html {
+    transform-origin: 0 0;
+    -webkit-transform-origin: 0 0;
   }
   
   /* Allow rotation in standalone mode */
   .min-h-screen {
     min-height: 100vh;
     min-height: -webkit-fill-available;
+  }
+}
+
+/* Force enable rotation for Samsung Internet */
+@supports (-webkit-appearance: none) {
+  @media screen and (orientation: landscape) {
+    html {
+      transform: none !important;
+      -webkit-transform: none !important;
+    }
   }
 }
 
