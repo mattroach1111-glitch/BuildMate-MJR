@@ -544,7 +544,8 @@ export class DatabaseStorage implements IStorage {
     - Builder Margin (${job.builderMargin || "0"}%): $${marginAmount.toFixed(2)}
     - Subtotal with Margin: $${subtotalWithMargin.toFixed(2)}
     - GST (10%): $${gstAmount.toFixed(2)}
-    - FINAL TOTAL (inc. GST): $${finalTotal.toFixed(2)}`);
+    - FINAL TOTAL (inc. GST): $${finalTotal.toFixed(2)}
+    - BONUS CALCULATION: ($${finalTotal.toFixed(2)} ÷ $5000) = ${(finalTotal / 5000).toFixed(2)} bonus hours`);
 
     return finalTotal;
   }
