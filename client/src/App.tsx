@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationPopup } from "@/components/notification-popup";
+import { PWAInstallPrompt } from "./components/pwa-install-prompt";
 import Landing from "@/pages/landing";
 import AdminDashboard from "@/pages/admin-dashboard";
 import { JobsList } from "@/pages/jobs-list";
@@ -48,13 +49,14 @@ function Router() {
 }
 
 function AppContent() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   
   return (
     <TooltipProvider>
       <Toaster />
       <Router />
       <NotificationPopup userEmail={(user as any)?.email} />
+      {isAuthenticated && <PWAInstallPrompt />}
     </TooltipProvider>
   );
 }
