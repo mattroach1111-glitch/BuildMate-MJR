@@ -49,6 +49,9 @@ self.addEventListener('push', (event) => {
   
   let title = 'BuildFlow Pro';
   let body = 'New notification from BuildFlow Pro';
+  let icon = '/icon-192x192.png';
+  let badge = '/icon-192x192.png';
+  let tag = 'default';
   
   if (event.data) {
     try {

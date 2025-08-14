@@ -35,7 +35,7 @@ class SimpleNotificationService implements NotificationService {
   }
 
   isSupported(): boolean {
-    return 'Notification' in window && 'serviceWorker' in navigator;
+    return 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
   }
 
   async requestPermission(): Promise<NotificationPermission> {
@@ -45,7 +45,16 @@ class SimpleNotificationService implements NotificationService {
     if (typeof Notification === 'undefined') {
       return 'denied';
     }
-    return await Notification.requestPermission();
+    
+    // For desktop browsers, ensure user gesture is present
+    try {
+      const permission = await Notification.requestPermission();
+      console.log('Notification permission result:', permission);
+      return permission;
+    } catch (error) {
+      console.error('Notification permission request failed:', error);
+      return 'denied';
+    }
   }
 
   getPermission(): NotificationPermission {
@@ -69,31 +78,54 @@ class SimpleNotificationService implements NotificationService {
   }
 
   async registerForPush(): Promise<boolean> {
+    console.log('Starting push registration...');
+    
     if (!this.isSupported()) {
+      console.warn('Push notifications not supported');
       return false;
     }
 
     const permission = await this.requestPermission();
+    console.log('Permission granted:', permission);
+    
     if (permission !== 'granted') {
+      console.warn('Notification permission not granted:', permission);
       return false;
     }
 
     try {
       if (!this.registration) {
+        console.log('Initializing service worker...');
         await this.initServiceWorker();
       }
 
       if (this.registration) {
+        console.log('Getting VAPID key...');
+        const vapidKey = await this.getVapidKey();
+        if (!vapidKey) {
+          console.error('Failed to get VAPID key');
+          return false;
+        }
+
+        console.log('Subscribing to push manager...');
         const subscription = await this.registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: await this.getVapidKey()
+          applicationServerKey: vapidKey
         });
 
+        console.log('Sending subscription to server...');
         await this.sendSubscriptionToServer(subscription);
+        console.log('Push registration successful!');
         return true;
       }
     } catch (error) {
       console.error('Push subscription failed:', error);
+      // Show more detailed error for desktop debugging
+      if (error.name === 'NotSupportedError') {
+        console.error('Push notifications not supported by browser');
+      } else if (error.name === 'NotAllowedError') {
+        console.error('Push notifications blocked by user or browser');
+      }
     }
 
     return false;

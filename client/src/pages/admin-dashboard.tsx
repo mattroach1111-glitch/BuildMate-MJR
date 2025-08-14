@@ -41,6 +41,7 @@ import { EmailProcessingReview } from "@/components/EmailProcessingReview";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import { TestNotificationButton } from '@/components/TestNotificationButton';
 import { NotificationDebugger } from '@/components/NotificationDebugger';
+import { DesktopNotificationTest } from '@/components/DesktopNotificationTest';
 
 import { AdminSettings } from "@/components/AdminSettings";
 import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
@@ -3579,6 +3580,24 @@ export default function AdminDashboard() {
               Control your email notification preferences and choose alternative notification methods.
             </p>
             <NotificationSettings />
+            
+            <Separator />
+            
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Desktop Troubleshooting</h3>
+              <p className="text-muted-foreground">
+                Use these tools to diagnose notification issues on desktop computers.
+              </p>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <DesktopNotificationTest />
+                <div className="space-y-4">
+                  <NotificationDebugger />
+                  <div className="flex gap-2">
+                    <TestNotificationButton />
+                  </div>
+                </div>
+              </div>
+            </div>
           </TabsContent>
 
 
