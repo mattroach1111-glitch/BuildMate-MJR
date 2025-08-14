@@ -3129,14 +3129,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      // Simple password check - in production, you might want to hash this
-      const adminPassword = process.env.ADMIN_PASSWORD || "admin123"; // Default for testing
+      // Get admin password from storage or use default
+      const adminPassword = await storage.getAdminPassword() || "admin123";
       const isValid = password === adminPassword;
       
       res.json({ valid: isValid });
     } catch (error) {
       console.error("Error validating admin password:", error);
       res.status(500).json({ message: "Failed to validate password" });
+    }
+  });
+
+  // Update admin password endpoint
+  app.put("/api/admin/password", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Current password and new password are required" });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: "New password must be at least 6 characters long" });
+      }
+
+      // Verify current password
+      const adminPassword = await storage.getAdminPassword() || "admin123";
+      if (currentPassword !== adminPassword) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+
+      // Update password
+      await storage.setAdminPassword(newPassword);
+      
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Error updating admin password:", error);
+      res.status(500).json({ message: "Failed to update password" });
     }
   });
 

@@ -12,6 +12,7 @@ import {
   notifications,
   emailProcessingLogs,
   emailProcessedDocuments,
+  adminSettings,
   type User,
   type UpsertUser,
   type Employee,
@@ -38,6 +39,8 @@ import {
   type InsertEmailProcessingLog,
   type EmailProcessedDocument,
   type InsertEmailProcessedDocument,
+  type AdminSettings,
+  type InsertAdminSettings,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sum, ne, gte, lte, lt, sql, isNull, or, ilike, inArray } from "drizzle-orm";
@@ -170,6 +173,10 @@ export interface IStorage {
   approveEmailProcessedDocument(id: string, jobId?: string): Promise<void>;
   rejectEmailProcessedDocument(id: string): Promise<void>;
   deleteOldRejectedEmailDocuments(cutoffTime: Date): Promise<void>;
+
+  // Admin settings operations
+  getAdminPassword(): Promise<string>;
+  setAdminPassword(password: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1908,6 +1915,39 @@ export class DatabaseStorage implements IStorage {
         lt(emailProcessedDocuments.processedAt, cutoffTime)
       ));
     console.log(`✅ Cleaned up old rejected documents`);
+  }
+
+  // Admin settings operations
+  async getAdminPassword(): Promise<string> {
+    try {
+      const [settings] = await db.select().from(adminSettings).where(eq(adminSettings.id, "default"));
+      return settings?.adminPassword || "admin123";
+    } catch (error) {
+      console.error("Error getting admin password:", error);
+      return "admin123"; // fallback default
+    }
+  }
+
+  async setAdminPassword(password: string): Promise<void> {
+    try {
+      await db
+        .insert(adminSettings)
+        .values({
+          id: "default",
+          adminPassword: password,
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: adminSettings.id,
+          set: {
+            adminPassword: password,
+            updatedAt: new Date(),
+          },
+        });
+    } catch (error) {
+      console.error("Error setting admin password:", error);
+      throw error;
+    }
   }
 
 

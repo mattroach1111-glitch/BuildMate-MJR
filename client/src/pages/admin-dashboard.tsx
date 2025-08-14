@@ -40,6 +40,7 @@ import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor"
 import { EmailProcessingReview } from "@/components/EmailProcessingReview";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import { AutoHoursSettings } from "@/components/AutoHoursSettings";
+import { AdminSettings } from "@/components/AdminSettings";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -3477,12 +3478,7 @@ export default function AdminDashboard() {
 
         {/* Settings Tab */}
         <TabsContent value="settings" className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-            <div>
-              <h2 className="text-xl font-semibold">Application Settings</h2>
-              <p className="text-sm text-muted-foreground">Configure integrations and application preferences</p>
-            </div>
-          </div>
+          <AdminSettings />
           
           <div className="grid gap-6 md:grid-cols-1">
             <GoogleDriveIntegration />

@@ -25,6 +25,13 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
+// Admin settings table
+export const adminSettings = pgTable("admin_settings", {
+  id: varchar("id").primaryKey().default("default"),
+  adminPassword: varchar("admin_password").notNull().default("admin123"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // User storage table (required for Replit Auth)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -393,3 +400,8 @@ export type EmailProcessingLog = typeof emailProcessingLogs.$inferSelect;
 export type InsertEmailProcessingLog = z.infer<typeof insertEmailProcessingLogSchema>;
 export type EmailProcessedDocument = typeof emailProcessedDocuments.$inferSelect;
 export type InsertEmailProcessedDocument = z.infer<typeof insertEmailProcessedDocumentSchema>;
+export type AdminSettings = typeof adminSettings.$inferSelect;
+export type InsertAdminSettings = typeof adminSettings.$inferInsert;
+
+// Admin Settings Schema
+export const insertAdminSettingsSchema = createInsertSchema(adminSettings);
