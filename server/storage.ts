@@ -304,6 +304,8 @@ export class DatabaseStorage implements IStorage {
     bonusHoursPerThreshold?: string;
     bonusThreshold?: string;
   }): Promise<Employee> {
+    console.log(`📊 Database update for employee ${id}:`, autoHoursConfig);
+    
     const [updatedEmployee] = await db
       .update(employees)
       .set({
@@ -314,6 +316,12 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(employees.id, id))
       .returning();
+      
+    console.log(`✅ Database updated for ${updatedEmployee.name}:`, {
+      autoHoursEnabled: updatedEmployee.autoHoursEnabled,
+      baseAutoHours: updatedEmployee.baseAutoHours
+    });
+    
     return updatedEmployee;
   }
 

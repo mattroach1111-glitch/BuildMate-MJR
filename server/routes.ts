@@ -439,6 +439,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { autoHoursEnabled, baseAutoHours, bonusHoursPerThreshold, bonusThreshold } = req.body;
       
+      console.log(`🔧 Updating auto hours for employee ${req.params.id}:`, {
+        autoHoursEnabled,
+        baseAutoHours,
+        bonusHoursPerThreshold,
+        bonusThreshold
+      });
+      
       // Validate the input
       if (typeof autoHoursEnabled !== 'boolean') {
         return res.status(400).json({ message: "autoHoursEnabled must be a boolean" });
@@ -449,6 +456,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         baseAutoHours: baseAutoHours?.toString() || "0",
         bonusHoursPerThreshold: bonusHoursPerThreshold?.toString() || "0",
         bonusThreshold: bonusThreshold?.toString() || "3000"
+      });
+      
+      console.log(`✅ Auto hours updated successfully for ${employee.name}:`, {
+        autoHoursEnabled: employee.autoHoursEnabled,
+        baseAutoHours: employee.baseAutoHours,
+        bonusHoursPerThreshold: employee.bonusHoursPerThreshold,
+        bonusThreshold: employee.bonusThreshold
       });
       
       res.json(employee);
