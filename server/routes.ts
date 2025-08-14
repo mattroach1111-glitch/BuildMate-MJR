@@ -458,6 +458,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Apply automatic hours to a specific job
+  app.post("/api/jobs/:jobId/apply-auto-hours", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const jobId = req.params.jobId;
+      
+      // Check if job exists
+      const job = await storage.getJob(jobId);
+      if (!job) {
+        return res.status(404).json({ message: "Job not found" });
+      }
+
+      // Apply automatic hours
+      await storage.applyAutomaticHours(jobId);
+      
+      res.json({ message: "Automatic hours applied successfully", jobId });
+    } catch (error) {
+      console.error("Error applying automatic hours:", error);
+      res.status(500).json({ message: "Failed to apply automatic hours" });
+    }
+  });
+
   app.delete("/api/employees/:id", isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);
