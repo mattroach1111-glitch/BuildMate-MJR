@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationPopup } from "@/components/notification-popup";
+import { SamsungRotationWarning } from "./components/SamsungRotationWarning";
 import Landing from "@/pages/landing";
 import AdminDashboard from "@/pages/admin-dashboard";
 import { JobsList } from "@/pages/jobs-list";
@@ -52,6 +53,7 @@ function AppContent() {
   
   return (
     <TooltipProvider>
+      <SamsungRotationWarning />
       <Toaster />
       <Router />
       <NotificationPopup userEmail={(user as any)?.email} />
