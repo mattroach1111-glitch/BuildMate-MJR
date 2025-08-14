@@ -409,8 +409,8 @@ export class DatabaseStorage implements IStorage {
       return; // No employees have auto hours enabled
     }
 
-    // Calculate total job cost excluding labor (to prevent feedback loops)
-    const totalCost = await this.calculateJobTotalCostExcludingLabor(jobId);
+    // Calculate total job cost INCLUDING labor (the full job sheet total with GST)
+    const totalCost = await this.calculateJobTotalCostIncludingLabor(jobId);
     
     // Apply automatic hours for each employee
     for (const employee of employeesWithAutoHours) {
