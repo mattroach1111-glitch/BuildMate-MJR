@@ -706,6 +706,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update labor entry hours (admin only)
+  app.patch("/api/labor-entries/:id/hours", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { hoursLogged } = req.body;
+      if (hoursLogged === undefined || isNaN(parseFloat(hoursLogged)) || parseFloat(hoursLogged) < 0) {
+        return res.status(400).json({ message: "Valid hours logged amount required (0 or greater)" });
+      }
+
+      const laborEntry = await storage.updateLaborEntry(req.params.id, { 
+        hoursLogged: parseFloat(hoursLogged).toString() 
+      });
+      res.json(laborEntry);
+    } catch (error) {
+      console.error("Error updating labor hours:", error);
+      res.status(500).json({ message: "Failed to update labor hours" });
+    }
+  });
+
   app.post("/api/jobs/:jobId/labor", isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);

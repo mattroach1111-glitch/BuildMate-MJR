@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -33,6 +34,8 @@ interface JobDetails extends Job {
 
 export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = (user as any)?.role === "admin";
   const [builderMargin, setBuilderMargin] = useState("25");
   const [defaultHourlyRate, setDefaultHourlyRate] = useState("50");
   const [localLaborRates, setLocalLaborRates] = useState<Record<string, string>>({});
@@ -66,6 +69,10 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const [editSubTradeForm, setEditSubTradeForm] = useState<{trade: string; contractor: string; amount: string; invoiceDate: string}>({trade: "", contractor: "", amount: "", invoiceDate: ""});
   const [editOtherCostForm, setEditOtherCostForm] = useState<{description: string; amount: string}>({description: "", amount: ""});
   const [editTipFeeForm, setEditTipFeeForm] = useState<{description: string; amount: string}>({description: "", amount: ""});
+  
+  // Labor entry editing states
+  const [editingLaborEntry, setEditingLaborEntry] = useState<string | null>(null);
+  const [editLaborHours, setEditLaborHours] = useState<string>("");
 
   const { data: jobDetails, isLoading } = useQuery<JobDetails>({
     queryKey: ["/api/jobs", jobId],
@@ -348,6 +355,43 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       toast({
         title: "Error",
         description: error.message || "Failed to add extra hours",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update labor entry hours mutation (admin only)
+  const updateLaborHoursMutation = useMutation({
+    mutationFn: async ({ laborEntryId, hoursLogged }: { laborEntryId: string; hoursLogged: string }) => {
+      const response = await apiRequest("PATCH", `/api/labor-entries/${laborEntryId}/hours`, { 
+        hoursLogged: parseFloat(hoursLogged) 
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
+      setEditingLaborEntry(null);
+      setEditLaborHours("");
+      toast({
+        title: "Success",
+        description: "Labor hours updated successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update labor hours",
         variant: "destructive",
       });
     },
@@ -1161,6 +1205,37 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     });
   };
 
+  // Helper functions for editing labor hours (admin only)
+  const startEditingLaborHours = (entry: LaborEntry) => {
+    if (!isAdmin) return;
+    setEditingLaborEntry(entry.id);
+    setEditLaborHours(entry.hoursLogged);
+  };
+
+  const cancelEditingLaborHours = () => {
+    setEditingLaborEntry(null);
+    setEditLaborHours("");
+  };
+
+  const saveEditingLaborHours = () => {
+    if (!editingLaborEntry || !editLaborHours) return;
+    
+    const hours = parseFloat(editLaborHours);
+    if (isNaN(hours) || hours < 0) {
+      toast({
+        title: "Invalid Hours",
+        description: "Please enter a valid number of hours (0 or greater)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateLaborHoursMutation.mutate({
+      laborEntryId: editingLaborEntry,
+      hoursLogged: editLaborHours
+    });
+  };
+
   const totals = calculateTotals();
 
   if (!isOpen) return null;
@@ -1498,7 +1573,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     </thead>
                     <tbody className="space-y-2">
                       {jobDetails.laborEntries.map((entry) => (
-                        <tr key={entry.id} className="border-b border-gray-100">
+                        <tr key={entry.id} className="border-b border-gray-100 group">
                           <td className="py-3">
                             <div className="flex items-center gap-2">
                               <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
@@ -1534,9 +1609,56 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                             </div>
                           </td>
                           <td className="py-3">
-                            <span className="text-sm text-gray-600 font-medium" data-testid={`text-labor-hours-${entry.id}`}>
-                              {entry.hoursLogged} hrs
-                            </span>
+                            {isAdmin && editingLaborEntry === entry.id ? (
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="number"
+                                  step="0.5"
+                                  min="0"
+                                  value={editLaborHours}
+                                  onChange={(e) => setEditLaborHours(e.target.value)}
+                                  className="w-20 text-sm border border-primary rounded px-2 py-1"
+                                  data-testid={`input-edit-hours-${entry.id}`}
+                                  autoFocus
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={saveEditingLaborHours}
+                                  disabled={updateLaborHoursMutation.isPending}
+                                  className="h-7 px-2 text-xs"
+                                  data-testid={`button-save-hours-${entry.id}`}
+                                >
+                                  {updateLaborHoursMutation.isPending ? "..." : "Save"}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={cancelEditingLaborHours}
+                                  className="h-7 px-2 text-xs"
+                                  data-testid={`button-cancel-hours-${entry.id}`}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-600 font-medium" data-testid={`text-labor-hours-${entry.id}`}>
+                                  {entry.hoursLogged} hrs
+                                </span>
+                                {isAdmin && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => startEditingLaborHours(entry)}
+                                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    data-testid={`button-edit-hours-${entry.id}`}
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            )}
                           </td>
                           <td className="py-3">
                             <div className="flex items-center gap-2">
