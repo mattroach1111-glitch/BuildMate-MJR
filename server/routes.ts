@@ -1502,9 +1502,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Send actual push notifications using webPushService
+      let pushResults: any[] = [];
       try {
         if (targetStaff === 'all') {
-          await webPushService.sendNotificationToAllUsers({
+          pushResults = await webPushService.sendNotificationToAllUsers({
             title: 'BuildFlow Pro Alert',
             body: message,
             data: {
@@ -1514,7 +1515,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           console.log('✅ Push notification sent to all users');
         } else {
-          await webPushService.sendNotificationToUsers(targetUserIds, {
+          pushResults = await webPushService.sendNotificationToUsers(targetUserIds, {
             title: 'BuildFlow Pro Alert',
             body: message,
             data: {
@@ -1528,16 +1529,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('Push notification error:', pushError);
         // Continue execution - don't fail if push notifications fail
       }
+
+      // Send mobile email notifications as fallback for failed push notifications
+      const { mobileNotificationService } = await import('./mobileNotificationService');
+      let mobileNotificationResults: any[] = [];
+      
+      try {
+        if (targetStaff === 'all') {
+          // Get all staff users and send mobile notifications
+          const allStaff = await storage.getStaffForTimesheets();
+          for (const staff of allStaff) {
+            if (staff.userId) {
+              const user = await storage.getUser(staff.userId);
+              if (user?.email) {
+                const pushSuccessful = pushResults.some(r => r.userId === staff.userId && r.success);
+                if (!pushSuccessful) {
+                  console.log(`📧 Sending mobile notification fallback to ${user.email}`);
+                  const mobileSuccess = await mobileNotificationService.sendNotificationWithMobileFallback(
+                    user.email,
+                    'BuildFlow Pro Alert',
+                    message,
+                    false
+                  );
+                  mobileNotificationResults.push({
+                    userId: staff.userId,
+                    email: user.email,
+                    success: mobileSuccess
+                  });
+                }
+              }
+            }
+          }
+        } else {
+          // Send to selected staff only
+          for (const userIdFromTarget of targetUserIds) {
+            const user = await storage.getUser(userIdFromTarget);
+            if (user?.email) {
+              const pushSuccessful = pushResults.some(r => r.userId === userIdFromTarget && r.success);
+              if (!pushSuccessful) {
+                console.log(`📧 Sending mobile notification fallback to ${user.email}`);
+                const mobileSuccess = await mobileNotificationService.sendNotificationWithMobileFallback(
+                  user.email,
+                  'BuildFlow Pro Alert',
+                  message,
+                  false
+                );
+                mobileNotificationResults.push({
+                  userId: userIdFromTarget,
+                  email: user.email,
+                  success: mobileSuccess
+                });
+              }
+            }
+          }
+        }
+      } catch (mobileError) {
+        console.error('Mobile notification fallback error:', mobileError);
+      }
       
       const targetStaffCount = targetStaff === 'all' 
         ? (await storage.getStaffForTimesheets()).length 
         : selectedStaff.length;
 
       console.log(`✅ Instant notification sent to ${targetStaffCount} staff member(s)`);
+      console.log(`📧 Mobile notification fallbacks sent to ${mobileNotificationResults.length} users`);
 
       res.json({ 
         message: "Instant notification sent successfully",
         targetCount: targetStaffCount,
+        pushResults,
+        mobileNotificationResults,
+        totalMobileFallbacks: mobileNotificationResults.length,
         sentAt: new Date().toISOString()
       });
     } catch (error) {
@@ -1605,6 +1667,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending test SMS:", error);
       res.status(500).json({ message: "Failed to send test SMS" });
+    }
+  });
+
+  // Test mobile notification (instant email)
+  app.post("/api/user/test-mobile-notification", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || !user.email) {
+        return res.status(404).json({ message: "User email not found" });
+      }
+
+      // Import mobile notification service
+      const { mobileNotificationService } = await import('./mobileNotificationService');
+      const success = await mobileNotificationService.testMobileNotification(user.email);
+      
+      if (success) {
+        res.json({ 
+          message: "Mobile notification test sent successfully",
+          email: user.email
+        });
+      } else {
+        res.status(500).json({ message: "Failed to send mobile notification" });
+      }
+    } catch (error) {
+      console.error("Error sending test mobile notification:", error);
+      res.status(500).json({ message: "Failed to send test mobile notification" });
     }
   });
 
