@@ -420,12 +420,13 @@ export function NotificationSettings() {
                       </p>
                     </div>
 
-                    {pushSettings.timesheetReminders.targetStaff === 'selected' && (
-                      <div className="ml-6 p-3 bg-blue-50 dark:bg-blue-800 rounded-md border">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Users className="h-4 w-4 text-gray-600" />
-                          <Label className="text-sm font-medium">Select Staff Members</Label>
-                        </div>
+                    <div className="ml-6 p-3 bg-blue-50 dark:bg-blue-800 rounded-md border">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Users className="h-4 w-4 text-gray-600" />
+                        <Label className="text-sm font-medium">Select Staff Members</Label>
+                      </div>
+                      
+                      {pushSettings.timesheetReminders.targetStaff === 'selected' ? (
                         <div className="space-y-2 max-h-40 overflow-y-auto">
                           {staffList?.map((staff: any) => {
                             const isChecked = (pushSettings.timesheetReminders.selectedStaff || []).includes(staff.id);
@@ -443,17 +444,21 @@ export function NotificationSettings() {
                               </div>
                             );
                           })}
+                          {staffList?.length === 0 && (
+                            <p className="text-sm text-muted-foreground">No staff members found</p>
+                          )}
+                          {pushSettings.timesheetReminders.selectedStaff?.length === 0 && (
+                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                              ⚠️ No staff selected - reminders will not be sent to anyone
+                            </p>
+                          )}
                         </div>
-                        {staffList?.length === 0 && (
-                          <p className="text-sm text-muted-foreground">No staff members found</p>
-                        )}
-                        {pushSettings.timesheetReminders.selectedStaff?.length === 0 && pushSettings.timesheetReminders.targetStaff === 'selected' && (
-                          <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
-                            ⚠️ No staff selected - reminders will not be sent to anyone
-                          </p>
-                        )}
-                      </div>
-                    )}
+                      ) : (
+                        <p className="text-sm text-gray-500">
+                          Switch to "Send to selected staff only" to choose individual staff members
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
