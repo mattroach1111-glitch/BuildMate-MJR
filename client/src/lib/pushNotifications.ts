@@ -278,4 +278,6 @@ export class PushNotificationService {
   }
 }
 
-export const pushNotificationService = PushNotificationService.getInstance();
+// Create and export the singleton instance
+const notificationServiceInstance = PushNotificationService.getInstance();
+export { notificationServiceInstance as pushNotificationService };
