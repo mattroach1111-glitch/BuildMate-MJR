@@ -180,34 +180,37 @@ table tr.weekend-row button {
     }
   }
 
-/* Landscape mode adjustments - FIXED VERSION */
+/* Landscape mode adjustments - COMPLETELY REWRITTEN FOR SCROLLING */
 html.landscape-mode {
-  overflow: auto !important; /* CHANGED: Allow scrolling */
   height: 100vh !important;
   width: 100vw !important;
+  overflow: hidden !important; /* Prevent double scrollbars */
 }
 
 body.landscape-mode {
-  overflow: auto !important; /* CHANGED: Enable scrolling */
+  /* Key fix: Remove position fixed, use absolute for natural scrolling */
+  position: absolute !important;
   width: 100vh !important;
   height: 100vw !important;
   transform: rotate(90deg) !important;
   transform-origin: center center !important;
-  position: fixed !important;
   top: calc((100vh - 100vw) / 2) !important;
   left: calc((100vw - 100vh) / 2) !important;
+  
+  /* Enable all scrolling properties */
+  overflow: auto !important;
+  overflow-y: scroll !important;
   -webkit-overflow-scrolling: touch !important;
-  touch-action: manipulation !important; /* ADDED: Better touch */
+  touch-action: pan-y !important;
 }
 
-/* Allow proper scrolling in landscape mode */
+/* Root container must have proper height for scrolling */
 body.landscape-mode #root {
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  -webkit-overflow-scrolling: touch !important;
-  height: 100% !important;
+  min-height: 100vh !important; /* Changed from 100% to 100vh */
   width: 100% !important;
-  touch-action: manipulation !important; /* ADDED: Better touch */
+  overflow: visible !important; /* Allow content to extend */
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
 }
 
 /* Fix portal positioning in landscape mode */
