@@ -26,19 +26,15 @@ export class WebPushService {
   // Store a push subscription for a user
   async subscribeUser(userId: string, subscription: PushSubscription): Promise<void> {
     try {
+      // First, delete any existing subscriptions for this user
+      await db.delete(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
+      
+      // Then insert the new subscription
       await db.insert(pushSubscriptions).values({
         userId,
         endpoint: subscription.endpoint,
         p256dh: subscription.keys.p256dh,
         auth: subscription.keys.auth,
-      }).onConflictDoUpdate({
-        target: [pushSubscriptions.userId],
-        set: {
-          endpoint: subscription.endpoint,
-          p256dh: subscription.keys.p256dh,
-          auth: subscription.keys.auth,
-          updatedAt: new Date(),
-        }
       });
       console.log(`Push subscription stored for user ${userId}`);
     } catch (error) {

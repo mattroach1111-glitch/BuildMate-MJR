@@ -114,6 +114,7 @@ class SimpleNotificationService implements NotificationService {
         });
 
         console.log('Sending subscription to server...');
+        console.log('Subscription object:', subscription.toJSON());
         await this.sendSubscriptionToServer(subscription);
         console.log('Push registration successful!');
         return true;
@@ -149,9 +150,7 @@ class SimpleNotificationService implements NotificationService {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          subscription: subscription.toJSON()
-        })
+        body: JSON.stringify(subscription.toJSON())
       });
 
       if (!response.ok) {

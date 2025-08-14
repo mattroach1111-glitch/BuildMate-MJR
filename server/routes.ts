@@ -3774,8 +3774,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const subscription = req.body;
-      if (!subscription || !subscription.endpoint) {
-        return res.status(400).json({ message: "Invalid subscription data" });
+      console.log('Received subscription data:', JSON.stringify(subscription, null, 2));
+      
+      if (!subscription || !subscription.endpoint || !subscription.keys?.p256dh || !subscription.keys?.auth) {
+        console.log('Subscription validation failed - missing required fields');
+        return res.status(400).json({ message: "Invalid subscription data - missing endpoint or keys" });
       }
 
       console.log('Storing push subscription for user:', userId);
@@ -3796,7 +3799,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Title and body are required" });
       }
 
-      const result = await webPushService.sendNotificationToAll(title, body, data);
+      const result = await webPushService.sendNotificationToAllUsers({ title, body, data });
       
       res.json({
         message: "Push notifications sent",
@@ -3819,7 +3822,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Title, body, and userIds array are required" });
       }
 
-      const result = await webPushService.sendNotificationToUsers(userIds, title, body, data);
+      const result = await webPushService.sendNotificationToUsers(userIds, { title, body, data });
       
       res.json({
         message: "Push notifications sent",
