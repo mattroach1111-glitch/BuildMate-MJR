@@ -816,6 +816,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addExtraHoursToLaborEntry(laborEntryId: string, extraHours: string): Promise<LaborEntry> {
+    console.log(`🔄 Adding ${extraHours} extra hours to labor entry ${laborEntryId}`);
+    
     // Get current labor entry
     const [currentEntry] = await db
       .select()
@@ -823,6 +825,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(laborEntries.id, laborEntryId));
 
     if (!currentEntry) {
+      console.error(`❌ Labor entry not found: ${laborEntryId}`);
       throw new Error("Labor entry not found");
     }
 
@@ -830,6 +833,8 @@ export class DatabaseStorage implements IStorage {
     const currentHours = parseFloat(currentEntry.hoursLogged) || 0;
     const additionalHours = parseFloat(extraHours);
     const newTotalHours = (currentHours + additionalHours).toString();
+
+    console.log(`📊 Hours calculation: ${currentHours} + ${additionalHours} = ${newTotalHours}`);
 
     // Update the labor entry with new total hours
     const [updatedEntry] = await db
@@ -841,6 +846,12 @@ export class DatabaseStorage implements IStorage {
       .where(eq(laborEntries.id, laborEntryId))
       .returning();
 
+    if (!updatedEntry) {
+      console.error(`❌ Failed to update labor entry ${laborEntryId}`);
+      throw new Error("Failed to update labor entry");
+    }
+
+    console.log(`✅ Successfully updated labor entry. New hours: ${updatedEntry.hoursLogged}`);
     return updatedEntry;
   }
 
