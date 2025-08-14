@@ -89,6 +89,8 @@ export function NotificationSettings() {
     if (user?.pushNotificationSettings) {
       try {
         const pushSettings = JSON.parse(user.pushNotificationSettings);
+        console.log('Loaded push notification settings:', pushSettings);
+        console.log('Target staff setting:', pushSettings?.timesheetReminders?.targetStaff);
         setPushSettings(pushSettings);
       } catch (error) {
         console.error('Error parsing push notification settings:', error);
@@ -403,12 +405,23 @@ export function NotificationSettings() {
 
                     <div className="mt-4">
                       <p className="text-xs text-gray-500 mb-2">
-                        Current target: {pushSettings.timesheetReminders.targetStaff}
+                        Current target: {pushSettings.timesheetReminders.targetStaff || 'all'}
+                      </p>
+                      <p className="text-xs text-blue-500 mb-2">
+                        Staff list loaded: {staffList?.length || 0} staff members
+                      </p>
+                    </div>
+
+                    {/* Always show this test box first */}
+                    <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-md border mb-4">
+                      <p className="text-sm">
+                        DEBUG: Target = "{pushSettings.timesheetReminders.targetStaff}", 
+                        Should show: {pushSettings.timesheetReminders.targetStaff === 'selected' ? 'YES' : 'NO'}
                       </p>
                     </div>
 
                     {pushSettings.timesheetReminders.targetStaff === 'selected' && (
-                      <div className="ml-6 p-3 bg-gray-50 dark:bg-gray-800 rounded-md border">
+                      <div className="ml-6 p-3 bg-blue-50 dark:bg-blue-800 rounded-md border">
                         <div className="flex items-center gap-2 mb-3">
                           <Users className="h-4 w-4 text-gray-600" />
                           <Label className="text-sm font-medium">Select Staff Members</Label>
@@ -416,7 +429,6 @@ export function NotificationSettings() {
                         <div className="space-y-2 max-h-40 overflow-y-auto">
                           {staffList?.map((staff: any) => {
                             const isChecked = (pushSettings.timesheetReminders.selectedStaff || []).includes(staff.id);
-                            console.log(`Staff ${staff.name} (${staff.id}): checked=${isChecked}`);
                             return (
                               <div key={staff.id} className="flex items-center space-x-2">
                                 <Checkbox
