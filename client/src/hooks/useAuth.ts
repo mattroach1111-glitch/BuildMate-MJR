@@ -1,12 +1,6 @@
-// Temporary placeholder file to prevent module loading errors
-// This hook was removed and replaced with direct useQuery calls
-// This should never be called since it's just a placeholder
+// This file should never be imported or used
+// All authentication is now handled via direct useQuery calls in components
 
 export function useAuth() {
-  console.warn('useAuth placeholder called - this should not happen');
-  return {
-    user: null,
-    isLoading: false,
-    isAuthenticated: false
-  };
+  throw new Error('useAuth hook has been removed. Use direct useQuery with "/api/auth/user" instead.');
 }

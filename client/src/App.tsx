@@ -65,10 +65,9 @@ function Router() {
 function AppContent() {
   console.log('AppContent component rendering');
   return (
-    <TooltipProvider>
-      <Toaster />
+    <div>
       <Router />
-    </TooltipProvider>
+    </div>
   );
 }
 
