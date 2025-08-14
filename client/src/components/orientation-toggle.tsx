@@ -13,12 +13,7 @@ export function OrientationToggle() {
       const isMobileDevice = window.innerWidth <= 768 || 
                            /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
                            window.innerHeight <= 600; // Also show on small screens
-      console.log('Mobile check:', { 
-        width: window.innerWidth, 
-        height: window.innerHeight, 
-        userAgent: navigator.userAgent,
-        isMobileDevice 
-      });
+
       setIsMobile(isMobileDevice);
     };
 
@@ -72,9 +67,10 @@ export function OrientationToggle() {
     setIsLandscapeForced(!isLandscapeForced);
   };
 
-  // For testing - always show the button
-  // Later we can add back mobile-only detection
-  console.log('Rendering orientation toggle - isMobile:', isMobile);
+  // Show on mobile devices and small screens for better usability
+  if (!isMobile && window.innerWidth > 768) {
+    return null;
+  }
 
   return (
     <Button
