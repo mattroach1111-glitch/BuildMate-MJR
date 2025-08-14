@@ -62,12 +62,17 @@ class MessageBirdSMSProvider implements SMSProvider {
       const apiKey = process.env.MESSAGEBIRD_API_KEY;
       
       if (!apiKey) {
-        console.log('❌ MessageBird API key not configured');
+        console.log('❌ MessageBird API key not configured - add MESSAGEBIRD_API_KEY to environment');
         return false;
       }
       
-      // Format phone number
-      const formattedPhone = phone.startsWith('+') ? phone.substring(1) : phone;
+      // Format phone number for MessageBird
+      let formattedPhone = phone.replace(/[\s\-\(\)]/g, '');
+      if (formattedPhone.startsWith('+')) {
+        formattedPhone = formattedPhone.substring(1);
+      }
+      
+      console.log(`📱 MessageBird: Sending SMS to ${formattedPhone}`);
       
       const response = await fetch('https://rest.messagebird.com/messages', {
         method: 'POST',
@@ -84,10 +89,11 @@ class MessageBirdSMSProvider implements SMSProvider {
       
       if (response.ok) {
         const result = await response.json();
-        console.log('✅ MessageBird SMS sent:', result.id);
+        console.log('✅ MessageBird SMS sent successfully:', result.id);
         return true;
       } else {
-        console.log('❌ MessageBird SMS failed:', await response.text());
+        const errorText = await response.text();
+        console.log('❌ MessageBird SMS failed:', response.status, errorText);
         return false;
       }
     } catch (error) {
