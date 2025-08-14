@@ -48,13 +48,11 @@ function Router() {
 }
 
 function AppContent() {
-  const { user } = useAuth();
-  
   return (
     <TooltipProvider>
       <Toaster />
       <Router />
-      <NotificationPopup userEmail={(user as any)?.email} />
+
     </TooltipProvider>
   );
 }
