@@ -187,6 +187,14 @@ html.landscape-mode {
 
 html.landscape-mode body {
   transition: transform 0.3s ease-in-out;
+  overflow: hidden;
+}
+
+/* Allow scrolling within the rotated content */
+html.landscape-mode #root {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
 }
 
 /* Hover states for dropdown items */
@@ -292,6 +300,18 @@ html.landscape-mode textarea {
   /* Smooth scrolling for mobile */
   * {
     -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Ensure mobile scrolling works everywhere */
+  body, html {
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+  }
+  
+  /* Fix scrolling in specific areas */
+  [data-radix-dialog-content] {
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
   }
   
   /* Remove tap highlight on mobile */
