@@ -169,11 +169,13 @@ export function NotificationSettings() {
   };
 
   const handleStaffToggle = (staffId: string) => {
+    console.log('Staff toggle clicked:', staffId);
     const currentStaff = pushSettings.timesheetReminders.selectedStaff || [];
     const newStaff = currentStaff.includes(staffId)
       ? currentStaff.filter(id => id !== staffId)
       : [...currentStaff, staffId];
     
+    console.log('Current staff:', currentStaff, 'New staff:', newStaff);
     handlePushSettingChange('timesheetReminders.selectedStaff', newStaff);
   };
 
@@ -400,19 +402,23 @@ export function NotificationSettings() {
                           <Label className="text-sm font-medium">Select Staff Members</Label>
                         </div>
                         <div className="space-y-2 max-h-40 overflow-y-auto">
-                          {staffList?.map((staff: any) => (
-                            <div key={staff.id} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`staff-${staff.id}`}
-                                checked={(pushSettings.timesheetReminders.selectedStaff || []).includes(staff.id)}
-                                onCheckedChange={() => handleStaffToggle(staff.id)}
-                                data-testid={`checkbox-staff-${staff.id}`}
-                              />
-                              <Label htmlFor={`staff-${staff.id}`} className="text-sm">
-                                {staff.name}
-                              </Label>
-                            </div>
-                          ))}
+                          {staffList?.map((staff: any) => {
+                            const isChecked = (pushSettings.timesheetReminders.selectedStaff || []).includes(staff.id);
+                            console.log(`Staff ${staff.name} (${staff.id}): checked=${isChecked}`);
+                            return (
+                              <div key={staff.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`staff-${staff.id}`}
+                                  checked={isChecked}
+                                  onCheckedChange={() => handleStaffToggle(staff.id)}
+                                  data-testid={`checkbox-staff-${staff.id}`}
+                                />
+                                <Label htmlFor={`staff-${staff.id}`} className="text-sm cursor-pointer">
+                                  {staff.name}
+                                </Label>
+                              </div>
+                            );
+                          })}
                         </div>
                         {staffList?.length === 0 && (
                           <p className="text-sm text-muted-foreground">No staff members found</p>
