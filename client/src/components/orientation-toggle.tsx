@@ -40,6 +40,7 @@ export function OrientationToggle() {
       document.body.style.left = '50%';
       document.body.style.transform = 'translate(-50%, -50%) rotate(90deg)';
       document.body.style.overflow = 'hidden';
+      document.body.style.overscrollBehavior = 'none';
       document.body.style.margin = '0';
       document.body.style.padding = '0';
       
@@ -73,24 +74,29 @@ export function OrientationToggle() {
                 node.style.pointerEvents = 'auto';
               }
               
-              // Position dropdowns with fixed coordinates
+              // Position dropdowns to not interfere with layout
               const dropdowns = node.querySelectorAll('[data-radix-dropdown-menu-content], [data-radix-select-content], [data-radix-popover-content]');
               dropdowns.forEach(dropdown => {
                 if (dropdown instanceof HTMLElement) {
-                  // Fixed positioning with counter-rotation
+                  // Ensure dropdown doesn't affect page layout
                   dropdown.style.position = 'fixed';
-                  dropdown.style.top = '100px';
-                  dropdown.style.left = '100px';
+                  dropdown.style.top = '150px';
+                  dropdown.style.right = '50px';
+                  dropdown.style.left = 'auto';
+                  dropdown.style.bottom = 'auto';
                   dropdown.style.transform = 'rotate(-90deg)';
-                  dropdown.style.transformOrigin = 'top left';
+                  dropdown.style.transformOrigin = 'top right';
                   dropdown.style.visibility = 'visible';
                   dropdown.style.opacity = '1';
                   dropdown.style.zIndex = '9999';
-                  dropdown.style.border = '3px solid #0066ff';
+                  dropdown.style.border = '2px solid #0066ff';
                   dropdown.style.background = 'white';
-                  dropdown.style.maxWidth = '120px';
-                  dropdown.style.maxHeight = '150px';
+                  dropdown.style.maxWidth = '160px';
+                  dropdown.style.maxHeight = '200px';
                   dropdown.style.fontSize = '14px';
+                  dropdown.style.overflow = 'hidden';
+                  dropdown.style.width = 'auto';
+                  dropdown.style.height = 'auto';
                 }
               });
             }

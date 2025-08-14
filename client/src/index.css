@@ -232,27 +232,29 @@ html.landscape-mode [data-state="open"][role="dialog"] {
   max-height: 90% !important;
 }
 
-/* Position dropdowns in accessible location for landscape */
+/* Position dropdowns to not affect layout in landscape */
 html.landscape-mode [data-radix-dropdown-menu-content],
 html.landscape-mode [data-radix-select-content],
 html.landscape-mode [data-radix-popover-content] {
   position: fixed !important;
-  top: 100px !important;
-  left: 100px !important;
-  right: auto !important;
+  top: 150px !important;
+  right: 50px !important;
+  left: auto !important;
   bottom: auto !important;
   transform: rotate(-90deg) !important;
-  transform-origin: top left !important;
+  transform-origin: top right !important;
   z-index: 9999 !important;
   background: white !important;
-  border: 3px solid #0066ff !important;
-  border-radius: 8px !important;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.4) !important;
-  max-height: 150px !important;
-  overflow-y: auto !important;
-  max-width: 120px !important;
-  padding: 6px !important;
+  border: 2px solid #0066ff !important;
+  border-radius: 6px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important;
+  max-height: 200px !important;
+  overflow: hidden !important;
+  max-width: 160px !important;
+  padding: 8px !important;
   font-size: 14px !important;
+  width: auto !important;
+  height: auto !important;
 }
 
 /* Make dropdown items more touch-friendly in landscape */
