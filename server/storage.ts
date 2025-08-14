@@ -12,7 +12,6 @@ import {
   notifications,
   emailProcessingLogs,
   emailProcessedDocuments,
-  adminSettings,
   type User,
   type UpsertUser,
   type Employee,
@@ -39,8 +38,6 @@ import {
   type InsertEmailProcessingLog,
   type EmailProcessedDocument,
   type InsertEmailProcessedDocument,
-  type AdminSettings,
-  type InsertAdminSettings,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sum, ne, gte, lte, lt, sql, isNull, or, ilike, inArray } from "drizzle-orm";
@@ -173,10 +170,6 @@ export interface IStorage {
   approveEmailProcessedDocument(id: string, jobId?: string): Promise<void>;
   rejectEmailProcessedDocument(id: string): Promise<void>;
   deleteOldRejectedEmailDocuments(cutoffTime: Date): Promise<void>;
-
-  // Admin settings operations
-  getAdminPassword(): Promise<string>;
-  setAdminPassword(password: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -298,33 +291,6 @@ export class DatabaseStorage implements IStorage {
     return updatedEmployee;
   }
 
-  async updateEmployeeAutoHours(id: string, autoHoursConfig: {
-    autoHoursEnabled: boolean;
-    baseAutoHours?: string;
-    bonusHoursPerThreshold?: string;
-    bonusThreshold?: string;
-  }): Promise<Employee> {
-    console.log(`📊 Database update for employee ${id}:`, autoHoursConfig);
-    
-    const [updatedEmployee] = await db
-      .update(employees)
-      .set({
-        autoHoursEnabled: autoHoursConfig.autoHoursEnabled,
-        baseAutoHours: autoHoursConfig.baseAutoHours || "0",
-        bonusHoursPerThreshold: autoHoursConfig.bonusHoursPerThreshold || "0",
-        bonusThreshold: autoHoursConfig.bonusThreshold || "3000",
-      })
-      .where(eq(employees.id, id))
-      .returning();
-      
-    console.log(`✅ Database updated for ${updatedEmployee.name}:`, {
-      autoHoursEnabled: updatedEmployee.autoHoursEnabled,
-      baseAutoHours: updatedEmployee.baseAutoHours
-    });
-    
-    return updatedEmployee;
-  }
-
   async deleteEmployee(id: string): Promise<void> {
     // First delete all labor entries for this employee
     await db.delete(laborEntries).where(eq(laborEntries.staffId, id));
@@ -395,16 +361,6 @@ export class DatabaseStorage implements IStorage {
       invoiceDate: new Date().toISOString().split('T')[0], // Today's date
     });
     
-    // Apply automatic hours for employees with auto hours enabled
-    // (This happens after all initial job setup is complete)
-    try {
-      await this.applyAutomaticHours(createdJob.id);
-      console.log('✅ Applied automatic hours during job creation');
-    } catch (autoHoursError) {
-      console.error('Error applying automatic hours during job creation:', autoHoursError);
-      // Don't fail job creation if auto hours fails
-    }
-    
     return createdJob;
   }
 
@@ -412,184 +368,6 @@ export class DatabaseStorage implements IStorage {
     // Create job without auto-adding all employees (for PDF import)
     const [createdJob] = await db.insert(jobs).values(job).returning();
     return createdJob;
-  }
-
-  async applyAutomaticHours(jobId: string, reason?: string): Promise<void> {
-    // Get all employees with auto hours enabled (respects current setting)
-    const employeesWithAutoHours = await db.select()
-      .from(employees)
-      .where(eq(employees.autoHoursEnabled, true));
-
-    if (employeesWithAutoHours.length === 0) {
-      console.log('🚫 No employees have automatic hours enabled. Skipping auto hours calculation.');
-      console.log('📋 Existing hours in job sheets will remain unchanged.');
-      return; // No employees have auto hours enabled - existing hours preserved
-    }
-    
-    console.log(`🔄 Applying automatic hours for ${employeesWithAutoHours.length} employees with auto hours enabled (reason: ${reason || 'unknown'})`);
-    employeesWithAutoHours.forEach(emp => 
-      console.log(`  • ${emp.name} (${emp.id.slice(0,8)}) - will receive updated auto hours`)
-    );
-
-    // Calculate total job cost INCLUDING labor (the full job sheet total with GST)
-    const totalCost = await this.calculateJobTotalCostIncludingLabor(jobId);
-    
-    // Apply automatic hours for each employee
-    for (const employee of employeesWithAutoHours) {
-      const baseHours = parseFloat(employee.baseAutoHours || "0");
-      const bonusHoursPerThreshold = parseFloat(employee.bonusHoursPerThreshold || "0");
-      const bonusThreshold = parseFloat(employee.bonusThreshold || "3000");
-      
-      // Calculate bonus hours based on job total and configurable threshold
-      const bonusHours = Math.floor(totalCost / bonusThreshold) * bonusHoursPerThreshold;
-      const totalAutoHours = baseHours + bonusHours;
-      
-      if (totalAutoHours > 0) {
-        // Check if labor entry exists for this employee and job
-        const [existingEntry] = await db.select()
-          .from(laborEntries)
-          .where(and(
-            eq(laborEntries.jobId, jobId),
-            eq(laborEntries.staffId, employee.id)
-          ));
-
-        if (existingEntry) {
-          // Check if we should apply automatic hours (prevent massive retroactive calculations)
-          const currentHours = parseFloat(existingEntry.hoursLogged || "0");
-          
-          // Only update if:
-          // 1. Current hours are 0 (new job sheet), OR
-          // 2. Current hours match a previous auto calculation (showing it was auto-generated), OR
-          // 3. The difference is reasonable (not a massive jump)
-          const hoursDifference = Math.abs(totalAutoHours - currentHours);
-          const shouldUpdate = currentHours === 0 || hoursDifference <= 20;
-          
-          if (shouldUpdate) {
-            await db.update(laborEntries)
-              .set({ 
-                hoursLogged: totalAutoHours.toString(),
-                updatedAt: new Date()
-              })
-              .where(eq(laborEntries.id, existingEntry.id));
-              
-            console.log(`✅ Set ${totalAutoHours} automatic hours for ${employee.name} to job (${baseHours} base + ${bonusHours} bonus) - was ${currentHours}`);
-          } else {
-            console.log(`⏭️  Skipped ${employee.name} auto hours update - would change from ${currentHours} to ${totalAutoHours} hours (too large a change, likely retroactive)`);
-          }
-        } else {
-          // Create new labor entry with auto hours
-          await this.createLaborEntry({
-            jobId: jobId,
-            staffId: employee.id,
-            hourlyRate: employee.defaultHourlyRate,
-            hoursLogged: totalAutoHours.toString(),
-          });
-          
-          console.log(`✅ Created new labor entry with ${totalAutoHours} automatic hours for ${employee.name} (${baseHours} base + ${bonusHours} bonus)`);
-        }
-      }
-    }
-  }
-
-  private async calculateJobTotalCost(jobId: string): Promise<number> {
-    // Get all costs for the job
-    const [laborCost] = await db
-      .select({ total: sum(sql`CAST(${laborEntries.hourlyRate} AS DECIMAL) * CAST(${laborEntries.hoursLogged} AS DECIMAL)`) })
-      .from(laborEntries)
-      .where(eq(laborEntries.jobId, jobId));
-
-    const [materialsCost] = await db
-      .select({ total: sum(sql`CAST(${materials.amount} AS DECIMAL)`) })
-      .from(materials)
-      .where(eq(materials.jobId, jobId));
-
-    const [subTradesCost] = await db
-      .select({ total: sum(sql`CAST(${subTrades.amount} AS DECIMAL)`) })
-      .from(subTrades)
-      .where(eq(subTrades.jobId, jobId));
-
-    const [otherCostsCost] = await db
-      .select({ total: sum(sql`CAST(${otherCosts.amount} AS DECIMAL)`) })
-      .from(otherCosts)
-      .where(eq(otherCosts.jobId, jobId));
-
-    const [tipFeesCost] = await db
-      .select({ total: sum(sql`CAST(${tipFees.totalAmount} AS DECIMAL)`) })
-      .from(tipFees)
-      .where(eq(tipFees.jobId, jobId));
-
-    const total = 
-      (parseFloat(laborCost.total || "0")) +
-      (parseFloat(materialsCost.total || "0")) +
-      (parseFloat(subTradesCost.total || "0")) +
-      (parseFloat(otherCostsCost.total || "0")) +
-      (parseFloat(tipFeesCost.total || "0"));
-
-    return total;
-  }
-
-  private async calculateJobTotalCostIncludingLabor(jobId: string): Promise<number> {
-    // Get job details first to access builder margin
-    const [job] = await db.select().from(jobs).where(eq(jobs.id, jobId));
-    
-    if (!job) {
-      console.error(`Job not found: ${jobId}`);
-      return 0;
-    }
-
-    // Get all costs for the job INCLUDING labor (the full job sheet total)
-    const [materialsCost] = await db
-      .select({ total: sum(sql`CAST(${materials.amount} AS DECIMAL)`) })
-      .from(materials)
-      .where(eq(materials.jobId, jobId));
-
-    const [subTradesCost] = await db
-      .select({ total: sum(sql`CAST(${subTrades.amount} AS DECIMAL)`) })
-      .from(subTrades)
-      .where(eq(subTrades.jobId, jobId));
-
-    const [otherCostsCost] = await db
-      .select({ total: sum(sql`CAST(${otherCosts.amount} AS DECIMAL)`) })
-      .from(otherCosts)
-      .where(eq(otherCosts.jobId, jobId));
-
-    const [tipFeesCost] = await db
-      .select({ total: sum(sql`CAST(${tipFees.totalAmount} AS DECIMAL)`) })
-      .from(tipFees)
-      .where(eq(tipFees.jobId, jobId));
-
-    // Get labor costs
-    const [laborCost] = await db
-      .select({ total: sum(sql`CAST(${laborEntries.hourlyRate} AS DECIMAL) * CAST(${laborEntries.hoursLogged} AS DECIMAL)`) })
-      .from(laborEntries)
-      .where(eq(laborEntries.jobId, jobId));
-
-    // Calculate subtotal INCLUDING labor AND tip fees (the full job sheet total)
-    const subtotal = 
-      (parseFloat(laborCost.total || "0")) +
-      (parseFloat(materialsCost.total || "0")) +
-      (parseFloat(subTradesCost.total || "0")) +
-      (parseFloat(otherCostsCost.total || "0")) +
-      (parseFloat(tipFeesCost.total || "0"));
-
-    // Apply builder margin (same as frontend calculation)
-    const marginPercent = parseFloat(job.builderMargin || "0") / 100;
-    const marginAmount = subtotal * marginPercent;
-    const subtotalWithMargin = subtotal + marginAmount;
-    
-    // Apply 10% GST
-    const gstAmount = subtotalWithMargin * 0.10;
-    const finalTotal = subtotalWithMargin + gstAmount;
-
-    console.log(`💰 Job total cost calculation (FULL JOB SHEET TOTAL):
-    - Subtotal: Labor($${laborCost.total || "0"}) + Materials($${materialsCost.total || "0"}) + SubTrades($${subTradesCost.total || "0"}) + OtherCosts($${otherCostsCost.total || "0"}) + TipFees($${tipFeesCost.total || "0"}) = $${subtotal}
-    - Builder Margin (${job.builderMargin || "0"}%): $${marginAmount.toFixed(2)}
-    - Subtotal with Margin: $${subtotalWithMargin.toFixed(2)}
-    - GST (10%): $${gstAmount.toFixed(2)}
-    - FINAL TOTAL (inc. GST): $${finalTotal.toFixed(2)}
-    - BONUS CALCULATION: ($${finalTotal.toFixed(2)} ÷ $5000) = ${(finalTotal / 5000).toFixed(2)} bonus hours`);
-
-    return finalTotal;
   }
 
   async updateJob(id: string, job: Partial<InsertJob>): Promise<Job> {
@@ -822,7 +600,6 @@ export class DatabaseStorage implements IStorage {
         staffId: laborEntries.staffId,
         hourlyRate: laborEntries.hourlyRate,
         hoursLogged: laborEntries.hoursLogged,
-        hoursSource: laborEntries.hoursSource,
         createdAt: laborEntries.createdAt,
         updatedAt: laborEntries.updatedAt,
         staff: {
@@ -892,30 +669,7 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
 
     if (existingEntry.length === 0) {
-      console.log(`[LABOR_UPDATE] No labor entry found for employeeId=${employeeId}, jobId=${jobId} - creating new entry`);
-      
-      // Get employee details for default hourly rate
-      const [employee] = await db.select().from(employees).where(eq(employees.id, employeeId)).limit(1);
-      
-      if (!employee) {
-        console.log(`[LABOR_UPDATE] Employee not found for ID ${employeeId} - skipping update`);
-        return;
-      }
-      
-      // Create new labor entry with timesheet hours
-      const newEntry = await this.createLaborEntry({
-        jobId,
-        staffId: employeeId,
-        hourlyRate: employee.defaultHourlyRate,
-        hoursLogged: totalHours.toString(),
-      });
-      
-      // Mark it as coming from timesheet
-      await db.update(laborEntries)
-        .set({ hoursSource: "timesheet" })
-        .where(eq(laborEntries.id, newEntry.id));
-        
-      console.log(`[LABOR_UPDATE] Created new labor entry for employeeId=${employeeId}, jobId=${jobId}, hours=${totalHours}`);
+      console.log(`[LABOR_UPDATE] No labor entry found for employeeId=${employeeId}, jobId=${jobId} - skipping update`);
       return;
     }
 
@@ -924,11 +678,7 @@ export class DatabaseStorage implements IStorage {
     // Update labor entry hours using the employee ID (not user ID)
     const updateResult = await db
       .update(laborEntries)
-      .set({ 
-        hoursLogged: totalHours.toString(), 
-        hoursSource: "timesheet",
-        updatedAt: new Date() 
-      })
+      .set({ hoursLogged: totalHours.toString(), updatedAt: new Date() })
       .where(
         and(
           eq(laborEntries.staffId, employeeId), // Use employee ID for labor entries
@@ -940,8 +690,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addExtraHoursToLaborEntry(laborEntryId: string, extraHours: string): Promise<LaborEntry> {
-    console.log(`🔄 Adding ${extraHours} extra hours to labor entry ${laborEntryId}`);
-    
     // Get current labor entry
     const [currentEntry] = await db
       .select()
@@ -949,7 +697,6 @@ export class DatabaseStorage implements IStorage {
       .where(eq(laborEntries.id, laborEntryId));
 
     if (!currentEntry) {
-      console.error(`❌ Labor entry not found: ${laborEntryId}`);
       throw new Error("Labor entry not found");
     }
 
@@ -957,8 +704,6 @@ export class DatabaseStorage implements IStorage {
     const currentHours = parseFloat(currentEntry.hoursLogged) || 0;
     const additionalHours = parseFloat(extraHours);
     const newTotalHours = (currentHours + additionalHours).toString();
-
-    console.log(`📊 Hours calculation: ${currentHours} + ${additionalHours} = ${newTotalHours}`);
 
     // Update the labor entry with new total hours
     const [updatedEntry] = await db
@@ -970,12 +715,6 @@ export class DatabaseStorage implements IStorage {
       .where(eq(laborEntries.id, laborEntryId))
       .returning();
 
-    if (!updatedEntry) {
-      console.error(`❌ Failed to update labor entry ${laborEntryId}`);
-      throw new Error("Failed to update labor entry");
-    }
-
-    console.log(`✅ Successfully updated labor entry. New hours: ${updatedEntry.hoursLogged}, jobId: ${updatedEntry.jobId}`);
     return updatedEntry;
   }
 
@@ -1943,39 +1682,6 @@ export class DatabaseStorage implements IStorage {
         lt(emailProcessedDocuments.processedAt, cutoffTime)
       ));
     console.log(`✅ Cleaned up old rejected documents`);
-  }
-
-  // Admin settings operations
-  async getAdminPassword(): Promise<string> {
-    try {
-      const [settings] = await db.select().from(adminSettings).where(eq(adminSettings.id, "default"));
-      return settings?.adminPassword || "admin123";
-    } catch (error) {
-      console.error("Error getting admin password:", error);
-      return "admin123"; // fallback default
-    }
-  }
-
-  async setAdminPassword(password: string): Promise<void> {
-    try {
-      await db
-        .insert(adminSettings)
-        .values({
-          id: "default",
-          adminPassword: password,
-          updatedAt: new Date(),
-        })
-        .onConflictDoUpdate({
-          target: adminSettings.id,
-          set: {
-            adminPassword: password,
-            updatedAt: new Date(),
-          },
-        });
-    } catch (error) {
-      console.error("Error setting admin password:", error);
-      throw error;
-    }
   }
 
 

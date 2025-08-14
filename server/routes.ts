@@ -429,75 +429,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update employee automatic hours settings
-  app.put("/api/employees/:id/auto-hours", isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const { autoHoursEnabled, baseAutoHours, bonusHoursPerThreshold, bonusThreshold } = req.body;
-      
-      console.log(`🔧 Updating auto hours for employee ${req.params.id}:`, {
-        autoHoursEnabled,
-        baseAutoHours,
-        bonusHoursPerThreshold,
-        bonusThreshold
-      });
-      
-      // Validate the input
-      if (typeof autoHoursEnabled !== 'boolean') {
-        return res.status(400).json({ message: "autoHoursEnabled must be a boolean" });
-      }
-
-      const employee = await storage.updateEmployeeAutoHours(req.params.id, {
-        autoHoursEnabled,
-        baseAutoHours: baseAutoHours?.toString() || "0",
-        bonusHoursPerThreshold: bonusHoursPerThreshold?.toString() || "0",
-        bonusThreshold: bonusThreshold?.toString() || "3000"
-      });
-      
-      console.log(`✅ Auto hours updated successfully for ${employee.name}:`, {
-        autoHoursEnabled: employee.autoHoursEnabled,
-        baseAutoHours: employee.baseAutoHours,
-        bonusHoursPerThreshold: employee.bonusHoursPerThreshold,
-        bonusThreshold: employee.bonusThreshold
-      });
-      
-      res.json(employee);
-    } catch (error) {
-      console.error("Error updating employee auto hours:", error);
-      res.status(500).json({ message: "Failed to update employee auto hours settings" });
-    }
-  });
-
-  // Apply automatic hours to a specific job
-  app.post("/api/jobs/:jobId/apply-auto-hours", isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const jobId = req.params.jobId;
-      
-      // Check if job exists
-      const job = await storage.getJob(jobId);
-      if (!job) {
-        return res.status(404).json({ message: "Job not found" });
-      }
-
-      // Apply automatic hours
-      await storage.applyAutomaticHours(jobId, "manual application");
-      
-      res.json({ message: "Automatic hours applied successfully", jobId });
-    } catch (error) {
-      console.error("Error applying automatic hours:", error);
-      res.status(500).json({ message: "Failed to apply automatic hours" });
-    }
-  });
-
   app.delete("/api/employees/:id", isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);
@@ -768,9 +699,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const laborEntry = await storage.addExtraHoursToLaborEntry(req.params.id, extraHours);
-      
-      // Automatic hours disabled
-      
       res.json(laborEntry);
     } catch (error) {
       console.error("Error adding extra hours:", error);
@@ -790,9 +718,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         jobId: req.params.jobId,
       });
       const entry = await storage.createLaborEntry(validatedData);
-      
-      // Automatic hours disabled
-      
       res.status(201).json(entry);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -812,18 +737,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertLaborEntrySchema.partial().parse(req.body);
       const entry = await storage.updateLaborEntry(req.params.id, validatedData);
-      
-      // Recalculate auto hours when labor entries are updated (affects total job cost)
-      if ((validatedData.hoursLogged || validatedData.hourlyRate) && entry.jobId) {
-        try {
-          console.log(`🔄 Starting automatic hours recalculation for job ${entry.jobId} after labor entry update`);
-          await storage.applyAutomaticHours(entry.jobId, "labor entry update");
-          console.log(`✅ Recalculated automatic hours for job ${entry.jobId} after labor entry update`);
-        } catch (autoHoursError) {
-          console.error('❌ Error recalculating automatic hours after labor entry update:', autoHoursError);
-        }
-      }
-      
       res.json(entry);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -864,9 +777,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         jobId: req.params.jobId,
       });
       const material = await storage.createMaterial(validatedData);
-      
-      // Automatic hours disabled
-      
       res.status(201).json(material);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -887,9 +797,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertMaterialSchema.partial().parse(req.body);
       const material = await storage.updateMaterial(req.params.id, validatedData);
-      
-      // Automatic hours disabled
-      
       res.json(material);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -958,9 +865,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         jobId: req.params.jobId,
       });
       const tipFee = await storage.createTipFee(validatedData);
-      
-      // Automatic hours disabled
-      
       res.status(201).json(tipFee);
     } catch (error) {
       console.error("Error creating tip fee:", error);
@@ -977,9 +881,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertTipFeeSchema.partial().parse(req.body);
       const tipFee = await storage.updateTipFee(req.params.id, validatedData);
-      
-      // Automatic hours disabled
-      
       res.json(tipFee);
     } catch (error) {
       console.error("Error updating tip fee:", error);
@@ -1015,9 +916,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         jobId: req.params.jobId,
       });
       const subTrade = await storage.createSubTrade(validatedData);
-      
-      // Automatic hours disabled
-      
       res.status(201).json(subTrade);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1037,9 +935,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertSubTradeSchema.partial().parse(req.body);
       const subTrade = await storage.updateSubTrade(req.params.id, validatedData);
-      
-      // Automatic hours disabled
-      
       res.json(subTrade);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1078,9 +973,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         jobId: req.params.jobId,
       });
       const otherCost = await storage.createOtherCost(validatedData);
-      
-      // Automatic hours disabled
-      
       res.status(201).json(otherCost);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1100,9 +992,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertOtherCostSchema.partial().parse(req.body);
       const otherCost = await storage.updateOtherCost(req.params.id, validatedData);
-      
-      // Automatic hours disabled
-      
       res.json(otherCost);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -2701,8 +2590,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // If no fuzzy match, create new employee
             console.log(`🔵 Creating new employee: ${laborEntry.employeeName}`);
             const newEmployee = await storage.createEmployee({
-              name: laborEntry.employeeName,
-              defaultHourlyRate: "50"
+              name: laborEntry.employeeName
             });
             employeeId = newEmployee.id;
           }
@@ -2943,15 +2831,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Don't fail the entire process if file processing fails
       }
 
-      // Apply automatic hours after all job data is complete
-      try {
-        await storage.applyAutomaticHours(newJob.id);
-        console.log('✅ Applied automatic hours for job');
-      } catch (autoHoursError) {
-        console.error('Error applying automatic hours:', autoHoursError);
-        // Don't fail the process if auto hours fails
-      }
-
       res.json({
         success: true,
         job: newJob,
@@ -3044,66 +2923,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error processing emails:", error);
       res.status(500).json({ error: "Failed to process emails" });
-    }
-  });
-
-  // Password validation endpoint
-  app.post("/api/validate-admin-password", isAuthenticated, async (req: any, res) => {
-    try {
-      const { password } = req.body;
-      
-      if (!password || typeof password !== 'string') {
-        return res.status(400).json({ message: "Password is required" });
-      }
-
-      // Check if user is admin
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user || user.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      // Get admin password from storage or use default
-      const adminPassword = await storage.getAdminPassword() || "admin123";
-      const isValid = password === adminPassword;
-      
-      res.json({ valid: isValid });
-    } catch (error) {
-      console.error("Error validating admin password:", error);
-      res.status(500).json({ message: "Failed to validate password" });
-    }
-  });
-
-  // Update admin password endpoint
-  app.put("/api/admin/password", isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user || user.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const { currentPassword, newPassword } = req.body;
-      
-      if (!currentPassword || !newPassword) {
-        return res.status(400).json({ message: "Current password and new password are required" });
-      }
-
-      if (newPassword.length < 6) {
-        return res.status(400).json({ message: "New password must be at least 6 characters long" });
-      }
-
-      // Verify current password
-      const adminPassword = await storage.getAdminPassword() || "admin123";
-      if (currentPassword !== adminPassword) {
-        return res.status(400).json({ message: "Current password is incorrect" });
-      }
-
-      // Update password
-      await storage.setAdminPassword(newPassword);
-      
-      res.json({ message: "Password updated successfully" });
-    } catch (error) {
-      console.error("Error updating admin password:", error);
-      res.status(500).json({ message: "Failed to update password" });
     }
   });
 

@@ -40,8 +40,6 @@ import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor"
 import { EmailProcessingReview } from "@/components/EmailProcessingReview";
 import { NotificationSettings } from "@/components/NotificationSettings";
 
-import { AdminSettings } from "@/components/AdminSettings";
-
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
     .min(1, "Builder margin is required")
@@ -1502,7 +1500,6 @@ export default function AdminDashboard() {
                 <Bell className="h-4 w-4 mr-2" />
                 Notification Settings
               </DropdownMenuItem>
-
               <DropdownMenuItem onClick={() => setActiveTab("settings")} data-testid="menu-settings">
                 <Settings className="h-4 w-4 mr-2" />
                 Settings
@@ -3475,7 +3472,12 @@ export default function AdminDashboard() {
 
         {/* Settings Tab */}
         <TabsContent value="settings" className="space-y-6">
-          <AdminSettings />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div>
+              <h2 className="text-xl font-semibold">Application Settings</h2>
+              <p className="text-sm text-muted-foreground">Configure integrations and application preferences</p>
+            </div>
+          </div>
           
           <div className="grid gap-6 md:grid-cols-1">
             <GoogleDriveIntegration />
@@ -3552,8 +3554,6 @@ export default function AdminDashboard() {
             </p>
             <NotificationSettings />
           </TabsContent>
-
-
         </Tabs>
 
         {/* Job Sheet Modal */}

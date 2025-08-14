@@ -25,13 +25,6 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// Admin settings table
-export const adminSettings = pgTable("admin_settings", {
-  id: varchar("id").primaryKey().default("default"),
-  adminPassword: varchar("admin_password").notNull().default("admin123"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
 // User storage table (required for Replit Auth)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -52,11 +45,6 @@ export const employees = pgTable("employees", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull(),
   defaultHourlyRate: decimal("default_hourly_rate", { precision: 10, scale: 2 }).notNull().default("50"),
-  // Automatic hours configuration
-  autoHoursEnabled: boolean("auto_hours_enabled").notNull().default(false),
-  baseAutoHours: decimal("base_auto_hours", { precision: 10, scale: 2 }).default("0"), // Base hours added to every job
-  bonusHoursPerThreshold: decimal("bonus_hours_per_threshold", { precision: 10, scale: 2 }).default("0"), // Additional hours per threshold amount
-  bonusThreshold: decimal("bonus_threshold", { precision: 10, scale: 2 }).default("3000"), // Dollar threshold for bonus hours
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -99,7 +87,6 @@ export const laborEntries = pgTable("labor_entries", {
   staffId: varchar("staff_id").notNull().references(() => employees.id),
   hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }).notNull(),
   hoursLogged: decimal("hours_logged", { precision: 10, scale: 2 }).notNull().default("0"),
-  hoursSource: varchar("hours_source", { length: 20 }).notNull().default("manual"), // 'manual' or 'timesheet'
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -266,11 +253,7 @@ export const insertJobSchema = createInsertSchema(jobs).omit({
 export const insertEmployeeSchema = createInsertSchema(employees).omit({
   id: true,
   createdAt: true,
-}).extend({
-  defaultHourlyRate: z.string().or(z.number()).transform(val => String(val)),
-  baseAutoHours: z.string().or(z.number()).transform(val => String(val)).optional(),
-  bonusHoursPerThreshold: z.string().or(z.number()).transform(val => String(val)).optional(),
-  bonusThreshold: z.string().or(z.number()).transform(val => String(val)).optional(),
+  defaultHourlyRate: true,
 });
 
 export const insertOtherCostSchema = createInsertSchema(otherCosts).omit({
@@ -400,8 +383,3 @@ export type EmailProcessingLog = typeof emailProcessingLogs.$inferSelect;
 export type InsertEmailProcessingLog = z.infer<typeof insertEmailProcessingLogSchema>;
 export type EmailProcessedDocument = typeof emailProcessedDocuments.$inferSelect;
 export type InsertEmailProcessedDocument = z.infer<typeof insertEmailProcessedDocumentSchema>;
-export type AdminSettings = typeof adminSettings.$inferSelect;
-export type InsertAdminSettings = typeof adminSettings.$inferInsert;
-
-// Admin Settings Schema
-export const insertAdminSettingsSchema = createInsertSchema(adminSettings);

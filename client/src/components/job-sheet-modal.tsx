@@ -66,13 +66,6 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const [editSubTradeForm, setEditSubTradeForm] = useState<{trade: string; contractor: string; amount: string; invoiceDate: string}>({trade: "", contractor: "", amount: "", invoiceDate: ""});
   const [editOtherCostForm, setEditOtherCostForm] = useState<{description: string; amount: string}>({description: "", amount: ""});
   const [editTipFeeForm, setEditTipFeeForm] = useState<{description: string; amount: string}>({description: "", amount: ""});
-  
-  // Hours editing state
-  const [editingHours, setEditingHours] = useState<string | null>(null);
-  const [editHoursForm, setEditHoursForm] = useState<{hoursLogged: string}>({hoursLogged: ""});
-  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-  const [passwordForEdit, setPasswordForEdit] = useState("");
-  const [pendingEditEntry, setPendingEditEntry] = useState<LaborEntry | null>(null);
 
   const { data: jobDetails, isLoading } = useQuery<JobDetails>({
     queryKey: ["/api/jobs", jobId],
@@ -651,43 +644,6 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     },
   });
 
-  // Update hours mutation
-  const updateHoursMutation = useMutation({
-    mutationFn: async ({ laborEntryId, hoursLogged }: { laborEntryId: string; hoursLogged: string }) => {
-      const response = await apiRequest("PATCH", `/api/labor-entries/${laborEntryId}`, {
-        hoursLogged: parseFloat(hoursLogged).toString(),
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
-      setEditingHours(null);
-      setEditHoursForm({ hoursLogged: "" });
-      toast({
-        title: "Success",
-        description: "Hours updated successfully",
-      });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update hours",
-        variant: "destructive",
-      });
-    },
-  });
-
   // Delete mutations
   const deleteMaterialMutation = useMutation({
     mutationFn: async (materialId: string) => {
@@ -1180,72 +1136,6 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     setIsEditing(false);
   };
 
-  // Password validation mutation
-  const validatePasswordMutation = useMutation({
-    mutationFn: async (password: string) => {
-      const response = await apiRequest("POST", "/api/validate-admin-password", {
-        password,
-      });
-      return response.json();
-    },
-    onSuccess: (data) => {
-      if (data.valid && pendingEditEntry) {
-        setShowPasswordDialog(false);
-        setPasswordForEdit("");
-        setEditingHours(pendingEditEntry.id);
-        setEditHoursForm({ hoursLogged: pendingEditEntry.hoursLogged });
-        setPendingEditEntry(null);
-      } else {
-        toast({
-          title: "Error",
-          description: "Invalid password",
-          variant: "destructive",
-        });
-      }
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to validate password",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Hours editing handlers
-  const handleStartEditHours = (laborEntry: LaborEntry & { hoursSource?: string }) => {
-    // Check if hours came from timesheet - require password
-    if (laborEntry.hoursSource === "timesheet") {
-      setPendingEditEntry(laborEntry);
-      setShowPasswordDialog(true);
-    } else {
-      // Manual hours can be edited freely
-      setEditingHours(laborEntry.id);
-      setEditHoursForm({ hoursLogged: laborEntry.hoursLogged });
-    }
-  };
-
-  const handleSaveHours = (laborEntryId: string) => {
-    if (!editHoursForm.hoursLogged.trim() || parseFloat(editHoursForm.hoursLogged) < 0) {
-      toast({
-        title: "Error",
-        description: "Please enter valid hours",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    updateHoursMutation.mutate({
-      laborEntryId,
-      hoursLogged: editHoursForm.hoursLogged,
-    });
-  };
-
-  const handleCancelEditHours = () => {
-    setEditingHours(null);
-    setEditHoursForm({ hoursLogged: "" });
-  };
-
   const handleAddExtraHours = (laborEntryId: string) => {
     const hoursToAdd = extraHours[laborEntryId];
     if (!hoursToAdd || parseFloat(hoursToAdd) <= 0) {
@@ -1644,69 +1534,9 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                             </div>
                           </td>
                           <td className="py-3">
-                            {editingHours === entry.id ? (
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="number"
-                                  step="0.5"
-                                  min="0"
-                                  value={editHoursForm.hoursLogged}
-                                  onChange={(e) => setEditHoursForm({ hoursLogged: e.target.value })}
-                                  className="w-20 text-sm border border-primary rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                  data-testid={`input-edit-hours-${entry.id}`}
-                                  autoFocus
-                                />
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleSaveHours(entry.id)}
-                                  disabled={updateHoursMutation.isPending}
-                                  className="h-7 px-2 text-xs bg-green-600 hover:bg-green-700 text-white"
-                                  data-testid={`button-save-hours-${entry.id}`}
-                                >
-                                  {updateHoursMutation.isPending ? "..." : "Save"}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={handleCancelEditHours}
-                                  className="h-7 px-2 text-xs"
-                                  data-testid={`button-cancel-edit-hours-${entry.id}`}
-                                >
-                                  Cancel
-                                </Button>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-1">
-                                  <span className="text-sm text-gray-600 font-medium" data-testid={`text-labor-hours-${entry.id}`}>
-                                    {entry.hoursLogged} hrs
-                                  </span>
-                                  {(entry as any).hoursSource === "timesheet" && (
-                                    <span className="text-xs bg-blue-100 text-blue-700 px-1 py-0.5 rounded" title="Hours from approved timesheet">
-                                      T
-                                    </span>
-                                  )}
-                                </div>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleStartEditHours(entry as any)}
-                                  className={`h-6 w-6 p-0 hover:bg-primary/10 ${
-                                    (entry as any).hoursSource === "timesheet" 
-                                      ? "text-orange-600 hover:text-orange-700" 
-                                      : ""
-                                  }`}
-                                  data-testid={`button-edit-hours-${entry.id}`}
-                                  title={
-                                    (entry as any).hoursSource === "timesheet" 
-                                      ? "Timesheet hours - password required to edit" 
-                                      : "Edit hours"
-                                  }
-                                >
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            )}
+                            <span className="text-sm text-gray-600 font-medium" data-testid={`text-labor-hours-${entry.id}`}>
+                              {entry.hoursLogged} hrs
+                            </span>
                           </td>
                           <td className="py-3">
                             <div className="flex items-center gap-2">
@@ -2694,57 +2524,6 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
               >
                 <Mail className="h-4 w-4 mr-2 max-sm:h-3 max-sm:w-3" />
                 {emailPDFMutation.isPending ? "Sending..." : "Send PDF"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Password Dialog for Timesheet Hours */}
-      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-lg">Password Required</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              These hours came from an approved timesheet. Enter the admin password to edit them.
-            </p>
-            <div>
-              <Label htmlFor="admin-password">Admin Password</Label>
-              <Input
-                id="admin-password"
-                type="password"
-                placeholder="Enter password"
-                value={passwordForEdit}
-                onChange={(e) => setPasswordForEdit(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && passwordForEdit.trim()) {
-                    validatePasswordMutation.mutate(passwordForEdit);
-                  }
-                }}
-                data-testid="input-admin-password"
-                autoFocus
-              />
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowPasswordDialog(false);
-                  setPasswordForEdit("");
-                  setPendingEditEntry(null);
-                }}
-                data-testid="button-cancel-password"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => validatePasswordMutation.mutate(passwordForEdit)}
-                disabled={validatePasswordMutation.isPending || !passwordForEdit.trim()}
-                data-testid="button-validate-password"
-              >
-                {validatePasswordMutation.isPending ? "Validating..." : "Confirm"}
               </Button>
             </div>
           </div>
