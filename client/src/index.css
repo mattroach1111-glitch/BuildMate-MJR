@@ -232,15 +232,11 @@ html.landscape-mode [data-state="open"][role="dialog"] {
   max-height: 90% !important;
 }
 
-/* Force all dropdowns to appear in a fixed location in landscape mode */
+/* Improve dropdown positioning in landscape mode */
 html.landscape-mode [data-radix-dropdown-menu-content],
 html.landscape-mode [data-radix-select-content],
 html.landscape-mode [data-radix-popover-content] {
   position: fixed !important;
-  top: 20px !important;
-  left: 20px !important;
-  bottom: auto !important;
-  transform: none !important;
   z-index: 9999 !important;
   background: white !important;
   border: 2px solid #2563eb !important;
