@@ -232,24 +232,25 @@ html.landscape-mode [data-state="open"][role="dialog"] {
   max-height: 90% !important;
 }
 
-/* Force dropdowns to absolute positioning within rotated container */
+/* Simple approach - just make dropdowns visible and positioned from viewport */
 html.landscape-mode [data-radix-dropdown-menu-content],
 html.landscape-mode [data-radix-select-content],
 html.landscape-mode [data-radix-popover-content] {
-  position: absolute !important;
-  top: 100px !important;
-  left: 100px !important;
+  position: fixed !important;
+  top: 50px !important;
+  left: 50px !important;
   right: auto !important;
   bottom: auto !important;
-  transform: none !important;
+  transform: rotate(-90deg) !important;
+  transform-origin: top left !important;
   z-index: 9999 !important;
   background: white !important;
   border: 3px solid #ef4444 !important;
   border-radius: 8px !important;
   box-shadow: 0 10px 40px rgba(0,0,0,0.4) !important;
-  max-height: 300px !important;
+  max-height: 200px !important;
   overflow-y: auto !important;
-  max-width: 200px !important;
+  max-width: 150px !important;
   padding: 8px !important;
 }
 

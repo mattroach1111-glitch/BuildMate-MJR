@@ -56,16 +56,11 @@ export function OrientationToggle() {
       // Add landscape class to html for additional styling
       document.documentElement.classList.add('landscape-mode');
       
-      // Handle existing portals/modals - force them into the rotated container
+      // Handle existing portals/modals
       const portals = document.querySelectorAll('[data-radix-portal]');
       portals.forEach(portal => {
         if (portal instanceof HTMLElement) {
           portal.style.pointerEvents = 'auto';
-          // Move portal into the rotated body container
-          const root = document.getElementById('root');
-          if (root && !root.contains(portal)) {
-            root.appendChild(portal);
-          }
         }
       });
       
@@ -76,31 +71,25 @@ export function OrientationToggle() {
             if (node instanceof HTMLElement) {
               if (node.matches('[data-radix-portal]')) {
                 node.style.pointerEvents = 'auto';
-                // Move new portals into the rotated container
-                const root = document.getElementById('root');
-                if (root && !root.contains(node)) {
-                  root.appendChild(node);
-                }
               }
               
-              // Force dropdowns to visible area in landscape
+              // Apply counter-rotation to dropdowns
               const dropdowns = node.querySelectorAll('[data-radix-dropdown-menu-content], [data-radix-select-content], [data-radix-popover-content]');
               dropdowns.forEach(dropdown => {
                 if (dropdown instanceof HTMLElement) {
-                  // Force to absolute positioning within the rotated container
-                  dropdown.style.position = 'absolute';
-                  dropdown.style.top = '100px';
-                  dropdown.style.left = '100px';
-                  dropdown.style.right = 'auto';
-                  dropdown.style.bottom = 'auto';
-                  dropdown.style.transform = 'none';
+                  // Counter-rotate the dropdown content
+                  dropdown.style.position = 'fixed';
+                  dropdown.style.top = '50px';
+                  dropdown.style.left = '50px';
+                  dropdown.style.transform = 'rotate(-90deg)';
+                  dropdown.style.transformOrigin = 'top left';
                   dropdown.style.visibility = 'visible';
                   dropdown.style.opacity = '1';
                   dropdown.style.zIndex = '9999';
                   dropdown.style.border = '3px solid #ef4444';
                   dropdown.style.background = 'white';
-                  dropdown.style.maxWidth = '200px';
-                  dropdown.style.maxHeight = '300px';
+                  dropdown.style.maxWidth = '150px';
+                  dropdown.style.maxHeight = '200px';
                 }
               });
             }
