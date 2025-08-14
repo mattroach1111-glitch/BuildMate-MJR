@@ -832,6 +832,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         jobId: req.params.jobId,
       });
       const material = await storage.createMaterial(validatedData);
+      
+      // Recalculate auto hours when new materials are added (affects total job cost)
+      try {
+        await storage.applyAutomaticHours(req.params.jobId);
+        console.log(`✅ Recalculated automatic hours for job ${req.params.jobId} after material creation`);
+      } catch (autoHoursError) {
+        console.error('Error recalculating automatic hours after material creation:', autoHoursError);
+      }
+      
       res.status(201).json(material);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -932,6 +941,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         jobId: req.params.jobId,
       });
       const tipFee = await storage.createTipFee(validatedData);
+      
+      // Recalculate auto hours when new tip fees are added (affects total job cost)
+      try {
+        await storage.applyAutomaticHours(req.params.jobId);
+        console.log(`✅ Recalculated automatic hours for job ${req.params.jobId} after tip fee creation`);
+      } catch (autoHoursError) {
+        console.error('Error recalculating automatic hours after tip fee creation:', autoHoursError);
+      }
+      
       res.status(201).json(tipFee);
     } catch (error) {
       console.error("Error creating tip fee:", error);
@@ -949,8 +967,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertTipFeeSchema.partial().parse(req.body);
       const tipFee = await storage.updateTipFee(req.params.id, validatedData);
       
-      // Recalculate auto hours when tip fee costs change (affects bonus hours)
-      if ((validatedData.totalAmount || validatedData.cartageAmount || validatedData.dumpFee) && tipFee.jobId) {
+      // Recalculate auto hours when tip fee costs change (affects bonus hours)  
+      if (tipFee.jobId) {
         try {
           await storage.applyAutomaticHours(tipFee.jobId);
           console.log(`✅ Recalculated automatic hours for job ${tipFee.jobId} after tip fee update`);
@@ -994,6 +1012,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         jobId: req.params.jobId,
       });
       const subTrade = await storage.createSubTrade(validatedData);
+      
+      // Recalculate auto hours when new subtrades are added (affects total job cost)
+      try {
+        await storage.applyAutomaticHours(req.params.jobId);
+        console.log(`✅ Recalculated automatic hours for job ${req.params.jobId} after subtrade creation`);
+      } catch (autoHoursError) {
+        console.error('Error recalculating automatic hours after subtrade creation:', autoHoursError);
+      }
+      
       res.status(201).json(subTrade);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1062,6 +1089,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         jobId: req.params.jobId,
       });
       const otherCost = await storage.createOtherCost(validatedData);
+      
+      // Recalculate auto hours when new other costs are added (affects total job cost)
+      try {
+        await storage.applyAutomaticHours(req.params.jobId);
+        console.log(`✅ Recalculated automatic hours for job ${req.params.jobId} after other cost creation`);
+      } catch (autoHoursError) {
+        console.error('Error recalculating automatic hours after other cost creation:', autoHoursError);
+      }
+      
       res.status(201).json(otherCost);
     } catch (error) {
       if (error instanceof z.ZodError) {
