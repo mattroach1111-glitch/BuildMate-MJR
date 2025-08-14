@@ -73,7 +73,7 @@ export function OrientationToggle() {
                 node.style.pointerEvents = 'auto';
               }
               
-              // Fix dropdown positioning
+              // Simplify dropdown positioning - just make them visible
               if (node.matches('[data-radix-popper-content-wrapper]') || 
                   node.querySelector('[data-radix-popper-content-wrapper]')) {
                 const dropdown = node.matches('[data-radix-popper-content-wrapper]') 
@@ -81,19 +81,11 @@ export function OrientationToggle() {
                   : node.querySelector('[data-radix-popper-content-wrapper]');
                 
                 if (dropdown instanceof HTMLElement) {
-                  // Reset positioning and force it to stay near trigger
-                  dropdown.style.position = 'absolute';
-                  dropdown.style.transform = 'rotate(-90deg)';
-                  dropdown.style.transformOrigin = 'top left';
-                  dropdown.style.zIndex = '9999';
-                  
-                  // Try to find the trigger button and position relative to it
-                  const trigger = document.querySelector('[data-state="open"]');
-                  if (trigger instanceof HTMLElement) {
-                    const rect = trigger.getBoundingClientRect();
-                    dropdown.style.top = `${rect.bottom + 5}px`;
-                    dropdown.style.left = `${rect.left}px`;
-                  }
+                  // Keep it simple - just make it visible and positioned relatively
+                  dropdown.style.position = 'relative';
+                  dropdown.style.transform = 'none';
+                  dropdown.style.zIndex = '50';
+                  dropdown.style.display = 'block';
                 }
               }
             }
