@@ -32,7 +32,6 @@ export function OrientationToggle() {
       const translateX = (vw - vh) / 2;
       const translateY = (vh - vw) / 2;
       
-      document.body.style.transform = 'rotate(90deg)';
       document.body.style.transformOrigin = 'center center';
       document.body.style.width = `${vh}px`;
       document.body.style.height = `${vw}px`;
