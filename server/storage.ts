@@ -432,18 +432,15 @@ export class DatabaseStorage implements IStorage {
           ));
 
         if (existingEntry) {
-          // Update existing entry by adding auto hours
-          const currentHours = parseFloat(existingEntry.hoursLogged || "0");
-          const newHours = currentHours + totalAutoHours;
-          
+          // Update existing entry by setting to auto hours (not adding)
           await db.update(laborEntries)
             .set({ 
-              hoursLogged: newHours.toString(),
+              hoursLogged: totalAutoHours.toString(),
               updatedAt: new Date()
             })
             .where(eq(laborEntries.id, existingEntry.id));
             
-          console.log(`✅ Added ${totalAutoHours} automatic hours for ${employee.name} to job (${baseHours} base + ${bonusHours} bonus)`);
+          console.log(`✅ Set ${totalAutoHours} automatic hours for ${employee.name} to job (${baseHours} base + ${bonusHours} bonus)`);
         } else {
           // Create new labor entry with auto hours
           await this.createLaborEntry({
