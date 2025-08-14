@@ -43,7 +43,8 @@ export function SMSNotificationSettings() {
         description: "Your SMS notification preferences have been saved.",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('📱 SMS Settings save error:', error);
       toast({
         title: "Failed to update settings",
         description: "There was an error saving your SMS preferences.",
