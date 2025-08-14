@@ -4,61 +4,73 @@ import { RotateCcw, Smartphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function OrientationToggle() {
-  const [isLandscape, setIsLandscape] = useState(false);
+  const [isLandscapeForced, setIsLandscapeForced] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [canRotate, setCanRotate] = useState(false);
 
   useEffect(() => {
-    // Check if device is mobile and supports orientation API
+    // Check if device is mobile or small screen
     const checkMobile = () => {
       const isMobileDevice = window.innerWidth <= 768 || 
-                           /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const hasOrientationAPI = 'screen' in window && 'orientation' in window.screen;
-      
-      setIsMobile(isMobileDevice);
-      setCanRotate(hasOrientationAPI && isMobileDevice);
-    };
+                           /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                           window.innerHeight <= 600;
 
-    // Check current orientation
-    const checkOrientation = () => {
-      setIsLandscape(window.innerWidth > window.innerHeight);
+      setIsMobile(isMobileDevice);
     };
 
     checkMobile();
-    checkOrientation();
-    
-    window.addEventListener('resize', checkOrientation);
-    window.addEventListener('orientationchange', checkOrientation);
-    
-    return () => {
-      window.removeEventListener('resize', checkOrientation);
-      window.removeEventListener('orientationchange', checkOrientation);
-    };
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const toggleOrientation = async () => {
-    if (!canRotate) return;
-
-    try {
-      const screen = window.screen as any;
-      if (screen.orientation) {
-        if (isLandscape) {
-          // Switch to portrait
-          await screen.orientation.lock('portrait-primary');
-        } else {
-          // Switch to landscape
-          await screen.orientation.lock('landscape-primary');
-        }
+  useEffect(() => {
+    if (isLandscapeForced) {
+      // Apply landscape transformation to the root element
+      const root = document.getElementById('root');
+      if (root) {
+        const vh = window.innerHeight;
+        const vw = window.innerWidth;
+        
+        // Transform and center the root container
+        root.style.transform = 'rotate(90deg)';
+        root.style.transformOrigin = 'center center';
+        root.style.width = `${vh}px`;
+        root.style.height = `${vw}px`;
+        root.style.position = 'fixed';
+        root.style.top = '50%';
+        root.style.left = '50%';
+        root.style.marginTop = `${-vw/2}px`;
+        root.style.marginLeft = `${-vh/2}px`;
       }
-    } catch (error) {
-      console.log('Orientation lock not supported or failed:', error);
-      // Fallback: just notify user to rotate manually
-      alert('Please rotate your device manually to switch orientation');
+      
+      // Prevent scrolling on body
+      document.body.style.overflow = 'hidden';
+      document.documentElement.classList.add('landscape-mode');
+    } else {
+      // Reset everything
+      const root = document.getElementById('root');
+      if (root) {
+        root.style.transform = '';
+        root.style.transformOrigin = '';
+        root.style.width = '';
+        root.style.height = '';
+        root.style.position = '';
+        root.style.top = '';
+        root.style.left = '';
+        root.style.marginTop = '';
+        root.style.marginLeft = '';
+      }
+      
+      document.body.style.overflow = '';
+      document.documentElement.classList.remove('landscape-mode');
     }
+  }, [isLandscapeForced]);
+
+  const toggleOrientation = () => {
+    setIsLandscapeForced(!isLandscapeForced);
   };
 
-  // Only show on mobile devices that support orientation
-  if (!isMobile) {
+  // Show on mobile devices and small screens for better usability
+  if (!isMobile && window.innerWidth > 768) {
     return null;
   }
 
@@ -66,16 +78,19 @@ export function OrientationToggle() {
     <Button
       onClick={toggleOrientation}
       size="sm"
-      variant="outline"
+      variant={isLandscapeForced ? "default" : "outline"}
       className={cn(
-        "fixed bottom-4 right-4 z-50 shadow-lg transition-all duration-200",
+        "fixed z-50 shadow-lg transition-all duration-200",
         "bg-white hover:bg-gray-50 border border-gray-300",
-        "min-w-[100px] h-10"
+        isLandscapeForced && "bg-blue-600 hover:bg-blue-700 text-white border-blue-600",
+        "min-w-[100px] h-10",
+        // Position based on orientation
+        isLandscapeForced ? "bottom-4 left-4" : "bottom-4 right-4"
       )}
-      title={isLandscape ? "Switch to Portrait" : "Switch to Landscape"}
+      title={isLandscapeForced ? "Switch to Portrait" : "Switch to Landscape"}
       data-testid="button-orientation-toggle"
     >
-      {isLandscape ? (
+      {isLandscapeForced ? (
         <>
           <Smartphone className="h-4 w-4 mr-1" />
           <span className="text-xs">Portrait</span>
