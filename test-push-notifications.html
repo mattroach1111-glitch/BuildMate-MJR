@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Push Notification Test</title>
+</head>
+<body>
+    <h1>Push Notification Test</h1>
+    <button id="testBtn">Test Push Notification</button>
+    <div id="status"></div>
+
+    <script>
+        document.getElementById('testBtn').addEventListener('click', async () => {
+            const status = document.getElementById('status');
+            status.innerHTML = 'Testing...';
+            
+            try {
+                // Simple test without imports
+                const response = await fetch('/api/test-push-notification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: 'Test Notification',
+                        message: 'This is a test from the simple test page',
+                        userIds: ['test-user']
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    status.innerHTML = `Success! ${JSON.stringify(result)}`;
+                } else {
+                    status.innerHTML = `Error: ${response.status} - ${await response.text()}`;
+                }
+            } catch (error) {
+                status.innerHTML = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>

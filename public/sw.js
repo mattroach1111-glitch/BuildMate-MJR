@@ -1,4 +1,5 @@
 // Service Worker for BuildFlow Pro PWA
+// Updated: Fixed import issues
 const CACHE_NAME = 'buildflow-v1';
 const urlsToCache = [
   '/',
