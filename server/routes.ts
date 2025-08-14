@@ -2157,9 +2157,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const objectStorageService = new ObjectStorageService();
       const normalizedPath = objectStorageService.normalizeObjectEntityPath(req.body.objectPath);
       
+      // Get job details for Google Drive upload
+      const job = await storage.getJob(validatedData.jobId);
+      let googleDriveLink = null;
+
+      if (job) {
+        try {
+          // Get Google Drive service with user tokens
+          const user = await storage.getUser(userId);
+          if (user?.googleDriveTokens) {
+            const googleDriveService = new GoogleDriveService();
+            googleDriveService.setUserTokens(JSON.parse(user.googleDriveTokens));
+
+            // Download file from object storage
+            const objectFile = await objectStorageService.getObjectEntityFile(normalizedPath);
+            const chunks: Buffer[] = [];
+            
+            const stream = objectFile.createReadStream();
+            for await (const chunk of stream) {
+              chunks.push(Buffer.from(chunk));
+            }
+            const fileBuffer = Buffer.concat(chunks);
+
+            // Upload to Google Drive in job folder
+            const driveResult = await googleDriveService.uploadJobAttachment(
+              validatedData.originalName,
+              fileBuffer,
+              validatedData.mimeType,
+              job.jobAddress
+            );
+
+            if (driveResult) {
+              googleDriveLink = driveResult.webViewLink;
+              console.log(`✅ Job attachment uploaded to Google Drive: ${validatedData.originalName}`);
+            }
+          } else {
+            console.log('⚠️ No Google Drive tokens available - file saved to object storage only');
+          }
+        } catch (driveError) {
+          console.error('Error uploading to Google Drive (file saved to object storage):', driveError);
+        }
+      }
+      
       const jobFile = await storage.createJobFile({
         ...validatedData,
         objectPath: normalizedPath,
+        googleDriveLink,
       });
 
       res.status(201).json(jobFile);
@@ -3000,17 +3043,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Convert base64 PDF data to buffer
       const pdfBuffer = Buffer.from(pdfData, 'base64');
       
-      // Send email with PDF attachment
+      // Upload PDF to Google Drive for public access (optional)
+      let googleDrivePdfLink = null;
+      try {
+        const user = await storage.getUser(req.user.claims.sub);
+        if (user?.googleDriveTokens) {
+          const googleDriveService = new GoogleDriveService();
+          googleDriveService.setUserTokens(JSON.parse(user.googleDriveTokens));
+
+          // Upload PDF to Google Drive job folder
+          const pdfFileName = `JobSheet_${jobDetails.jobAddress.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+          const driveResult = await googleDriveService.uploadJobAttachment(
+            pdfFileName,
+            pdfBuffer,
+            'application/pdf',
+            jobDetails.jobAddress
+          );
+
+          if (driveResult) {
+            googleDrivePdfLink = driveResult.webViewLink;
+            console.log(`✅ Job sheet PDF uploaded to Google Drive: ${pdfFileName}`);
+          }
+        }
+      } catch (driveError) {
+        console.log('⚠️ Failed to upload PDF to Google Drive (email will still be sent):', driveError);
+      }
+      
+      // Send email with PDF attachment and optional Google Drive link
       const { sendEmail } = await import('./services/emailService');
       
       const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || "jobs@mjrbuilders.com.au";
+      
+      // Enhanced email content with Google Drive link if available
+      let emailText = message || `Please find attached the job sheet for ${jobDetails.jobAddress}.`;
+      let emailHtml = `<p>${(message || `Please find attached the job sheet for ${jobDetails.jobAddress}.`).replace(/\n/g, '<br>')}</p>`;
+      
+      if (googleDrivePdfLink) {
+        emailText += `\n\nYou can also view the PDF online: ${googleDrivePdfLink}`;
+        emailHtml += `<br><br><p><strong>View PDF online:</strong> <a href="${googleDrivePdfLink}">Click here to open in Google Drive</a></p>`;
+      }
       
       const emailSuccess = await sendEmail({
         from: fromEmail,
         to: to.trim(),
         subject: subject || `Job Sheet - ${jobDetails.jobAddress}`,
-        text: message || `Please find attached the job sheet for ${jobDetails.jobAddress}.`,
-        html: `<p>${(message || `Please find attached the job sheet for ${jobDetails.jobAddress}.`).replace(/\n/g, '<br>')}</p>`,
+        text: emailText,
+        html: emailHtml,
         attachments: [{
           filename: `JobSheet_${jobDetails.jobAddress.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
           content: pdfBuffer,

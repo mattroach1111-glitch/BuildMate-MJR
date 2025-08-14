@@ -67,7 +67,7 @@ export class GoogleDriveService {
       const fileId = response.data.id;
       console.log(`File uploaded to Google Drive: ${response.data.name} (ID: ${fileId})`);
       
-      // Make the file publicly readable so others can view the job sheet PDFs
+      // Make the file publicly readable so others can view the job sheet PDFs and attachments
       await this.makeFilePublic(fileId);
       
       return {
@@ -156,6 +156,47 @@ export class GoogleDriveService {
       return await this.createFolder(folderName, parentFolderId);
     } catch (error) {
       console.error('Error finding/creating folder:', error);
+      return null;
+    }
+  }
+
+  // Upload file attachment to Google Drive in job folder
+  async uploadJobAttachment(fileName: string, fileBuffer: Buffer, mimeType: string, jobAddress: string): Promise<{ webViewLink: string; fileId: string } | null> {
+    if (!this.isReady()) {
+      console.error('Google Drive not authenticated for job attachment upload');
+      return null;
+    }
+
+    try {
+      // Create the folder structure: BuildFlow Pro -> Job - [Address] -> Attachments
+      const mainFolderId = await this.findOrCreateFolder('BuildFlow Pro');
+      if (!mainFolderId) {
+        console.error('Failed to create main BuildFlow Pro folder');
+        return null;
+      }
+
+      const jobFolderId = await this.findOrCreateFolder(`Job - ${jobAddress}`, mainFolderId);
+      if (!jobFolderId) {
+        console.error('Failed to create job folder');
+        return null;
+      }
+
+      const attachmentsFolderId = await this.findOrCreateFolder('Attachments', jobFolderId);
+      if (!attachmentsFolderId) {
+        console.error('Failed to create attachments folder');
+        return null;
+      }
+
+      // Upload file to the attachments folder
+      const result = await this.uploadFile(fileName, fileBuffer, mimeType, attachmentsFolderId);
+      
+      if (result) {
+        console.log(`✅ Job attachment uploaded to Google Drive: ${fileName} (${jobAddress})`);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error uploading job attachment to Google Drive:', error);
       return null;
     }
   }
