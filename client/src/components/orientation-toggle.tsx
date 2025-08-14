@@ -56,11 +56,16 @@ export function OrientationToggle() {
       // Add landscape class to html for additional styling
       document.documentElement.classList.add('landscape-mode');
       
-      // Handle existing portals/modals
+      // Handle existing portals/modals - force them into the rotated container
       const portals = document.querySelectorAll('[data-radix-portal]');
       portals.forEach(portal => {
         if (portal instanceof HTMLElement) {
           portal.style.pointerEvents = 'auto';
+          // Move portal into the rotated body container
+          const root = document.getElementById('root');
+          if (root && !root.contains(portal)) {
+            root.appendChild(portal);
+          }
         }
       });
       
@@ -71,6 +76,11 @@ export function OrientationToggle() {
             if (node instanceof HTMLElement) {
               if (node.matches('[data-radix-portal]')) {
                 node.style.pointerEvents = 'auto';
+                // Move new portals into the rotated container
+                const root = document.getElementById('root');
+                if (root && !root.contains(node)) {
+                  root.appendChild(node);
+                }
               }
               
               // Force dropdowns to visible area in landscape
