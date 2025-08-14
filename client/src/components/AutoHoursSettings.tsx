@@ -121,6 +121,7 @@ export function AutoHoursSettings() {
             <ul className="list-disc list-inside space-y-1 text-xs">
               <li><strong>Base Hours:</strong> Added to every job sheet automatically when created</li>
               <li><strong>Bonus Hours per $3k:</strong> Additional hours added for every $3,000 of total job cost</li>
+              <li><strong>Hourly Rate:</strong> Uses the job sheet's default rate, not employee's rate</li>
               <li><strong>Example:</strong> Matt has 1 base hour + 1 bonus hour per $3k. A $9,000 job = 1 + (3 × 1) = 4 total hours added</li>
             </ul>
           </div>
@@ -143,7 +144,7 @@ export function AutoHoursSettings() {
                   <div>
                     <CardTitle className="text-lg">{employee.name}</CardTitle>
                     <CardDescription>
-                      Hourly Rate: ${employee.defaultHourlyRate}
+                      Rate varies per job sheet
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
