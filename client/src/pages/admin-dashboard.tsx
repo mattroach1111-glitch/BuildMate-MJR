@@ -40,6 +40,7 @@ import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor"
 import { EmailProcessingReview } from "@/components/EmailProcessingReview";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import { TestNotificationButton } from '@/components/TestNotificationButton';
+import { NotificationDebugger } from '@/components/NotificationDebugger';
 
 import { AdminSettings } from "@/components/AdminSettings";
 import { NotificationPermissionBanner } from "@/components/NotificationPermissionBanner";
@@ -3542,6 +3543,9 @@ export default function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
+            
+            {/* Notification Diagnostics */}
+            <NotificationDebugger />
 
             {/* Placeholder for future integrations */}
             <Card>

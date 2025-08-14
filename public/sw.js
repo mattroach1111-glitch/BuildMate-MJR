@@ -44,11 +44,29 @@ self.addEventListener('activate', (event) => {
 
 // Handle push notifications
 self.addEventListener('push', (event) => {
+  console.log('Service Worker: Push event received', event);
+  
+  let title = 'BuildFlow Pro';
+  let body = 'New notification from BuildFlow Pro';
+  
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      title = payload.title || title;
+      body = payload.body || payload.message || body;
+      console.log('Service Worker: Push payload', payload);
+    } catch (e) {
+      body = event.data.text();
+      console.log('Service Worker: Push text', body);
+    }
+  }
+
   const options = {
-    body: event.data ? event.data.text() : 'New notification from BuildFlow Pro',
+    body: body,
     icon: '/icon-192x192.png',
     badge: '/icon-192x192.png',
-    vibrate: [100, 50, 100],
+    vibrate: [200, 100, 200],
+    requireInteraction: true,
     data: {
       dateOfArrival: Date.now(),
       primaryKey: '2'
@@ -67,8 +85,10 @@ self.addEventListener('push', (event) => {
     ]
   };
 
+  console.log('Service Worker: Showing notification', title, options);
+  
   event.waitUntil(
-    self.registration.showNotification('BuildFlow Pro', options)
+    self.registration.showNotification(title, options)
   );
 });
 

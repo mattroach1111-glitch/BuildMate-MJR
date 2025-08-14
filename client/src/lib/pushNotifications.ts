@@ -2,6 +2,7 @@
 export class PushNotificationService {
   private static instance: PushNotificationService;
   private permission: NotificationPermission = 'default';
+  private registration: ServiceWorkerRegistration | null = null;
 
   static getInstance(): PushNotificationService {
     if (!PushNotificationService.instance) {
@@ -12,11 +13,24 @@ export class PushNotificationService {
 
   constructor() {
     this.permission = Notification.permission;
+    this.initializeServiceWorker();
+  }
+
+  // Initialize service worker
+  private async initializeServiceWorker(): Promise<void> {
+    if ('serviceWorker' in navigator) {
+      try {
+        this.registration = await navigator.serviceWorker.register('/sw.js');
+        console.log('Service Worker registered successfully');
+      } catch (error) {
+        console.error('Service Worker registration failed:', error);
+      }
+    }
   }
 
   // Check if browser supports notifications
   isSupported(): boolean {
-    return 'Notification' in window;
+    return 'Notification' in window && 'serviceWorker' in navigator;
   }
 
   // Get current permission status
@@ -76,6 +90,14 @@ export class PushNotificationService {
   // Test notification (for debugging)
   async sendTestNotification(): Promise<boolean> {
     try {
+      // First ensure we have permission
+      const permission = await this.requestPermission();
+      if (permission !== 'granted') {
+        console.warn('Notification permission not granted');
+        return false;
+      }
+
+      // Call the API
       const response = await fetch('/api/test-push-notification', {
         method: 'POST',
         headers: {
@@ -92,13 +114,14 @@ export class PushNotificationService {
         const result = await response.json();
         console.log('Test notification API response:', result);
         
-        // Show browser notification
-        this.showNotification('Test Notification', {
+        // Show immediate browser notification
+        await this.showNotificationWithServiceWorker('Test Notification', {
           body: 'This is a test push notification from BuildFlow Pro',
           icon: '/icon-192x192.png',
           badge: '/icon-192x192.png',
           tag: 'test-notification',
-          requireInteraction: true
+          requireInteraction: true,
+          vibrate: [200, 100, 200]
         });
         
         return true;
@@ -112,23 +135,50 @@ export class PushNotificationService {
     }
   }
 
+  // Show notification using service worker
+  private async showNotificationWithServiceWorker(title: string, options?: NotificationOptions): Promise<void> {
+    if (!this.registration) {
+      await this.initializeServiceWorker();
+    }
+
+    if (this.registration && this.permission === 'granted') {
+      try {
+        await this.registration.showNotification(title, {
+          icon: '/icon-192x192.png',
+          badge: '/icon-192x192.png',
+          ...options
+        });
+        console.log('Service worker notification shown:', title);
+      } catch (error) {
+        console.error('Error showing service worker notification:', error);
+        // Fallback to regular notification
+        this.showNotification(title, options);
+      }
+    } else {
+      console.warn('Service worker not available, using fallback notification');
+      this.showNotification(title, options);
+    }
+  }
+
   // Show timesheet reminder notification
-  showTimesheetReminder(): void {
-    this.showNotification('Timesheet Reminder', {
+  async showTimesheetReminder(): Promise<void> {
+    await this.showNotificationWithServiceWorker('Timesheet Reminder', {
       body: 'Don\'t forget to submit your timesheet for this week!',
-      icon: '/favicon.ico',
+      icon: '/icon-192x192.png',
       tag: 'timesheet-reminder',
-      requireInteraction: true
+      requireInteraction: true,
+      vibrate: [200, 100, 200]
     });
   }
 
   // Show instant notification from admin
-  showInstantNotification(message: string): void {
-    this.showNotification('Important Message', {
+  async showInstantNotification(message: string): Promise<void> {
+    await this.showNotificationWithServiceWorker('Important Message', {
       body: message,
-      icon: '/favicon.ico',
+      icon: '/icon-192x192.png',
       tag: 'instant-notification',
-      requireInteraction: true
+      requireInteraction: true,
+      vibrate: [200, 100, 200]
     });
   }
 }
