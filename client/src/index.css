@@ -232,10 +232,16 @@ html.landscape-mode [data-state="open"][role="dialog"] {
   max-height: 90% !important;
 }
 
-/* Let dropdowns position naturally but ensure they're visible */
+/* Force dropdowns to absolute positioning within rotated container */
 html.landscape-mode [data-radix-dropdown-menu-content],
 html.landscape-mode [data-radix-select-content],
 html.landscape-mode [data-radix-popover-content] {
+  position: absolute !important;
+  top: 100px !important;
+  left: 100px !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
   z-index: 9999 !important;
   background: white !important;
   border: 3px solid #ef4444 !important;
@@ -243,8 +249,7 @@ html.landscape-mode [data-radix-popover-content] {
   box-shadow: 0 10px 40px rgba(0,0,0,0.4) !important;
   max-height: 300px !important;
   overflow-y: auto !important;
-  min-width: 200px !important;
-  max-width: 300px !important;
+  max-width: 200px !important;
   padding: 8px !important;
 }
 

@@ -73,17 +73,24 @@ export function OrientationToggle() {
                 node.style.pointerEvents = 'auto';
               }
               
-              // Simply ensure dropdowns are visible with red border for testing
+              // Force dropdowns to visible area in landscape
               const dropdowns = node.querySelectorAll('[data-radix-dropdown-menu-content], [data-radix-select-content], [data-radix-popover-content]');
               dropdowns.forEach(dropdown => {
                 if (dropdown instanceof HTMLElement) {
+                  // Force to absolute positioning within the rotated container
+                  dropdown.style.position = 'absolute';
+                  dropdown.style.top = '100px';
+                  dropdown.style.left = '100px';
+                  dropdown.style.right = 'auto';
+                  dropdown.style.bottom = 'auto';
+                  dropdown.style.transform = 'none';
                   dropdown.style.visibility = 'visible';
                   dropdown.style.opacity = '1';
                   dropdown.style.zIndex = '9999';
-                  
-                  // Add a visible red border for testing
                   dropdown.style.border = '3px solid #ef4444';
                   dropdown.style.background = 'white';
+                  dropdown.style.maxWidth = '200px';
+                  dropdown.style.maxHeight = '300px';
                 }
               });
             }
