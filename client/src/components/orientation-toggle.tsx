@@ -48,19 +48,14 @@ export function OrientationToggle() {
         root.style.position = 'fixed';
         root.style.top = '0';
         root.style.left = '0';
-      }
-      document.body.style.margin = '0';
-      document.body.style.padding = '0';
-      
-      // Adjust the root container
-      const root = document.getElementById('root');
-      if (root) {
         root.style.width = `${vh}px`;
         root.style.height = `${vw}px`;
         root.style.overflow = 'auto';
         root.style.transform = 'none';
         root.style.position = 'relative';
       }
+      document.body.style.margin = '0';
+      document.body.style.padding = '0';
       
       // Add landscape class to html for additional styling
       document.documentElement.classList.add('landscape-mode');
