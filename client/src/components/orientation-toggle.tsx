@@ -24,17 +24,26 @@ export function OrientationToggle() {
 
   useEffect(() => {
     if (isLandscapeForced) {
-      // Simple landscape implementation - just rotate the entire viewport
+      // Get current viewport dimensions
+      const vh = window.innerHeight;
+      const vw = window.innerWidth;
+      
+      // Simple landscape implementation with proper centering
       document.body.style.transform = 'rotate(90deg)';
       document.body.style.transformOrigin = 'center center';
-      document.body.style.width = '100vh';
-      document.body.style.height = '100vw';
+      document.body.style.width = `${vh}px`;
+      document.body.style.height = `${vw}px`;
       document.body.style.position = 'fixed';
-      document.body.style.top = '50%';
-      document.body.style.left = '50%';
-      document.body.style.marginTop = '-50vw';
-      document.body.style.marginLeft = '-50vh';
-      document.body.style.overflow = 'hidden';
+      document.body.style.top = '0';
+      document.body.style.left = '0';
+      document.body.style.margin = '0';
+      document.body.style.padding = '0';
+      document.body.style.overflow = 'auto';
+      
+      // Center the rotated content
+      const translateX = (vw - vh) / 2;
+      const translateY = (vh - vw) / 2;
+      document.body.style.transform = `translate(${translateX}px, ${translateY}px) rotate(90deg)`;
       
       // Add landscape class for any additional styling
       document.documentElement.classList.add('landscape-mode');
@@ -47,8 +56,8 @@ export function OrientationToggle() {
       document.body.style.position = '';
       document.body.style.top = '';
       document.body.style.left = '';
-      document.body.style.marginTop = '';
-      document.body.style.marginLeft = '';
+      document.body.style.margin = '';
+      document.body.style.padding = '';
       document.body.style.overflow = '';
       
       // Remove landscape class
