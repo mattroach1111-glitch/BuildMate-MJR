@@ -372,27 +372,39 @@ export function NotificationSettings() {
                     <Label className="text-sm font-medium">Who should receive reminders?</Label>
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
-                        <Checkbox
+                        <input
+                          type="radio"
                           id="target-all"
+                          name="staff-target"
                           checked={pushSettings.timesheetReminders.targetStaff === 'all'}
-                          onCheckedChange={(checked) => handlePushSettingChange('timesheetReminders.targetStaff', checked ? 'all' : 'selected')}
-                          data-testid="checkbox-target-all"
+                          onChange={() => handlePushSettingChange('timesheetReminders.targetStaff', 'all')}
+                          className="rounded border-gray-300"
+                          data-testid="radio-target-all"
                         />
-                        <Label htmlFor="target-all" className="text-sm">
+                        <Label htmlFor="target-all" className="text-sm cursor-pointer">
                           Send to all staff members
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Checkbox
+                        <input
+                          type="radio"
                           id="target-selected"
+                          name="staff-target"
                           checked={pushSettings.timesheetReminders.targetStaff === 'selected'}
-                          onCheckedChange={(checked) => handlePushSettingChange('timesheetReminders.targetStaff', checked ? 'selected' : 'all')}
-                          data-testid="checkbox-target-selected"
+                          onChange={() => handlePushSettingChange('timesheetReminders.targetStaff', 'selected')}
+                          className="rounded border-gray-300"
+                          data-testid="radio-target-selected"
                         />
-                        <Label htmlFor="target-selected" className="text-sm">
+                        <Label htmlFor="target-selected" className="text-sm cursor-pointer">
                           Send to selected staff only
                         </Label>
                       </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <p className="text-xs text-gray-500 mb-2">
+                        Current target: {pushSettings.timesheetReminders.targetStaff}
+                      </p>
                     </div>
 
                     {pushSettings.timesheetReminders.targetStaff === 'selected' && (
