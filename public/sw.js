@@ -1,110 +1,33 @@
-// Service Worker for BuildFlow Pro PWA
-// Updated: Fixed import issues
-const CACHE_NAME = 'buildflow-v1';
-const urlsToCache = [
-  '/',
-  '/manifest.json',
-  '/icon-192x192.png',
-  '/icon-512x512.png'
-];
+// Minimal Service Worker - Troubleshooting Mode
+console.log('Service Worker: Troubleshooting mode active');
 
-// Install event - cache resources
+// Immediately skip waiting and take control
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(urlsToCache))
-  );
+  console.log('Service Worker: Installing...');
+  self.skipWaiting();
 });
 
-// Fetch event - serve from cache when offline
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request);
-      }
-    )
-  );
-});
-
-// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
+  console.log('Service Worker: Activating...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
+      console.log('Service Worker: Clearing all caches');
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
+          return caches.delete(cacheName);
         })
       );
+    }).then(() => {
+      console.log('Service Worker: Taking control of clients');
+      return self.clients.claim();
     })
   );
 });
 
-// Handle push notifications
-self.addEventListener('push', (event) => {
-  console.log('Service Worker: Push event received', event);
-  console.log('Service Worker: User agent', navigator.userAgent);
-  
-  let title = 'BuildFlow Pro';
-  let body = 'New notification from BuildFlow Pro';
-  let icon = '/icon-192x192.png';
-  let badge = '/icon-192x192.png';
-  let tag = 'default';
-  
-  if (event.data) {
-    try {
-      const payload = event.data.json();
-      title = payload.title || title;
-      body = payload.body || payload.message || body;
-      console.log('Service Worker: Push payload', payload);
-    } catch (e) {
-      body = event.data.text();
-      console.log('Service Worker: Push text', body);
-    }
-  }
-
-  const options = {
-    body: body,
-    icon: '/icon-192x192.png',
-    badge: '/icon-192x192.png',
-    vibrate: [200, 100, 200],
-    requireInteraction: true,
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: '2'
-    },
-    actions: [
-      {
-        action: 'explore',
-        title: 'Open App',
-        icon: '/icon-192x192.png'
-      },
-      {
-        action: 'close',
-        title: 'Close',
-        icon: '/icon-192x192.png'
-      }
-    ]
-  };
-
-  console.log('Service Worker: Showing notification', title, options);
-  
-  event.waitUntil(
-    self.registration.showNotification(title, options)
-  );
+// Don't intercept fetch requests - let everything go to network
+self.addEventListener('fetch', (event) => {
+  // No caching, no interception - just let requests pass through
+  return;
 });
 
-// Handle notification clicks
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-
-  if (event.action === 'explore') {
-    // Open the app
-    event.waitUntil(
-      clients.openWindow('/')
-    );
-  }
-});
+console.log('Service Worker: Setup complete');
