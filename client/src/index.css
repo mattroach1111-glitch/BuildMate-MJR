@@ -4,6 +4,35 @@
 @tailwind components;
 @tailwind utilities;
 
+/* PWA and Mobile Orientation Support */
+@media screen and (orientation: portrait) {
+  html {
+    height: 100vh;
+    width: 100vw;
+  }
+}
+
+@media screen and (orientation: landscape) {
+  html {
+    height: 100vh;
+    width: 100vw;
+  }
+}
+
+/* Samsung Internet PWA fixes */
+@media all and (display-mode: standalone) {
+  html, body {
+    height: 100vh;
+    overflow-x: hidden;
+  }
+  
+  /* Allow rotation in standalone mode */
+  .min-h-screen {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+}
+
 :root {
   --primary: hsl(208.3, 76.2%, 42.2%);
   --primary-foreground: hsl(0, 0%, 100%);
