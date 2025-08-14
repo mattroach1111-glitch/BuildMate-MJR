@@ -3,7 +3,7 @@ function App() {
     <div style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ textAlign: 'center' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#111827', marginBottom: '1rem' }}>BuildFlow Pro</h1>
-        <p style={{ fontSize: '1.125rem', color: '#6b7280' }}>System Online - Testing Mode</p>
+        <p style={{ fontSize: '1.125rem', color: '#6b7280' }}>System Online - Cache Cleared {new Date().toLocaleTimeString()}</p>
         <div style={{ marginTop: '2rem', padding: '1rem', background: '#e5e7eb', borderRadius: '0.5rem', maxWidth: '400px' }}>
           <p style={{ color: '#374151', marginBottom: '0.5rem' }}>Core systems restored</p>
           <button 
