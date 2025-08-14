@@ -8,10 +8,17 @@ export function OrientationToggle() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Check if device is mobile
+    // Check if device is mobile or small screen
     const checkMobile = () => {
       const isMobileDevice = window.innerWidth <= 768 || 
-                           /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                           /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                           window.innerHeight <= 600; // Also show on small screens
+      console.log('Mobile check:', { 
+        width: window.innerWidth, 
+        height: window.innerHeight, 
+        userAgent: navigator.userAgent,
+        isMobileDevice 
+      });
       setIsMobile(isMobileDevice);
     };
 
@@ -65,8 +72,8 @@ export function OrientationToggle() {
     setIsLandscapeForced(!isLandscapeForced);
   };
 
-  // Only show on mobile devices
-  if (!isMobile) {
+  // Show on mobile devices and small screens (for testing, always show if screen is narrow)
+  if (!isMobile && window.innerWidth > 768) {
     return null;
   }
 
