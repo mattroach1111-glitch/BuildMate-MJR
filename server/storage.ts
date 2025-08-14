@@ -414,7 +414,7 @@ export class DatabaseStorage implements IStorage {
     return createdJob;
   }
 
-  async applyAutomaticHours(jobId: string): Promise<void> {
+  async applyAutomaticHours(jobId: string, reason?: string): Promise<void> {
     // Get all employees with auto hours enabled (respects current setting)
     const employeesWithAutoHours = await db.select()
       .from(employees)
@@ -426,7 +426,7 @@ export class DatabaseStorage implements IStorage {
       return; // No employees have auto hours enabled - existing hours preserved
     }
     
-    console.log(`🔄 Applying automatic hours for ${employeesWithAutoHours.length} employees with auto hours enabled`);
+    console.log(`🔄 Applying automatic hours for ${employeesWithAutoHours.length} employees with auto hours enabled (reason: ${reason || 'unknown'})`);
     employeesWithAutoHours.forEach(emp => 
       console.log(`  • ${emp.name} (${emp.id.slice(0,8)}) - will receive updated auto hours`)
     );
@@ -454,15 +454,28 @@ export class DatabaseStorage implements IStorage {
           ));
 
         if (existingEntry) {
-          // Update existing entry by setting to auto hours (not adding)
-          await db.update(laborEntries)
-            .set({ 
-              hoursLogged: totalAutoHours.toString(),
-              updatedAt: new Date()
-            })
-            .where(eq(laborEntries.id, existingEntry.id));
-            
-          console.log(`✅ Set ${totalAutoHours} automatic hours for ${employee.name} to job (${baseHours} base + ${bonusHours} bonus)`);
+          // Check if we should apply automatic hours (prevent massive retroactive calculations)
+          const currentHours = parseFloat(existingEntry.hoursLogged || "0");
+          
+          // Only update if:
+          // 1. Current hours are 0 (new job sheet), OR
+          // 2. Current hours match a previous auto calculation (showing it was auto-generated), OR
+          // 3. The difference is reasonable (not a massive jump)
+          const hoursDifference = Math.abs(totalAutoHours - currentHours);
+          const shouldUpdate = currentHours === 0 || hoursDifference <= 20;
+          
+          if (shouldUpdate) {
+            await db.update(laborEntries)
+              .set({ 
+                hoursLogged: totalAutoHours.toString(),
+                updatedAt: new Date()
+              })
+              .where(eq(laborEntries.id, existingEntry.id));
+              
+            console.log(`✅ Set ${totalAutoHours} automatic hours for ${employee.name} to job (${baseHours} base + ${bonusHours} bonus) - was ${currentHours}`);
+          } else {
+            console.log(`⏭️  Skipped ${employee.name} auto hours update - would change from ${currentHours} to ${totalAutoHours} hours (too large a change, likely retroactive)`);
+          }
         } else {
           // Create new labor entry with auto hours
           await this.createLaborEntry({
