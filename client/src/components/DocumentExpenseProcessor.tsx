@@ -417,6 +417,8 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       return;
     }
 
+    let anyGoogleDriveUploaded = false;
+    
     for (const file of result.successful) {
       try {
         const jobResponse = await createJobFromDocumentMutation.mutateAsync({
@@ -438,6 +440,19 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
               objectPath: file.uploadURL
             });
             console.log("✅ Saved document as job file attachment");
+            
+            // Upload to Google Drive if connected
+            try {
+              await uploadToGoogleDriveMutation.mutateAsync({
+                jobId: jobResponse.job.id,
+                fileInfo: file
+              });
+              console.log("✅ Uploaded document to Google Drive");
+              anyGoogleDriveUploaded = true;
+            } catch (driveError) {
+              console.log("ℹ️ Google Drive upload skipped (not connected or failed):", driveError);
+              // Don't fail the process if Google Drive upload fails
+            }
           } catch (fileError) {
             console.error("Failed to save document as job file:", fileError);
             // Don't fail the entire process if file saving fails
@@ -449,10 +464,18 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
         setClientName("");
         setProjectManager("");
         
-        toast({
-          title: "Job Created Successfully",
-          description: `Created job for ${currentJobAddress} (${currentClientName}) with document attached`,
-        });
+        // Show different success message based on Google Drive status
+        if (anyGoogleDriveUploaded) {
+          toast({
+            title: "Job Created Successfully",
+            description: `Created job for ${currentJobAddress} (${currentClientName}) with document attached and saved to Google Drive`,
+          });
+        } else {
+          toast({
+            title: "Job Created Successfully",
+            description: `Created job for ${currentJobAddress} (${currentClientName}) with document attached. Connect Google Drive in Settings for clickable links in PDF emails.`,
+          });
+        }
       } catch (error) {
         console.error("Job creation error:", error);
         toast({
