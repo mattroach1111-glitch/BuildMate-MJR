@@ -16,13 +16,17 @@ app.get('/api/test', (req, res) => {
 // Development: Set up Vite with middleware
 if (process.env.NODE_ENV !== 'production') {
   const vite = await createViteServer({
-    server: { middlewareMode: true },
+    server: { 
+      middlewareMode: true,
+      host: '0.0.0.0'
+    },
     appType: 'spa',
-    root: path.resolve(process.cwd(), 'client')
+    root: path.resolve(process.cwd(), 'client'),
   });
   
   app.use(vite.ssrFixStacktrace);
   app.use(vite.middlewares);
+  console.log('✅ Vite development server configured');
 } else {
   // Production: Serve static files
   app.use(express.static(path.resolve(process.cwd(), 'dist/public')));
@@ -33,7 +37,8 @@ if (process.env.NODE_ENV !== 'production') {
 
 const httpServer = createServer(app);
 
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌐 Frontend: http://localhost:${PORT}`);
+  console.log(`🌐 External: http://0.0.0.0:${PORT}`);
 });
