@@ -769,20 +769,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const laborEntry = await storage.addExtraHoursToLaborEntry(req.params.id, extraHours);
       
-      // Recalculate auto hours when labor costs change (affects total job cost)
-      const jobId = laborEntry.jobId || (laborEntry as any).job_id;
-      console.log(`🔍 Checking if auto hours recalculation needed. JobId: ${jobId}`);
-      if (jobId) {
-        try {
-          console.log(`🔄 Starting automatic hours recalculation for job ${jobId} after labor hours update`);
-          await storage.applyAutomaticHours(jobId, "labor hours update");
-          console.log(`✅ Recalculated automatic hours for job ${jobId} after labor hours update`);
-        } catch (autoHoursError) {
-          console.error('❌ Error recalculating automatic hours after labor hours update:', autoHoursError);
-        }
-      } else {
-        console.error('❌ No jobId found in labor entry - cannot recalculate automatic hours');
-      }
+      // Automatic hours disabled
       
       res.json(laborEntry);
     } catch (error) {
@@ -804,14 +791,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       const entry = await storage.createLaborEntry(validatedData);
       
-      // Recalculate auto hours when new labor entries are added (affects total job cost)
-      try {
-        console.log(`🔄 Starting automatic hours recalculation for job ${req.params.jobId} after labor entry creation`);
-        await storage.applyAutomaticHours(req.params.jobId, "labor entry creation");
-        console.log(`✅ Recalculated automatic hours for job ${req.params.jobId} after labor entry creation`);
-      } catch (autoHoursError) {
-        console.error('❌ Error recalculating automatic hours after labor entry creation:', autoHoursError);
-      }
+      // Automatic hours disabled
       
       res.status(201).json(entry);
     } catch (error) {
@@ -885,14 +865,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       const material = await storage.createMaterial(validatedData);
       
-      // Recalculate auto hours when new materials are added (affects total job cost)
-      try {
-        console.log(`🔄 Starting automatic hours recalculation for job ${req.params.jobId} after material creation`);
-        await storage.applyAutomaticHours(req.params.jobId, "material creation");
-        console.log(`✅ Recalculated automatic hours for job ${req.params.jobId} after material creation`);
-      } catch (autoHoursError) {
-        console.error('❌ Error recalculating automatic hours after material creation:', autoHoursError);
-      }
+      // Automatic hours disabled
       
       res.status(201).json(material);
     } catch (error) {
@@ -915,16 +888,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertMaterialSchema.partial().parse(req.body);
       const material = await storage.updateMaterial(req.params.id, validatedData);
       
-      // Recalculate auto hours when material costs change (affects bonus hours)
-      if (validatedData.amount && material.jobId) {
-        try {
-          await storage.applyAutomaticHours(material.jobId, "material update");
-          console.log(`✅ Recalculated automatic hours for job ${material.jobId} after material update`);
-        } catch (autoHoursError) {
-          console.error('Error recalculating automatic hours after material update:', autoHoursError);
-          // Don't fail the material update if auto hours fails
-        }
-      }
+      // Automatic hours disabled
       
       res.json(material);
     } catch (error) {
@@ -995,14 +959,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       const tipFee = await storage.createTipFee(validatedData);
       
-      // Recalculate auto hours when new tip fees are added (affects total job cost)
-      try {
-        console.log(`🔄 Starting automatic hours recalculation for job ${req.params.jobId} after tip fee creation`);
-        await storage.applyAutomaticHours(req.params.jobId, "tip fee creation");
-        console.log(`✅ Recalculated automatic hours for job ${req.params.jobId} after tip fee creation`);
-      } catch (autoHoursError) {
-        console.error('❌ Error recalculating automatic hours after tip fee creation:', autoHoursError);
-      }
+      // Automatic hours disabled
       
       res.status(201).json(tipFee);
     } catch (error) {
@@ -1021,15 +978,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertTipFeeSchema.partial().parse(req.body);
       const tipFee = await storage.updateTipFee(req.params.id, validatedData);
       
-      // Recalculate auto hours when tip fee costs change (affects bonus hours)  
-      if (tipFee.jobId) {
-        try {
-          await storage.applyAutomaticHours(tipFee.jobId, "tip fee update");
-          console.log(`✅ Recalculated automatic hours for job ${tipFee.jobId} after tip fee update`);
-        } catch (autoHoursError) {
-          console.error('Error recalculating automatic hours after tip fee update:', autoHoursError);
-        }
-      }
+      // Automatic hours disabled
       
       res.json(tipFee);
     } catch (error) {
@@ -1067,14 +1016,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       const subTrade = await storage.createSubTrade(validatedData);
       
-      // Recalculate auto hours when new subtrades are added (affects total job cost)
-      try {
-        console.log(`🔄 Starting automatic hours recalculation for job ${req.params.jobId} after subtrade creation`);
-        await storage.applyAutomaticHours(req.params.jobId, "subtrade creation");
-        console.log(`✅ Recalculated automatic hours for job ${req.params.jobId} after subtrade creation`);
-      } catch (autoHoursError) {
-        console.error('❌ Error recalculating automatic hours after subtrade creation:', autoHoursError);
-      }
+      // Automatic hours disabled
       
       res.status(201).json(subTrade);
     } catch (error) {
@@ -1096,15 +1038,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertSubTradeSchema.partial().parse(req.body);
       const subTrade = await storage.updateSubTrade(req.params.id, validatedData);
       
-      // Recalculate auto hours when subtrade costs change (affects bonus hours)
-      if (validatedData.amount && subTrade.jobId) {
-        try {
-          await storage.applyAutomaticHours(subTrade.jobId, "subtrade update");
-          console.log(`✅ Recalculated automatic hours for job ${subTrade.jobId} after subtrade update`);
-        } catch (autoHoursError) {
-          console.error('Error recalculating automatic hours after subtrade update:', autoHoursError);
-        }
-      }
+      // Automatic hours disabled
       
       res.json(subTrade);
     } catch (error) {
@@ -1145,14 +1079,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       const otherCost = await storage.createOtherCost(validatedData);
       
-      // Recalculate auto hours when new other costs are added (affects total job cost)
-      try {
-        console.log(`🔄 Starting automatic hours recalculation for job ${req.params.jobId} after other cost creation`);
-        await storage.applyAutomaticHours(req.params.jobId, "other cost creation");
-        console.log(`✅ Recalculated automatic hours for job ${req.params.jobId} after other cost creation`);
-      } catch (autoHoursError) {
-        console.error('❌ Error recalculating automatic hours after other cost creation:', autoHoursError);
-      }
+      // Automatic hours disabled
       
       res.status(201).json(otherCost);
     } catch (error) {
@@ -1174,15 +1101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertOtherCostSchema.partial().parse(req.body);
       const otherCost = await storage.updateOtherCost(req.params.id, validatedData);
       
-      // Recalculate auto hours when other costs change (affects bonus hours)
-      if (validatedData.amount && otherCost.jobId) {
-        try {
-          await storage.applyAutomaticHours(otherCost.jobId, "other cost update");
-          console.log(`✅ Recalculated automatic hours for job ${otherCost.jobId} after other cost update`);
-        } catch (autoHoursError) {
-          console.error('Error recalculating automatic hours after other cost update:', autoHoursError);
-        }
-      }
+      // Automatic hours disabled
       
       res.json(otherCost);
     } catch (error) {

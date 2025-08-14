@@ -39,7 +39,7 @@ import JobUpdateDialog from "@/components/job-update-form";
 import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor";
 import { EmailProcessingReview } from "@/components/EmailProcessingReview";
 import { NotificationSettings } from "@/components/NotificationSettings";
-import { AutoHoursSettings } from "@/components/AutoHoursSettings";
+
 import { AdminSettings } from "@/components/AdminSettings";
 
 const jobFormSchema = insertJobSchema.extend({
@@ -1502,10 +1502,7 @@ export default function AdminDashboard() {
                 <Bell className="h-4 w-4 mr-2" />
                 Notification Settings
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveTab("auto-hours")} data-testid="menu-auto-hours">
-                <Clock className="h-4 w-4 mr-2" />
-                Auto Hours Settings
-              </DropdownMenuItem>
+
               <DropdownMenuItem onClick={() => setActiveTab("settings")} data-testid="menu-settings">
                 <Settings className="h-4 w-4 mr-2" />
                 Settings
@@ -3556,9 +3553,7 @@ export default function AdminDashboard() {
             <NotificationSettings />
           </TabsContent>
 
-          <TabsContent value="auto-hours" className="space-y-6">
-            <AutoHoursSettings />
-          </TabsContent>
+
         </Tabs>
 
         {/* Job Sheet Modal */}
