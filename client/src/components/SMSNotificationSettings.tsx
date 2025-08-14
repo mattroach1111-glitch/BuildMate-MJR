@@ -134,7 +134,7 @@ export function SMSNotificationSettings() {
           <AlertDescription>
             <strong>Perfect for mobile browsers:</strong> Samsung Internet and other mobile browsers 
             often don't support push notifications. SMS notifications provide a reliable backup 
-            to ensure you never miss important alerts.
+            to ensure you never miss important alerts. Uses email-to-SMS gateways for instant delivery.
           </AlertDescription>
         </Alert>
 

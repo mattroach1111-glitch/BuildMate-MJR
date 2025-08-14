@@ -10,6 +10,14 @@ const SMS_GATEWAYS = {
   'auto': '' // Auto-detect or use default
 };
 
+// Backup gateways for better delivery rates
+const BACKUP_GATEWAYS = [
+  '@txt.att.net',
+  '@messaging.sprintpcs.com',
+  '@tmomail.net',
+  '@vtext.com'
+];
+
 interface SMSConfig {
   host: string;
   port: number;
@@ -56,16 +64,29 @@ export class SMSService {
       }
 
       // Try multiple SMS gateways for reliability
-      const gatewaysToTry = carrier !== 'auto' && SMS_GATEWAYS[carrier as keyof typeof SMS_GATEWAYS] 
-        ? [SMS_GATEWAYS[carrier as keyof typeof SMS_GATEWAYS]]
-        : Object.values(SMS_GATEWAYS).filter(g => g !== '');
+      let gatewaysToTry: string[] = [];
+      
+      if (carrier !== 'auto' && SMS_GATEWAYS[carrier as keyof typeof SMS_GATEWAYS]) {
+        // Use specific carrier gateway first, then backups
+        gatewaysToTry = [
+          SMS_GATEWAYS[carrier as keyof typeof SMS_GATEWAYS],
+          ...BACKUP_GATEWAYS
+        ];
+      } else {
+        // Use all Australian gateways plus backups
+        gatewaysToTry = [
+          ...Object.values(SMS_GATEWAYS).filter(g => g !== ''),
+          ...BACKUP_GATEWAYS
+        ];
+      }
 
       // Limit message length for SMS (160 characters max)
       const truncatedMessage = message.length > 160 
         ? message.substring(0, 157) + '...'
         : message;
 
-      console.log(`📱 Sending SMS to ${formattedPhone}: ${truncatedMessage}`);
+      console.log(`📱 Attempting SMS to ${formattedPhone}: ${truncatedMessage}`);
+      console.log(`📱 Will try ${gatewaysToTry.length} gateways for delivery`);
 
       for (const gateway of gatewaysToTry) {
         try {

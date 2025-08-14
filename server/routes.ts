@@ -1530,9 +1530,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Continue execution - don't fail if push notifications fail
       }
 
-      // Send mobile email notifications as fallback for failed push notifications
+      // Send mobile email notifications and SMS as fallback for failed push notifications
       const { mobileNotificationService } = await import('./mobileNotificationService');
+      const { smsService } = await import('./smsService');
       let mobileNotificationResults: any[] = [];
+      let smsResults: any[] = [];
       
       try {
         if (targetStaff === 'all') {
@@ -1556,6 +1558,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     email: user.email,
                     success: mobileSuccess
                   });
+
+                  // Also try SMS if enabled and phone number available
+                  if (user.smsNotificationsEnabled && user.mobilePhone) {
+                    console.log(`📱 Sending SMS fallback to ${user.mobilePhone}`);
+                    const smsSuccess = await smsService.sendNotificationWithSMSFallback(
+                      user.mobilePhone,
+                      'BuildFlow Pro Alert',
+                      message,
+                      false
+                    );
+                    smsResults.push({
+                      userId: staff.userId,
+                      phone: user.mobilePhone,
+                      success: smsSuccess
+                    });
+                  }
                 }
               }
             }
@@ -1579,12 +1597,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   email: user.email,
                   success: mobileSuccess
                 });
+
+                // Also try SMS if enabled and phone number available
+                if (user.smsNotificationsEnabled && user.mobilePhone) {
+                  console.log(`📱 Sending SMS fallback to ${user.mobilePhone}`);
+                  const smsSuccess = await smsService.sendNotificationWithSMSFallback(
+                    user.mobilePhone,
+                    'BuildFlow Pro Alert',
+                    message,
+                    false
+                  );
+                  smsResults.push({
+                    userId: userIdFromTarget,
+                    phone: user.mobilePhone,
+                    success: smsSuccess
+                  });
+                }
               }
             }
           }
         }
-      } catch (mobileError) {
-        console.error('Mobile notification fallback error:', mobileError);
+      } catch (fallbackError) {
+        console.error('Mobile/SMS notification fallback error:', fallbackError);
       }
       
       const targetStaffCount = targetStaff === 'all' 
@@ -1593,13 +1627,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`✅ Instant notification sent to ${targetStaffCount} staff member(s)`);
       console.log(`📧 Mobile notification fallbacks sent to ${mobileNotificationResults.length} users`);
+      console.log(`📱 SMS fallbacks sent to ${smsResults.length} users`);
 
       res.json({ 
         message: "Instant notification sent successfully",
         targetCount: targetStaffCount,
         pushResults,
         mobileNotificationResults,
+        smsResults,
         totalMobileFallbacks: mobileNotificationResults.length,
+        totalSMSFallbacks: smsResults.length,
         sentAt: new Date().toISOString()
       });
     } catch (error) {
