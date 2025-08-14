@@ -857,7 +857,30 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
 
     if (existingEntry.length === 0) {
-      console.log(`[LABOR_UPDATE] No labor entry found for employeeId=${employeeId}, jobId=${jobId} - skipping update`);
+      console.log(`[LABOR_UPDATE] No labor entry found for employeeId=${employeeId}, jobId=${jobId} - creating new entry`);
+      
+      // Get employee details for default hourly rate
+      const [employee] = await db.select().from(employees).where(eq(employees.id, employeeId)).limit(1);
+      
+      if (!employee) {
+        console.log(`[LABOR_UPDATE] Employee not found for ID ${employeeId} - skipping update`);
+        return;
+      }
+      
+      // Create new labor entry with timesheet hours
+      const newEntry = await this.createLaborEntry({
+        jobId,
+        staffId: employeeId,
+        hourlyRate: employee.defaultHourlyRate,
+        hoursLogged: totalHours.toString(),
+      });
+      
+      // Mark it as coming from timesheet
+      await db.update(laborEntries)
+        .set({ hoursSource: "timesheet" })
+        .where(eq(laborEntries.id, newEntry.id));
+        
+      console.log(`[LABOR_UPDATE] Created new labor entry for employeeId=${employeeId}, jobId=${jobId}, hours=${totalHours}`);
       return;
     }
 
