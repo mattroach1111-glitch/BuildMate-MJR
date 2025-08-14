@@ -3,7 +3,7 @@ import App from "./App";
 import "./index.css";
 
 // Force cache refresh with version
-console.log('BuildFlow Pro v1.0.3 - LANDSCAPE SCROLLING REWRITTEN:', Date.now());
+console.log('BuildFlow Pro v1.0.4 - JOB SHEET BUTTONS NOW SCROLL:', Date.now());
 
 // Clear any existing caches on load
 if ('caches' in window) {

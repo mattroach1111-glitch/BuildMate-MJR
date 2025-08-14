@@ -1421,7 +1421,28 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                 )}
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" onClick={onClose} className="hidden sm:block" size="sm" data-testid="button-close-modal">
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : !jobDetails ? (
+            <div className="text-center py-8 text-gray-500">
+              Job not found
+            </div>
+          ) : (
+            <div className="space-y-6 p-4 sm:p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+            
+            {/* Action Buttons - Now Scrollable */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full bg-white sticky top-0 z-10 pb-4 border-b">
               {!isEditing ? (
                 <>
                   <Button 
@@ -1513,25 +1534,8 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                   </Button>
                 </>
               )}
-
-              <Button variant="ghost" onClick={onClose} className="hidden sm:block" size="sm" data-testid="button-close-modal">
-                <X className="h-5 w-5" />
-              </Button>
             </div>
-          </div>
-        </DialogHeader>
-
-        <div className="flex-1 overflow-y-auto min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : !jobDetails ? (
-            <div className="text-center py-8 text-gray-500">
-              Job not found
-            </div>
-          ) : (
-            <div className="space-y-6 p-4 sm:p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+            
             {/* Labour Section */}
             <Card>
               <CardHeader>
