@@ -187,11 +187,22 @@ html.landscape-mode {
 
 html.landscape-mode body {
   transition: transform 0.3s ease-in-out;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* Ensure proper positioning for landscape content */
 html.landscape-mode .fixed {
   position: absolute;
+}
+
+/* Prevent any content from affecting the rotated layout */
+html.landscape-mode #root {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* Fix modals and dialogs in landscape mode - simpler approach */

@@ -45,14 +45,15 @@ export function OrientationToggle() {
       // Prevent any layout shifts during landscape mode
       const root = document.getElementById('root');
       if (root) {
-        root.style.position = 'fixed';
+        root.style.position = 'absolute';
         root.style.top = '0';
         root.style.left = '0';
         root.style.width = `${vh}px`;
         root.style.height = `${vw}px`;
         root.style.overflow = 'auto';
         root.style.transform = 'none';
-        root.style.position = 'relative';
+        root.style.margin = '0';
+        root.style.padding = '0';
       }
       document.body.style.margin = '0';
       document.body.style.padding = '0';
@@ -138,6 +139,8 @@ export function OrientationToggle() {
         root.style.position = '';
         root.style.top = '';
         root.style.left = '';
+        root.style.margin = '';
+        root.style.padding = '';
       }
       
       // Remove landscape class
