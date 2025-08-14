@@ -409,8 +409,8 @@ export class DatabaseStorage implements IStorage {
       return; // No employees have auto hours enabled
     }
 
-    // Calculate total job cost
-    const totalCost = await this.calculateJobTotalCost(jobId);
+    // Calculate total job cost excluding labor (to prevent feedback loops)
+    const totalCost = await this.calculateJobTotalCostExcludingLabor(jobId);
     
     // Apply automatic hours for each employee
     for (const employee of employeesWithAutoHours) {
@@ -492,6 +492,39 @@ export class DatabaseStorage implements IStorage {
       (parseFloat(subTradesCost.total || "0")) +
       (parseFloat(otherCostsCost.total || "0")) +
       (parseFloat(tipFeesCost.total || "0"));
+
+    return total;
+  }
+
+  private async calculateJobTotalCostExcludingLabor(jobId: string): Promise<number> {
+    // Get all costs for the job EXCEPT labor (to prevent automatic hours feedback loops)
+    const [materialsCost] = await db
+      .select({ total: sum(sql`CAST(${materials.amount} AS DECIMAL)`) })
+      .from(materials)
+      .where(eq(materials.jobId, jobId));
+
+    const [subTradesCost] = await db
+      .select({ total: sum(sql`CAST(${subTrades.amount} AS DECIMAL)`) })
+      .from(subTrades)
+      .where(eq(subTrades.jobId, jobId));
+
+    const [otherCostsCost] = await db
+      .select({ total: sum(sql`CAST(${otherCosts.amount} AS DECIMAL)`) })
+      .from(otherCosts)
+      .where(eq(otherCosts.jobId, jobId));
+
+    const [tipFeesCost] = await db
+      .select({ total: sum(sql`CAST(${tipFees.totalAmount} AS DECIMAL)`) })
+      .from(tipFees)
+      .where(eq(tipFees.jobId, jobId));
+
+    const total = 
+      (parseFloat(materialsCost.total || "0")) +
+      (parseFloat(subTradesCost.total || "0")) +
+      (parseFloat(otherCostsCost.total || "0")) +
+      (parseFloat(tipFeesCost.total || "0"));
+
+    console.log(`💰 Job total cost (excluding labor): Materials($${materialsCost.total || "0"}) + SubTrades($${subTradesCost.total || "0"}) + OtherCosts($${otherCostsCost.total || "0"}) + TipFees($${tipFeesCost.total || "0"}) = $${total}`);
 
     return total;
   }
