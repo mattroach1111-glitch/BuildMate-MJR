@@ -46,7 +46,7 @@ export function MobileNotificationTest() {
       success: hasPushManager,
       message: hasPushManager 
         ? 'Push Manager API is supported'
-        : 'Push Manager API is not supported'
+        : 'Push Manager API is not supported - this is common on Samsung Internet and some mobile browsers. Use email notifications instead.'
     });
 
     // Test 4: Service Worker Registration

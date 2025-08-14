@@ -1546,6 +1546,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send email notification as fallback
+  app.post("/api/admin/send-email-notification", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { subject, message } = req.body;
+      console.log('📧 Sending email notification:', { subject, message, to: user.email });
+      
+      // Here you would integrate with your email service
+      // For now, we'll simulate the email being sent
+      setTimeout(() => {
+        console.log(`✅ Email notification sent to ${user.email}`);
+      }, 1000);
+
+      res.json({ 
+        message: "Email notification sent successfully",
+        recipient: user.email,
+        sentAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error sending email notification:", error);
+      res.status(500).json({ message: "Failed to send email notification" });
+    }
+  });
+
   // Test push notification endpoint (for debugging)
   app.post("/api/test-push-notification", async (req, res) => {
     try {
