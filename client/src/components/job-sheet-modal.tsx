@@ -66,6 +66,10 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const [editSubTradeForm, setEditSubTradeForm] = useState<{trade: string; contractor: string; amount: string; invoiceDate: string}>({trade: "", contractor: "", amount: "", invoiceDate: ""});
   const [editOtherCostForm, setEditOtherCostForm] = useState<{description: string; amount: string}>({description: "", amount: ""});
   const [editTipFeeForm, setEditTipFeeForm] = useState<{description: string; amount: string}>({description: "", amount: ""});
+  
+  // Hours editing state
+  const [editingHours, setEditingHours] = useState<string | null>(null);
+  const [editHoursForm, setEditHoursForm] = useState<{hoursLogged: string}>({hoursLogged: ""});
 
   const { data: jobDetails, isLoading } = useQuery<JobDetails>({
     queryKey: ["/api/jobs", jobId],
@@ -644,6 +648,43 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     },
   });
 
+  // Update hours mutation
+  const updateHoursMutation = useMutation({
+    mutationFn: async ({ laborEntryId, hoursLogged }: { laborEntryId: string; hoursLogged: string }) => {
+      const response = await apiRequest("PATCH", `/api/labor-entries/${laborEntryId}`, {
+        hoursLogged: parseFloat(hoursLogged).toString(),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
+      setEditingHours(null);
+      setEditHoursForm({ hoursLogged: "" });
+      toast({
+        title: "Success",
+        description: "Hours updated successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update hours",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Delete mutations
   const deleteMaterialMutation = useMutation({
     mutationFn: async (materialId: string) => {
@@ -1136,6 +1177,33 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     setIsEditing(false);
   };
 
+  // Hours editing handlers
+  const handleStartEditHours = (laborEntry: LaborEntry) => {
+    setEditingHours(laborEntry.id);
+    setEditHoursForm({ hoursLogged: laborEntry.hoursLogged });
+  };
+
+  const handleSaveHours = (laborEntryId: string) => {
+    if (!editHoursForm.hoursLogged.trim() || parseFloat(editHoursForm.hoursLogged) < 0) {
+      toast({
+        title: "Error",
+        description: "Please enter valid hours",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateHoursMutation.mutate({
+      laborEntryId,
+      hoursLogged: editHoursForm.hoursLogged,
+    });
+  };
+
+  const handleCancelEditHours = () => {
+    setEditingHours(null);
+    setEditHoursForm({ hoursLogged: "" });
+  };
+
   const handleAddExtraHours = (laborEntryId: string) => {
     const hoursToAdd = extraHours[laborEntryId];
     if (!hoursToAdd || parseFloat(hoursToAdd) <= 0) {
@@ -1534,9 +1602,53 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                             </div>
                           </td>
                           <td className="py-3">
-                            <span className="text-sm text-gray-600 font-medium" data-testid={`text-labor-hours-${entry.id}`}>
-                              {entry.hoursLogged} hrs
-                            </span>
+                            {editingHours === entry.id ? (
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="number"
+                                  step="0.5"
+                                  min="0"
+                                  value={editHoursForm.hoursLogged}
+                                  onChange={(e) => setEditHoursForm({ hoursLogged: e.target.value })}
+                                  className="w-20 text-sm border border-primary rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                  data-testid={`input-edit-hours-${entry.id}`}
+                                  autoFocus
+                                />
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleSaveHours(entry.id)}
+                                  disabled={updateHoursMutation.isPending}
+                                  className="h-7 px-2 text-xs bg-green-600 hover:bg-green-700 text-white"
+                                  data-testid={`button-save-hours-${entry.id}`}
+                                >
+                                  {updateHoursMutation.isPending ? "..." : "Save"}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={handleCancelEditHours}
+                                  className="h-7 px-2 text-xs"
+                                  data-testid={`button-cancel-edit-hours-${entry.id}`}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-600 font-medium" data-testid={`text-labor-hours-${entry.id}`}>
+                                  {entry.hoursLogged} hrs
+                                </span>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleStartEditHours(entry)}
+                                  className="h-6 w-6 p-0 hover:bg-primary/10"
+                                  data-testid={`button-edit-hours-${entry.id}`}
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
                           </td>
                           <td className="py-3">
                             <div className="flex items-center gap-2">
