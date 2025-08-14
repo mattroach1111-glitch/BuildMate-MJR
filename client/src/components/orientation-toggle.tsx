@@ -24,99 +24,20 @@ export function OrientationToggle() {
 
   useEffect(() => {
     if (isLandscapeForced) {
-      // Force landscape orientation with better centering
-      const vh = window.innerHeight;
-      const vw = window.innerWidth;
-      
-      // Calculate better positioning to center the rotated content
-      const translateX = (vw - vh) / 2;
-      const translateY = (vh - vw) / 2;
-      
+      // Simple landscape implementation - just rotate the entire viewport
+      document.body.style.transform = 'rotate(90deg)';
       document.body.style.transformOrigin = 'center center';
-      document.body.style.width = `${vh}px`;
-      document.body.style.height = `${vw}px`;
+      document.body.style.width = '100vh';
+      document.body.style.height = '100vw';
       document.body.style.position = 'fixed';
       document.body.style.top = '50%';
       document.body.style.left = '50%';
-      document.body.style.transform = 'translate(-50%, -50%) rotate(90deg)';
+      document.body.style.marginTop = '-50vw';
+      document.body.style.marginLeft = '-50vh';
       document.body.style.overflow = 'hidden';
-      document.body.style.overscrollBehavior = 'none';
       
-      // Prevent any layout shifts during landscape mode
-      const root = document.getElementById('root');
-      if (root) {
-        root.style.position = 'absolute';
-        root.style.top = '0';
-        root.style.left = '0';
-        root.style.width = `${vh}px`;
-        root.style.height = `${vw}px`;
-        root.style.overflow = 'auto';
-        root.style.transform = 'none';
-        root.style.margin = '0';
-        root.style.padding = '0';
-      }
-      document.body.style.margin = '0';
-      document.body.style.padding = '0';
-      
-      // Add landscape class to html for additional styling
+      // Add landscape class for any additional styling
       document.documentElement.classList.add('landscape-mode');
-      
-      // Handle existing portals/modals
-      const portals = document.querySelectorAll('[data-radix-portal]');
-      portals.forEach(portal => {
-        if (portal instanceof HTMLElement) {
-          portal.style.pointerEvents = 'auto';
-        }
-      });
-      
-      // Listen for new modals/dialogs and dropdowns
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          mutation.addedNodes.forEach((node) => {
-            if (node instanceof HTMLElement) {
-              if (node.matches('[data-radix-portal]')) {
-                node.style.pointerEvents = 'auto';
-              }
-              
-              // Completely isolate dropdowns from layout
-              const dropdowns = node.querySelectorAll('[data-radix-dropdown-menu-content], [data-radix-select-content], [data-radix-popover-content]');
-              dropdowns.forEach(dropdown => {
-                if (dropdown instanceof HTMLElement) {
-                  // Remove from normal document flow completely
-                  dropdown.style.position = 'fixed';
-                  dropdown.style.top = '100px';
-                  dropdown.style.left = '100px';
-                  dropdown.style.right = 'auto';
-                  dropdown.style.bottom = 'auto';
-                  dropdown.style.transform = 'rotate(-90deg)';
-                  dropdown.style.transformOrigin = 'top left';
-                  dropdown.style.visibility = 'visible';
-                  dropdown.style.opacity = '1';
-                  dropdown.style.zIndex = '9999';
-                  dropdown.style.border = '2px solid #ff0000';
-                  dropdown.style.background = 'white';
-                  dropdown.style.width = '150px';
-                  dropdown.style.height = '180px';
-                  dropdown.style.fontSize = '13px';
-                  dropdown.style.overflow = 'auto';
-                  dropdown.style.margin = '0';
-                  dropdown.style.padding = '8px';
-                  dropdown.style.boxSizing = 'border-box';
-                  
-                  // Force it to not affect parent containers
-                  dropdown.style.contain = 'layout style size';
-                  dropdown.style.isolation = 'isolate';
-                }
-              });
-            }
-          });
-        });
-      });
-      
-      observer.observe(document.body, { childList: true, subtree: true });
-      
-      // Store observer to clean up later
-      (window as any).landscapeObserver = observer;
     } else {
       // Reset to normal orientation
       document.body.style.transform = '';
@@ -126,31 +47,12 @@ export function OrientationToggle() {
       document.body.style.position = '';
       document.body.style.top = '';
       document.body.style.left = '';
+      document.body.style.marginTop = '';
+      document.body.style.marginLeft = '';
       document.body.style.overflow = '';
-      document.body.style.margin = '';
-      document.body.style.padding = '';
-      
-      const root = document.getElementById('root');
-      if (root) {
-        root.style.width = '';
-        root.style.height = '';
-        root.style.overflow = '';
-        root.style.transform = '';
-        root.style.position = '';
-        root.style.top = '';
-        root.style.left = '';
-        root.style.margin = '';
-        root.style.padding = '';
-      }
       
       // Remove landscape class
       document.documentElement.classList.remove('landscape-mode');
-      
-      // Clean up modal observer
-      if ((window as any).landscapeObserver) {
-        (window as any).landscapeObserver.disconnect();
-        delete (window as any).landscapeObserver;
-      }
     }
   }, [isLandscapeForced]);
 
