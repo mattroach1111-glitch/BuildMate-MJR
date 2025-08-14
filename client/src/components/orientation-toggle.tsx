@@ -82,14 +82,10 @@ export function OrientationToggle() {
                   dropdown.style.opacity = '1';
                   dropdown.style.position = 'fixed';
                   
-                  // Smart positioning: center-right area for easy access
-                  const vh = window.innerHeight;
-                  const vw = window.innerWidth;
-                  
-                  // Position in the middle-right area, easily accessible
-                  dropdown.style.top = '50%';
-                  dropdown.style.left = '60%';
-                  dropdown.style.transform = 'translate(-50%, -50%)';
+                  // Position dropdown in center of screen for easy access
+                  dropdown.style.top = '200px';
+                  dropdown.style.left = '50%';
+                  dropdown.style.transform = 'translateX(-50%)';
                   dropdown.style.right = 'auto';
                   dropdown.style.bottom = 'auto';
                   dropdown.style.zIndex = '9999';
