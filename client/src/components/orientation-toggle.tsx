@@ -37,7 +37,7 @@ export function OrientationToggle() {
       document.body.style.width = `${vh}px`;
       document.body.style.height = `${vw}px`;
       document.body.style.position = 'fixed';
-      document.body.style.top = `${(vh - vw) / 2 + 10}px`;
+      document.body.style.top = `${(vh - vw) / 2}px`;
       document.body.style.left = `${(vw - vh) / 2}px`;
       document.body.style.overflow = 'hidden';
       document.body.style.margin = '0';
