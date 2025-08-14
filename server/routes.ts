@@ -756,14 +756,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const laborEntry = await storage.addExtraHoursToLaborEntry(req.params.id, extraHours);
       
       // Recalculate auto hours when labor costs change (affects total job cost)
-      if (laborEntry.jobId) {
+      const jobId = laborEntry.jobId || (laborEntry as any).job_id;
+      console.log(`🔍 Checking if auto hours recalculation needed. JobId: ${jobId}`);
+      if (jobId) {
         try {
-          console.log(`🔄 Starting automatic hours recalculation for job ${laborEntry.jobId} after labor hours update`);
-          await storage.applyAutomaticHours(laborEntry.jobId);
-          console.log(`✅ Recalculated automatic hours for job ${laborEntry.jobId} after labor hours update`);
+          console.log(`🔄 Starting automatic hours recalculation for job ${jobId} after labor hours update`);
+          await storage.applyAutomaticHours(jobId);
+          console.log(`✅ Recalculated automatic hours for job ${jobId} after labor hours update`);
         } catch (autoHoursError) {
           console.error('❌ Error recalculating automatic hours after labor hours update:', autoHoursError);
         }
+      } else {
+        console.error('❌ No jobId found in labor entry - cannot recalculate automatic hours');
       }
       
       res.json(laborEntry);

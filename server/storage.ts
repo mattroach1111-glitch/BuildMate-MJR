@@ -851,7 +851,7 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Failed to update labor entry");
     }
 
-    console.log(`✅ Successfully updated labor entry. New hours: ${updatedEntry.hoursLogged}`);
+    console.log(`✅ Successfully updated labor entry. New hours: ${updatedEntry.hoursLogged}, jobId: ${updatedEntry.jobId}`);
     return updatedEntry;
   }
 
