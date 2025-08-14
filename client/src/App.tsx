@@ -4,16 +4,11 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
-import { NotificationPopup } from "@/components/notification-popup";
-import { SamsungRotationWarning } from "./components/SamsungRotationWarning";
-import { notificationService } from "@/lib/notifications";
-import { useEffect } from "react";
 import Landing from "@/pages/landing";
 import AdminDashboard from "@/pages/admin-dashboard";
 import { JobsList } from "@/pages/jobs-list";
 import NotFound from "@/pages/not-found";
 import FortnightTimesheetView from "@/pages/fortnight-timesheet-view";
-import StaffTimesheet from "@/pages/staff-timesheet";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -50,43 +45,20 @@ function Router() {
   );
 }
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AppContent />
-    </QueryClientProvider>
-  );
-}
-
 function AppContent() {
-  const { user, isAuthenticated } = useAuth();
-  
-  // Temporarily disable auto-registration to isolate the issue
-  // useEffect(() => {
-  //   if (isAuthenticated && user) {
-  //     const autoRegister = async () => {
-  //       try {
-  //         // Check if notifications are already granted
-  //         if (Notification.permission === 'granted') {
-  //           // Silently register for push notifications without showing any UI
-  //           await notificationService.registerForPush();
-  //           console.log('Auto-registered for push notifications');
-  //         }
-  //       } catch (error) {
-  //         // Silently fail - don't show errors to user
-  //         console.log('Auto-registration for push notifications failed:', error);
-  //       }
-  //     };
-
-  //     autoRegister();
-  //   }
-  // }, [isAuthenticated, user]);
-  
   return (
     <TooltipProvider>
       <Toaster />
       <Router />
     </TooltipProvider>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppContent />
+    </QueryClientProvider>
   );
 }
 
