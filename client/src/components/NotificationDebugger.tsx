@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle, XCircle, AlertTriangle, TestTube, Smartphone } from 'lucide-react';
-// import { pushNotificationService } from '@/lib/pushNotifications';
+import { pushNotificationService } from '@/lib/pushNotifications';
 
 export function NotificationDebugger() {
   const [debugInfo, setDebugInfo] = useState<any>(null);

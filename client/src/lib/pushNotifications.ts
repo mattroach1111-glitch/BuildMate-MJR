@@ -1,5 +1,5 @@
 // Web Push Notifications Service
-export class PushNotificationService {
+class PushNotificationService {
   private static instance: PushNotificationService;
   private permission: NotificationPermission = 'default';
   private registration: ServiceWorkerRegistration | null = null;
@@ -279,5 +279,4 @@ export class PushNotificationService {
 }
 
 // Create and export the singleton instance
-const notificationServiceInstance = PushNotificationService.getInstance();
-export { notificationServiceInstance as pushNotificationService };
+export const pushNotificationService = PushNotificationService.getInstance();
