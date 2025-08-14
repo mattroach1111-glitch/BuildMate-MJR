@@ -1666,16 +1666,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user SMS settings
-  app.put("/api/user/sms-settings", async (req: any, res) => {
+  app.put("/api/user/sms-settings", isAuthenticated, async (req: any, res) => {
     console.log('📱 SMS Settings PUT request received');
-    console.log('📱 Request headers:', req.headers);
-    console.log('📱 Session:', req.session);
-    console.log('📱 User:', req.user);
-    
-    if (!req.user) {
-      console.log('📱 No user in request, authentication failed');
-      return res.status(401).json({ message: "Unauthorized - no user" });
-    }
+    console.log('📱 Request body:', req.body);
 
     try {
       const userId = req.user.claims.sub;

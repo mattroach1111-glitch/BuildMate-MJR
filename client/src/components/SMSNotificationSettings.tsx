@@ -31,11 +31,22 @@ export function SMSNotificationSettings() {
 
   // Update settings mutation
   const updateSettingsMutation = useMutation({
-    mutationFn: (data: { mobilePhone: string; smsNotificationsEnabled: boolean }) =>
-      apiRequest('/api/user/sms-settings', {
+    mutationFn: async (data: { mobilePhone: string; smsNotificationsEnabled: boolean }) => {
+      const response = await fetch('/api/user/sms-settings', {
         method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
         body: JSON.stringify(data),
-      }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update SMS settings');
+      }
+      
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user/sms-settings'] });
       toast({
@@ -55,11 +66,22 @@ export function SMSNotificationSettings() {
 
   // Test SMS mutation
   const testSMSMutation = useMutation({
-    mutationFn: (phoneNum: string) =>
-      apiRequest('/api/user/test-sms', {
+    mutationFn: async (phoneNum: string) => {
+      const response = await fetch('/api/user/test-sms', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
         body: JSON.stringify({ phoneNumber: phoneNum }),
-      }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send test SMS');
+      }
+      
+      return response.json();
+    },
     onSuccess: () => {
       setTestResult('success');
       toast({
