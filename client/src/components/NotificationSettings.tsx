@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Bell, Mail, FileText, Clock, CheckCircle, AlertCircle, Smartphone } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Bell, Mail, FileText, Clock, CheckCircle, AlertCircle, Smartphone, Users } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -23,6 +24,8 @@ interface PushNotificationSettings {
     time: string;
     days: string[];
     timezone: string;
+    targetStaff: 'all' | 'selected';
+    selectedStaff?: string[];
   };
 }
 
@@ -39,7 +42,9 @@ export function NotificationSettings() {
       enabled: true,
       time: "17:00",
       days: ["monday", "tuesday", "wednesday", "thursday", "friday"],
-      timezone: "Australia/Sydney"
+      timezone: "Australia/Sydney",
+      targetStaff: "all",
+      selectedStaff: []
     }
   });
 
@@ -52,6 +57,20 @@ export function NotificationSettings() {
       });
       if (!response.ok) {
         throw new Error('Failed to fetch user');
+      }
+      return response.json();
+    },
+  });
+
+  // Get staff list for push notification targeting
+  const { data: staffList } = useQuery({
+    queryKey: ['/api/staff'],
+    queryFn: async () => {
+      const response = await fetch('/api/staff', {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch staff');
       }
       return response.json();
     },
@@ -147,6 +166,15 @@ export function NotificationSettings() {
       : [...currentDays, day];
     
     handlePushSettingChange('timesheetReminders.days', newDays);
+  };
+
+  const handleStaffToggle = (staffId: string) => {
+    const currentStaff = pushSettings.timesheetReminders.selectedStaff || [];
+    const newStaff = currentStaff.includes(staffId)
+      ? currentStaff.filter(id => id !== staffId)
+      : [...currentStaff, staffId];
+    
+    handlePushSettingChange('timesheetReminders.selectedStaff', newStaff);
   };
 
   return (
@@ -335,6 +363,67 @@ export function NotificationSettings() {
                         <SelectItem value="Australia/Darwin">Australia/Darwin</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* Staff Selection */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Who should receive reminders?</Label>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="target-all"
+                          checked={pushSettings.timesheetReminders.targetStaff === 'all'}
+                          onCheckedChange={(checked) => handlePushSettingChange('timesheetReminders.targetStaff', checked ? 'all' : 'selected')}
+                          data-testid="checkbox-target-all"
+                        />
+                        <Label htmlFor="target-all" className="text-sm">
+                          Send to all staff members
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="target-selected"
+                          checked={pushSettings.timesheetReminders.targetStaff === 'selected'}
+                          onCheckedChange={(checked) => handlePushSettingChange('timesheetReminders.targetStaff', checked ? 'selected' : 'all')}
+                          data-testid="checkbox-target-selected"
+                        />
+                        <Label htmlFor="target-selected" className="text-sm">
+                          Send to selected staff only
+                        </Label>
+                      </div>
+                    </div>
+
+                    {pushSettings.timesheetReminders.targetStaff === 'selected' && (
+                      <div className="ml-6 p-3 bg-gray-50 dark:bg-gray-800 rounded-md border">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Users className="h-4 w-4 text-gray-600" />
+                          <Label className="text-sm font-medium">Select Staff Members</Label>
+                        </div>
+                        <div className="space-y-2 max-h-40 overflow-y-auto">
+                          {staffList?.map((staff: any) => (
+                            <div key={staff.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`staff-${staff.id}`}
+                                checked={(pushSettings.timesheetReminders.selectedStaff || []).includes(staff.id)}
+                                onCheckedChange={() => handleStaffToggle(staff.id)}
+                                data-testid={`checkbox-staff-${staff.id}`}
+                              />
+                              <Label htmlFor={`staff-${staff.id}`} className="text-sm">
+                                {staff.name}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                        {staffList?.length === 0 && (
+                          <p className="text-sm text-muted-foreground">No staff members found</p>
+                        )}
+                        {pushSettings.timesheetReminders.selectedStaff?.length === 0 && pushSettings.timesheetReminders.targetStaff === 'selected' && (
+                          <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                            ⚠️ No staff selected - reminders will not be sent to anyone
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
