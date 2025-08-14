@@ -493,7 +493,7 @@ export class DatabaseStorage implements IStorage {
     return total;
   }
 
-  private async calculateJobTotalCostExcludingLabor(jobId: string): Promise<number> {
+  private async calculateJobTotalCostIncludingLabor(jobId: string): Promise<number> {
     // Get job details first to access builder margin
     const [job] = await db.select().from(jobs).where(eq(jobs.id, jobId));
     
@@ -502,7 +502,7 @@ export class DatabaseStorage implements IStorage {
       return 0;
     }
 
-    // Get all costs for the job EXCEPT labor (to prevent automatic hours feedback loops)
+    // Get all costs for the job INCLUDING labor (the full job sheet total)
     const [materialsCost] = await db
       .select({ total: sum(sql`CAST(${materials.amount} AS DECIMAL)`) })
       .from(materials)
@@ -523,12 +523,18 @@ export class DatabaseStorage implements IStorage {
       .from(tipFees)
       .where(eq(tipFees.jobId, jobId));
 
-    // Calculate subtotal (excluding labor)
+    // Get labor costs
+    const [laborCost] = await db
+      .select({ total: sum(sql`CAST(${laborEntries.hourlyRate} AS DECIMAL) * CAST(${laborEntries.hoursLogged} AS DECIMAL)`) })
+      .from(laborEntries)
+      .where(eq(laborEntries.jobId, jobId));
+
+    // Calculate subtotal INCLUDING labor (the full job sheet total)
     const subtotal = 
+      (parseFloat(laborCost.total || "0")) +
       (parseFloat(materialsCost.total || "0")) +
       (parseFloat(subTradesCost.total || "0")) +
-      (parseFloat(otherCostsCost.total || "0")) +
-      (parseFloat(tipFeesCost.total || "0"));
+      (parseFloat(otherCostsCost.total || "0"));
 
     // Apply builder margin (same as frontend calculation)
     const marginPercent = parseFloat(job.builderMargin || "0") / 100;
@@ -539,8 +545,8 @@ export class DatabaseStorage implements IStorage {
     const gstAmount = subtotalWithMargin * 0.10;
     const finalTotal = subtotalWithMargin + gstAmount;
 
-    console.log(`💰 Job total cost calculation (excluding labor):
-    - Subtotal: Materials($${materialsCost.total || "0"}) + SubTrades($${subTradesCost.total || "0"}) + OtherCosts($${otherCostsCost.total || "0"}) + TipFees($${tipFeesCost.total || "0"}) = $${subtotal}
+    console.log(`💰 Job total cost calculation (FULL JOB SHEET TOTAL):
+    - Subtotal: Labor($${laborCost.total || "0"}) + Materials($${materialsCost.total || "0"}) + SubTrades($${subTradesCost.total || "0"}) + OtherCosts($${otherCostsCost.total || "0"}) = $${subtotal}
     - Builder Margin (${job.builderMargin || "0"}%): $${marginAmount.toFixed(2)}
     - Subtotal with Margin: $${subtotalWithMargin.toFixed(2)}
     - GST (10%): $${gstAmount.toFixed(2)}
