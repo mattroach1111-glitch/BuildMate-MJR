@@ -35,40 +35,94 @@ class SimpleNotificationService implements NotificationService {
   }
 
   isSupported(): boolean {
-    return 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
+    if (typeof window === 'undefined') return false;
+    
+    const hasServiceWorker = 'serviceWorker' in navigator;
+    const hasPushManager = 'PushManager' in window;
+    const hasNotification = 'Notification' in window;
+    
+    console.log('🔍 Push support check:', {
+      hasServiceWorker,
+      hasPushManager, 
+      hasNotification,
+      userAgent: navigator.userAgent.substring(0, 100)
+    });
+    
+    // For mobile browsers, be more permissive with notification support
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+      // Mobile browsers might have different notification API implementations
+      console.log('📱 Mobile browser detected, checking alternative notification support...');
+      return hasServiceWorker && hasPushManager;
+    }
+    
+    return hasServiceWorker && hasPushManager && hasNotification;
   }
 
   async requestPermission(): Promise<NotificationPermission> {
     if (!this.isSupported()) {
-      return 'denied';
-    }
-    if (typeof Notification === 'undefined') {
+      console.log('🚫 Notifications not supported by this browser');
       return 'denied';
     }
     
-    // For desktop browsers, ensure user gesture is present
+    // Check if we're on mobile and handle differently
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (typeof Notification === 'undefined') {
+      if (isMobile) {
+        console.log('📱 Mobile browser may use service worker notifications');
+        // On mobile, service worker can handle notifications even without global Notification
+        return 'granted';
+      }
+      console.log('🚫 Notification API not available');
+      return 'denied';
+    }
+    
     try {
       const permission = await Notification.requestPermission();
-      console.log('Notification permission result:', permission);
+      console.log('📋 Notification permission result:', permission);
       return permission;
     } catch (error) {
-      console.error('Notification permission request failed:', error);
+      console.error('🚫 Notification permission request failed:', error);
+      if (isMobile) {
+        console.log('📱 Falling back to service worker notifications for mobile');
+        return 'granted';
+      }
       return 'denied';
     }
   }
 
   getPermission(): NotificationPermission {
     if (typeof Notification === 'undefined') {
+      // On mobile, assume granted if we have service worker support
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile && 'serviceWorker' in navigator) {
+        return 'granted';
+      }
       return 'denied';
     }
     return Notification.permission;
   }
 
   showNotification(title: string, options?: NotificationOptions): void {
+    // Check if we're on mobile first
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
     if (typeof Notification === 'undefined') {
+      if (isMobile && this.registration) {
+        // Use service worker notification for mobile
+        console.log('📱 Using service worker notification for mobile');
+        this.registration.showNotification(title, {
+          icon: '/icon-192x192.png',
+          badge: '/icon-192x192.png',
+          ...options
+        });
+        return;
+      }
       console.warn('Notifications not supported in this environment');
       return;
     }
+    
     if (this.getPermission() === 'granted') {
       new Notification(title, {
         icon: '/icon-192x192.png',
