@@ -237,8 +237,8 @@ html.landscape-mode [data-radix-dropdown-menu-content],
 html.landscape-mode [data-radix-select-content],
 html.landscape-mode [data-radix-popover-content] {
   position: fixed !important;
-  top: 80px !important;
-  right: 20px !important;
+  top: 40px !important;
+  right: 10px !important;
   left: auto !important;
   bottom: auto !important;
   transform: none !important;
