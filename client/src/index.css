@@ -180,34 +180,33 @@ table tr.weekend-row button {
     }
   }
 
-/* Landscape mode adjustments - SIMPLE AND RELIABLE */
+/* Landscape mode - NATIVE ORIENTATION WITH CSS FALLBACK */
 html.landscape-mode {
-  overflow: hidden !important;
+  /* Only apply CSS rotation if native orientation isn't available */
+  overflow: auto !important;
 }
 
-body.landscape-mode {
-  /* Simple centered rotation */
-  transform: rotate(90deg) !important;
-  transform-origin: center center !important;
-  
-  /* Keep normal positioning but adjust dimensions */
-  width: 100vh !important;
-  height: 100vw !important;
-  position: fixed !important;
-  top: calc((100vh - 100vw) / 2) !important;
-  left: calc((100vw - 100vh) / 2) !important;
-  
-  /* Enable scrolling */
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  -webkit-overflow-scrolling: touch !important;
-}
+/* CSS fallback for browsers without orientation lock */
+@media (max-width: 768px) {
+  body.landscape-mode {
+    /* Only rotate if we're on mobile and native orientation failed */
+    transform: rotate(90deg) !important;
+    transform-origin: center center !important;
+    width: 100vh !important;
+    height: 100vw !important;
+    position: fixed !important;
+    top: calc((100vh - 100vw) / 2) !important;
+    left: calc((100vw - 100vh) / 2) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
 
-/* Ensure root container is visible */
-body.landscape-mode #root {
-  width: 100% !important;
-  min-height: 100% !important;
-  overflow: visible !important;
+  body.landscape-mode #root {
+    width: 100% !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+  }
 }
 
 /* Fix portal positioning in landscape mode */

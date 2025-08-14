@@ -24,14 +24,35 @@ export function OrientationToggle() {
 
   useEffect(() => {
     if (isLandscapeForced) {
-      // Apply landscape mode via CSS class only
-      document.documentElement.classList.add('landscape-mode');
-      document.body.classList.add('landscape-mode');
+      // Force landscape orientation using screen.orientation API
+      if ('screen' in window && 'orientation' in window.screen && 'lock' in window.screen.orientation) {
+        window.screen.orientation.lock('landscape').catch(() => {
+          // Fallback to CSS if orientation lock fails
+          document.documentElement.classList.add('landscape-mode');
+          document.body.classList.add('landscape-mode');
+        });
+      } else {
+        // Fallback to CSS for browsers without orientation API
+        document.documentElement.classList.add('landscape-mode');
+        document.body.classList.add('landscape-mode');
+      }
     } else {
-      // Remove landscape mode
+      // Remove landscape mode and unlock orientation
+      if ('screen' in window && 'orientation' in window.screen && 'unlock' in window.screen.orientation) {
+        window.screen.orientation.unlock();
+      }
       document.documentElement.classList.remove('landscape-mode');
       document.body.classList.remove('landscape-mode');
     }
+    
+    // Cleanup function
+    return () => {
+      if ('screen' in window && 'orientation' in window.screen && 'unlock' in window.screen.orientation) {
+        window.screen.orientation.unlock();
+      }
+      document.documentElement.classList.remove('landscape-mode');
+      document.body.classList.remove('landscape-mode');
+    };
   }, [isLandscapeForced]);
 
   const toggleOrientation = () => {
