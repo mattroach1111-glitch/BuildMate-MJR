@@ -3,11 +3,10 @@
   "short_name": "BuildFlow",
   "description": "Mobile-first construction management system for job costing, billing, and workforce management",
   "start_url": "/",
-  "display": "minimal-ui",
-  "display_override": ["standalone", "fullscreen"],
+  "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#3b82f6",
-  "orientation": "any",
+  "orientation": "portrait-primary",
   "categories": ["business", "productivity", "utilities"],
   "lang": "en",
   "icons": [
