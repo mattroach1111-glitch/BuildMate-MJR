@@ -10,6 +10,15 @@ import NotFound from "@/pages/not-found";
 import FortnightTimesheetView from "@/pages/fortnight-timesheet-view";
 import StaffTimesheet from "@/pages/staff-timesheet";
 
+// Register service worker for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').then(registration => {
+    console.log('Service Worker registered successfully:', registration);
+  }).catch(error => {
+    console.log('Service Worker registration failed:', error);
+  });
+}
+
 function Router() {
   console.log('Router component rendering');
   const { data: user, isLoading, error } = useQuery({
@@ -64,7 +73,7 @@ function AppContent() {
 }
 
 function App() {
-  console.log('App component rendering');
+  console.log('App component rendering with restored QueryClient');
   return (
     <QueryClientProvider client={queryClient}>
       <AppContent />
