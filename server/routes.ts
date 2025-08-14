@@ -1449,6 +1449,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get staff for push notification targeting
+  app.get("/api/staff", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const staffForTimesheets = await storage.getStaffForTimesheets();
+      console.log('Staff API returning:', staffForTimesheets);
+      res.json(staffForTimesheets);
+    } catch (error) {
+      console.error("Error fetching staff for push notifications:", error);
+      res.status(500).json({ message: "Failed to fetch staff" });
+    }
+  });
+
   app.post("/api/timesheet", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

@@ -403,74 +403,43 @@ export function NotificationSettings() {
                       </div>
                     </div>
 
-                    <div className="mt-4">
-                      <p className="text-xs text-gray-500 mb-2">
-                        Current target: {pushSettings.timesheetReminders.targetStaff || 'all'}
-                      </p>
-                      <p className="text-xs text-blue-500 mb-2">
-                        Staff list loaded: {staffList?.length || 0} staff members
-                      </p>
-                    </div>
 
-                    {/* Always show this test box first */}
-                    <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-md border mb-4">
-                      <p className="text-sm">
-                        DEBUG: Target = "{pushSettings.timesheetReminders.targetStaff}", 
-                        Should show: {pushSettings.timesheetReminders.targetStaff === 'selected' ? 'YES' : 'NO'}
-                      </p>
-                    </div>
 
-                    <div className="ml-6 p-3 bg-blue-50 dark:bg-blue-800 rounded-md border">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Users className="h-4 w-4 text-gray-600" />
-                        <Label className="text-sm font-medium">Select Staff Members</Label>
+                    {pushSettings.timesheetReminders.targetStaff === 'selected' && (
+                      <div className="ml-6 p-3 bg-gray-50 dark:bg-gray-800 rounded-md border">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Users className="h-4 w-4 text-gray-600" />
+                          <Label className="text-sm font-medium">Select Staff Members</Label>
+                        </div>
+                        <div className="space-y-2 max-h-40 overflow-y-auto">
+                          {staffList && staffList.length > 0 ? (
+                            staffList.map((staff: any) => {
+                              const isChecked = (pushSettings.timesheetReminders.selectedStaff || []).includes(staff.id);
+                              return (
+                                <div key={staff.id} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`staff-${staff.id}`}
+                                    checked={isChecked}
+                                    onCheckedChange={() => handleStaffToggle(staff.id)}
+                                    data-testid={`checkbox-staff-${staff.id}`}
+                                  />
+                                  <Label htmlFor={`staff-${staff.id}`} className="text-sm cursor-pointer">
+                                    {staff.name}
+                                  </Label>
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <p className="text-sm text-muted-foreground">No staff members found</p>
+                          )}
+                          {pushSettings.timesheetReminders.selectedStaff?.length === 0 && pushSettings.timesheetReminders.targetStaff === 'selected' && (
+                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                              ⚠️ No staff selected - reminders will not be sent to anyone
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      
-                      <div className="space-y-2">
-                        <p className="text-xs text-green-600">
-                          Staff list: {JSON.stringify(staffList?.map(s => ({id: s.id, name: s.name})) || [])}
-                        </p>
-                        <p className="text-xs text-purple-600">
-                          Target staff: "{pushSettings.timesheetReminders.targetStaff}"
-                        </p>
-                        
-                        {pushSettings.timesheetReminders.targetStaff === 'selected' ? (
-                          <div className="space-y-2 max-h-40 overflow-y-auto bg-red-100 p-2 rounded">
-                            <p className="text-xs text-red-600">SHOWING STAFF SELECTION (target = selected)</p>
-                            {staffList && staffList.length > 0 ? (
-                              staffList.map((staff: any) => {
-                                const isChecked = (pushSettings.timesheetReminders.selectedStaff || []).includes(staff.id);
-                                console.log(`Rendering staff: ${staff.name} (${staff.id}), checked: ${isChecked}`);
-                                return (
-                                  <div key={staff.id} className="flex items-center space-x-2 bg-white p-2 rounded border">
-                                    <Checkbox
-                                      id={`staff-${staff.id}`}
-                                      checked={isChecked}
-                                      onCheckedChange={() => handleStaffToggle(staff.id)}
-                                      data-testid={`checkbox-staff-${staff.id}`}
-                                    />
-                                    <Label htmlFor={`staff-${staff.id}`} className="text-sm cursor-pointer">
-                                      {staff.name}
-                                    </Label>
-                                  </div>
-                                );
-                              })
-                            ) : (
-                              <p className="text-sm text-red-500">No staff list available</p>
-                            )}
-                            {pushSettings.timesheetReminders.selectedStaff?.length === 0 && (
-                              <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
-                                ⚠️ No staff selected - reminders will not be sent to anyone
-                              </p>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-gray-500 bg-gray-100 p-2 rounded">
-                            Switch to "Send to selected staff only" to choose individual staff members
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               )}
