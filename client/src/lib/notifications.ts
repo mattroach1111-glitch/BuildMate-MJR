@@ -42,14 +42,24 @@ class SimpleNotificationService implements NotificationService {
     if (!this.isSupported()) {
       return 'denied';
     }
+    if (typeof Notification === 'undefined') {
+      return 'denied';
+    }
     return await Notification.requestPermission();
   }
 
   getPermission(): NotificationPermission {
+    if (typeof Notification === 'undefined') {
+      return 'denied';
+    }
     return Notification.permission;
   }
 
   showNotification(title: string, options?: NotificationOptions): void {
+    if (typeof Notification === 'undefined') {
+      console.warn('Notifications not supported in this environment');
+      return;
+    }
     if (this.getPermission() === 'granted') {
       new Notification(title, {
         icon: '/icon-192x192.png',
