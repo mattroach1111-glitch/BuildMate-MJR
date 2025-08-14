@@ -291,6 +291,23 @@ export class DatabaseStorage implements IStorage {
     return updatedEmployee;
   }
 
+  async updateEmployeeAutoHours(id: string, autoHoursConfig: {
+    autoHoursEnabled: boolean;
+    baseAutoHours?: string;
+    bonusHoursPer3k?: string;
+  }): Promise<Employee> {
+    const [updatedEmployee] = await db
+      .update(employees)
+      .set({
+        autoHoursEnabled: autoHoursConfig.autoHoursEnabled,
+        baseAutoHours: autoHoursConfig.baseAutoHours || "0",
+        bonusHoursPer3k: autoHoursConfig.bonusHoursPer3k || "0",
+      })
+      .where(eq(employees.id, id))
+      .returning();
+    return updatedEmployee;
+  }
+
   async deleteEmployee(id: string): Promise<void> {
     // First delete all labor entries for this employee
     await db.delete(laborEntries).where(eq(laborEntries.staffId, id));
@@ -368,6 +385,102 @@ export class DatabaseStorage implements IStorage {
     // Create job without auto-adding all employees (for PDF import)
     const [createdJob] = await db.insert(jobs).values(job).returning();
     return createdJob;
+  }
+
+  async applyAutomaticHours(jobId: string): Promise<void> {
+    // Get all employees with auto hours enabled
+    const employeesWithAutoHours = await db.select()
+      .from(employees)
+      .where(eq(employees.autoHoursEnabled, true));
+
+    if (employeesWithAutoHours.length === 0) {
+      return; // No employees have auto hours enabled
+    }
+
+    // Calculate total job cost
+    const totalCost = await this.calculateJobTotalCost(jobId);
+    
+    // Apply automatic hours for each employee
+    for (const employee of employeesWithAutoHours) {
+      const baseHours = parseFloat(employee.baseAutoHours || "0");
+      const bonusHoursPer3k = parseFloat(employee.bonusHoursPer3k || "0");
+      
+      // Calculate bonus hours based on job total
+      const bonusHours = Math.floor(totalCost / 3000) * bonusHoursPer3k;
+      const totalAutoHours = baseHours + bonusHours;
+      
+      if (totalAutoHours > 0) {
+        // Check if labor entry exists for this employee and job
+        const [existingEntry] = await db.select()
+          .from(laborEntries)
+          .where(and(
+            eq(laborEntries.jobId, jobId),
+            eq(laborEntries.staffId, employee.id)
+          ));
+
+        if (existingEntry) {
+          // Update existing entry by adding auto hours
+          const currentHours = parseFloat(existingEntry.hoursLogged || "0");
+          const newHours = currentHours + totalAutoHours;
+          
+          await db.update(laborEntries)
+            .set({ 
+              hoursLogged: newHours.toString(),
+              updatedAt: new Date()
+            })
+            .where(eq(laborEntries.id, existingEntry.id));
+            
+          console.log(`✅ Added ${totalAutoHours} automatic hours for ${employee.name} to job (${baseHours} base + ${bonusHours} bonus)`);
+        } else {
+          // Create new labor entry with auto hours
+          await this.createLaborEntry({
+            jobId: jobId,
+            staffId: employee.id,
+            hourlyRate: employee.defaultHourlyRate,
+            hoursLogged: totalAutoHours.toString(),
+          });
+          
+          console.log(`✅ Created new labor entry with ${totalAutoHours} automatic hours for ${employee.name} (${baseHours} base + ${bonusHours} bonus)`);
+        }
+      }
+    }
+  }
+
+  private async calculateJobTotalCost(jobId: string): Promise<number> {
+    // Get all costs for the job
+    const [laborCost] = await db
+      .select({ total: sum(sql`CAST(${laborEntries.hourlyRate} AS DECIMAL) * CAST(${laborEntries.hoursLogged} AS DECIMAL)`) })
+      .from(laborEntries)
+      .where(eq(laborEntries.jobId, jobId));
+
+    const [materialsCost] = await db
+      .select({ total: sum(sql`CAST(${materials.amount} AS DECIMAL)`) })
+      .from(materials)
+      .where(eq(materials.jobId, jobId));
+
+    const [subTradesCost] = await db
+      .select({ total: sum(sql`CAST(${subTrades.amount} AS DECIMAL)`) })
+      .from(subTrades)
+      .where(eq(subTrades.jobId, jobId));
+
+    const [otherCostsCost] = await db
+      .select({ total: sum(sql`CAST(${otherCosts.amount} AS DECIMAL)`) })
+      .from(otherCosts)
+      .where(eq(otherCosts.jobId, jobId));
+
+    const [tipFeesCost] = await db
+      .select({ total: sum(sql`CAST(${tipFees.totalAmount} AS DECIMAL)`) })
+      .from(tipFees)
+      .where(eq(tipFees.jobId, jobId));
+
+    const total = 
+      (parseFloat(laborCost.total || "0")) +
+      (parseFloat(materialsCost.total || "0")) +
+      (parseFloat(subTradesCost.total || "0")) +
+      (parseFloat(otherCostsCost.total || "0")) +
+      (parseFloat(tipFeesCost.total || "0"));
+
+    return total;
   }
 
   async updateJob(id: string, job: Partial<InsertJob>): Promise<Job> {

@@ -39,6 +39,7 @@ import JobUpdateDialog from "@/components/job-update-form";
 import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor";
 import { EmailProcessingReview } from "@/components/EmailProcessingReview";
 import { NotificationSettings } from "@/components/NotificationSettings";
+import { AutoHoursSettings } from "@/components/AutoHoursSettings";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -1499,6 +1500,10 @@ export default function AdminDashboard() {
               <DropdownMenuItem onClick={() => setActiveTab("notifications")} data-testid="menu-notifications">
                 <Bell className="h-4 w-4 mr-2" />
                 Notification Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveTab("auto-hours")} data-testid="menu-auto-hours">
+                <Clock className="h-4 w-4 mr-2" />
+                Auto Hours Settings
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setActiveTab("settings")} data-testid="menu-settings">
                 <Settings className="h-4 w-4 mr-2" />
@@ -3553,6 +3558,10 @@ export default function AdminDashboard() {
               Control your email notification preferences and choose alternative notification methods.
             </p>
             <NotificationSettings />
+          </TabsContent>
+
+          <TabsContent value="auto-hours" className="space-y-6">
+            <AutoHoursSettings />
           </TabsContent>
         </Tabs>
 

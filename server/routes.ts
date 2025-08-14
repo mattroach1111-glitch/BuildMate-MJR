@@ -429,6 +429,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update employee automatic hours settings
+  app.put("/api/employees/:id/auto-hours", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { autoHoursEnabled, baseAutoHours, bonusHoursPer3k } = req.body;
+      
+      // Validate the input
+      if (typeof autoHoursEnabled !== 'boolean') {
+        return res.status(400).json({ message: "autoHoursEnabled must be a boolean" });
+      }
+
+      const employee = await storage.updateEmployeeAutoHours(req.params.id, {
+        autoHoursEnabled,
+        baseAutoHours: baseAutoHours?.toString() || "0",
+        bonusHoursPer3k: bonusHoursPer3k?.toString() || "0"
+      });
+      
+      res.json(employee);
+    } catch (error) {
+      console.error("Error updating employee auto hours:", error);
+      res.status(500).json({ message: "Failed to update employee auto hours settings" });
+    }
+  });
+
   app.delete("/api/employees/:id", isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);
@@ -2590,7 +2618,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // If no fuzzy match, create new employee
             console.log(`🔵 Creating new employee: ${laborEntry.employeeName}`);
             const newEmployee = await storage.createEmployee({
-              name: laborEntry.employeeName
+              name: laborEntry.employeeName,
+              defaultHourlyRate: "50"
             });
             employeeId = newEmployee.id;
           }
@@ -2829,6 +2858,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         console.error('Error processing job sheet file:', error);
         // Don't fail the entire process if file processing fails
+      }
+
+      // Apply automatic hours after all job data is complete
+      try {
+        await storage.applyAutomaticHours(newJob.id);
+        console.log('✅ Applied automatic hours for job');
+      } catch (autoHoursError) {
+        console.error('Error applying automatic hours:', autoHoursError);
+        // Don't fail the process if auto hours fails
       }
 
       res.json({

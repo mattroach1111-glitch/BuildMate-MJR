@@ -45,6 +45,10 @@ export const employees = pgTable("employees", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull(),
   defaultHourlyRate: decimal("default_hourly_rate", { precision: 10, scale: 2 }).notNull().default("50"),
+  // Automatic hours configuration
+  autoHoursEnabled: boolean("auto_hours_enabled").notNull().default(false),
+  baseAutoHours: decimal("base_auto_hours", { precision: 10, scale: 2 }).default("0"), // Base hours added to every job
+  bonusHoursPer3k: decimal("bonus_hours_per_3k", { precision: 10, scale: 2 }).default("0"), // Additional hours per $3,000 of job value
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -253,7 +257,10 @@ export const insertJobSchema = createInsertSchema(jobs).omit({
 export const insertEmployeeSchema = createInsertSchema(employees).omit({
   id: true,
   createdAt: true,
-  defaultHourlyRate: true,
+}).extend({
+  defaultHourlyRate: z.string().or(z.number()).transform(val => String(val)),
+  baseAutoHours: z.string().or(z.number()).transform(val => String(val)).optional(),
+  bonusHoursPer3k: z.string().or(z.number()).transform(val => String(val)).optional(),
 });
 
 export const insertOtherCostSchema = createInsertSchema(otherCosts).omit({
