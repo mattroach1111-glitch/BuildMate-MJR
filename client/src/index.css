@@ -172,7 +172,13 @@ table tr.weekend-row button {
     .hidden-text-xs span {
       display: none;
     }
-}
+    
+    /* Larger tap targets */
+    .tap-target {
+      min-height: 48px;
+      min-width: 48px;
+    }
+  }
 
 /* Landscape mode adjustments */
 html.landscape-mode {
@@ -187,12 +193,6 @@ html.landscape-mode body {
 html.landscape-mode .fixed {
   position: absolute;
 }
-    /* Larger tap targets */
-    .tap-target {
-      min-height: 48px;
-      min-width: 48px;
-    }
-  }
 
 /* Custom classes for construction theme */
 .construction-gradient {
