@@ -73,25 +73,17 @@ export function OrientationToggle() {
                 node.style.pointerEvents = 'auto';
               }
               
-              // Force dropdowns to fixed position and ensure visibility
+              // Simply ensure dropdowns are visible with red border for testing
               const dropdowns = node.querySelectorAll('[data-radix-dropdown-menu-content], [data-radix-select-content], [data-radix-popover-content]');
               dropdowns.forEach(dropdown => {
                 if (dropdown instanceof HTMLElement) {
-                  dropdown.style.display = 'block';
                   dropdown.style.visibility = 'visible';
                   dropdown.style.opacity = '1';
-                  dropdown.style.position = 'fixed';
-                  
-                  // Position dropdown in center of screen for easy access
-                  dropdown.style.top = '200px';
-                  dropdown.style.left = '50%';
-                  dropdown.style.transform = 'translateX(-50%)';
-                  dropdown.style.right = 'auto';
-                  dropdown.style.bottom = 'auto';
                   dropdown.style.zIndex = '9999';
                   
-                  // Add a subtle animation
-                  dropdown.style.animation = 'fadeIn 0.2s ease-out';
+                  // Add a visible red border for testing
+                  dropdown.style.border = '3px solid #ef4444';
+                  dropdown.style.background = 'white';
                 }
               });
             }
