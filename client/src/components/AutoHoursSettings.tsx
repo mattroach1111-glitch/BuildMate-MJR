@@ -41,6 +41,13 @@ export function AutoHoursSettings() {
 
   const { data: employees, isLoading } = useQuery<Employee[]>({
     queryKey: ['/api/employees'],
+    onSuccess: (data) => {
+      console.log('🔍 Employees data loaded:', data?.map(emp => ({
+        id: emp.id.slice(0,8),
+        name: emp.name,
+        autoHoursEnabled: emp.autoHoursEnabled
+      })));
+    }
   });
 
   const updateEmployeeMutation = useMutation({
@@ -48,7 +55,8 @@ export function AutoHoursSettings() {
       const response = await apiRequest('PUT', `/api/employees/${data.employeeId}/auto-hours`, data.autoHoursConfig);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('✅ Auto hours update successful:', data);
       toast({
         title: 'Auto Hours Updated',
         description: 'Automatic hours settings have been saved successfully.',
@@ -79,6 +87,7 @@ export function AutoHoursSettings() {
   const handleSave = () => {
     if (!editingEmployee) return;
 
+    console.log('💾 Saving auto hours config:', tempConfig);
     updateEmployeeMutation.mutate({
       employeeId: editingEmployee,
       autoHoursConfig: {
@@ -159,12 +168,10 @@ export function AutoHoursSettings() {
                     <Switch
                       checked={config.autoHoursEnabled}
                       onCheckedChange={(checked) => {
-                        if (isEditing) {
-                          setTempConfig(prev => ({ ...prev, autoHoursEnabled: checked }));
-                        } else {
+                        if (!isEditing) {
                           handleEditStart(employee);
-                          setTempConfig(prev => ({ ...prev, autoHoursEnabled: checked }));
                         }
+                        setTempConfig(prev => ({ ...prev, autoHoursEnabled: checked }));
                       }}
                       data-testid={`switch-auto-hours-${employee.id}`}
                     />
