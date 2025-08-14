@@ -41,6 +41,14 @@ export function OrientationToggle() {
       document.body.style.transform = 'translate(-50%, -50%) rotate(90deg)';
       document.body.style.overflow = 'hidden';
       document.body.style.overscrollBehavior = 'none';
+      
+      // Prevent any layout shifts during landscape mode
+      const root = document.getElementById('root');
+      if (root) {
+        root.style.position = 'fixed';
+        root.style.top = '0';
+        root.style.left = '0';
+      }
       document.body.style.margin = '0';
       document.body.style.padding = '0';
       
@@ -74,29 +82,34 @@ export function OrientationToggle() {
                 node.style.pointerEvents = 'auto';
               }
               
-              // Position dropdowns to not interfere with layout
+              // Completely isolate dropdowns from layout
               const dropdowns = node.querySelectorAll('[data-radix-dropdown-menu-content], [data-radix-select-content], [data-radix-popover-content]');
               dropdowns.forEach(dropdown => {
                 if (dropdown instanceof HTMLElement) {
-                  // Ensure dropdown doesn't affect page layout
+                  // Remove from normal document flow completely
                   dropdown.style.position = 'fixed';
-                  dropdown.style.top = '150px';
-                  dropdown.style.right = '50px';
-                  dropdown.style.left = 'auto';
+                  dropdown.style.top = '100px';
+                  dropdown.style.left = '100px';
+                  dropdown.style.right = 'auto';
                   dropdown.style.bottom = 'auto';
                   dropdown.style.transform = 'rotate(-90deg)';
-                  dropdown.style.transformOrigin = 'top right';
+                  dropdown.style.transformOrigin = 'top left';
                   dropdown.style.visibility = 'visible';
                   dropdown.style.opacity = '1';
                   dropdown.style.zIndex = '9999';
-                  dropdown.style.border = '2px solid #0066ff';
+                  dropdown.style.border = '2px solid #ff0000';
                   dropdown.style.background = 'white';
-                  dropdown.style.maxWidth = '160px';
-                  dropdown.style.maxHeight = '200px';
-                  dropdown.style.fontSize = '14px';
-                  dropdown.style.overflow = 'hidden';
-                  dropdown.style.width = 'auto';
-                  dropdown.style.height = 'auto';
+                  dropdown.style.width = '150px';
+                  dropdown.style.height = '180px';
+                  dropdown.style.fontSize = '13px';
+                  dropdown.style.overflow = 'auto';
+                  dropdown.style.margin = '0';
+                  dropdown.style.padding = '8px';
+                  dropdown.style.boxSizing = 'border-box';
+                  
+                  // Force it to not affect parent containers
+                  dropdown.style.contain = 'layout style size';
+                  dropdown.style.isolation = 'isolate';
                 }
               });
             }
@@ -128,6 +141,8 @@ export function OrientationToggle() {
         root.style.overflow = '';
         root.style.transform = '';
         root.style.position = '';
+        root.style.top = '';
+        root.style.left = '';
       }
       
       // Remove landscape class
