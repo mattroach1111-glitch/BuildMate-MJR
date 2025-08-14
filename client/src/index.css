@@ -180,13 +180,31 @@ table tr.weekend-row button {
     }
   }
 
-/* Landscape mode adjustments */
-html.landscape-mode {
-  overflow: hidden;
-}
-
-html.landscape-mode body {
-  transition: transform 0.3s ease-in-out;
+/* Landscape orientation adjustments using native device orientation */
+@media screen and (orientation: landscape) and (max-height: 768px) {
+  /* Better spacing for landscape mobile devices */
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  /* Optimize buttons for landscape touch */
+  button, .button {
+    min-height: 40px;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  /* Better modal sizing for landscape */
+  .modal-content, [role="dialog"] {
+    max-height: 85vh;
+    max-width: 90vw;
+  }
+  
+  /* Compact headers in landscape */
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.1rem; }
 }
 
 /* Hover states for dropdown items */
