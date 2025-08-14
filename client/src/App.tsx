@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationPopup } from "@/components/notification-popup";
 import { SamsungRotationWarning } from "./components/SamsungRotationWarning";
-import { pushNotificationService } from "@/lib/pushNotifications";
+// import { pushNotificationService } from "@/lib/pushNotifications";
 import { useEffect } from "react";
 import Landing from "@/pages/landing";
 import AdminDashboard from "@/pages/admin-dashboard";
@@ -56,23 +56,8 @@ function AppContent() {
   // Auto-register for push notifications when user is authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      const autoRegister = async () => {
-        try {
-          const notificationService = pushNotificationService;
-          
-          // Check if notifications are already granted
-          if (Notification.permission === 'granted') {
-            // Silently register for push notifications without showing any UI
-            await notificationService.registerForPush();
-            console.log('Auto-registered for push notifications');
-          }
-        } catch (error) {
-          // Silently fail - don't show errors to user
-          console.log('Auto-registration for push notifications failed:', error);
-        }
-      };
-
-      autoRegister();
+      // Temporarily disabled push notifications while fixing import issues
+      console.log('Push notifications temporarily disabled');
     }
   }, [isAuthenticated, user]);
   

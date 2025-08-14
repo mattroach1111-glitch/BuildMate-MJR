@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Bell, X } from 'lucide-react';
-import { pushNotificationService } from '@/lib/pushNotifications';
+// import { pushNotificationService } from '@/lib/pushNotifications';
 
 export function NotificationPermissionBanner() {
   const [permission, setPermission] = useState<NotificationPermission>('default');
@@ -10,12 +10,13 @@ export function NotificationPermissionBanner() {
   const [isRequesting, setIsRequesting] = useState(false);
 
   useEffect(() => {
-    const currentPermission = pushNotificationService.getPermission();
+    // const currentPermission = pushNotificationService.getPermission();
+    const currentPermission = Notification.permission;
     setPermission(currentPermission);
     
     // Show banner if notifications are supported but not granted
     setIsVisible(
-      pushNotificationService.isSupported() && 
+      'Notification' in window && 
       currentPermission === 'default'
     );
   }, []);
@@ -23,13 +24,14 @@ export function NotificationPermissionBanner() {
   const handleEnableNotifications = async () => {
     setIsRequesting(true);
     try {
-      const result = await pushNotificationService.requestPermission();
+      // const result = await pushNotificationService.requestPermission();
+      const result = await Notification.requestPermission();
       setPermission(result);
       
       if (result === 'granted') {
         setIsVisible(false);
         // Show a test notification
-        pushNotificationService.showNotification('Notifications Enabled!', {
+        new Notification('Notifications Enabled!', {
           body: 'You will now receive timesheet reminders and important messages.',
         });
       }

@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { TestTube } from 'lucide-react';
-import { pushNotificationService } from '@/lib/pushNotifications';
+// import { pushNotificationService } from '@/lib/pushNotifications';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
@@ -14,7 +14,8 @@ export function TestNotificationButton() {
       console.log('Testing real push notification...');
       
       // Register for push notifications first
-      const registered = await pushNotificationService.registerForPush();
+      // const registered = await pushNotificationService.registerForPush();
+      const registered = false; // Temporarily disabled
       
       if (!registered) {
         toast({
