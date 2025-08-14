@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Bell, Mail, FileText, Clock, CheckCircle, AlertCircle, Smartphone, Users, Send, MessageSquare } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { pushNotificationService } from '@/lib/pushNotifications';
+
 
 interface NotificationPreferences {
   documentProcessing: boolean;
@@ -35,17 +35,14 @@ interface PushNotificationSettings {
 export function NotificationSettings() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [browserPermission, setBrowserPermission] = useState<NotificationPermission>('default');
+
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     documentProcessing: true,
     jobUpdates: true,
     timesheetReminders: true,
   });
 
-  // Check browser notification permission on mount
-  React.useEffect(() => {
-    setBrowserPermission(pushNotificationService.getPermission());
-  }, []);
+
 
   // Instant notification states
   const [instantNotification, setInstantNotification] = useState({
