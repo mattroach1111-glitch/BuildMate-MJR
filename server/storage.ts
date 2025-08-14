@@ -494,6 +494,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   private async calculateJobTotalCostExcludingLabor(jobId: string): Promise<number> {
+    // Get job details first to access builder margin
+    const [job] = await db.select().from(jobs).where(eq(jobs.id, jobId));
+    
+    if (!job) {
+      console.error(`Job not found: ${jobId}`);
+      return 0;
+    }
+
     // Get all costs for the job EXCEPT labor (to prevent automatic hours feedback loops)
     const [materialsCost] = await db
       .select({ total: sum(sql`CAST(${materials.amount} AS DECIMAL)`) })
@@ -515,15 +523,30 @@ export class DatabaseStorage implements IStorage {
       .from(tipFees)
       .where(eq(tipFees.jobId, jobId));
 
-    const total = 
+    // Calculate subtotal (excluding labor)
+    const subtotal = 
       (parseFloat(materialsCost.total || "0")) +
       (parseFloat(subTradesCost.total || "0")) +
       (parseFloat(otherCostsCost.total || "0")) +
       (parseFloat(tipFeesCost.total || "0"));
 
-    console.log(`💰 Job total cost (excluding labor): Materials($${materialsCost.total || "0"}) + SubTrades($${subTradesCost.total || "0"}) + OtherCosts($${otherCostsCost.total || "0"}) + TipFees($${tipFeesCost.total || "0"}) = $${total}`);
+    // Apply builder margin (same as frontend calculation)
+    const marginPercent = parseFloat(job.builderMargin || "0") / 100;
+    const marginAmount = subtotal * marginPercent;
+    const subtotalWithMargin = subtotal + marginAmount;
+    
+    // Apply 10% GST
+    const gstAmount = subtotalWithMargin * 0.10;
+    const finalTotal = subtotalWithMargin + gstAmount;
 
-    return total;
+    console.log(`💰 Job total cost calculation (excluding labor):
+    - Subtotal: Materials($${materialsCost.total || "0"}) + SubTrades($${subTradesCost.total || "0"}) + OtherCosts($${otherCostsCost.total || "0"}) + TipFees($${tipFeesCost.total || "0"}) = $${subtotal}
+    - Builder Margin (${job.builderMargin || "0"}%): $${marginAmount.toFixed(2)}
+    - Subtotal with Margin: $${subtotalWithMargin.toFixed(2)}
+    - GST (10%): $${gstAmount.toFixed(2)}
+    - FINAL TOTAL (inc. GST): $${finalTotal.toFixed(2)}`);
+
+    return finalTotal;
   }
 
   async updateJob(id: string, job: Partial<InsertJob>): Promise<Job> {
