@@ -20,7 +20,6 @@ import {
   insertTipFeeSchema,
   insertTimesheetEntrySchema,
   insertJobFileSchema,
-  insertNotificationSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -1449,7 +1448,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get staff for push notification targeting
+  // Get staff for admin operations
   app.get("/api/staff", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -1463,60 +1462,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Staff API returning:', staffForTimesheets);
       res.json(staffForTimesheets);
     } catch (error) {
-      console.error("Error fetching staff for push notifications:", error);
+      console.error("Error fetching staff:", error);
       res.status(500).json({ message: "Failed to fetch staff" });
     }
   });
 
-  // Send instant push notification
-  app.post("/api/admin/send-instant-notification", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      if (user?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const { message, targetStaff, selectedStaff } = req.body;
-
-      if (!message || !message.trim()) {
-        return res.status(400).json({ message: "Message is required" });
-      }
-
-      if (targetStaff === 'selected' && (!selectedStaff || selectedStaff.length === 0)) {
-        return res.status(400).json({ message: "At least one staff member must be selected" });
-      }
-
-      // Here you would integrate with your actual push notification service
-      // For now, we'll just log the notification and return success
-      console.log('📱 INSTANT PUSH NOTIFICATION:');
-      console.log('Message:', message);
-      console.log('Target Staff:', targetStaff);
-      console.log('Selected Staff:', targetStaff === 'selected' ? selectedStaff : 'ALL STAFF');
-
-      // In a real implementation, you would:
-      // 1. Get the push notification tokens for the target staff
-      // 2. Send the notification using your push service (Firebase, OneSignal, etc.)
-      // 3. Log the notification in the database for tracking
-      
-      // Simulate sending notification
-      const targetStaffCount = targetStaff === 'all' 
-        ? (await storage.getStaffForTimesheets()).length 
-        : selectedStaff.length;
-
-      console.log(`✅ Instant notification sent to ${targetStaffCount} staff member(s)`);
-
-      res.json({ 
-        message: "Instant notification sent successfully",
-        targetCount: targetStaffCount,
-        sentAt: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error("Error sending instant push notification:", error);
-      res.status(500).json({ message: "Failed to send notification" });
-    }
-  });
+  // Push notification endpoint removed - notification system disabled
 
   app.post("/api/timesheet", isAuthenticated, async (req: any, res) => {
     try {
@@ -2403,127 +2354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Notification routes
-  app.get("/api/notifications", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      if (!userId) {
-        return res.status(401).json({ error: "Not authenticated" });
-      }
-
-      const notifications = await storage.getNotificationsForUser(userId);
-      res.json(notifications);
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-      res.status(500).json({ error: "Failed to fetch notifications" });
-    }
-  });
-
-  app.get("/api/notifications/active", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      if (!userId) {
-        return res.status(401).json({ error: "Not authenticated" });
-      }
-
-      const notifications = await storage.getActiveNotifications(userId);
-      res.json(notifications);
-    } catch (error) {
-      console.error("Error fetching active notifications:", error);
-      res.status(500).json({ error: "Failed to fetch active notifications" });
-    }
-  });
-
-  app.post("/api/notifications", isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const result = insertNotificationSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ error: "Invalid notification data", details: result.error.errors });
-      }
-
-      const notification = await storage.createNotification(result.data);
-      res.status(201).json(notification);
-    } catch (error) {
-      console.error("Error creating notification:", error);
-      res.status(500).json({ error: "Failed to create notification" });
-    }
-  });
-
-  app.patch("/api/notifications/:id/read", isAuthenticated, async (req: any, res) => {
-    try {
-      const notificationId = req.params.id;
-      await storage.markNotificationAsRead(notificationId);
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
-      res.status(500).json({ error: "Failed to mark notification as read" });
-    }
-  });
-
-  app.patch("/api/notifications/:id/dismiss", isAuthenticated, async (req: any, res) => {
-    try {
-      const notificationId = req.params.id;
-      await storage.dismissNotification(notificationId);
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error dismissing notification:", error);
-      res.status(500).json({ error: "Failed to dismiss notification" });
-    }
-  });
-
-  // Update user notification preferences
-  app.put('/api/user/notification-preferences', isAuthenticated, async (req: any, res) => {
-    try {
-      const { preferences } = req.body;
-      const userId = req.user?.claims?.sub;
-      
-      if (!userId) {
-        return res.status(401).json({ message: 'Unauthorized' });
-      }
-      
-      // Validate preferences structure
-      if (!preferences || typeof preferences !== 'object') {
-        return res.status(400).json({ message: 'Invalid preferences format' });
-      }
-      
-      // Update user preferences
-      await storage.updateUserNotificationPreferences(userId, JSON.stringify(preferences));
-      
-      res.json({ message: 'Notification preferences updated successfully' });
-    } catch (error) {
-      console.error('Error updating notification preferences:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  });
-
-  app.put('/api/user/push-notification-settings', isAuthenticated, async (req: any, res) => {
-    try {
-      const { settings } = req.body;
-      const userId = req.user?.claims?.sub;
-      
-      if (!userId) {
-        return res.status(401).json({ message: 'Unauthorized' });
-      }
-      
-      // Validate settings structure
-      if (!settings || typeof settings !== 'object') {
-        return res.status(400).json({ message: 'Invalid settings format' });
-      }
-      
-      // Update user push notification settings
-      await storage.updateUserPushNotificationSettings(userId, JSON.stringify(settings));
-      
-      res.json({ message: 'Push notification settings updated successfully' });
-    } catch (error) {
-      console.error('Error updating push notification settings:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  });
+  // Notification system disabled - all notification routes removed
 
   // Document upload endpoints for expense processing
   

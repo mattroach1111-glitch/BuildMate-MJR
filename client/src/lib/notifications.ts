@@ -8,3 +8,11 @@ export function sendNotification() {
 export function getNotifications() {
   return [];
 }
+
+export const notificationService = {
+  sendNotification,
+  getNotifications,
+  init: () => Promise.resolve(),
+  requestPermission: () => Promise.resolve('granted'),
+  isSupported: () => false
+};
