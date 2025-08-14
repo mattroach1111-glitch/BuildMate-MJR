@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Bell, Mail, FileText, Clock, CheckCircle, AlertCircle, Smartphone, Users, Send, MessageSquare, TestTube } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { pushNotificationService } from '@/lib/pushNotifications';
+import { notificationService } from '@/lib/notifications';
 
 interface NotificationPreferences {
   documentProcessing: boolean;
@@ -44,7 +44,7 @@ export function NotificationSettings() {
 
   // Check browser notification permission on mount
   React.useEffect(() => {
-    setBrowserPermission(pushNotificationService.getPermission());
+    setBrowserPermission(notificationService.getPermission());
   }, []);
 
   // Instant notification states

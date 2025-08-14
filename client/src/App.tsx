@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationPopup } from "@/components/notification-popup";
 import { SamsungRotationWarning } from "./components/SamsungRotationWarning";
-import { pushNotificationService } from "@/lib/pushNotifications";
+import { notificationService } from "@/lib/notifications";
 import { useEffect } from "react";
 import Landing from "@/pages/landing";
 import AdminDashboard from "@/pages/admin-dashboard";
@@ -61,7 +61,7 @@ function AppContent() {
           // Check if notifications are already granted
           if (Notification.permission === 'granted') {
             // Silently register for push notifications without showing any UI
-            await pushNotificationService.registerForPush();
+            await notificationService.registerForPush();
             console.log('Auto-registered for push notifications');
           }
         } catch (error) {

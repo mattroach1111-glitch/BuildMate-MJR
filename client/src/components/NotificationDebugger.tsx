@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle, XCircle, AlertTriangle, TestTube, Smartphone } from 'lucide-react';
-import { pushNotificationService } from '@/lib/pushNotifications';
+import { notificationService } from '@/lib/notifications';
 
 export function NotificationDebugger() {
   const [debugInfo, setDebugInfo] = useState<any>(null);
@@ -40,31 +40,31 @@ export function NotificationDebugger() {
             const newReg = await navigator.serviceWorker.register('/sw.js');
             info.serviceWorkerRegistration = 'newly-registered';
             info.serviceWorkerState = newReg.installing?.state || 'installing';
-          } catch (regError) {
-            info.registrationError = regError.message;
+          } catch (regError: any) {
+            info.registrationError = regError?.message || String(regError);
           }
         }
-      } catch (error) {
-        info.registrationError = error.message;
+      } catch (error: any) {
+        info.registrationError = error?.message || String(error);
       }
     }
 
     // Test permission request
     if ('Notification' in window) {
       try {
-        const permission = await pushNotificationService.requestPermission();
+        const permission = await notificationService.requestPermission();
         info.permissionRequestResult = permission;
-      } catch (error) {
-        info.permissionError = error.message;
+      } catch (error: any) {
+        info.permissionError = error?.message || String(error);
       }
     }
 
     // Test notification
     try {
-      const testResult = await pushNotificationService.sendTestNotification();
+      const testResult = await notificationService.sendTestNotification();
       info.testNotificationResult = testResult ? 'success' : 'failed';
-    } catch (error) {
-      info.testNotificationResult = `error: ${error.message}`;
+    } catch (error: any) {
+      info.testNotificationResult = `error: ${error?.message || String(error)}`;
     }
 
     setDebugInfo(info);
@@ -86,7 +86,7 @@ export function NotificationDebugger() {
       default: 'bg-yellow-100 text-yellow-800'
     };
     return (
-      <Badge className={colors[permission] || colors.default}>
+      <Badge className={colors[permission as keyof typeof colors] || colors.default}>
         {permission}
       </Badge>
     );
