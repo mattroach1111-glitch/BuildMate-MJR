@@ -232,17 +232,17 @@ html.landscape-mode [data-state="open"][role="dialog"] {
   max-height: 90% !important;
 }
 
-/* Simple approach - just make dropdowns visible and positioned from viewport */
+/* Counter-rotate dropdowns and center them in viewport */
 html.landscape-mode [data-radix-dropdown-menu-content],
 html.landscape-mode [data-radix-select-content],
 html.landscape-mode [data-radix-popover-content] {
   position: fixed !important;
-  top: 50px !important;
-  left: 50px !important;
+  top: 50% !important;
+  left: 50% !important;
   right: auto !important;
   bottom: auto !important;
-  transform: rotate(-90deg) !important;
-  transform-origin: top left !important;
+  transform: translate(-50%, -50%) rotate(-90deg) !important;
+  transform-origin: center !important;
   z-index: 9999 !important;
   background: white !important;
   border: 3px solid #ef4444 !important;

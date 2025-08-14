@@ -73,16 +73,16 @@ export function OrientationToggle() {
                 node.style.pointerEvents = 'auto';
               }
               
-              // Apply counter-rotation to dropdowns
+              // Center and counter-rotate dropdowns
               const dropdowns = node.querySelectorAll('[data-radix-dropdown-menu-content], [data-radix-select-content], [data-radix-popover-content]');
               dropdowns.forEach(dropdown => {
                 if (dropdown instanceof HTMLElement) {
-                  // Counter-rotate the dropdown content
+                  // Center and counter-rotate the dropdown
                   dropdown.style.position = 'fixed';
-                  dropdown.style.top = '50px';
-                  dropdown.style.left = '50px';
-                  dropdown.style.transform = 'rotate(-90deg)';
-                  dropdown.style.transformOrigin = 'top left';
+                  dropdown.style.top = '50%';
+                  dropdown.style.left = '50%';
+                  dropdown.style.transform = 'translate(-50%, -50%) rotate(-90deg)';
+                  dropdown.style.transformOrigin = 'center';
                   dropdown.style.visibility = 'visible';
                   dropdown.style.opacity = '1';
                   dropdown.style.zIndex = '9999';
