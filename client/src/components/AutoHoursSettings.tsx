@@ -134,11 +134,11 @@ export function AutoHoursSettings() {
           <div className="text-sm text-blue-700 dark:text-blue-300">
             <p className="font-medium mb-1">How Automatic Hours Work:</p>
             <ul className="list-disc list-inside space-y-1 text-xs">
-              <li><strong>Base Hours:</strong> Added to every job sheet automatically when created</li>
-              <li><strong>Bonus Hours:</strong> Additional hours added for every threshold amount of total job cost</li>
-              <li><strong>Threshold:</strong> Dollar amount that triggers bonus hours (e.g., $3,000, $5,000)</li>
-              <li><strong>Hourly Rate:</strong> Uses the job sheet's default rate, not employee's rate</li>
-              <li><strong>Example:</strong> Matt has 1 base hour + 1 bonus hour per $5k. A $15,000 job = 1 + (3 × 1) = 4 total hours added</li>
+              <li><strong>When Enabled:</strong> Hours are automatically calculated and applied when job costs change</li>
+              <li><strong>When Disabled:</strong> No new automatic hours are applied, but existing hours remain in job sheets</li>
+              <li><strong>Base Hours:</strong> Added to every job sheet when auto hours are applied</li>
+              <li><strong>Bonus Hours:</strong> Additional hours based on total job cost (materials + labor + everything)</li>
+              <li><strong>Example:</strong> Matt has 2 base hours + 1 bonus per $1k. A $15k job = 2 + (15 × 1) = 17 total hours</li>
             </ul>
           </div>
         </div>

@@ -415,19 +415,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async applyAutomaticHours(jobId: string): Promise<void> {
-    // Get all employees with auto hours enabled
+    // Get all employees with auto hours enabled (respects current setting)
     const employeesWithAutoHours = await db.select()
       .from(employees)
       .where(eq(employees.autoHoursEnabled, true));
 
     if (employeesWithAutoHours.length === 0) {
       console.log('🚫 No employees have automatic hours enabled. Skipping auto hours calculation.');
-      return; // No employees have auto hours enabled
+      console.log('📋 Existing hours in job sheets will remain unchanged.');
+      return; // No employees have auto hours enabled - existing hours preserved
     }
     
     console.log(`🔄 Applying automatic hours for ${employeesWithAutoHours.length} employees with auto hours enabled`);
     employeesWithAutoHours.forEach(emp => 
-      console.log(`  • ${emp.name} (${emp.id.slice(0,8)}) - enabled: ${emp.autoHoursEnabled}`)
+      console.log(`  • ${emp.name} (${emp.id.slice(0,8)}) - will receive updated auto hours`)
     );
 
     // Calculate total job cost INCLUDING labor (the full job sheet total with GST)
