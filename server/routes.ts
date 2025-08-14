@@ -1703,7 +1703,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test SMS endpoint
+  // Test SMS endpoint (email-to-SMS)
   app.post("/api/user/test-sms", isAuthenticated, async (req: any, res) => {
     try {
       const { phoneNumber } = req.body;
@@ -1724,6 +1724,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending test SMS:", error);
       res.status(500).json({ message: "Failed to send test SMS" });
+    }
+  });
+
+  // Test Direct SMS endpoint (ClickSend, Twilio, MessageBird)
+  app.post('/api/user/test-direct-sms', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const user = await storage.getUserById(userId);
+      const phoneNumber = req.body.phoneNumber || user?.mobilePhone;
+      
+      if (!phoneNumber) {
+        return res.status(400).json({ error: 'No phone number provided' });
+      }
+
+      // Import and use direct SMS service
+      const { directSmsService } = await import('./directSmsService');
+      const result = await directSmsService.testSMS(phoneNumber);
+      
+      if (result.success) {
+        res.json({ 
+          success: true, 
+          message: `Direct SMS sent successfully via ${result.details.providerUsed}`,
+          details: result.details
+        });
+      } else {
+        res.json({ 
+          success: false, 
+          message: result.details.error || 'All SMS providers failed',
+          details: result.details
+        });
+      }
+    } catch (error) {
+      console.error('Test Direct SMS error:', error);
+      res.status(500).json({ error: 'Failed to send test SMS' });
     }
   });
 

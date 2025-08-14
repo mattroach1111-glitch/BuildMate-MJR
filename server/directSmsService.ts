@@ -1,11 +1,12 @@
-/**
- * Direct SMS Service using reliable SMS APIs
- * This provides better delivery rates than email-to-SMS gateways
- */
-
 interface SMSProvider {
   name: string;
-  sendSMS: (phone: string, message: string) => Promise<boolean>;
+  sendSMS(phone: string, message: string): Promise<boolean>;
+}
+
+interface SMSResult {
+  success: boolean;
+  provider?: string;
+  error?: string;
 }
 
 class TwilioSMSProvider implements SMSProvider {
@@ -13,27 +14,30 @@ class TwilioSMSProvider implements SMSProvider {
   
   async sendSMS(phone: string, message: string): Promise<boolean> {
     try {
-      // Twilio SMS implementation (requires API key)
       const accountSid = process.env.TWILIO_ACCOUNT_SID;
       const authToken = process.env.TWILIO_AUTH_TOKEN;
-      const fromPhone = process.env.TWILIO_PHONE_NUMBER;
+      const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
       
-      if (!accountSid || !authToken || !fromPhone) {
-        console.log('❌ Twilio credentials not configured');
+      if (!accountSid || !authToken || !twilioPhone) {
+        console.log('❌ Twilio credentials not configured - add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER to environment');
         return false;
       }
       
-      // Format phone number for international SMS
+      // Format phone number
       const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
+      
+      console.log(`📱 Twilio: Sending SMS to ${formattedPhone}`);
+      
+      const authHeader = 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64');
       
       const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
         method: 'POST',
         headers: {
-          'Authorization': 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64'),
+          'Authorization': authHeader,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          From: fromPhone,
+          From: twilioPhone,
           To: formattedPhone,
           Body: message
         })
@@ -41,14 +45,72 @@ class TwilioSMSProvider implements SMSProvider {
       
       if (response.ok) {
         const result = await response.json();
-        console.log('✅ Twilio SMS sent:', result.sid);
+        console.log('✅ Twilio SMS sent successfully:', result.sid);
         return true;
       } else {
-        console.log('❌ Twilio SMS failed:', await response.text());
+        const errorText = await response.text();
+        console.log('❌ Twilio SMS failed:', response.status, errorText);
         return false;
       }
     } catch (error) {
       console.error('❌ Twilio SMS error:', error);
+      return false;
+    }
+  }
+}
+
+class ClickSendSMSProvider implements SMSProvider {
+  name = 'ClickSend';
+  
+  async sendSMS(phone: string, message: string): Promise<boolean> {
+    try {
+      const username = process.env.CLICKSEND_USERNAME;
+      const apiKey = process.env.CLICKSEND_API_KEY;
+      
+      if (!username || !apiKey) {
+        console.log('❌ ClickSend credentials not configured - add CLICKSEND_USERNAME and CLICKSEND_API_KEY to environment');
+        return false;
+      }
+      
+      // Format phone number for ClickSend (Australian format)
+      let formattedPhone = phone.replace(/[\s\-\(\)]/g, '');
+      if (!formattedPhone.startsWith('+')) {
+        // Assume Australian number if no country code
+        if (formattedPhone.startsWith('04') || formattedPhone.startsWith('4')) {
+          formattedPhone = '+61' + (formattedPhone.startsWith('04') ? formattedPhone.substring(1) : formattedPhone);
+        }
+      }
+      
+      console.log(`📱 ClickSend: Sending SMS to ${formattedPhone}`);
+      
+      const authHeader = 'Basic ' + Buffer.from(`${username}:${apiKey}`).toString('base64');
+      
+      const response = await fetch('https://rest.clicksend.com/v3/sms/send', {
+        method: 'POST',
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [{
+            to: formattedPhone,
+            body: message,
+            source: 'BuildFlow'
+          }]
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ ClickSend SMS sent successfully:', result.data?.messages?.[0]?.message_id);
+        return true;
+      } else {
+        const errorText = await response.text();
+        console.log('❌ ClickSend SMS failed:', response.status, errorText);
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ ClickSend SMS error:', error);
       return false;
     }
   }
@@ -103,57 +165,12 @@ class MessageBirdSMSProvider implements SMSProvider {
   }
 }
 
-class ClickSendSMSProvider implements SMSProvider {
-  name = 'ClickSend';
-  
-  async sendSMS(phone: string, message: string): Promise<boolean> {
-    try {
-      const username = process.env.CLICKSEND_USERNAME;
-      const apiKey = process.env.CLICKSEND_API_KEY;
-      
-      if (!username || !apiKey) {
-        console.log('❌ ClickSend credentials not configured');
-        return false;
-      }
-      
-      // Format phone number
-      const formattedPhone = phone.startsWith('+') ? phone.substring(1) : phone;
-      
-      const response = await fetch('https://rest.clicksend.com/v3/sms/send', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Basic ' + Buffer.from(`${username}:${apiKey}`).toString('base64'),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: [{
-            to: formattedPhone,
-            body: message,
-            from: 'BuildFlow'
-          }]
-        })
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        console.log('✅ ClickSend SMS sent:', result.data.messages[0]?.message_id);
-        return true;
-      } else {
-        console.log('❌ ClickSend SMS failed:', await response.text());
-        return false;
-      }
-    } catch (error) {
-      console.error('❌ ClickSend SMS error:', error);
-      return false;
-    }
-  }
-}
-
 export class DirectSMSService {
+  // SMS providers in order of preference (ClickSend first as it's configured)
   private providers: SMSProvider[] = [
+    new ClickSendSMSProvider(),
     new TwilioSMSProvider(),
     new MessageBirdSMSProvider(),
-    new ClickSendSMSProvider()
   ];
 
   /**
@@ -224,11 +241,12 @@ export class DirectSMSService {
    */
   private async checkProviderConfiguration(): Promise<Record<string, boolean>> {
     return {
-      twilio: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER),
-      messageBird: !!process.env.MESSAGEBIRD_API_KEY,
-      clickSend: !!(process.env.CLICKSEND_USERNAME && process.env.CLICKSEND_API_KEY)
+      ClickSend: !!(process.env.CLICKSEND_USERNAME && process.env.CLICKSEND_API_KEY),
+      Twilio: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER),
+      MessageBird: !!process.env.MESSAGEBIRD_API_KEY
     };
   }
 }
 
+// Export singleton instance
 export const directSmsService = new DirectSMSService();

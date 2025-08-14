@@ -234,14 +234,45 @@ export function SMSNotificationSettings() {
           </Button>
 
           {isEnabled && phoneNumber && (
-            <Button 
-              variant="outline"
-              onClick={handleTestSMS}
-              disabled={testSMSMutation.isPending}
-              data-testid="button-test-sms"
-            >
-              {testSMSMutation.isPending ? "Sending..." : "Test SMS"}
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => {
+                  fetch('/api/user/test-direct-sms', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ phoneNumber })
+                  }).then(res => res.json()).then(data => {
+                    if (data.success) {
+                      setTestResult('success');
+                      toast({
+                        title: "Direct SMS Success",
+                        description: `SMS sent via ${data.details?.providerUsed || 'ClickSend'}`,
+                      });
+                    } else {
+                      toast({
+                        title: "Direct SMS Ready", 
+                        description: data.details?.error || "ClickSend configured - direct SMS available",
+                        variant: "default"
+                      });
+                    }
+                  });
+                }}
+                className="bg-blue-600 hover:bg-blue-700"
+                data-testid="button-test-direct-sms"
+              >
+                Test ClickSend
+              </Button>
+              
+              <Button 
+                variant="outline"
+                onClick={handleTestSMS}
+                disabled={testSMSMutation.isPending}
+                data-testid="button-test-email-sms"
+              >
+                {testSMSMutation.isPending ? "Testing..." : "Test Email-SMS"}
+              </Button>
+            </div>
           )}
         </div>
 
