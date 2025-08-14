@@ -835,10 +835,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Recalculate auto hours when new materials are added (affects total job cost)
       try {
+        console.log(`🔄 Starting automatic hours recalculation for job ${req.params.jobId} after material creation`);
         await storage.applyAutomaticHours(req.params.jobId);
         console.log(`✅ Recalculated automatic hours for job ${req.params.jobId} after material creation`);
       } catch (autoHoursError) {
-        console.error('Error recalculating automatic hours after material creation:', autoHoursError);
+        console.error('❌ Error recalculating automatic hours after material creation:', autoHoursError);
       }
       
       res.status(201).json(material);
@@ -944,10 +945,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Recalculate auto hours when new tip fees are added (affects total job cost)
       try {
+        console.log(`🔄 Starting automatic hours recalculation for job ${req.params.jobId} after tip fee creation`);
         await storage.applyAutomaticHours(req.params.jobId);
         console.log(`✅ Recalculated automatic hours for job ${req.params.jobId} after tip fee creation`);
       } catch (autoHoursError) {
-        console.error('Error recalculating automatic hours after tip fee creation:', autoHoursError);
+        console.error('❌ Error recalculating automatic hours after tip fee creation:', autoHoursError);
       }
       
       res.status(201).json(tipFee);
@@ -1015,10 +1017,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Recalculate auto hours when new subtrades are added (affects total job cost)
       try {
+        console.log(`🔄 Starting automatic hours recalculation for job ${req.params.jobId} after subtrade creation`);
         await storage.applyAutomaticHours(req.params.jobId);
         console.log(`✅ Recalculated automatic hours for job ${req.params.jobId} after subtrade creation`);
       } catch (autoHoursError) {
-        console.error('Error recalculating automatic hours after subtrade creation:', autoHoursError);
+        console.error('❌ Error recalculating automatic hours after subtrade creation:', autoHoursError);
       }
       
       res.status(201).json(subTrade);
@@ -1092,10 +1095,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Recalculate auto hours when new other costs are added (affects total job cost)
       try {
+        console.log(`🔄 Starting automatic hours recalculation for job ${req.params.jobId} after other cost creation`);
         await storage.applyAutomaticHours(req.params.jobId);
         console.log(`✅ Recalculated automatic hours for job ${req.params.jobId} after other cost creation`);
       } catch (autoHoursError) {
-        console.error('Error recalculating automatic hours after other cost creation:', autoHoursError);
+        console.error('❌ Error recalculating automatic hours after other cost creation:', autoHoursError);
       }
       
       res.status(201).json(otherCost);
