@@ -8,7 +8,9 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Bell, Mail, FileText, Clock, CheckCircle, AlertCircle, Smartphone, Users } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Bell, Mail, FileText, Clock, CheckCircle, AlertCircle, Smartphone, Users, Send, MessageSquare } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -36,6 +38,13 @@ export function NotificationSettings() {
     documentProcessing: true,
     jobUpdates: true,
     timesheetReminders: true,
+  });
+
+  // Instant notification states
+  const [instantNotification, setInstantNotification] = useState({
+    message: '',
+    targetStaff: 'all' as 'all' | 'selected',
+    selectedStaff: [] as string[]
   });
   const [pushSettings, setPushSettings] = useState<PushNotificationSettings>({
     timesheetReminders: {
@@ -140,6 +149,35 @@ export function NotificationSettings() {
     },
   });
 
+  // Send instant push notification
+  const sendInstantNotificationMutation = useMutation({
+    mutationFn: async (data: {
+      message: string;
+      targetStaff: 'all' | 'selected';
+      selectedStaff?: string[];
+    }) => {
+      return apiRequest('POST', '/api/admin/send-instant-notification', data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Notification Sent!",
+        description: "Push notification has been sent to selected staff members.",
+      });
+      setInstantNotification({
+        message: '',
+        targetStaff: 'all',
+        selectedStaff: []
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Send Notification",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handlePreferenceChange = (key: keyof NotificationPreferences, value: boolean) => {
     const newPrefs = { ...preferences, [key]: value };
     setPreferences(newPrefs);
@@ -179,6 +217,44 @@ export function NotificationSettings() {
     
     console.log('Current staff:', currentStaff, 'New staff:', newStaff);
     handlePushSettingChange('timesheetReminders.selectedStaff', newStaff);
+  };
+
+  // Instant notification handlers
+  const handleInstantStaffToggle = (staffId: string) => {
+    const currentStaff = instantNotification.selectedStaff;
+    const newStaff = currentStaff.includes(staffId)
+      ? currentStaff.filter(id => id !== staffId)
+      : [...currentStaff, staffId];
+    setInstantNotification(prev => ({
+      ...prev,
+      selectedStaff: newStaff
+    }));
+  };
+
+  const handleSendInstantNotification = () => {
+    if (!instantNotification.message.trim()) {
+      toast({
+        title: "Message Required",
+        description: "Please enter a message to send.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (instantNotification.targetStaff === 'selected' && instantNotification.selectedStaff.length === 0) {
+      toast({
+        title: "Staff Selection Required",
+        description: "Please select at least one staff member to send the notification to.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    sendInstantNotificationMutation.mutate({
+      message: instantNotification.message,
+      targetStaff: instantNotification.targetStaff,
+      selectedStaff: instantNotification.targetStaff === 'selected' ? instantNotification.selectedStaff : undefined
+    });
   };
 
   return (
@@ -452,6 +528,120 @@ export function NotificationSettings() {
                 Saving push notification settings...
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        <Separator />
+
+        {/* Instant Push Notification */}
+        <Card className="border-green-200 dark:border-green-800">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-300">
+              <Send className="h-5 w-5" />
+              Send Instant Push Notification
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Send an immediate push notification to staff members for urgent messages or announcements.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Message Input */}
+            <div className="space-y-2">
+              <Label htmlFor="instant-message" className="text-sm font-medium">Message</Label>
+              <Textarea
+                id="instant-message"
+                placeholder="Enter your message to send to staff members..."
+                value={instantNotification.message}
+                onChange={(e) => setInstantNotification(prev => ({ ...prev, message: e.target.value }))}
+                className="min-h-[80px]"
+                data-testid="textarea-instant-message"
+              />
+            </div>
+
+            {/* Target Staff Selection */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Send To</Label>
+              <RadioGroup
+                value={instantNotification.targetStaff}
+                onValueChange={(value: 'all' | 'selected') => setInstantNotification(prev => ({ 
+                  ...prev, 
+                  targetStaff: value,
+                  selectedStaff: value === 'all' ? [] : prev.selectedStaff
+                }))}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="all" id="instant-all" />
+                  <Label htmlFor="instant-all" className="text-sm cursor-pointer">
+                    Send to all staff
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="selected" id="instant-selected" />
+                  <Label htmlFor="instant-selected" className="text-sm cursor-pointer">
+                    Send to selected staff only
+                  </Label>
+                </div>
+              </RadioGroup>
+
+              {/* Staff Selection */}
+              {instantNotification.targetStaff === 'selected' && (
+                <div className="ml-6 p-3 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Users className="h-4 w-4 text-green-600" />
+                    <Label className="text-sm font-medium">Select Staff Members</Label>
+                  </div>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {staffList && staffList.length > 0 ? (
+                      staffList.map((staff: any) => {
+                        const isChecked = instantNotification.selectedStaff.includes(staff.id);
+                        return (
+                          <div key={staff.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`instant-staff-${staff.id}`}
+                              checked={isChecked}
+                              onCheckedChange={() => handleInstantStaffToggle(staff.id)}
+                              data-testid={`checkbox-instant-staff-${staff.id}`}
+                            />
+                            <Label htmlFor={`instant-staff-${staff.id}`} className="text-sm cursor-pointer">
+                              {staff.name}
+                            </Label>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No staff members found</p>
+                    )}
+                    {instantNotification.selectedStaff.length === 0 && instantNotification.targetStaff === 'selected' && (
+                      <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                        ⚠️ No staff selected - notification will not be sent to anyone
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Send Button */}
+            <div className="flex justify-end pt-2">
+              <Button
+                onClick={handleSendInstantNotification}
+                disabled={sendInstantNotificationMutation.isPending || !instantNotification.message.trim()}
+                className="bg-green-600 hover:bg-green-700 text-white"
+                data-testid="button-send-instant-notification"
+              >
+                {sendInstantNotificationMutation.isPending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Send Notification
+                  </>
+                )}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
