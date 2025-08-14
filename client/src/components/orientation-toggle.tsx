@@ -80,18 +80,29 @@ export function OrientationToggle() {
                 dropdownContent.style.visibility = 'visible';
                 dropdownContent.style.opacity = '1';
                 
-                // Position near the trigger button
+                // Try multiple methods to position near trigger
                 setTimeout(() => {
-                  const trigger = document.querySelector('[data-state="open"][aria-expanded="true"]');
+                  // Try different trigger selectors
+                  let trigger = document.querySelector('[data-state="open"]') ||
+                               document.querySelector('[aria-expanded="true"]') ||
+                               document.querySelector('button:focus') ||
+                               document.querySelector('.lucide-more-horizontal')?.closest('button');
+                  
                   if (trigger instanceof HTMLElement) {
                     const rect = trigger.getBoundingClientRect();
-                    // Position dropdown near the trigger, accounting for landscape rotation
                     dropdownContent.style.position = 'fixed';
-                    dropdownContent.style.top = `${rect.bottom + 5}px`;
-                    dropdownContent.style.left = `${rect.left}px`;
+                    dropdownContent.style.top = `${Math.min(rect.bottom + 5, window.innerHeight - 200)}px`;
+                    dropdownContent.style.left = `${Math.min(rect.left, window.innerWidth - 200)}px`;
+                    dropdownContent.style.transform = 'none';
+                    dropdownContent.style.maxWidth = '180px';
+                  } else {
+                    // Fallback: position in upper left
+                    dropdownContent.style.position = 'fixed';
+                    dropdownContent.style.top = '20px';
+                    dropdownContent.style.left = '20px';
                     dropdownContent.style.transform = 'none';
                   }
-                }, 10);
+                }, 50);
               }
             }
           });
