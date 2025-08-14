@@ -96,6 +96,12 @@ export function SMSNotificationSettings() {
       return;
     }
 
+    console.log('📱 Saving SMS settings:', {
+      mobilePhone: cleanPhone,
+      smsNotificationsEnabled: isEnabled,
+      rawPhone: phoneNumber
+    });
+
     updateSettingsMutation.mutate({
       mobilePhone: cleanPhone,
       smsNotificationsEnabled: isEnabled,

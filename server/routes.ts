@@ -1671,12 +1671,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { mobilePhone, smsNotificationsEnabled } = req.body;
       
-      await storage.updateUser(userId, {
+      console.log('📱 SMS Settings Update Request:', {
+        userId,
+        mobilePhone,
+        smsNotificationsEnabled,
+        body: req.body
+      });
+      
+      const result = await storage.updateUser(userId, {
         mobilePhone,
         smsNotificationsEnabled,
       });
 
-      res.json({ message: "SMS settings updated successfully" });
+      console.log('📱 SMS Settings Update Result:', result);
+
+      if (result) {
+        res.json({ 
+          message: "SMS settings updated successfully",
+          mobilePhone: result.mobilePhone,
+          smsNotificationsEnabled: result.smsNotificationsEnabled
+        });
+      } else {
+        res.status(500).json({ message: "Failed to update SMS settings - no result returned" });
+      }
     } catch (error) {
       console.error("Error updating SMS settings:", error);
       res.status(500).json({ message: "Failed to update SMS settings" });

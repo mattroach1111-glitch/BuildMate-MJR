@@ -54,6 +54,8 @@ export interface IStorage {
   updateUserRole(id: string, role: "admin" | "staff"): Promise<void>;
   assignUserToEmployee(userId: string, employeeId: string): Promise<void>;
   getUnassignedUsers(): Promise<User[]>;
+  updateUser(id: string, updates: Partial<typeof users.$inferInsert>): Promise<User | null>;
+  getUsersWithSMSEnabled(): Promise<User[]>;
   
   // Employee operations
   getEmployees(): Promise<Employee[]>;
