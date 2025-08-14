@@ -73,12 +73,25 @@ export function OrientationToggle() {
                 node.style.pointerEvents = 'auto';
               }
               
-              // Make dropdowns visible in landscape
+              // Make dropdowns visible and position them correctly in landscape
               const dropdownContent = node.querySelector('[data-radix-dropdown-menu-content]');
               if (dropdownContent instanceof HTMLElement) {
                 dropdownContent.style.display = 'block';
                 dropdownContent.style.visibility = 'visible';
                 dropdownContent.style.opacity = '1';
+                
+                // Position near the trigger button
+                setTimeout(() => {
+                  const trigger = document.querySelector('[data-state="open"][aria-expanded="true"]');
+                  if (trigger instanceof HTMLElement) {
+                    const rect = trigger.getBoundingClientRect();
+                    // Position dropdown near the trigger, accounting for landscape rotation
+                    dropdownContent.style.position = 'fixed';
+                    dropdownContent.style.top = `${rect.bottom + 5}px`;
+                    dropdownContent.style.left = `${rect.left}px`;
+                    dropdownContent.style.transform = 'none';
+                  }
+                }, 10);
               }
             }
           });
