@@ -24,17 +24,21 @@ export function OrientationToggle() {
 
   useEffect(() => {
     if (isLandscapeForced) {
-      // Force landscape orientation with proper positioning
+      // Force landscape orientation with better centering
       const vh = window.innerHeight;
       const vw = window.innerWidth;
       
-      document.body.style.transform = 'rotate(90deg)';
+      // Calculate better positioning to center the rotated content
+      const translateX = (vw - vh) / 2;
+      const translateY = (vh - vw) / 2;
+      
+      document.body.style.transform = `translate(${translateX}px, ${translateY}px) rotate(90deg)`;
       document.body.style.transformOrigin = 'center center';
       document.body.style.width = `${vh}px`;
       document.body.style.height = `${vw}px`;
       document.body.style.position = 'fixed';
-      document.body.style.top = `${(vh - vw) / 2}px`;
-      document.body.style.left = `${(vw - vh) / 2}px`;
+      document.body.style.top = '0';
+      document.body.style.left = '0';
       document.body.style.overflow = 'hidden';
       document.body.style.margin = '0';
       document.body.style.padding = '0';
