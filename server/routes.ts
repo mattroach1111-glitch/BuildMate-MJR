@@ -437,7 +437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const { autoHoursEnabled, baseAutoHours, bonusHoursPer3k } = req.body;
+      const { autoHoursEnabled, baseAutoHours, bonusHoursPerThreshold, bonusThreshold } = req.body;
       
       // Validate the input
       if (typeof autoHoursEnabled !== 'boolean') {
@@ -447,7 +447,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const employee = await storage.updateEmployeeAutoHours(req.params.id, {
         autoHoursEnabled,
         baseAutoHours: baseAutoHours?.toString() || "0",
-        bonusHoursPer3k: bonusHoursPer3k?.toString() || "0"
+        bonusHoursPerThreshold: bonusHoursPerThreshold?.toString() || "0",
+        bonusThreshold: bonusThreshold?.toString() || "3000"
       });
       
       res.json(employee);

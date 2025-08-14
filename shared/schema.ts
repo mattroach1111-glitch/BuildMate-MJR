@@ -48,7 +48,8 @@ export const employees = pgTable("employees", {
   // Automatic hours configuration
   autoHoursEnabled: boolean("auto_hours_enabled").notNull().default(false),
   baseAutoHours: decimal("base_auto_hours", { precision: 10, scale: 2 }).default("0"), // Base hours added to every job
-  bonusHoursPer3k: decimal("bonus_hours_per_3k", { precision: 10, scale: 2 }).default("0"), // Additional hours per $3,000 of job value
+  bonusHoursPerThreshold: decimal("bonus_hours_per_threshold", { precision: 10, scale: 2 }).default("0"), // Additional hours per threshold amount
+  bonusThreshold: decimal("bonus_threshold", { precision: 10, scale: 2 }).default("3000"), // Dollar threshold for bonus hours
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -260,7 +261,8 @@ export const insertEmployeeSchema = createInsertSchema(employees).omit({
 }).extend({
   defaultHourlyRate: z.string().or(z.number()).transform(val => String(val)),
   baseAutoHours: z.string().or(z.number()).transform(val => String(val)).optional(),
-  bonusHoursPer3k: z.string().or(z.number()).transform(val => String(val)).optional(),
+  bonusHoursPerThreshold: z.string().or(z.number()).transform(val => String(val)).optional(),
+  bonusThreshold: z.string().or(z.number()).transform(val => String(val)).optional(),
 });
 
 export const insertOtherCostSchema = createInsertSchema(otherCosts).omit({

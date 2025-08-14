@@ -294,14 +294,16 @@ export class DatabaseStorage implements IStorage {
   async updateEmployeeAutoHours(id: string, autoHoursConfig: {
     autoHoursEnabled: boolean;
     baseAutoHours?: string;
-    bonusHoursPer3k?: string;
+    bonusHoursPerThreshold?: string;
+    bonusThreshold?: string;
   }): Promise<Employee> {
     const [updatedEmployee] = await db
       .update(employees)
       .set({
         autoHoursEnabled: autoHoursConfig.autoHoursEnabled,
         baseAutoHours: autoHoursConfig.baseAutoHours || "0",
-        bonusHoursPer3k: autoHoursConfig.bonusHoursPer3k || "0",
+        bonusHoursPerThreshold: autoHoursConfig.bonusHoursPerThreshold || "0",
+        bonusThreshold: autoHoursConfig.bonusThreshold || "3000",
       })
       .where(eq(employees.id, id))
       .returning();
@@ -403,10 +405,11 @@ export class DatabaseStorage implements IStorage {
     // Apply automatic hours for each employee
     for (const employee of employeesWithAutoHours) {
       const baseHours = parseFloat(employee.baseAutoHours || "0");
-      const bonusHoursPer3k = parseFloat(employee.bonusHoursPer3k || "0");
+      const bonusHoursPerThreshold = parseFloat(employee.bonusHoursPerThreshold || "0");
+      const bonusThreshold = parseFloat(employee.bonusThreshold || "3000");
       
-      // Calculate bonus hours based on job total
-      const bonusHours = Math.floor(totalCost / 3000) * bonusHoursPer3k;
+      // Calculate bonus hours based on job total and configurable threshold
+      const bonusHours = Math.floor(totalCost / bonusThreshold) * bonusHoursPerThreshold;
       const totalAutoHours = baseHours + bonusHours;
       
       if (totalAutoHours > 0) {

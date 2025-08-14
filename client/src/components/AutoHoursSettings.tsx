@@ -15,14 +15,16 @@ interface Employee {
   defaultHourlyRate: string;
   autoHoursEnabled: boolean;
   baseAutoHours: string;
-  bonusHoursPer3k: string;
+  bonusHoursPerThreshold: string;
+  bonusThreshold: string;
 }
 
 interface AutoHoursConfig {
   employeeId: string;
   autoHoursEnabled: boolean;
   baseAutoHours: string;
-  bonusHoursPer3k: string;
+  bonusHoursPerThreshold: string;
+  bonusThreshold: string;
 }
 
 export function AutoHoursSettings() {
@@ -33,7 +35,8 @@ export function AutoHoursSettings() {
     employeeId: '',
     autoHoursEnabled: false,
     baseAutoHours: '0',
-    bonusHoursPer3k: '0',
+    bonusHoursPerThreshold: '0',
+    bonusThreshold: '3000',
   });
 
   const { data: employees, isLoading } = useQuery<Employee[]>({
@@ -68,7 +71,8 @@ export function AutoHoursSettings() {
       employeeId: employee.id,
       autoHoursEnabled: employee.autoHoursEnabled,
       baseAutoHours: employee.baseAutoHours || '0',
-      bonusHoursPer3k: employee.bonusHoursPer3k || '0',
+      bonusHoursPerThreshold: employee.bonusHoursPerThreshold || '0',
+      bonusThreshold: employee.bonusThreshold || '3000',
     });
   };
 
@@ -80,7 +84,8 @@ export function AutoHoursSettings() {
       autoHoursConfig: {
         autoHoursEnabled: tempConfig.autoHoursEnabled,
         baseAutoHours: tempConfig.baseAutoHours,
-        bonusHoursPer3k: tempConfig.bonusHoursPer3k,
+        bonusHoursPerThreshold: tempConfig.bonusHoursPerThreshold,
+        bonusThreshold: tempConfig.bonusThreshold,
       }
     });
   };
@@ -91,7 +96,8 @@ export function AutoHoursSettings() {
       employeeId: '',
       autoHoursEnabled: false,
       baseAutoHours: '0',
-      bonusHoursPer3k: '0',
+      bonusHoursPerThreshold: '0',
+      bonusThreshold: '3000',
     });
   };
 
@@ -120,9 +126,10 @@ export function AutoHoursSettings() {
             <p className="font-medium mb-1">How Automatic Hours Work:</p>
             <ul className="list-disc list-inside space-y-1 text-xs">
               <li><strong>Base Hours:</strong> Added to every job sheet automatically when created</li>
-              <li><strong>Bonus Hours per $3k:</strong> Additional hours added for every $3,000 of total job cost</li>
+              <li><strong>Bonus Hours:</strong> Additional hours added for every threshold amount of total job cost</li>
+              <li><strong>Threshold:</strong> Dollar amount that triggers bonus hours (e.g., $3,000, $5,000)</li>
               <li><strong>Hourly Rate:</strong> Uses the job sheet's default rate, not employee's rate</li>
-              <li><strong>Example:</strong> Matt has 1 base hour + 1 bonus hour per $3k. A $9,000 job = 1 + (3 × 1) = 4 total hours added</li>
+              <li><strong>Example:</strong> Matt has 1 base hour + 1 bonus hour per $5k. A $15,000 job = 1 + (3 × 1) = 4 total hours added</li>
             </ul>
           </div>
         </div>
@@ -134,7 +141,8 @@ export function AutoHoursSettings() {
           const config = isEditing ? tempConfig : {
             autoHoursEnabled: employee.autoHoursEnabled,
             baseAutoHours: employee.baseAutoHours || '0',
-            bonusHoursPer3k: employee.bonusHoursPer3k || '0',
+            bonusHoursPerThreshold: employee.bonusHoursPerThreshold || '0',
+            bonusThreshold: employee.bonusThreshold || '3000',
           };
 
           return (
@@ -169,7 +177,7 @@ export function AutoHoursSettings() {
               
               {config.autoHoursEnabled && (
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor={`base-hours-${employee.id}`} className="flex items-center gap-2">
                         <Clock className="h-4 w-4" />
@@ -200,27 +208,54 @@ export function AutoHoursSettings() {
                     <div className="space-y-2">
                       <Label htmlFor={`bonus-hours-${employee.id}`} className="flex items-center gap-2">
                         <Calculator className="h-4 w-4" />
-                        Bonus Hours per $3,000
+                        Bonus Hours per Threshold
                       </Label>
                       <Input
                         id={`bonus-hours-${employee.id}`}
                         type="number"
                         step="0.1"
                         min="0"
-                        value={config.bonusHoursPer3k}
+                        value={config.bonusHoursPerThreshold}
                         onChange={(e) => {
                           if (isEditing) {
-                            setTempConfig(prev => ({ ...prev, bonusHoursPer3k: e.target.value }));
+                            setTempConfig(prev => ({ ...prev, bonusHoursPerThreshold: e.target.value }));
                           } else {
                             handleEditStart(employee);
-                            setTempConfig(prev => ({ ...prev, bonusHoursPer3k: e.target.value }));
+                            setTempConfig(prev => ({ ...prev, bonusHoursPerThreshold: e.target.value }));
                           }
                         }}
                         placeholder="1.0"
                         data-testid={`input-bonus-hours-${employee.id}`}
                       />
                       <p className="text-xs text-muted-foreground">
-                        Additional hours per $3,000 job value
+                        Additional hours per threshold
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor={`bonus-threshold-${employee.id}`} className="flex items-center gap-2">
+                        <Calculator className="h-4 w-4" />
+                        Bonus Threshold ($)
+                      </Label>
+                      <Input
+                        id={`bonus-threshold-${employee.id}`}
+                        type="number"
+                        step="100"
+                        min="0"
+                        value={config.bonusThreshold}
+                        onChange={(e) => {
+                          if (isEditing) {
+                            setTempConfig(prev => ({ ...prev, bonusThreshold: e.target.value }));
+                          } else {
+                            handleEditStart(employee);
+                            setTempConfig(prev => ({ ...prev, bonusThreshold: e.target.value }));
+                          }
+                        }}
+                        placeholder="3000"
+                        data-testid={`input-bonus-threshold-${employee.id}`}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Dollar amount that triggers bonus hours
                       </p>
                     </div>
                   </div>
@@ -229,9 +264,19 @@ export function AutoHoursSettings() {
                   <div className="bg-muted p-3 rounded-lg">
                     <p className="text-sm font-medium mb-1">Preview Examples:</p>
                     <div className="text-xs text-muted-foreground space-y-1">
-                      <p>• $3,000 job = {parseFloat(config.baseAutoHours || '0') + parseFloat(config.bonusHoursPer3k || '0')} hours</p>
-                      <p>• $6,000 job = {parseFloat(config.baseAutoHours || '0') + (2 * parseFloat(config.bonusHoursPer3k || '0'))} hours</p>
-                      <p>• $9,000 job = {parseFloat(config.baseAutoHours || '0') + (3 * parseFloat(config.bonusHoursPer3k || '0'))} hours</p>
+                      {(() => {
+                        const threshold = parseFloat(config.bonusThreshold || '3000');
+                        const baseHours = parseFloat(config.baseAutoHours || '0');
+                        const bonusHours = parseFloat(config.bonusHoursPerThreshold || '0');
+                        
+                        return (
+                          <>
+                            <p>• ${threshold.toLocaleString()} job = {baseHours + bonusHours} hours</p>
+                            <p>• ${(threshold * 2).toLocaleString()} job = {baseHours + (2 * bonusHours)} hours</p>
+                            <p>• ${(threshold * 3).toLocaleString()} job = {baseHours + (3 * bonusHours)} hours</p>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
 
