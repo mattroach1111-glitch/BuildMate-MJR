@@ -73,23 +73,24 @@ export function OrientationToggle() {
                 node.style.pointerEvents = 'auto';
               }
               
-              // Center and counter-rotate dropdowns
+              // Position dropdowns using viewport units in landscape
               const dropdowns = node.querySelectorAll('[data-radix-dropdown-menu-content], [data-radix-select-content], [data-radix-popover-content]');
               dropdowns.forEach(dropdown => {
                 if (dropdown instanceof HTMLElement) {
-                  // Center and counter-rotate the dropdown
+                  // Use viewport-based positioning with counter-rotation
                   dropdown.style.position = 'fixed';
-                  dropdown.style.top = '50%';
-                  dropdown.style.left = '50%';
-                  dropdown.style.transform = 'translate(-50%, -50%) rotate(-90deg)';
-                  dropdown.style.transformOrigin = 'center';
+                  dropdown.style.top = '20vh';
+                  dropdown.style.left = '30vw';
+                  dropdown.style.transform = 'rotate(-90deg)';
+                  dropdown.style.transformOrigin = 'top left';
                   dropdown.style.visibility = 'visible';
                   dropdown.style.opacity = '1';
                   dropdown.style.zIndex = '9999';
-                  dropdown.style.border = '3px solid #ef4444';
+                  dropdown.style.border = '3px solid #00ff00';
                   dropdown.style.background = 'white';
-                  dropdown.style.maxWidth = '150px';
-                  dropdown.style.maxHeight = '200px';
+                  dropdown.style.maxWidth = '120px';
+                  dropdown.style.maxHeight = '150px';
+                  dropdown.style.fontSize = '14px';
                 }
               });
             }

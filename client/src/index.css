@@ -232,26 +232,27 @@ html.landscape-mode [data-state="open"][role="dialog"] {
   max-height: 90% !important;
 }
 
-/* Counter-rotate dropdowns and center them in viewport */
+/* Simplified approach - position dropdowns in landscape viewport */
 html.landscape-mode [data-radix-dropdown-menu-content],
 html.landscape-mode [data-radix-select-content],
 html.landscape-mode [data-radix-popover-content] {
   position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
+  top: 20vh !important;
+  left: 30vw !important;
   right: auto !important;
   bottom: auto !important;
-  transform: translate(-50%, -50%) rotate(-90deg) !important;
-  transform-origin: center !important;
+  transform: rotate(-90deg) !important;
+  transform-origin: top left !important;
   z-index: 9999 !important;
   background: white !important;
-  border: 3px solid #ef4444 !important;
+  border: 3px solid #00ff00 !important;
   border-radius: 8px !important;
   box-shadow: 0 10px 40px rgba(0,0,0,0.4) !important;
-  max-height: 200px !important;
+  max-height: 150px !important;
   overflow-y: auto !important;
-  max-width: 150px !important;
-  padding: 8px !important;
+  max-width: 120px !important;
+  padding: 6px !important;
+  font-size: 14px !important;
 }
 
 /* Make dropdown items more touch-friendly in landscape */
