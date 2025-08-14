@@ -3,6 +3,7 @@ export class PushNotificationService {
   private static instance: PushNotificationService;
   private permission: NotificationPermission = 'default';
   private registration: ServiceWorkerRegistration | null = null;
+  private subscription: PushSubscription | null = null;
 
   static getInstance(): PushNotificationService {
     if (!PushNotificationService.instance) {
@@ -77,14 +78,108 @@ export class PushNotificationService {
     }
   }
 
-  // Register for push notifications (simplified version)
+  // Get VAPID public key from server
+  private async getVapidPublicKey(): Promise<string> {
+    try {
+      const response = await fetch('/api/push/vapid-key');
+      const data = await response.json();
+      return data.publicKey;
+    } catch (error) {
+      console.error('Error fetching VAPID key:', error);
+      throw error;
+    }
+  }
+
+  // Convert URL-safe base64 to Uint8Array
+  private urlBase64ToUint8Array(base64String: string): Uint8Array {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
+  // Subscribe to push notifications
+  async subscribeToPush(): Promise<PushSubscription | null> {
+    if (!this.registration) {
+      await this.initializeServiceWorker();
+    }
+
+    if (!this.registration) {
+      console.error('Service worker not available');
+      return null;
+    }
+
+    try {
+      const vapidPublicKey = await this.getVapidPublicKey();
+      const applicationServerKey = this.urlBase64ToUint8Array(vapidPublicKey);
+
+      this.subscription = await this.registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: applicationServerKey
+      });
+
+      // Send subscription to server
+      await this.sendSubscriptionToServer(this.subscription);
+      
+      console.log('Push subscription successful:', this.subscription);
+      return this.subscription;
+    } catch (error) {
+      console.error('Error subscribing to push notifications:', error);
+      return null;
+    }
+  }
+
+  // Send subscription to server
+  private async sendSubscriptionToServer(subscription: PushSubscription): Promise<void> {
+    try {
+      const response = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          subscription: {
+            endpoint: subscription.endpoint,
+            keys: {
+              p256dh: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')!))),
+              auth: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth')!)))
+            }
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send subscription to server');
+      }
+
+      console.log('Subscription sent to server successfully');
+    } catch (error) {
+      console.error('Error sending subscription to server:', error);
+      throw error;
+    }
+  }
+
+  // Register for push notifications (full implementation)
   async registerForPush(): Promise<boolean> {
     if (!this.isSupported()) {
       return false;
     }
 
     const permission = await this.requestPermission();
-    return permission === 'granted';
+    if (permission !== 'granted') {
+      return false;
+    }
+
+    const subscription = await this.subscribeToPush();
+    return subscription !== null;
   }
 
   // Test notification (for debugging)

@@ -163,12 +163,38 @@ export function NotificationSettings() {
       targetStaff: 'all' | 'selected';
       selectedStaff?: string[];
     }) => {
-      return apiRequest('POST', '/api/admin/send-instant-notification', data);
+      // Use the new real push notification API
+      const endpoint = data.targetStaff === 'all' ? '/api/push/send-to-all' : '/api/push/send-to-users';
+      const body = data.targetStaff === 'all'
+        ? {
+            title: "Instant Notification",
+            body: data.message
+          }
+        : {
+            title: "Instant Notification", 
+            body: data.message,
+            userIds: data.selectedStaff || []
+          };
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to send notification');
+      }
+
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       toast({
-        title: "Notification Sent!",
-        description: "Push notification has been sent to selected staff members.",
+        title: "Real Push Notification Sent!",
+        description: `Delivered to ${result.success} device(s), failed: ${result.failed}. Recipients: ${instantNotification.targetStaff === 'all' ? 'all staff' : `${instantNotification.selectedStaff?.length || 0} selected staff`}`,
       });
       setInstantNotification({
         message: '',
@@ -178,7 +204,7 @@ export function NotificationSettings() {
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to Send Notification",
+        title: "Failed to Send Real Push Notification",
         description: error.message || "Please try again.",
         variant: "destructive",
       });

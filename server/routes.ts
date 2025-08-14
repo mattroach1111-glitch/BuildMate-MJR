@@ -10,6 +10,7 @@ import { TimesheetPDFGenerator } from "./pdfGenerator";
 import { GoogleDriveService } from "./googleDriveService";
 import { GoogleDriveAuth } from "./googleAuth";
 import { DocumentProcessor } from "./services/documentProcessor";
+import { webPushService } from "./webPushService";
 import {
   insertJobSchema,
   insertEmployeeSchema,
@@ -3712,6 +3713,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: "Failed to add expense to job", 
         details: (error as Error).message 
       });
+    }
+  });
+
+  // Push notification endpoints
+  
+  // Get VAPID public key
+  app.get("/api/push/vapid-key", (req, res) => {
+    res.json({ publicKey: webPushService.getVapidPublicKey() });
+  });
+
+  // Subscribe to push notifications
+  app.post("/api/push/subscribe", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { subscription } = req.body;
+      if (!subscription || !subscription.endpoint) {
+        return res.status(400).json({ message: "Invalid subscription data" });
+      }
+
+      await webPushService.subscribeUser(userId, subscription);
+      res.json({ message: "Push subscription successful" });
+    } catch (error) {
+      console.error("Error subscribing to push notifications:", error);
+      res.status(500).json({ message: "Failed to subscribe to push notifications" });
+    }
+  });
+
+  // Send push notification to all users
+  app.post("/api/push/send-to-all", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { title, body, data } = req.body;
+      
+      if (!title || !body) {
+        return res.status(400).json({ message: "Title and body are required" });
+      }
+
+      const result = await webPushService.sendNotificationToAll(title, body, data);
+      
+      res.json({
+        message: "Push notifications sent",
+        success: result.success,
+        failed: result.failed,
+        total: result.success + result.failed
+      });
+    } catch (error) {
+      console.error("Error sending push notifications:", error);
+      res.status(500).json({ message: "Failed to send push notifications" });
+    }
+  });
+
+  // Send push notification to specific users
+  app.post("/api/push/send-to-users", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userIds, title, body, data } = req.body;
+      
+      if (!title || !body || !userIds || !Array.isArray(userIds)) {
+        return res.status(400).json({ message: "Title, body, and userIds array are required" });
+      }
+
+      const result = await webPushService.sendNotificationToUsers(userIds, title, body, data);
+      
+      res.json({
+        message: "Push notifications sent",
+        success: result.success,
+        failed: result.failed,
+        total: result.success + result.failed
+      });
+    } catch (error) {
+      console.error("Error sending push notifications:", error);
+      res.status(500).json({ message: "Failed to send push notifications" });
     }
   });
 
