@@ -194,6 +194,42 @@ html.landscape-mode .fixed {
   position: absolute;
 }
 
+/* Fix modals and dialogs in landscape mode */
+html.landscape-mode [data-radix-portal] {
+  position: fixed !important;
+  transform: rotate(-90deg) !important;
+  transform-origin: center center !important;
+  top: 50% !important;
+  left: 50% !important;
+  margin-top: -50vh !important;
+  margin-left: -50vw !important;
+  width: 100vh !important;
+  height: 100vw !important;
+  z-index: 9999 !important;
+}
+
+/* Ensure dialog content is properly sized in landscape */
+html.landscape-mode [role="dialog"] {
+  max-width: 90vh !important;
+  max-height: 85vw !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+/* Fix scrollable areas in landscape modals */
+html.landscape-mode .overflow-y-auto {
+  max-height: 75vw !important;
+}
+
+/* Ensure buttons and interactive elements remain clickable */
+html.landscape-mode button,
+html.landscape-mode [role="button"],
+html.landscape-mode input,
+html.landscape-mode select,
+html.landscape-mode textarea {
+  pointer-events: auto !important;
+}
+
 /* Custom classes for construction theme */
 .construction-gradient {
   background: linear-gradient(135deg, var(--primary), #1976D2);

@@ -55,6 +55,30 @@ export function OrientationToggle() {
       
       // Add landscape class to html for additional styling
       document.documentElement.classList.add('landscape-mode');
+      
+      // Handle existing portals/modals
+      const portals = document.querySelectorAll('[data-radix-portal]');
+      portals.forEach(portal => {
+        if (portal instanceof HTMLElement) {
+          portal.style.pointerEvents = 'auto';
+        }
+      });
+      
+      // Listen for new modals/dialogs
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          mutation.addedNodes.forEach((node) => {
+            if (node instanceof HTMLElement && node.matches('[data-radix-portal]')) {
+              node.style.pointerEvents = 'auto';
+            }
+          });
+        });
+      });
+      
+      observer.observe(document.body, { childList: true, subtree: true });
+      
+      // Store observer to clean up later
+      (window as any).landscapeObserver = observer;
     } else {
       // Reset to normal orientation
       document.body.style.transform = '';
@@ -79,6 +103,12 @@ export function OrientationToggle() {
       
       // Remove landscape class
       document.documentElement.classList.remove('landscape-mode');
+      
+      // Clean up modal observer
+      if ((window as any).landscapeObserver) {
+        (window as any).landscapeObserver.disconnect();
+        delete (window as any).landscapeObserver;
+      }
     }
   }, [isLandscapeForced]);
 
