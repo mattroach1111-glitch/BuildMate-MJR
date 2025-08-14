@@ -1,0 +1,107 @@
+chunk-RPCDYKBN.js?v=ab07a46b:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+chunk-RPCDYKBN.js?v=96e2f6b5:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+pwa.ts:37 Service Worker registered successfully: ServiceWorkerRegistration {installing: null, waiting: null, active: ServiceWorker, navigationPreload: NavigationPreloadManager, scope: 'https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/', …}
+useAuth.ts:5 Uncaught Error: useAuth hook has been removed. Use direct useQuery with "/api/auth/user" instead.
+    at useAuth (useAuth.ts:5:9)
+    at AppContent (App.tsx:54:37)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=ab07a46b:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=ab07a46b:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=ab07a46b:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=ab07a46b:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=ab07a46b:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=ab07a46b:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=ab07a46b:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=ab07a46b:19198:20)
+useAuth @ useAuth.ts:5
+AppContent @ App.tsx:54
+renderWithHooks @ chunk-RPCDYKBN.js?v=ab07a46b:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=ab07a46b:14926
+beginWork @ chunk-RPCDYKBN.js?v=ab07a46b:15914
+callCallback2 @ chunk-RPCDYKBN.js?v=ab07a46b:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=ab07a46b:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=ab07a46b:3733
+beginWork$1 @ chunk-RPCDYKBN.js?v=ab07a46b:19765
+performUnitOfWork @ chunk-RPCDYKBN.js?v=ab07a46b:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=ab07a46b:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=ab07a46b:19116
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=ab07a46b:18678
+workLoop @ chunk-RPCDYKBN.js?v=ab07a46b:197
+flushWork @ chunk-RPCDYKBN.js?v=ab07a46b:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=ab07a46b:384
+useAuth.ts:5 Uncaught Error: useAuth hook has been removed. Use direct useQuery with "/api/auth/user" instead.
+    at useAuth (useAuth.ts:5:9)
+    at AppContent (App.tsx:54:37)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=ab07a46b:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=ab07a46b:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=ab07a46b:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=ab07a46b:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=ab07a46b:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=ab07a46b:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=ab07a46b:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=ab07a46b:19198:20)
+useAuth @ useAuth.ts:5
+AppContent @ App.tsx:54
+renderWithHooks @ chunk-RPCDYKBN.js?v=ab07a46b:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=ab07a46b:14926
+beginWork @ chunk-RPCDYKBN.js?v=ab07a46b:15914
+callCallback2 @ chunk-RPCDYKBN.js?v=ab07a46b:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=ab07a46b:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=ab07a46b:3733
+beginWork$1 @ chunk-RPCDYKBN.js?v=ab07a46b:19765
+performUnitOfWork @ chunk-RPCDYKBN.js?v=ab07a46b:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=ab07a46b:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=ab07a46b:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js?v=ab07a46b:18736
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=ab07a46b:18684
+workLoop @ chunk-RPCDYKBN.js?v=ab07a46b:197
+flushWork @ chunk-RPCDYKBN.js?v=ab07a46b:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=ab07a46b:384
+chunk-RPCDYKBN.js?v=ab07a46b:14032 The above error occurred in the <AppContent> component:
+
+    at AppContent (https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/src/App.tsx?v=V3alITk6AvG6dsCsl5eSF:120:37)
+    at QueryClientProvider (https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=ab07a46b:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-RPCDYKBN.js?v=ab07a46b:14032
+update.callback @ chunk-RPCDYKBN.js?v=ab07a46b:14052
+callCallback @ chunk-RPCDYKBN.js?v=ab07a46b:11248
+commitUpdateQueue @ chunk-RPCDYKBN.js?v=ab07a46b:11265
+commitLayoutEffectOnFiber @ chunk-RPCDYKBN.js?v=ab07a46b:17093
+commitLayoutMountEffects_complete @ chunk-RPCDYKBN.js?v=ab07a46b:17980
+commitLayoutEffects_begin @ chunk-RPCDYKBN.js?v=ab07a46b:17969
+commitLayoutEffects @ chunk-RPCDYKBN.js?v=ab07a46b:17920
+commitRootImpl @ chunk-RPCDYKBN.js?v=ab07a46b:19353
+commitRoot @ chunk-RPCDYKBN.js?v=ab07a46b:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=ab07a46b:18760
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=ab07a46b:18718
+workLoop @ chunk-RPCDYKBN.js?v=ab07a46b:197
+flushWork @ chunk-RPCDYKBN.js?v=ab07a46b:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=ab07a46b:384
+chunk-RPCDYKBN.js?v=ab07a46b:19413 Uncaught Error: useAuth hook has been removed. Use direct useQuery with "/api/auth/user" instead.
+    at useAuth (useAuth.ts:5:9)
+    at AppContent (App.tsx:54:37)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=ab07a46b:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=ab07a46b:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=ab07a46b:15914:22)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=ab07a46b:19753:22)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=ab07a46b:19198:20)
+    at workLoopSync (chunk-RPCDYKBN.js?v=ab07a46b:19137:13)
+    at renderRootSync (chunk-RPCDYKBN.js?v=ab07a46b:19116:15)
+    at recoverFromConcurrentError (chunk-RPCDYKBN.js?v=ab07a46b:18736:28)
+useAuth @ useAuth.ts:5
+AppContent @ App.tsx:54
+renderWithHooks @ chunk-RPCDYKBN.js?v=ab07a46b:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=ab07a46b:14926
+beginWork @ chunk-RPCDYKBN.js?v=ab07a46b:15914
+beginWork$1 @ chunk-RPCDYKBN.js?v=ab07a46b:19753
+performUnitOfWork @ chunk-RPCDYKBN.js?v=ab07a46b:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=ab07a46b:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=ab07a46b:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js?v=ab07a46b:18736
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=ab07a46b:18684
+workLoop @ chunk-RPCDYKBN.js?v=ab07a46b:197
+flushWork @ chunk-RPCDYKBN.js?v=ab07a46b:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=ab07a46b:384
+(index):1 Error while trying to use the following icon from the Manifest: https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/icon-192x192.png (Download error or resource isn't a valid image)
