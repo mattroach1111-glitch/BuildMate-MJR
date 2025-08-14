@@ -73,20 +73,12 @@ export function OrientationToggle() {
                 node.style.pointerEvents = 'auto';
               }
               
-              // Simplify dropdown positioning - just make them visible
-              if (node.matches('[data-radix-popper-content-wrapper]') || 
-                  node.querySelector('[data-radix-popper-content-wrapper]')) {
-                const dropdown = node.matches('[data-radix-popper-content-wrapper]') 
-                  ? node 
-                  : node.querySelector('[data-radix-popper-content-wrapper]');
-                
-                if (dropdown instanceof HTMLElement) {
-                  // Keep it simple - just make it visible and positioned relatively
-                  dropdown.style.position = 'relative';
-                  dropdown.style.transform = 'none';
-                  dropdown.style.zIndex = '50';
-                  dropdown.style.display = 'block';
-                }
+              // Make dropdowns visible in landscape
+              const dropdownContent = node.querySelector('[data-radix-dropdown-menu-content]');
+              if (dropdownContent instanceof HTMLElement) {
+                dropdownContent.style.display = 'block';
+                dropdownContent.style.visibility = 'visible';
+                dropdownContent.style.opacity = '1';
               }
             }
           });

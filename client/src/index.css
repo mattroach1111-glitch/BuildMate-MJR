@@ -232,26 +232,16 @@ html.landscape-mode [data-state="open"][role="dialog"] {
   max-height: 90% !important;
 }
 
-/* Disable complex dropdown positioning in landscape mode */
-html.landscape-mode [data-radix-popper-content-wrapper] {
-  transform: none !important;
-  position: relative !important;
-  top: auto !important;
-  left: auto !important;
-  right: auto !important;
-  bottom: auto !important;
-}
-
-/* Keep dropdown content simple and visible */
-html.landscape-mode [data-radix-dropdown-menu-content],
-html.landscape-mode [data-radix-select-content],
-html.landscape-mode [role="menu"] {
-  position: relative !important;
-  transform: none !important;
-  max-height: 200px !important;
+/* Simple dropdown fix for landscape mode - just ensure visibility */
+html.landscape-mode [data-radix-dropdown-menu-content] {
+  position: fixed !important;
+  z-index: 9999 !important;
+  background: white !important;
+  border: 1px solid #ccc !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  max-height: 300px !important;
   overflow-y: auto !important;
-  margin-top: 4px !important;
-  z-index: 50 !important;
 }
 
 /* Ensure buttons and interactive elements remain clickable */
