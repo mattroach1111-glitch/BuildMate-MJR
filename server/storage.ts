@@ -272,6 +272,35 @@ export class DatabaseStorage implements IStorage {
     ).orderBy(desc(users.updatedAt));
   }
 
+  async updateUser(id: string, updates: Partial<typeof users.$inferInsert>): Promise<User | null> {
+    try {
+      const [user] = await db
+        .update(users)
+        .set({
+          ...updates,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, id))
+        .returning();
+      return user || null;
+    } catch (error) {
+      console.error("Error updating user:", error);
+      return null;
+    }
+  }
+
+  async getUsersWithSMSEnabled(): Promise<User[]> {
+    try {
+      return await db
+        .select()
+        .from(users)
+        .where(eq(users.smsNotificationsEnabled, true));
+    } catch (error) {
+      console.error("Error fetching SMS-enabled users:", error);
+      return [];
+    }
+  }
+
   // Employee operations
   async getEmployees(): Promise<Employee[]> {
     return await db.select().from(employees).orderBy(desc(employees.createdAt));

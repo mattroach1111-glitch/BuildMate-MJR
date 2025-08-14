@@ -45,6 +45,8 @@ export const users = pgTable("users", {
   isAssigned: boolean("is_assigned").notNull().default(false), // Whether user has been assigned to an employee
   emailNotificationPreferences: text("email_notification_preferences").default('{"documentProcessing":true,"jobUpdates":true,"timesheetReminders":true}'), // JSON string of notification preferences
   pushNotificationSettings: text("push_notification_settings").default('{"timesheetReminders":{"enabled":true,"time":"17:00","days":["monday","tuesday","wednesday","thursday","friday"],"timezone":"Australia/Sydney","targetStaff":"all"}}'), // JSON string of push notification settings
+  mobilePhone: varchar("mobile_phone"), // Mobile phone number for SMS notifications
+  smsNotificationsEnabled: boolean("sms_notifications_enabled").notNull().default(false), // Enable SMS as fallback for push notifications
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

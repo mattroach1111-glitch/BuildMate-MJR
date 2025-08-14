@@ -1546,6 +1546,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user SMS settings
+  app.get("/api/user/sms-settings", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({
+        mobilePhone: user.mobilePhone,
+        smsNotificationsEnabled: user.smsNotificationsEnabled,
+      });
+    } catch (error) {
+      console.error("Error fetching SMS settings:", error);
+      res.status(500).json({ message: "Failed to fetch SMS settings" });
+    }
+  });
+
+  // Update user SMS settings
+  app.put("/api/user/sms-settings", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { mobilePhone, smsNotificationsEnabled } = req.body;
+      
+      await storage.updateUser(userId, {
+        mobilePhone,
+        smsNotificationsEnabled,
+      });
+
+      res.json({ message: "SMS settings updated successfully" });
+    } catch (error) {
+      console.error("Error updating SMS settings:", error);
+      res.status(500).json({ message: "Failed to update SMS settings" });
+    }
+  });
+
+  // Test SMS endpoint
+  app.post("/api/user/test-sms", isAuthenticated, async (req: any, res) => {
+    try {
+      const { phoneNumber } = req.body;
+      
+      if (!phoneNumber) {
+        return res.status(400).json({ message: "Phone number is required" });
+      }
+
+      // Import SMS service dynamically to avoid import issues
+      const { smsService } = await import('./smsService');
+      const success = await smsService.testSMS(phoneNumber);
+      
+      if (success) {
+        res.json({ message: "SMS test sent successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to send SMS" });
+      }
+    } catch (error) {
+      console.error("Error sending test SMS:", error);
+      res.status(500).json({ message: "Failed to send test SMS" });
+    }
+  });
+
   // Send email notification as fallback
   app.post("/api/admin/send-email-notification", isAuthenticated, async (req: any, res) => {
     try {
