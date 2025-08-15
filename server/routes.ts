@@ -686,7 +686,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Deleted jobs functionality completely removed
+  // Deleted jobs functionality completely removed - return 404 to break cached components
+  app.get("/api/deleted-jobs", isAuthenticated, async (req: any, res) => {
+    res.status(404).json({ message: "Deleted jobs functionality has been removed" });
+  });
 
   // Get timesheet data for a specific job
   app.get("/api/jobs/:id/timesheets", isAuthenticated, async (req: any, res) => {
