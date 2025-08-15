@@ -80,7 +80,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
   // Define the deletion password - you can change this to whatever you prefer
-  const DELETION_PASSWORD = 'DELETE123'; // Change this password to whatever you want
+  const DELETION_PASSWORD = 'Festool1!'; // Change this password to whatever you want
   const [editingLaborEntry, setEditingLaborEntry] = useState<string | null>(null);
   const [editLaborHours, setEditLaborHours] = useState<string>("");
 
