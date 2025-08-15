@@ -16,7 +16,7 @@ import { generateJobPDF } from "@/lib/pdfGenerator";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { OrientationToggle } from "@/components/orientation-toggle";
 import { debounce } from "lodash";
-import { Upload, Download, Trash2, FileText, Clock, X, Edit, Mail } from "lucide-react";
+import { Upload, Download, Trash2, FileText, Clock, X, Edit, Mail, Users, RefreshCw } from "lucide-react";
 import type { Job, LaborEntry, Material, SubTrade, OtherCost, TipFee, JobFile } from "@shared/schema";
 
 interface JobSheetModalProps {
@@ -1479,17 +1479,21 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       data-testid="button-refresh-labor"
                       title="Sync all staff to this job"
                     >
-                      <i className="fas fa-sync"></i>
+                      <RefreshCw className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => setShowEmployeeManager(true)}
-                      data-testid="button-manage-employees"
-                      title="Manage employees"
-                    >
-                      <i className="fas fa-users"></i>
-                    </Button>
+                    {isAdmin && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowEmployeeManager(true)}
+                        data-testid="button-manage-employees"
+                        title="Manage employees"
+                        className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                      >
+                        <Users className="h-4 w-4 mr-1" />
+                        <span className="text-xs">Staff</span>
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardHeader>
