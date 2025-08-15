@@ -4,16 +4,14 @@ import "./index.css";
 // Cache buster: force new build hash
 console.log("BuildFlow Pro loaded fresh:", new Date().toISOString());
 
-// Force cache refresh with version
-console.log('BuildFlow Pro v1.0.9 - LANDSCAPE MODE DISABLED, FOCUS ON CORE FEATURES:', Date.now());
+// Force cache refresh with version - DELETED JOBS REMOVED
+console.log('BuildFlow Pro v2.0.0 - DELETED JOBS FUNCTIONALITY COMPLETELY REMOVED:', Date.now());
 
-// Clear any existing caches on load
+// Clear ALL caches on load - force fresh start
 if ('caches' in window) {
   caches.keys().then((names) => {
     names.forEach(name => {
-      if (name.startsWith('buildflow-pro-v1.0.0')) {
-        caches.delete(name);
-      }
+      caches.delete(name);
     });
   });
 }
