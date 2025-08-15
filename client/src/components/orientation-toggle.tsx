@@ -18,22 +18,18 @@ export function OrientationToggle({ show = false }: OrientationToggleProps) {
   const toggleOrientation = () => {
     setIsLandscape(!isLandscape);
     
-    const app = document.getElementById('app-container');
-    if (!app) return;
+    // Target the dialog content (job sheet or timesheet modal)
+    const dialogContent = document.querySelector('[role="dialog"]');
+    if (!dialogContent) return;
 
     if (!isLandscape) {
-      // Switch to landscape
-      app.style.transform = 'rotate(90deg)';
-      app.style.transformOrigin = 'center center';
-      app.style.width = '100vh';
-      app.style.height = '100vw';
-      app.style.position = 'fixed';
-      app.style.top = '0';
-      app.style.left = '0';
-      
-      // Adjust body to prevent scrolling issues
-      document.body.style.overflow = 'hidden';
-      document.documentElement.style.overflow = 'hidden';
+      // Switch to landscape - rotate the modal content
+      dialogContent.style.transform = 'rotate(90deg)';
+      dialogContent.style.transformOrigin = 'center center';
+      dialogContent.style.width = '90vh';
+      dialogContent.style.height = '90vw';
+      dialogContent.style.maxWidth = '90vh';
+      dialogContent.style.maxHeight = '90vw';
       
       // Center the rotated content
       const viewportWidth = window.innerWidth;
@@ -41,19 +37,26 @@ export function OrientationToggle({ show = false }: OrientationToggleProps) {
       const translateX = (viewportWidth - viewportHeight) / 2;
       const translateY = (viewportHeight - viewportWidth) / 2;
       
-      app.style.transform = `translate(${translateX}px, ${translateY}px) rotate(90deg)`;
+      dialogContent.style.transform = `translate(${translateX}px, ${translateY}px) rotate(90deg)`;
+      
+      // Adjust backdrop styling
+      const backdrop = document.querySelector('[data-state="open"]');
+      if (backdrop) {
+        backdrop.style.overflow = 'hidden';
+      }
     } else {
       // Switch back to portrait
-      app.style.transform = '';
-      app.style.transformOrigin = '';
-      app.style.width = '';
-      app.style.height = '';
-      app.style.position = '';
-      app.style.top = '';
-      app.style.left = '';
+      dialogContent.style.transform = '';
+      dialogContent.style.transformOrigin = '';
+      dialogContent.style.width = '';
+      dialogContent.style.height = '';
+      dialogContent.style.maxWidth = '';
+      dialogContent.style.maxHeight = '';
       
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
+      const backdrop = document.querySelector('[data-state="open"]');
+      if (backdrop) {
+        backdrop.style.overflow = '';
+      }
     }
   };
 
