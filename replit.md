@@ -54,8 +54,6 @@ Preferred communication style: Simple, everyday language.
 - **Timesheet Workflow**: Separation of draft (`Save All`) and submitted (`Submit Timesheet`) entries to prevent premature approval. Prevents duplicate timesheet entries.
 - **Timesheet Validation**: Low hours warning for submission if total hours < 76, leave type validation requiring hours > 0, and completion validation requiring all Monday-Friday entries to be filled. Allows multiple entries on unlocked weekend days.
 - **Custom Address Display**: Correct display of custom addresses in admin dashboard.
-- **Weekly Organizer**: Complete staff scheduling system with full CRUD operations. Admin view allows editing schedule entries for all employees across weekly periods. Staff view provides read-only access. Features include employee order consistency, visual separators, week navigation, and persistent data storage in PostgreSQL weekly_schedules table.
-- **Job Progress Indicators**: Replaced text badges with neat colored progress bars (8px-12px wide) across all job views. Colors: Blue (New), Yellow (In Progress), Orange (On Hold), Green (Complete), Purple (Ready for Billing). Hover tooltips show status text.
 
 # External Dependencies
 

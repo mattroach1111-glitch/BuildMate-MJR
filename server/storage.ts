@@ -12,7 +12,6 @@ import {
   notifications,
   emailProcessingLogs,
   emailProcessedDocuments,
-  weeklySchedules,
   type User,
   type UpsertUser,
   type Employee,
@@ -39,8 +38,6 @@ import {
   type InsertEmailProcessingLog,
   type EmailProcessedDocument,
   type InsertEmailProcessedDocument,
-  type WeeklySchedule,
-  type InsertWeeklySchedule,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sum, ne, gte, lte, lt, sql, isNull, or, ilike, inArray } from "drizzle-orm";
@@ -175,10 +172,6 @@ export interface IStorage {
   approveEmailProcessedDocument(id: string, jobId?: string): Promise<void>;
   rejectEmailProcessedDocument(id: string): Promise<void>;
   deleteOldRejectedEmailDocuments(cutoffTime: Date): Promise<void>;
-
-  // Weekly schedule operations
-  getWeeklySchedule(weekStartDate: string): Promise<WeeklySchedule[]>;
-  updateWeeklySchedule(weekStartDate: string, scheduleEntries: InsertWeeklySchedule[]): Promise<WeeklySchedule[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1715,38 +1708,6 @@ export class DatabaseStorage implements IStorage {
         lt(emailProcessedDocuments.processedAt, cutoffTime)
       ));
     console.log(`✅ Cleaned up old rejected documents`);
-  }
-
-  // Weekly schedule operations
-  async getWeeklySchedule(weekStartDate: string): Promise<WeeklySchedule[]> {
-    const schedules = await db
-      .select()
-      .from(weeklySchedules)
-      .where(eq(weeklySchedules.weekStartDate, weekStartDate))
-      .orderBy(weeklySchedules.employeeName);
-    
-    return schedules;
-  }
-
-  async updateWeeklySchedule(weekStartDate: string, scheduleEntries: InsertWeeklySchedule[]): Promise<WeeklySchedule[]> {
-    // Delete existing schedules for this week
-    await db
-      .delete(weeklySchedules)
-      .where(eq(weeklySchedules.weekStartDate, weekStartDate));
-
-    // Insert new schedule entries
-    if (scheduleEntries.length > 0) {
-      const entriesWithTimestamp = scheduleEntries.map(entry => ({
-        ...entry,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }));
-
-      await db.insert(weeklySchedules).values(entriesWithTimestamp);
-    }
-
-    // Return updated schedules
-    return this.getWeeklySchedule(weekStartDate);
   }
 
 

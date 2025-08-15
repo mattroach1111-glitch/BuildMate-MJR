@@ -240,13 +240,9 @@ export function JobsList() {
 
                   {/* Status & Date */}
                   <div className="space-y-2">
-                    <div className={`w-12 h-2 rounded-full ${
-                      job.status === 'ready_for_billing' ? 'bg-purple-500' :
-                      job.status === 'job_complete' ? 'bg-green-500' :
-                      job.status === 'job_in_progress' ? 'bg-yellow-500' :
-                      job.status === 'job_on_hold' ? 'bg-orange-500' :
-                      'bg-blue-400'
-                    }`} title={job.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} />
+                    <Badge className={getStatusColor(job.status)}>
+                      {job.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </Badge>
                     <p className="text-sm text-gray-600 flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {formatDate(job.createdAt)}

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Trash2, Lock, Unlock, ChevronLeft } from "lucide-react";
+import { FileText, Trash2, Lock, Unlock } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -215,18 +215,6 @@ export default function StaffTimesheet() {
   return (
     <PageLayout title="Daily Timesheet Entries">
       <div className="max-w-6xl mx-auto p-4">
-        {/* Back to Staff Dashboard Button */}
-        <div className="mb-4">
-          <Button 
-            variant="outline" 
-            onClick={() => window.location.href = '/staff'}
-            className="flex items-center gap-2"
-            data-testid="button-back-staff"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Back to Staff Dashboard
-          </Button>
-        </div>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

@@ -13,7 +13,6 @@ import { JobsList } from "@/pages/jobs-list";
 import NotFound from "@/pages/not-found";
 import FortnightTimesheetView from "@/pages/fortnight-timesheet-view";
 import StaffTimesheet from "@/pages/staff-timesheet";
-import StaffDashboard from "@/pages/staff-dashboard";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -36,15 +35,13 @@ function Router() {
           <Route path="/admin" component={AdminDashboard} />
           <Route path="/jobs" component={JobsList} />
           <Route path="/timesheet" component={FortnightTimesheetView} />
-          <Route path="/staff" component={StaffDashboard} />
-          <Route path="/staff-timesheet" component={StaffTimesheet} />
+          <Route path="/staff" component={AdminDashboard} />
         </>
       ) : (
         <>
-          <Route path="/" component={StaffDashboard} />
-          <Route path="/staff" component={StaffDashboard} />
+          <Route path="/" component={FortnightTimesheetView} />
+          <Route path="/staff" component={FortnightTimesheetView} />
           <Route path="/timesheet" component={FortnightTimesheetView} />
-          <Route path="/staff-timesheet" component={StaffTimesheet} />
         </>
       )}
       <Route component={NotFound} />

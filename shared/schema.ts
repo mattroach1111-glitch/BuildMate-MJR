@@ -157,19 +157,6 @@ export const notifications = pgTable("notifications", {
   dismissedAt: timestamp("dismissed_at"),
 });
 
-export const weeklySchedules = pgTable("weekly_schedules", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  employeeName: varchar("employee_name").notNull(),
-  weekStartDate: date("week_start_date").notNull(), // Monday of the week
-  monday: varchar("monday"),
-  tuesday: varchar("tuesday"), 
-  wednesday: varchar("wednesday"),
-  thursday: varchar("thursday"),
-  friday: varchar("friday"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   laborEntries: many(laborEntries),
@@ -331,12 +318,6 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
-export const insertWeeklyScheduleSchema = createInsertSchema(weeklySchedules).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
 // Email processing tracking table
 export const emailProcessingLogs = pgTable("email_processing_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -408,5 +389,3 @@ export type EmailProcessingLog = typeof emailProcessingLogs.$inferSelect;
 export type InsertEmailProcessingLog = z.infer<typeof insertEmailProcessingLogSchema>;
 export type EmailProcessedDocument = typeof emailProcessedDocuments.$inferSelect;
 export type InsertEmailProcessedDocument = z.infer<typeof insertEmailProcessedDocumentSchema>;
-export type WeeklySchedule = typeof weeklySchedules.$inferSelect;
-export type InsertWeeklySchedule = z.infer<typeof insertWeeklyScheduleSchema>;
