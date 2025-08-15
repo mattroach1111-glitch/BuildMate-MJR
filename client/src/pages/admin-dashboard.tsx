@@ -1878,13 +1878,88 @@ export default function AdminDashboard() {
                 
                 // Show individual jobs if no grouping or only one group
                 if (groupBy === 'none' || Object.keys(groupedJobs).length === 1) {
+                  // Special table view for "All Jobs" in search tab
+                  if (groupBy === 'none' && activeTab === 'search') {
+                    return (
+                      <div key={groupName} className="bg-white rounded-lg border overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead className="bg-gray-50 border-b">
+                              <tr>
+                                <th className="text-left p-4 font-medium text-gray-900">Address</th>
+                                <th className="text-left p-4 font-medium text-gray-900">Client</th>
+                                <th className="text-left p-4 font-medium text-gray-900">Project Manager</th>
+                                <th className="text-left p-4 font-medium text-gray-900">Status</th>
+                                <th className="text-left p-4 font-medium text-gray-900">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                              {groupJobs.map((job) => (
+                                <tr
+                                  key={job.id}
+                                  className="hover:bg-gray-50 cursor-pointer transition-colors"
+                                  onClick={() => setSelectedJob(job.id)}
+                                  data-testid={`row-job-${job.id}`}
+                                >
+                                  <td className="p-4">
+                                    <div className="font-medium text-gray-900">{job.jobAddress}</div>
+                                  </td>
+                                  <td className="p-4">
+                                    <div className="text-gray-600">{job.clientName}</div>
+                                  </td>
+                                  <td className="p-4">
+                                    <div className="text-gray-600">{job.projectManager || '-'}</div>
+                                  </td>
+                                  <td className="p-4">
+                                    <Badge className={getStatusColor(job.status)}>
+                                      {formatStatus(job.status)}
+                                    </Badge>
+                                  </td>
+                                  <td className="p-4">
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedJobForProgress(job.id);
+                                        }}
+                                        data-testid={`progress-${job.id}`}
+                                        title="View Progress Analytics"
+                                      >
+                                        <BarChart3 className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedJob(job.id);
+                                        }}
+                                        data-testid={`view-${job.id}`}
+                                        title="View Job Details"
+                                      >
+                                        <Eye className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Original card view for Job Management tab
                   return (
-                    <div key={groupName} className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-2"}>
+                    <div key={groupName} className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"}>
                       {groupJobs.map((job) => 
                         viewMode === 'grid' ? (
                           <Card 
                             key={job.id} 
-                            className="cursor-pointer hover:shadow-md transition-shadow"
+                            className="cursor-pointer hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50"
                             onClick={() => setSelectedJob(job.id)}
                             data-testid={`card-job-${job.id}`}
                           >
@@ -1897,37 +1972,39 @@ export default function AdminDashboard() {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-8 w-8 p-0"
+                                    className="h-8 w-8 p-0 bg-blue-50 hover:bg-blue-100 border-blue-200"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setSelectedJobForProgress(job.id);
                                     }}
                                     data-testid={`progress-${job.id}`}
+                                    title="View Progress Analytics"
                                   >
-                                    <BarChart3 className="h-4 w-4" />
+                                    <BarChart3 className="h-4 w-4 text-blue-600" />
                                   </Button>
                                 </div>
                               </div>
-                              <h3 className="font-semibold text-lg mb-2">{job.jobAddress}</h3>
-                              <p className="text-muted-foreground mb-2">{job.clientName}</p>
+                              <h3 className="font-semibold text-lg mb-2 text-gray-900">{job.jobAddress}</h3>
+                              <p className="text-gray-600 mb-2">{job.clientName}</p>
                               {job.projectManager && (
-                                <p className="text-sm text-muted-foreground">PM: {job.projectManager}</p>
+                                <p className="text-sm text-gray-500">PM: {job.projectManager}</p>
                               )}
                             </CardContent>
                           </Card>
                         ) : (
                           <Card 
                             key={job.id} 
-                            className="cursor-pointer hover:shadow-md transition-shadow"
+                            className="cursor-pointer hover:shadow-md transition-shadow border-0 bg-gradient-to-r from-white to-gray-50"
                             onClick={() => setSelectedJob(job.id)}
                             data-testid={`card-job-${job.id}`}
                           >
                             <CardContent className="p-4">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-3">
+                                  <div className={`w-3 h-3 rounded-full ${getStatusColor(job.status).replace('bg-', 'bg-').replace('text-white', '').replace('text-black', '')}`} />
                                   <div>
-                                    <h3 className="font-semibold">{job.jobAddress}</h3>
-                                    <p className="text-sm text-muted-foreground">
+                                    <h3 className="font-semibold text-gray-900">{job.jobAddress}</h3>
+                                    <p className="text-sm text-gray-600">
                                       {job.clientName}
                                       {job.projectManager && ` • PM: ${job.projectManager}`}
                                     </p>
@@ -1941,14 +2018,15 @@ export default function AdminDashboard() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="h-8 w-8 p-0"
+                                      className="h-8 w-8 p-0 bg-blue-50 hover:bg-blue-100 border-blue-200"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setSelectedJobForProgress(job.id);
                                       }}
                                       data-testid={`progress-${job.id}`}
+                                      title="View Progress Analytics"
                                     >
-                                      <BarChart3 className="h-4 w-4" />
+                                      <BarChart3 className="h-4 w-4 text-blue-600" />
                                     </Button>
                                   </div>
                                 </div>
