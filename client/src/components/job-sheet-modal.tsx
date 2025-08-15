@@ -782,6 +782,10 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const deleteEmployeeMutation = useMutation({
     mutationFn: async (employeeId: string) => {
       const response = await apiRequest("DELETE", `/api/employees/${employeeId}`);
+      // API returns 204 No Content on successful deletion
+      if (response.status === 204) {
+        return { success: true };
+      }
       return response.json();
     },
     onSuccess: () => {
