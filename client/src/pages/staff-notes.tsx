@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-// import { insertStaffNoteSchema } from '@shared/schema';
 import { z } from 'zod';
 import { apiRequest } from '@/lib/queryClient';
 import { Plus, Edit2, Trash2, DollarSign, Clock, ArrowLeft } from 'lucide-react';
