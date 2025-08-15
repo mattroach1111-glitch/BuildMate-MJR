@@ -1884,174 +1884,73 @@ export default function AdminDashboard() {
                         viewMode === 'grid' ? (
                           <Card 
                             key={job.id} 
-                            className={`cursor-pointer transition-shadow relative ${
-                              groupBy === 'none' 
-                                ? `${getJobCardColors(job).bg} border-gray-200 hover:shadow-md border`
-                                : 'hover:shadow-md bg-white'
-                            }`}
+                            className="cursor-pointer hover:shadow-md transition-shadow"
                             onClick={() => setSelectedJob(job.id)}
                             data-testid={`card-job-${job.id}`}
                           >
-                            <CardHeader className="pb-3">
-                              <div className="flex items-start justify-between">
-                                <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <div onClick={(e) => e.stopPropagation()}>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-8 w-8 p-0 bg-blue-50 hover:bg-blue-100 border-blue-200"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedJobForProgress(job.id);
-                                      }}
-                                      data-testid={`progress-${job.id}`}
-                                      title="View Progress Analytics"
-                                    >
-                                      <BarChart3 className="h-4 w-4 text-blue-600" />
-                                    </Button>
-                                  </div>
-                                  <div onClick={(e) => e.stopPropagation()}>
-                                    <Select 
-                                      value={job.status} 
-                                      onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
-                                    >
-                                      <SelectTrigger 
-                                        className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
-                                        data-testid={`select-status-${job.id}`}
-                                      >
-                                        <Badge className={`${getStatusColor(job.status)} text-xs`}>
-                                          {formatStatus(job.status)}
-                                        </Badge>
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="new_job">New Job</SelectItem>
-                                        <SelectItem value="job_in_progress">Job In Progress</SelectItem>
-                                        <SelectItem value="job_complete">Job Complete</SelectItem>
-                                        <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  {job.status === 'ready_for_billing' && (
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <Button 
-                                          variant="ghost" 
-                                          size="sm" 
-                                          className="h-7 w-7 p-0"
-                                          onClick={(e) => e.stopPropagation()}
-                                          data-testid={`menu-${job.id}`}
-                                        >
-                                          <MoreVertical className="h-3 w-3" />
-                                        </Button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent align="end">
-                                        <DropdownMenuItem 
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
-                                              deleteJobMutation.mutate(job.id);
-                                            }
-                                          }}
-                                          className="text-red-600 focus:text-red-600"
-                                          data-testid={`delete-job-${job.id}`}
-                                        >
-                                          <Trash2 className="h-4 w-4 mr-2" />
-                                          Delete Job
-                                        </DropdownMenuItem>
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
-                                  )}
+                            <CardContent className="p-6">
+                              <div className="flex items-center justify-between mb-4">
+                                <Badge className={getStatusColor(job.status)}>
+                                  {formatStatus(job.status)}
+                                </Badge>
+                                <div onClick={(e) => e.stopPropagation()}>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedJobForProgress(job.id);
+                                    }}
+                                    data-testid={`progress-${job.id}`}
+                                  >
+                                    <BarChart3 className="h-4 w-4" />
+                                  </Button>
                                 </div>
                               </div>
-                            </CardHeader>
+                              <h3 className="font-semibold text-lg mb-2">{job.jobAddress}</h3>
+                              <p className="text-muted-foreground mb-2">{job.clientName}</p>
+                              {job.projectManager && (
+                                <p className="text-sm text-muted-foreground">PM: {job.projectManager}</p>
+                              )}
+                            </CardContent>
                           </Card>
                         ) : (
                           <Card 
                             key={job.id} 
-                            className={`cursor-pointer transition-shadow relative ${
-                              groupBy === 'none' 
-                                ? `${getJobCardColors(job).bg} border-gray-200 hover:shadow-md border`
-                                : 'hover:shadow-md bg-white'
-                            }`}
+                            className="cursor-pointer hover:shadow-md transition-shadow"
                             onClick={() => setSelectedJob(job.id)}
                             data-testid={`card-job-${job.id}`}
                           >
-                            <CardContent className="p-3">
+                            <CardContent className="p-4">
                               <div className="flex items-center justify-between">
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="font-medium text-sm sm:text-base truncate">{job.jobAddress}</h3>
-                                  {job.clientName && (
-                                    <p className="text-xs text-muted-foreground mt-1 truncate">{job.clientName}</p>
-                                  )}
+                                <div className="flex items-center space-x-3">
+                                  <div>
+                                    <h3 className="font-semibold">{job.jobAddress}</h3>
+                                    <p className="text-sm text-muted-foreground">
+                                      {job.clientName}
+                                      {job.projectManager && ` • PM: ${job.projectManager}`}
+                                    </p>
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-2 shrink-0">
+                                <div className="flex items-center space-x-2">
+                                  <Badge className={getStatusColor(job.status)}>
+                                    {formatStatus(job.status)}
+                                  </Badge>
                                   <div onClick={(e) => e.stopPropagation()}>
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="h-8 w-8 p-0 bg-blue-50 hover:bg-blue-100 border-blue-200"
+                                      className="h-8 w-8 p-0"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setSelectedJobForProgress(job.id);
                                       }}
                                       data-testid={`progress-${job.id}`}
-                                      title="View Progress Analytics"
                                     >
-                                      <BarChart3 className="h-4 w-4 text-blue-600" />
+                                      <BarChart3 className="h-4 w-4" />
                                     </Button>
                                   </div>
-                                  <div onClick={(e) => e.stopPropagation()}>
-                                    <Select 
-                                      value={job.status} 
-                                      onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
-                                    >
-                                      <SelectTrigger 
-                                        className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
-                                        data-testid={`select-status-${job.id}`}
-                                      >
-                                        <Badge className={`${getStatusColor(job.status)} text-xs`}>
-                                          {formatStatus(job.status)}
-                                        </Badge>
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="new_job">New Job</SelectItem>
-                                        <SelectItem value="job_in_progress">Job In Progress</SelectItem>
-                                        <SelectItem value="job_complete">Job Complete</SelectItem>
-                                        <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  {job.status === 'ready_for_billing' && (
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <Button 
-                                          variant="ghost" 
-                                          size="sm" 
-                                          className="h-7 w-7 p-0"
-                                          onClick={(e) => e.stopPropagation()}
-                                          data-testid={`menu-${job.id}`}
-                                        >
-                                          <MoreVertical className="h-3 w-3" />
-                                        </Button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent align="end">
-                                        <DropdownMenuItem 
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
-                                              deleteJobMutation.mutate(job.id);
-                                            }
-                                          }}
-                                          className="text-red-600 focus:text-red-600"
-                                          data-testid={`delete-job-${job.id}`}
-                                        >
-                                          <Trash2 className="h-4 w-4 mr-2" />
-                                          Delete Job
-                                        </DropdownMenuItem>
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
-                                  )}
                                 </div>
                               </div>
                             </CardContent>
