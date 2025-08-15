@@ -3228,12 +3228,14 @@ export default function AdminDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="p-4 border rounded">
+                <div className="p-4 border rounded bg-white">
                   <h4 className="font-medium mb-2">Deleted Jobs Cleanup</h4>
                   <p className="text-sm text-muted-foreground mb-4">
                     This section will help you clean up old deleted jobs.
                   </p>
-                  <DeletedJobsView />
+                  <div className="min-h-[200px] bg-gray-50 border rounded p-4">
+                    <DeletedJobsView />
+                  </div>
                 </div>
               </CardContent>
             </Card>
