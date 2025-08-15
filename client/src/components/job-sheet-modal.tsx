@@ -888,9 +888,9 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   });
 
   // Handle file upload
-  const handleGetUploadParameters = async () => {
+  const handleGetUploadParameters = async (file: any) => {
     try {
-      console.log("Getting upload parameters...");
+      console.log("Getting upload parameters for file:", file.name);
       const response = await apiRequest("/api/job-files/upload-url", "POST");
       console.log("Upload URL response:", response);
       
@@ -912,9 +912,14 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       const data = await response.json();
       console.log("Upload URL data:", data);
       
+      if (!data.uploadURL) {
+        throw new Error("No upload URL received from server");
+      }
+      
       return {
-        method: "PUT" as const,
+        method: "PUT",
         url: data.uploadURL,
+        headers: {},
       };
     } catch (error) {
       console.error("Error getting upload parameters:", error);
@@ -928,16 +933,42 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   };
 
   const handleFileUploadComplete = (result: any) => {
+    console.log("Upload complete result:", result);
     if (result.successful && result.successful.length > 0) {
       result.successful.forEach((file: any) => {
-        const uploadURL = file.response?.uploadURL;
+        console.log("Processing successful file:", file);
+        // The object path should be the URL that was used for upload
+        const objectPath = file.uploadURL || file.response?.uploadURL || file.response?.url;
+        console.log("Object path for file:", objectPath);
+        
+        if (!objectPath) {
+          console.error("No object path found for uploaded file:", file);
+          toast({
+            title: "Upload Error",
+            description: `Failed to get object path for ${file.name}`,
+            variant: "destructive",
+          });
+          return;
+        }
+        
         uploadFileMutation.mutate({
           jobId,
           fileName: file.name,
           originalName: file.name,
           fileSize: file.size,
           mimeType: file.type,
-          objectPath: uploadURL,
+          objectPath: objectPath,
+        });
+      });
+    }
+    
+    if (result.failed && result.failed.length > 0) {
+      console.error("Failed uploads:", result.failed);
+      result.failed.forEach((file: any) => {
+        toast({
+          title: "Upload Failed",
+          description: `Failed to upload ${file.name}: ${file.error}`,
+          variant: "destructive",
         });
       });
     }
