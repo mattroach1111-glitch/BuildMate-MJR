@@ -1242,7 +1242,8 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
         className="sm:max-w-6xl sm:max-h-[95vh] 
                    max-sm:!fixed max-sm:!inset-0 max-sm:!w-screen max-sm:!h-screen max-sm:!max-w-none max-sm:!max-h-none 
@@ -1443,7 +1444,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
             <div className="space-y-6 p-4 sm:p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
             
             {/* Action Buttons - Now Scrollable */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full bg-white sticky top-0 z-10 pb-4 border-b">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full bg-white pb-4 border-b">
               {!isEditing ? (
                 <>
                   <Button 
@@ -2592,6 +2593,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
           )}
         </div>
       </DialogContent>
+      </Dialog>
       
       {/* Email PDF Dialog */}
       <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
@@ -2658,8 +2660,6 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
         </DialogContent>
       </Dialog>
       
-      {/* Show landscape toggle only in job sheet modal */}
-      <OrientationToggle show={true} />
-    </Dialog>
+    </>
   );
 }

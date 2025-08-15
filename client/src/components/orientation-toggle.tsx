@@ -63,7 +63,7 @@ export function OrientationToggle({ show = false }: OrientationToggleProps) {
       size="sm"
       onClick={toggleOrientation}
       className={cn(
-        "fixed top-4 right-4 z-50 bg-white shadow-md border-2",
+        "fixed top-4 right-4 z-[70] bg-white shadow-md border-2",
         isLandscape ? "border-blue-500" : "border-gray-300"
       )}
       data-testid="orientation-toggle"
