@@ -39,10 +39,9 @@ export function WeeklyOrganizer({ isAdminView = false }: WeeklyOrganizerProps) {
   const [editMode, setEditMode] = useState(false);
   const [scheduleData, setScheduleData] = useState<WeeklyScheduleEntry[]>([]);
 
-  // Predefined employee order matching your current system
+  // Predefined employee order as specified by user
   const employeeOrder = [
-    'Liam', 'Hamish', 'Greg', 'Tim', 'Logan', 'Jesse', 'Mark',
-    'Will', 'Truck', 'Scaffold', 'Plastering', 'Mark M', 'Labour'
+    'Matt', 'Mark', 'Will', 'Logan', 'Tim', 'Greg', 'Jesse', 'Liam', 'Hamish', 'Mark Plastering'
   ];
 
   const weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] as const;
@@ -259,22 +258,21 @@ export function WeeklyOrganizer({ isAdminView = false }: WeeklyOrganizerProps) {
               </thead>
               <tbody>
                 {scheduleData.map((entry, index) => {
-                  // Add visual separators for different sections
-                  const isSpecialRow = ['Truck', 'Plastering', 'Labour'].includes(entry.employeeName);
-                  const showSeparator = entry.employeeName === 'Will' || entry.employeeName === 'Plastering';
+                  // Add visual separator before Mark Plastering (bottom section)
+                  const showSeparator = entry.employeeName === 'Mark Plastering';
                   
                   return (
                     <React.Fragment key={entry.employeeName}>
                       {showSeparator && (
                         <tr>
                           <td colSpan={6} className="p-0">
-                            <div className="border-t border-muted"></div>
+                            <div className="border-t-2 border-muted"></div>
                           </td>
                         </tr>
                       )}
                       <tr 
                         className={`border-b hover:bg-muted/20 ${
-                          isSpecialRow ? 'bg-amber-50/50' : ''
+                          entry.employeeName === 'Mark Plastering' ? 'bg-amber-50/50' : ''
                         } ${index % 2 === 0 ? 'bg-card' : 'bg-muted/10'}`}
                       >
                         <td className="p-4">
