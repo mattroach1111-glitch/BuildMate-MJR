@@ -450,8 +450,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await db
         .select({
           id: staffNotes.id,
-          type: staffNotes.type,
-          notes: staffNotes.notes,
+          noteType: staffNotes.noteType,
+          title: staffNotes.title,
+          content: staffNotes.content,
           amount: staffNotes.amount,
           hours: staffNotes.hours,
           createdAt: staffNotes.createdAt,
@@ -469,7 +470,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .from(staffNotes)
         .leftJoin(employees, eq(staffNotes.employeeId, employees.id))
-        .leftJoin(users, eq(staffNotes.createdBy, users.id))
+        .leftJoin(users, eq(staffNotes.createdById, users.id))
         .orderBy(staffNotes.createdAt);
 
       res.json(result);
@@ -497,8 +498,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await db
         .select({
           id: staffNotes.id,
-          type: staffNotes.type,
-          notes: staffNotes.notes,
+          noteType: staffNotes.noteType,
+          title: staffNotes.title,
+          content: staffNotes.content,
           amount: staffNotes.amount,
           hours: staffNotes.hours,
           createdAt: staffNotes.createdAt,
@@ -516,7 +518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .from(staffNotes)
         .leftJoin(employees, eq(staffNotes.employeeId, employees.id))
-        .leftJoin(users, eq(staffNotes.createdBy, users.id))
+        .leftJoin(users, eq(staffNotes.createdById, users.id))
         .where(eq(staffNotes.id, staffNote.id));
 
       res.status(201).json(result[0]);
@@ -547,8 +549,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await db
         .select({
           id: staffNotes.id,
-          type: staffNotes.type,
-          notes: staffNotes.notes,
+          noteType: staffNotes.noteType,
+          title: staffNotes.title,
+          content: staffNotes.content,
           amount: staffNotes.amount,
           hours: staffNotes.hours,
           createdAt: staffNotes.createdAt,
@@ -566,7 +569,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .from(staffNotes)
         .leftJoin(employees, eq(staffNotes.employeeId, employees.id))
-        .leftJoin(users, eq(staffNotes.createdBy, users.id))
+        .leftJoin(users, eq(staffNotes.createdById, users.id))
         .where(eq(staffNotes.id, staffNote.id));
 
       res.json(result[0]);

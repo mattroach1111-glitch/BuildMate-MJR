@@ -21,6 +21,7 @@ import { Link } from 'wouter';
 type StaffNote = {
   id: string;
   noteType: 'banked_hours' | 'tool_bills' | 'general';
+  title: string;
   content: string;
   amount?: string;
   hours?: string;
@@ -156,7 +157,7 @@ export default function StaffNotes() {
   const handleEdit = (note: StaffNote) => {
     setEditingNote(note);
     form.reset({
-      title: '',
+      title: note.title || '',
       noteType: note.noteType,
       content: note.content,
       amount: note.amount || '',
@@ -328,7 +329,7 @@ export default function StaffNotes() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-type">
                             <SelectValue placeholder="Select type" />
@@ -351,7 +352,7 @@ export default function StaffNotes() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Employee</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-employee">
                             <SelectValue placeholder="Select employee" />
