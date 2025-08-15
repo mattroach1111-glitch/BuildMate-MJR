@@ -345,6 +345,7 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
+// Staff notes insert schema
 export const insertStaffNoteSchema = createInsertSchema(staffNotes).omit({
   id: true,
   createdAt: true,

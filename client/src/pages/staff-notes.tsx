@@ -44,7 +44,7 @@ type Employee = {
   lastName: string;
 };
 
-// Using local schema to avoid import issues
+// Staff notes form validation schema
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   noteType: z.enum(['banked_hours', 'tool_bills', 'general']),
