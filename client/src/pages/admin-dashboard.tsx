@@ -1996,16 +1996,15 @@ export default function AdminDashboard() {
                             onClick={() => setSelectedJob(job.id)}
                             data-testid={`card-job-${job.id}`}
                           >
-                            <CardContent className="p-4">
+                            <CardContent className="p-3">
                               <div className="flex items-center justify-between">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-4">
-                                    <div>
-                                      <h3 className="font-semibold text-lg">{job.jobAddress}</h3>
-                                    </div>
-                                  </div>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="font-medium text-sm sm:text-base truncate">{job.jobAddress}</h3>
+                                  {job.clientName && (
+                                    <p className="text-xs text-muted-foreground mt-1 truncate">{job.clientName}</p>
+                                  )}
                                 </div>
-                                <div className="flex items-center gap-3 shrink-0">
+                                <div className="flex items-center gap-2 shrink-0">
                                   <div onClick={(e) => e.stopPropagation()}>
                                     <Button
                                       variant="outline"
@@ -2196,7 +2195,7 @@ export default function AdminDashboard() {
                     </div>
                     
                     {isExpanded && (
-                      <div className={`mt-3 sm:mt-4 ${viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4" : "space-y-2"}`}>
+                      <div className={`mt-3 ${viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3" : "space-y-1.5"}`}>
                         {groupJobs.map((job) => 
                           viewMode === 'grid' ? (
                             <Card 
@@ -2205,10 +2204,15 @@ export default function AdminDashboard() {
                               onClick={() => setSelectedJob(job.id)}
                               data-testid={`card-job-${job.id}`}
                             >
-                            <CardHeader className="pb-3 p-3 sm:p-6">
+                            <CardHeader className="pb-2 p-3">
                               <div className="flex items-start justify-between gap-2">
-                                <CardTitle className="text-base sm:text-lg leading-tight flex-1 min-w-0">{job.jobAddress}</CardTitle>
-                                <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                                <div className="flex-1 min-w-0">
+                                  <CardTitle className="text-sm leading-tight truncate">{job.jobAddress}</CardTitle>
+                                  {job.clientName && (
+                                    <p className="text-xs text-muted-foreground mt-1 truncate">{job.clientName}</p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1 shrink-0">
                                   <div onClick={(e) => e.stopPropagation()}>
                                     <Button
                                       variant="outline"
@@ -2286,16 +2290,27 @@ export default function AdminDashboard() {
                               onClick={() => setSelectedJob(job.id)}
                               data-testid={`card-job-${job.id}`}
                             >
-                              <CardContent className="p-3 sm:p-4">
+                              <CardContent className="p-3">
                                 <div className="flex items-center justify-between gap-2">
                                   <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 sm:gap-4">
+                                    <div className="flex items-center gap-3">
+                                      <div className="flex-shrink-0">
+                                        <div className={`w-3 h-3 rounded-full ${
+                                          job.status === 'ready_for_billing' ? 'bg-green-500' :
+                                          job.status === 'job_complete' ? 'bg-blue-500' :
+                                          job.status === 'job_in_progress' ? 'bg-yellow-500' :
+                                          'bg-gray-400'
+                                        }`} />
+                                      </div>
                                       <div className="min-w-0 flex-1">
-                                        <h3 className="font-semibold text-base sm:text-lg truncate">{job.jobAddress}</h3>
+                                        <h3 className="font-medium text-sm sm:text-base truncate">{job.jobAddress}</h3>
+                                        {job.clientName && (
+                                          <p className="text-xs text-muted-foreground truncate">{job.clientName}</p>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+                                  <div className="flex items-center gap-2 shrink-0">
                                     <div onClick={(e) => e.stopPropagation()}>
                                       <Button
                                         variant="outline"
