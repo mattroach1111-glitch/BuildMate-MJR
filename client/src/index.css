@@ -7,6 +7,9 @@
 /* Force hide any persistent deleted jobs components */
 [data-testid*="deleted-jobs"],
 [data-testid*="previous-completed"],
+[data-testid*="completed-job"],
+[data-testid*="archived"],
+[data-testid*="archive"],
 .deleted-jobs-folder,
 .previous-completed-jobs {
   display: none !important;
@@ -14,7 +17,17 @@
 
 /* Hide any components with archive icon and "3" count that might be cached */
 .lucide-archive + * [data-count="3"],
-[aria-label*="Previous Completed"] {
+[aria-label*="Previous Completed"],
+[aria-label*="Completed Job"],
+[aria-label*="Archive"],
+*:contains("Previous Completed Job Sheets"),
+*:contains("3"):contains("job"):contains("sheet") {
+  display: none !important;
+}
+
+/* Aggressively hide any card/folder with Trash2 icon and "3" count */
+.lucide-trash-2 ~ *:contains("3"),
+[class*="card"]:has(.lucide-trash-2):has(*:contains("3")) {
   display: none !important;
 }
 
