@@ -954,7 +954,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
   // Custom employee sort order
   const employeeSortOrder = [
-    'Matt', 'Mark', 'Will', 'Logan', 'Tim', 'Greg', 'Jesse', 'Liam', 'Hamish', 'Mark Plastering'
+    'Matt', 'Mark', 'Will', 'Logan', 'Tim', 'Greg', 'Jesse', 'Liam', 'Hamish'
   ];
 
   const getSortedLaborEntries = (laborEntries: LaborEntry[]) => {
@@ -962,6 +962,15 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       const nameA = a.staff?.name || a.staffId;
       const nameB = b.staff?.name || b.staffId;
       
+      // Special case: Mark Plastering always goes to the bottom
+      const isMarkPlasteringA = nameA.toLowerCase().includes('mark plastering') || nameA.toLowerCase().includes('plastering');
+      const isMarkPlasteringB = nameB.toLowerCase().includes('mark plastering') || nameB.toLowerCase().includes('plastering');
+      
+      if (isMarkPlasteringA && !isMarkPlasteringB) return 1; // A goes after B
+      if (!isMarkPlasteringA && isMarkPlasteringB) return -1; // B goes after A
+      if (isMarkPlasteringA && isMarkPlasteringB) return 0; // Both are Mark Plastering, same position
+      
+      // For non-Mark Plastering employees, use the main sort order
       const indexA = employeeSortOrder.findIndex(name => 
         nameA.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(nameA.toLowerCase())
       );
