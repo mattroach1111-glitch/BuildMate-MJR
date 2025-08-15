@@ -1849,80 +1849,9 @@ export default function AdminDashboard() {
                 // Show individual jobs if no grouping or only one group
                 if (groupBy === 'none' || Object.keys(groupedJobs).length === 1) {
                   return (
-                    <div key={groupName} className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-2"}>
-                      {groupJobs.map((job) => 
-                        viewMode === 'grid' ? (
-                          <Card 
-                            key={job.id} 
-                            className={`cursor-pointer transition-shadow relative ${
-                              groupBy === 'none' 
-                                ? `${getJobCardColors(job).bg} border-gray-200 hover:shadow-md border`
-                                : 'hover:shadow-md bg-white'
-                            }`}
-                            onClick={() => setSelectedJob(job.id)}
-                            data-testid={`card-job-${job.id}`}
-                          >
-                            <CardHeader className="pb-3">
-                              <div className="flex items-start justify-between">
-                                <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <div onClick={(e) => e.stopPropagation()}>
-                                    <Select 
-                                      value={job.status} 
-                                      onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
-                                    >
-                                      <SelectTrigger 
-                                        className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
-                                        data-testid={`select-status-${job.id}`}
-                                      >
-                                        <Badge className={`${getStatusColor(job.status)} text-xs`}>
-                                          {formatStatus(job.status)}
-                                        </Badge>
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="new_job">New Job</SelectItem>
-                                        <SelectItem value="job_in_progress">Job In Progress</SelectItem>
-                                        <SelectItem value="job_complete">Job Complete</SelectItem>
-                                        <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  {job.status === 'ready_for_billing' && (
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <Button 
-                                          variant="ghost" 
-                                          size="sm" 
-                                          className="h-7 w-7 p-0"
-                                          onClick={(e) => e.stopPropagation()}
-                                          data-testid={`menu-${job.id}`}
-                                        >
-                                          <MoreVertical className="h-3 w-3" />
-                                        </Button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent align="end">
-                                        <DropdownMenuItem 
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
-                                              deleteJobMutation.mutate(job.id);
-                                            }
-                                          }}
-                                          className="text-red-600 focus:text-red-600"
-                                          data-testid={`delete-job-${job.id}`}
-                                        >
-                                          <Trash2 className="h-4 w-4 mr-2" />
-                                          Delete Job
-                                        </DropdownMenuItem>
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
-                                  )}
-                                </div>
-                              </div>
-                            </CardHeader>
-                          </Card>
-                        ) : (
-                          <Card 
+                    <div key={groupName} className="space-y-2">
+                      {groupJobs.map((job) => (
+                        <Card 
                             key={job.id} 
                             className={`cursor-pointer transition-shadow relative ${
                               groupBy === 'none' 
