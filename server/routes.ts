@@ -689,16 +689,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get deleted jobs for cleanup purposes
   app.get("/api/deleted-jobs", isAuthenticated, async (req: any, res) => {
     try {
+      console.log("Deleted jobs request from user:", req.user?.claims?.sub);
+      
+      if (!req.user?.claims?.sub) {
+        console.log("No user in request");
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
       const user = await storage.getUser(req.user.claims.sub);
-      if (user?.role !== "admin") {
+      console.log("User found:", { id: user?.id, role: user?.role });
+      
+      if (!user) {
+        console.log("User not found in database");
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (user.role !== "admin") {
+        console.log("User is not admin, role:", user.role);
         return res.status(403).json({ message: "Admin access required" });
       }
 
+      console.log("Fetching deleted jobs...");
       const deletedJobs = await storage.getDeletedJobs();
+      console.log("Found deleted jobs:", deletedJobs.length);
       res.json(deletedJobs);
     } catch (error) {
       console.error("Error fetching deleted jobs:", error);
-      res.status(500).json({ message: "Failed to fetch deleted jobs" });
+      res.status(500).json({ message: "Failed to fetch deleted jobs", error: error.message });
     }
   });
 

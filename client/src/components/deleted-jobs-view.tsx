@@ -12,10 +12,12 @@ export function DeletedJobsView() {
   const { toast } = useToast();
 
   // Fetch deleted jobs
-  const { data: deletedJobs, isLoading } = useQuery<Job[]>({
+  const { data: deletedJobs, isLoading, error } = useQuery<Job[]>({
     queryKey: ["/api/deleted-jobs"],
     retry: false,
   });
+
+  console.log("DeletedJobsView render:", { deletedJobs, isLoading, error });
 
   // Delete individual job permanently
   const deleteJobMutation = useMutation({
@@ -66,6 +68,22 @@ export function DeletedJobsView() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
           <p className="text-sm text-muted-foreground mt-2">Loading deleted jobs...</p>
         </div>
+      </div>
+    );
+  }
+
+  // Show error state if API call failed
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+        <FolderX className="h-16 w-16 text-destructive mb-4" />
+        <h3 className="text-lg font-semibold mb-2">Error Loading Deleted Jobs</h3>
+        <p className="text-sm text-muted-foreground max-w-md">
+          There was an error loading deleted jobs. The deleted jobs feature may need to be updated.
+        </p>
+        <p className="text-xs text-muted-foreground mt-2">
+          Error: {error?.message || 'Unknown error'}
+        </p>
       </div>
     );
   }
