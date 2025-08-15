@@ -16,7 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { insertTimesheetEntrySchema } from "@shared/schema";
 import { z } from "zod";
 import type { Job, TimesheetEntry } from "@shared/schema";
-import { Calendar, Clock, Plus, Trash2, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, Info, Target } from "lucide-react";
+import { Calendar, Clock, Plus, Trash2, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, Info, Target, Users, ClipboardList } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek, isSameWeek, parseISO } from "date-fns";
 import PageLayout from "@/components/page-layout";
 import { OnboardingTour, WelcomeAnimation } from "@/components/onboarding-tour";
@@ -44,7 +44,7 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
   } = useOnboarding();
   
   // Tab state for staff dashboard
-  const [activeTab, setActiveTab] = useState<"timesheet" | "organizer">("timesheet");
+  const [activeTab, setActiveTab] = useState<"home" | "timesheet" | "organizer">("home");
   
   // Current fortnight state
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -405,33 +405,72 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
 
   return (
     <PageLayout 
-      title={activeTab === "timesheet" ? "My Timesheet" : "Weekly Schedule"}
+      title={activeTab === "home" ? "BuildFlow Pro" : activeTab === "timesheet" ? "My Timesheet" : "Weekly Schedule"}
       subtitle={`Welcome back, ${(user as any)?.firstName || 'Staff'}`}
     >
       <div className="max-w-4xl mx-auto space-y-6" data-testid="container-timesheet">
-        {/* Tab Navigation */}
-        <div className="flex items-center justify-center gap-2">
-          <Button
-            variant={activeTab === "timesheet" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveTab("timesheet")}
-            className="flex items-center gap-2"
-            data-testid="tab-timesheet"
-          >
-            <Clock className="h-4 w-4" />
-            My Timesheet
-          </Button>
-          <Button
-            variant={activeTab === "organizer" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveTab("organizer")}
-            className="flex items-center gap-2"
-            data-testid="tab-organizer"
-          >
-            <Calendar className="h-4 w-4" />
-            Weekly Schedule
-          </Button>
-        </div>
+        {activeTab === "home" && (
+          /* Home Landing Page */
+          <div className="min-h-[60vh] flex items-center justify-center">
+            <div className="text-center space-y-8 max-w-md">
+              <div className="space-y-4">
+                <h1 className="text-3xl font-bold text-gray-900">Choose Your Task</h1>
+                <p className="text-lg text-gray-600">What would you like to do today?</p>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {/* Timesheet Button */}
+                <Card 
+                  className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 border-2 hover:border-blue-300"
+                  onClick={() => setActiveTab("timesheet")}
+                  data-testid="card-timesheet"
+                >
+                  <CardContent className="p-8 text-center space-y-4">
+                    <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center">
+                      <ClipboardList className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900">Timesheet</h3>
+                      <p className="text-gray-600 mt-2">Log your work hours and manage entries</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Organizer Button */}
+                <Card 
+                  className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 border-2 hover:border-green-300"
+                  onClick={() => setActiveTab("organizer")}
+                  data-testid="card-organizer"
+                >
+                  <CardContent className="p-8 text-center space-y-4">
+                    <div className="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+                      <Users className="h-8 w-8 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900">Weekly Organizer</h3>
+                      <p className="text-gray-600 mt-2">View weekly staff schedules</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab !== "home" && (
+          /* Back to Home Button */
+          <div className="flex justify-start">
+            <Button 
+              variant="outline" 
+              onClick={() => setActiveTab("home")}
+              className="flex items-center gap-2"
+              data-testid="button-back-home"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Back to Home
+            </Button>
+          </div>
+        )}
 
         {activeTab === "timesheet" ? (
       <div className="space-y-6">
