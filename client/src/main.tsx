@@ -1,6 +1,8 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+// Cache buster: force new build hash
+console.log("BuildFlow Pro loaded fresh:", new Date().toISOString());
 
 // Force cache refresh with version
 console.log('BuildFlow Pro v1.0.9 - LANDSCAPE MODE DISABLED, FOCUS ON CORE FEATURES:', Date.now());
