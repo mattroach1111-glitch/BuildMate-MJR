@@ -5,48 +5,9 @@
 @tailwind utilities;
 
 /* COMPLETELY REMOVE ALL DELETED/ARCHIVED JOB COMPONENTS */
-[data-testid*="deleted"],
-[data-testid*="archive"],
-[data-testid*="previous"],
-[data-testid*="completed"],
-[data-testid*="trash"],
-[class*="deleted"],
-[class*="archive"],
-[class*="previous"],
-[class*="completed"],
-.deleted-jobs-folder,
-.previous-completed-jobs,
-.archived-jobs {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  height: 0 !important;
-  width: 0 !important;
-  overflow: hidden !important;
-}
+/* Allow deleted jobs folder to be visible for cleanup */
 
-/* Hide any text containing these phrases */
-*:contains("Previous Completed"),
-*:contains("Job Sheets"),
-*:contains("Archive"),
-*:contains("Deleted"),
-span:contains("3"),
-div:contains("3") {
-  display: none !important;
-}
-
-/* Hide cards with specific icons and counts */
-.lucide-trash-2,
-.lucide-archive,
-svg[data-lucide="trash-2"],
-svg[data-lucide="archive"] {
-  display: none !important;
-}
-
-/* Nuclear option - hide anything with "3" in settings tab */
-[role="tabpanel"]:contains("Application Settings") *:contains("3") {
-  display: none !important;
-}
+/* Removed all CSS rules that were hiding archive/deleted elements */
 
 /* Remove aggressive overrides - allow deleted jobs folder to show for cleanup */
 
