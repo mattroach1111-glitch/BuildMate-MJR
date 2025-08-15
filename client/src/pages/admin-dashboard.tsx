@@ -40,7 +40,7 @@ import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor"
 import { EmailProcessingReview } from "@/components/EmailProcessingReview";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import { WeeklyOrganizer } from "@/components/weekly-organizer";
-import { DeletedJobsView } from "@/components/deleted-jobs-view";
+import { DeletedJobsSimple } from "@/components/deleted-jobs-simple";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -3234,7 +3234,7 @@ export default function AdminDashboard() {
                     This section will help you clean up old deleted jobs.
                   </p>
                   <div className="min-h-[200px] bg-gray-50 border rounded p-4">
-                    <DeletedJobsView />
+                    <DeletedJobsSimple />
                   </div>
                 </div>
               </CardContent>
