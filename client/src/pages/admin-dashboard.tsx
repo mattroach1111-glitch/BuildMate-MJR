@@ -800,39 +800,7 @@ export default function AdminDashboard() {
     },
   });
 
-  const resetDatabaseMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/admin/reset-database", {});
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/timesheets"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/timesheet"] });
-      toast({
-        title: "Success",
-        description: "Database reset successfully. All timesheet entries cleared and labor hours reset.",
-      });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to reset database",
-        variant: "destructive",
-      });
-    },
-  });
+  // Removed database reset functionality for production safety
 
   const editCustomAddressMutation = useMutation({
     mutationFn: async ({ entryId, address }: { entryId: string; address: string }) => {

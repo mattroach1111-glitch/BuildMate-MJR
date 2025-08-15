@@ -1909,24 +1909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin-only endpoint to reset database for testing
-  app.post("/api/admin/reset-database", isAuthenticated, isAdmin, async (req: any, res) => {
-    try {
-      // Clear all timesheet entries
-      await db.delete(timesheetEntries);
-      
-      // Reset all labor entries to 0 hours
-      await db.update(laborEntries).set({ hoursLogged: "0" });
-      
-      res.json({ 
-        message: "Database reset successfully. All timesheet entries cleared and labor hours reset to 0.",
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error("Error resetting database:", error);
-      res.status(500).json({ message: "Failed to reset database" });
-    }
-  });
+  // Removed database reset endpoint for production safety
 
   // Edit individual timesheet entry
   app.patch("/api/timesheet/:id", isAuthenticated, async (req: any, res) => {
