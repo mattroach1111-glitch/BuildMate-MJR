@@ -1,12 +1,5 @@
 import { useState, useRef } from "react";
 import type { ReactNode } from "react";
-import Uppy from "@uppy/core";
-import { DashboardModal, DragDrop } from "@uppy/react";
-import "@uppy/core/dist/style.min.css";
-import "@uppy/dashboard/dist/style.min.css";
-import "@uppy/drag-drop/dist/style.min.css";
-import AwsS3 from "@uppy/aws-s3";
-import type { UploadResult } from "@uppy/core";
 import { Button } from "@/components/ui/button";
 
 interface ObjectUploaderProps {
@@ -17,9 +10,7 @@ interface ObjectUploaderProps {
     url: string;
     headers?: Record<string, string>;
   }>;
-  onComplete?: (
-    result: UploadResult<Record<string, unknown>, Record<string, unknown>>
-  ) => void;
+  onComplete?: (result: any) => void;
   buttonClassName?: string;
   children: ReactNode;
 }
@@ -47,29 +38,80 @@ export function ObjectUploader({
   buttonClassName,
   children,
 }: ObjectUploaderProps) {
-  const [showModal, setShowModal] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const [uppy] = useState(() =>
-    new Uppy({
-      restrictions: {
-        maxNumberOfFiles,
-        maxFileSize,
-      },
-      autoProceed: true, // Auto-proceed for drag and drop
-    })
-      .use(AwsS3, {
-        shouldUseMultipart: false,
-        getUploadParameters: (file) => {
-          return onGetUploadParameters(file);
-        },
-      })
-      .on("complete", (result) => {
-        onComplete?.(result);
-        setShowModal(false);
-      })
-  );
+
+  const uploadFile = async (file: File) => {
+    try {
+      console.log("Starting upload for:", file.name);
+      setIsUploading(true);
+      
+      // Get upload parameters
+      const uploadParams = await onGetUploadParameters(file);
+      console.log("Upload params:", uploadParams);
+      
+      // Upload file directly
+      const uploadResponse = await fetch(uploadParams.url, {
+        method: uploadParams.method,
+        body: file,
+        headers: uploadParams.headers || {},
+      });
+      
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload failed: ${uploadResponse.status}`);
+      }
+      
+      console.log("Upload successful for:", file.name);
+      
+      return {
+        successful: [{
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          uploadURL: uploadParams.url,
+        }],
+        failed: []
+      };
+    } catch (error) {
+      console.error("Upload failed for:", file.name, error);
+      return {
+        successful: [],
+        failed: [{
+          name: file.name,
+          error: error.message,
+        }]
+      };
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleFiles = async (files: File[]) => {
+    // Check file count limit
+    if (files.length > maxNumberOfFiles) {
+      alert(`Maximum ${maxNumberOfFiles} files allowed`);
+      return;
+    }
+    
+    // Check file size limit
+    const oversizedFiles = files.filter(file => file.size > maxFileSize);
+    if (oversizedFiles.length > 0) {
+      alert(`File too large: ${oversizedFiles[0].name}. Maximum size: ${Math.round(maxFileSize / 1024 / 1024)}MB`);
+      return;
+    }
+    
+    // Upload files
+    const results = await Promise.all(files.map(uploadFile));
+    
+    // Combine results
+    const combinedResult = {
+      successful: results.flatMap(r => r.successful),
+      failed: results.flatMap(r => r.failed)
+    };
+    
+    onComplete?.(combinedResult);
+  };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -86,26 +128,13 @@ export function ObjectUploader({
     setIsDragging(false);
     
     const files = Array.from(e.dataTransfer.files);
-    files.forEach(file => {
-      uppy.addFile({
-        name: file.name,
-        type: file.type,
-        data: file,
-        source: 'drag-drop'
-      });
-    });
+    handleFiles(files);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    files.forEach(file => {
-      uppy.addFile({
-        name: file.name,
-        type: file.type,
-        data: file,
-        source: 'file-input'
-      });
-    });
+    handleFiles(files);
+    
     // Reset input so same file can be selected again
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -117,11 +146,11 @@ export function ObjectUploader({
       <div 
         className={`${buttonClassName} relative cursor-pointer transition-all duration-200 ${
           isDragging ? 'border-blue-500 bg-blue-50' : 'hover:border-gray-400'
-        }`}
+        } ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => !isUploading && fileInputRef.current?.click()}
         data-testid="drag-drop-upload-area"
       >
         <input
@@ -133,20 +162,20 @@ export function ObjectUploader({
           className="hidden"
           data-testid="file-input-hidden"
         />
-        {children}
-        {isDragging && (
+        {isUploading ? (
+          <div className="flex flex-col items-center gap-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <span className="text-sm text-gray-600">Uploading...</span>
+          </div>
+        ) : (
+          children
+        )}
+        {isDragging && !isUploading && (
           <div className="absolute inset-0 bg-blue-500 bg-opacity-10 border-2 border-dashed border-blue-500 rounded-lg flex items-center justify-center">
             <span className="text-blue-600 font-medium">Drop files here</span>
           </div>
         )}
       </div>
-
-      <DashboardModal
-        uppy={uppy}
-        open={showModal}
-        onRequestClose={() => setShowModal(false)}
-        proudlyDisplayPoweredByUppy={false}
-      />
     </div>
   );
 }
