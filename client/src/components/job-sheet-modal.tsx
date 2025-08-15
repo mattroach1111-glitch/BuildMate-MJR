@@ -1246,10 +1246,9 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
         className="sm:max-w-6xl sm:max-h-[95vh] 
-                   max-sm:!fixed max-sm:!inset-0 max-sm:!w-screen max-sm:!h-screen max-sm:!max-w-none max-sm:!max-h-none 
-                   max-sm:!rounded-none max-sm:!border-0 max-sm:!m-0 max-sm:!p-0 max-sm:!translate-x-0 max-sm:!translate-y-0 
-                   max-sm:!left-0 max-sm:!top-0 max-sm:!z-[60]
-                   overflow-hidden flex flex-col !bg-white" 
+                   max-sm:w-screen max-sm:h-screen max-sm:max-w-none max-sm:max-h-none 
+                   max-sm:rounded-none max-sm:border-0 max-sm:m-0 max-sm:p-0
+                   overflow-hidden flex flex-col bg-white" 
         style={{ WebkitOverflowScrolling: 'touch' }}
         aria-describedby="job-sheet-description"
       >
