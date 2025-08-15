@@ -3215,15 +3215,25 @@ export default function AdminDashboard() {
             <GoogleDriveIntegration />
             <UserManagement />
 
-            {/* Force clear any cached deleted jobs components */}
-            <div className="hidden">
-              {/* This ensures any cached components are overridden */}
-              <Card id="force-cache-clear" key={`cache-clear-${Date.now()}`}>
-                <CardHeader>
-                  <CardTitle>Cache Cleared</CardTitle>
-                </CardHeader>
-              </Card>
-            </div>
+            {/* Archived Job Sheets - REMOVED: All archived job functionality has been eliminated */}
+            <Card className="border-dashed border-gray-300">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-gray-500">
+                  <Trash2 className="h-5 w-5" />
+                  Archived Job Sheets
+                </CardTitle>
+                <CardDescription>
+                  Archive functionality has been completely removed from the system
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-4">
+                  <div className="text-sm text-gray-500">
+                    No archived jobs • Archive system disabled
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Placeholder for future integrations */}
             <Card>
