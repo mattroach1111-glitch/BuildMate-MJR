@@ -349,9 +349,6 @@ export const insertStaffNoteSchema = createInsertSchema(staffNotes).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-}).extend({
-  amount: z.string().or(z.number()).transform(val => val ? String(val) : undefined).optional(),
-  hours: z.string().or(z.number()).transform(val => val ? String(val) : undefined).optional(),
 });
 
 // Email processing tracking table
