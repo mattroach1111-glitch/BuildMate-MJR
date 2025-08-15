@@ -21,9 +21,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { insertJobSchema, insertEmployeeSchema, insertTimesheetEntrySchema } from "@shared/schema";
 import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
-import { JobProgressVisualization } from "@/components/JobProgressVisualization";
+
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, Grid3X3, List, Settings, UserPlus, Download, Edit, BarChart3, DollarSign, TrendingUp, Building2, Bell } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, Settings, UserPlus, Download, Edit, DollarSign, TrendingUp, Building2, Bell } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
@@ -72,7 +72,7 @@ export default function AdminDashboard() {
     skipTour 
   } = useOnboarding();
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
-  const [selectedJobForProgress, setSelectedJobForProgress] = useState<string | null>(null);
+
   const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
   const [isCreateEmployeeOpen, setIsCreateEmployeeOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<string | null>(null);
@@ -97,7 +97,7 @@ export default function AdminDashboard() {
   const [folderColors, setFolderColors] = useState<Record<string, number>>({});
   const [colorPickerOpen, setColorPickerOpen] = useState<string | null>(null);
   const [isDeletedFolderExpanded, setIsDeletedFolderExpanded] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const viewMode = 'list'; // Always use list view
   const [sortBy, setSortBy] = useState<'address' | 'client' | 'manager' | 'status'>('address');
   const [activeTab, setActiveTab] = useState("jobs");
   const [showEditAddressDialog, setShowEditAddressDialog] = useState(false);
@@ -1774,26 +1774,7 @@ export default function AdminDashboard() {
               />
             </div>
             <div className="flex gap-2 flex-wrap">
-              <div className="flex items-center gap-1 border rounded-md p-1">
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className="h-8 w-8 p-0"
-                  data-testid="button-grid-view"
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                  className="h-8 w-8 p-0"
-                  data-testid="button-list-view"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
+
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
                 <SelectTrigger 
                   className="w-auto min-w-32"
@@ -1886,21 +1867,6 @@ export default function AdminDashboard() {
                                 <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
                                 <div className="flex items-center gap-2 shrink-0">
                                   <div onClick={(e) => e.stopPropagation()}>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-8 w-8 p-0 bg-blue-50 hover:bg-blue-100 border-blue-200"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedJobForProgress(job.id);
-                                      }}
-                                      data-testid={`progress-${job.id}`}
-                                      title="View Progress Analytics"
-                                    >
-                                      <BarChart3 className="h-4 w-4 text-blue-600" />
-                                    </Button>
-                                  </div>
-                                  <div onClick={(e) => e.stopPropagation()}>
                                     <Select 
                                       value={job.status} 
                                       onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
@@ -1975,21 +1941,6 @@ export default function AdminDashboard() {
                                   )}
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
-                                  <div onClick={(e) => e.stopPropagation()}>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-8 w-8 p-0 bg-blue-50 hover:bg-blue-100 border-blue-200"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedJobForProgress(job.id);
-                                      }}
-                                      data-testid={`progress-${job.id}`}
-                                      title="View Progress Analytics"
-                                    >
-                                      <BarChart3 className="h-4 w-4 text-blue-600" />
-                                    </Button>
-                                  </div>
                                   <div onClick={(e) => e.stopPropagation()}>
                                     <Select 
                                       value={job.status} 
@@ -2257,7 +2208,19 @@ export default function AdminDashboard() {
                           ) : (
                             <Card 
                               key={job.id} 
-                              className="cursor-pointer hover:shadow-md transition-shadow bg-white relative"
+                              className="cursor-pointer hover:shadow-md transition-shadow bg-white relative border-l-4 border-r-4"
+                              style={{
+                                borderLeftColor: job.status === 'ready_for_billing' ? '#a855f7' :
+                                  job.status === 'job_complete' ? '#10b981' :
+                                  job.status === 'job_in_progress' ? '#f59e0b' :
+                                  job.status === 'job_on_hold' ? '#f97316' :
+                                  '#60a5fa',
+                                borderRightColor: job.status === 'ready_for_billing' ? '#a855f7' :
+                                  job.status === 'job_complete' ? '#10b981' :
+                                  job.status === 'job_in_progress' ? '#f59e0b' :
+                                  job.status === 'job_on_hold' ? '#f97316' :
+                                  '#60a5fa'
+                              }}
                               onClick={() => setSelectedJob(job.id)}
                               data-testid={`card-job-${job.id}`}
                             >
@@ -2265,15 +2228,6 @@ export default function AdminDashboard() {
                                 <div className="flex items-center justify-between gap-2">
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-3">
-                                      <div className="flex-shrink-0">
-                                        <div className={`w-3 h-3 rounded-full ${
-                                          job.status === 'ready_for_billing' ? 'bg-purple-500' :
-                                          job.status === 'job_complete' ? 'bg-green-500' :
-                                          job.status === 'job_in_progress' ? 'bg-yellow-500' :
-                                          job.status === 'job_on_hold' ? 'bg-orange-500' :
-                                          'bg-blue-400'
-                                        }`} />
-                                      </div>
                                       <div className="min-w-0 flex-1">
                                         <h3 className="font-medium text-sm sm:text-base truncate">{job.jobAddress}</h3>
                                         {job.clientName && (
@@ -2283,21 +2237,6 @@ export default function AdminDashboard() {
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-2 shrink-0">
-                                    <div onClick={(e) => e.stopPropagation()}>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8 w-8 p-0 bg-blue-50 hover:bg-blue-100 border-blue-200"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setSelectedJobForProgress(job.id);
-                                        }}
-                                        data-testid={`progress-${job.id}`}
-                                        title="View Progress Analytics"
-                                      >
-                                        <BarChart3 className="h-4 w-4 text-blue-600" />
-                                      </Button>
-                                    </div>
                                     <div onClick={(e) => e.stopPropagation()}>
                                       <Select 
                                         value={job.status} 
@@ -3519,12 +3458,7 @@ export default function AdminDashboard() {
           />
         )}
 
-        {/* Job Progress Visualization Modal */}
-        <JobProgressVisualization
-          jobId={selectedJobForProgress || ''}
-          isOpen={!!selectedJobForProgress}
-          onClose={() => setSelectedJobForProgress(null)}
-        />
+
 
         {/* Edit Custom Address Dialog */}
         <Dialog open={showEditAddressDialog} onOpenChange={setShowEditAddressDialog}>
