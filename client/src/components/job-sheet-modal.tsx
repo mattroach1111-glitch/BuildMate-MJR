@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { generateJobPDF } from "@/lib/pdfGenerator";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import { OrientationToggle } from "@/components/orientation-toggle";
 import { debounce } from "lodash";
 import { Upload, Download, Trash2, FileText, Clock, X, Edit, Mail } from "lucide-react";
 import type { Job, LaborEntry, Material, SubTrade, OtherCost, TipFee, JobFile } from "@shared/schema";
@@ -2656,6 +2657,9 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Show landscape toggle only in job sheet modal */}
+      <OrientationToggle show={true} />
     </Dialog>
   );
 }

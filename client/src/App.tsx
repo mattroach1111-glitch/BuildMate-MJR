@@ -53,13 +53,14 @@ function AppContent() {
   const { user, isAuthenticated } = useAuth();
   
   return (
-    <TooltipProvider>
-      <Toaster />
-      <Router />
-      <NotificationPopup userEmail={(user as any)?.email} />
-      {isAuthenticated && <PWAInstallPrompt />}
-      <OrientationToggle />
-    </TooltipProvider>
+    <div id="app-container">
+      <TooltipProvider>
+        <Toaster />
+        <Router />
+        <NotificationPopup userEmail={(user as any)?.email} />
+        {isAuthenticated && <PWAInstallPrompt />}
+      </TooltipProvider>
+    </div>
   );
 }
 

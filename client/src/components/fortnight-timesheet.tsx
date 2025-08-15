@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft, Users, Plus, Trash2, Save, Clock, CheckCircle, Calendar, Lock, Unlock, Edit } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { OrientationToggle } from "@/components/orientation-toggle";
 import { format, addDays, parseISO } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -2622,6 +2623,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         
         </div>
       </div>
+      
+      {/* Show landscape toggle only in timesheet */}
+      <OrientationToggle show={true} />
     </>
   );
 }

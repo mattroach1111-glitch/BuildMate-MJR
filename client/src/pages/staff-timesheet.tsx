@@ -11,6 +11,7 @@ import { format, addDays, parseISO } from "date-fns";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { OrientationToggle } from "@/components/orientation-toggle";
 import PageLayout from "@/components/page-layout";
 
 const FORTNIGHT_START_DATE = new Date(2025, 7, 11); // August 11, 2025 (month is 0-indexed)
@@ -538,6 +539,9 @@ export default function StaffTimesheet() {
           </DialogContent>
         </Dialog>
       </div>
+      
+      {/* Show landscape toggle only in staff timesheet */}
+      <OrientationToggle show={true} />
     </PageLayout>
   );
 }
