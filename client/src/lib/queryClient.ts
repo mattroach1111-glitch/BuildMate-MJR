@@ -58,6 +58,4 @@ export const queryClient = new QueryClient({
   },
 });
 
-// Force invalidate all deleted jobs related queries on startup
-queryClient.invalidateQueries({ queryKey: ['/api/deleted-jobs'] });
-queryClient.removeQueries({ queryKey: ['/api/deleted-jobs'] });
+// Deleted jobs functionality completely removed
