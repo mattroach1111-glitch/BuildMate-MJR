@@ -2213,12 +2213,12 @@ export default function AdminDashboard() {
                                 borderLeftColor: job.status === 'ready_for_billing' ? '#a855f7' :
                                   job.status === 'job_complete' ? '#10b981' :
                                   job.status === 'job_in_progress' ? '#f59e0b' :
-                                  job.status === 'job_on_hold' ? '#f97316' :
+                                  job.status === 'job_on_hold' ? '#ef4444' :
                                   '#60a5fa',
                                 borderRightColor: job.status === 'ready_for_billing' ? '#a855f7' :
                                   job.status === 'job_complete' ? '#10b981' :
                                   job.status === 'job_in_progress' ? '#f59e0b' :
-                                  job.status === 'job_on_hold' ? '#f97316' :
+                                  job.status === 'job_on_hold' ? '#ef4444' :
                                   '#60a5fa'
                               }}
                               onClick={() => setSelectedJob(job.id)}
