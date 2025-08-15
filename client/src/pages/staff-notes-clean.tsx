@@ -21,14 +21,14 @@ interface StaffMember {
 
 interface StaffNote {
   id: string;
-  type: 'banked_hours' | 'tool_cost' | 'general';
+  type: 'banked_hours' | 'tool_cost' | 'rdo_hours' | 'general';
   description: string;
   amount: number;
   date: string;
 }
 
 interface NoteFormData {
-  type: 'banked_hours' | 'tool_cost' | 'general';
+  type: 'banked_hours' | 'tool_cost' | 'rdo_hours' | 'general';
   description: string;
   amount: string;
 }
@@ -126,7 +126,7 @@ export default function StaffNotesClean() {
         };
 
         // Update running totals
-        if (newNote.type === 'banked_hours') {
+        if (newNote.type === 'banked_hours' || newNote.type === 'rdo_hours') {
           updatedMember.bankedHours += amount;
         } else if (newNote.type === 'tool_cost') {
           updatedMember.toolCostOwed += amount;
@@ -141,7 +141,7 @@ export default function StaffNotesClean() {
     setSelectedStaff(prev => {
       if (!prev) return null;
       const updated = { ...prev, notes: [...prev.notes, newNote] };
-      if (newNote.type === 'banked_hours') {
+      if (newNote.type === 'banked_hours' || newNote.type === 'rdo_hours') {
         updated.bankedHours += amount;
       } else if (newNote.type === 'tool_cost') {
         updated.toolCostOwed += amount;
@@ -175,7 +175,7 @@ export default function StaffNotesClean() {
         };
 
         // Update running totals
-        if (editingNote.type === 'banked_hours') {
+        if (editingNote.type === 'banked_hours' || editingNote.type === 'rdo_hours') {
           updatedMember.bankedHours += amountDiff;
         } else if (editingNote.type === 'tool_cost') {
           updatedMember.toolCostOwed += amountDiff;
@@ -207,7 +207,7 @@ export default function StaffNotesClean() {
           };
 
           // Update running totals
-          if (noteToDelete.type === 'banked_hours') {
+          if (noteToDelete.type === 'banked_hours' || noteToDelete.type === 'rdo_hours') {
             updatedMember.bankedHours -= noteToDelete.amount;
           } else if (noteToDelete.type === 'tool_cost') {
             updatedMember.toolCostOwed -= noteToDelete.amount;
@@ -221,7 +221,7 @@ export default function StaffNotesClean() {
       setSelectedStaff(prev => {
         if (!prev) return null;
         const updated = { ...prev, notes: prev.notes.filter(note => note.id !== noteId) };
-        if (noteToDelete.type === 'banked_hours') {
+        if (noteToDelete.type === 'banked_hours' || noteToDelete.type === 'rdo_hours') {
           updated.bankedHours -= noteToDelete.amount;
         } else if (noteToDelete.type === 'tool_cost') {
           updated.toolCostOwed -= noteToDelete.amount;
@@ -252,6 +252,7 @@ export default function StaffNotesClean() {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'banked_hours': return <Clock className="h-4 w-4" />;
+      case 'rdo_hours': return <Clock className="h-4 w-4" />;
       case 'tool_cost': return <DollarSign className="h-4 w-4" />;
       default: return <User className="h-4 w-4" />;
     }
@@ -260,6 +261,7 @@ export default function StaffNotesClean() {
   const getTypeBadgeColor = (type: string) => {
     switch (type) {
       case 'banked_hours': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      case 'rdo_hours': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
       case 'tool_cost': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
@@ -268,6 +270,7 @@ export default function StaffNotesClean() {
   const formatTypeName = (type: string) => {
     switch (type) {
       case 'banked_hours': return 'Banked Hours';
+      case 'rdo_hours': return 'RDO Hours';
       case 'tool_cost': return 'Tool Cost';
       default: return 'General';
     }
@@ -559,7 +562,7 @@ export default function StaffNotesClean() {
                             <div className={`font-semibold text-sm sm:text-base ${
                               note.amount > 0 ? 'text-green-600' : 'text-red-600'
                             }`}>
-                              {note.type === 'banked_hours' 
+                              {note.type === 'banked_hours' || note.type === 'rdo_hours'
                                 ? `${note.amount > 0 ? '+' : ''}${note.amount} hrs`
                                 : `${note.amount > 0 ? '+' : ''}$${Math.abs(note.amount).toFixed(2)}`
                               }
@@ -608,7 +611,7 @@ export default function StaffNotesClean() {
               <Label htmlFor="note-type" className="text-sm font-medium">Note Type</Label>
               <Select 
                 value={noteForm.type} 
-                onValueChange={(value: 'banked_hours' | 'tool_cost' | 'general') => 
+                onValueChange={(value: 'banked_hours' | 'tool_cost' | 'rdo_hours' | 'general') => 
                   setNoteForm(prev => ({ ...prev, type: value }))
                 }
               >
@@ -617,6 +620,7 @@ export default function StaffNotesClean() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="banked_hours">Banked Hours</SelectItem>
+                  <SelectItem value="rdo_hours">RDO Hours</SelectItem>
                   <SelectItem value="tool_cost">Tool Cost</SelectItem>
                   <SelectItem value="general">General Note</SelectItem>
                 </SelectContent>
@@ -638,15 +642,15 @@ export default function StaffNotesClean() {
 
             <div>
               <Label htmlFor="note-amount" className="text-sm font-medium">
-                {noteForm.type === 'banked_hours' ? 'Hours (+/-)' : 'Amount (+/-)'}
+                {noteForm.type === 'banked_hours' || noteForm.type === 'rdo_hours' ? 'Hours (+/-)' : 'Amount (+/-)'}
               </Label>
               <Input
                 id="note-amount"
                 type="number"
-                step={noteForm.type === 'banked_hours' ? '0.25' : '0.01'}
+                step={noteForm.type === 'banked_hours' || noteForm.type === 'rdo_hours' ? '0.25' : '0.01'}
                 value={noteForm.amount}
                 onChange={(e) => setNoteForm(prev => ({ ...prev, amount: e.target.value }))}
-                placeholder={noteForm.type === 'banked_hours' ? '8.0' : '50.00'}
+                placeholder={noteForm.type === 'banked_hours' || noteForm.type === 'rdo_hours' ? '8.0' : '50.00'}
                 data-testid="input-amount"
                 className="mt-1 h-11"
               />
