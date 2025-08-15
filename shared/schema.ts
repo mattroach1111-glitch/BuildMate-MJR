@@ -157,6 +157,21 @@ export const notifications = pgTable("notifications", {
   dismissedAt: timestamp("dismissed_at"),
 });
 
+export const staffNotes = pgTable("staff_notes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  employeeId: varchar("employee_id").notNull().references(() => employees.id, { onDelete: "cascade" }),
+  createdById: varchar("created_by_id").notNull().references(() => users.id),
+  noteType: varchar("note_type", { enum: ["banked_hours", "tool_bills", "general"] }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }), // For tracking monetary amounts
+  hours: decimal("hours", { precision: 5, scale: 2 }), // For tracking hours
+  dueDate: date("due_date"), // For bills or time-sensitive notes
+  status: varchar("status", { enum: ["active", "resolved", "overdue"] }).notNull().default("active"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   laborEntries: many(laborEntries),
@@ -166,6 +181,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 
 export const employeesRelations = relations(employees, ({ many }) => ({
   laborEntries: many(laborEntries),
+  staffNotes: many(staffNotes),
 }));
 
 export const jobsRelations = relations(jobs, ({ many }) => ({
@@ -246,6 +262,17 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
 }));
 
+export const staffNotesRelations = relations(staffNotes, ({ one }) => ({
+  employee: one(employees, {
+    fields: [staffNotes.employeeId],
+    references: [employees.id],
+  }),
+  createdBy: one(users, {
+    fields: [staffNotes.createdById],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertJobSchema = createInsertSchema(jobs).omit({
   id: true,
@@ -316,6 +343,15 @@ export const insertJobFileSchema = createInsertSchema(jobFiles).omit({
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
   id: true,
   createdAt: true,
+});
+
+export const insertStaffNoteSchema = createInsertSchema(staffNotes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  amount: z.string().or(z.number()).transform(val => val ? String(val) : undefined).optional(),
+  hours: z.string().or(z.number()).transform(val => val ? String(val) : undefined).optional(),
 });
 
 // Email processing tracking table
@@ -389,3 +425,5 @@ export type EmailProcessingLog = typeof emailProcessingLogs.$inferSelect;
 export type InsertEmailProcessingLog = z.infer<typeof insertEmailProcessingLogSchema>;
 export type EmailProcessedDocument = typeof emailProcessedDocuments.$inferSelect;
 export type InsertEmailProcessedDocument = z.infer<typeof insertEmailProcessedDocumentSchema>;
+export type StaffNote = typeof staffNotes.$inferSelect;
+export type InsertStaffNote = z.infer<typeof insertStaffNoteSchema>;

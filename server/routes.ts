@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { db } from "./db";
-import { timesheetEntries, laborEntries, users } from "@shared/schema";
+import { timesheetEntries, laborEntries, users, staffNotes, employees } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { TimesheetPDFGenerator } from "./pdfGenerator";
@@ -21,6 +21,7 @@ import {
   insertTimesheetEntrySchema,
   insertJobFileSchema,
   insertNotificationSchema,
+  insertStaffNoteSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -441,6 +442,161 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting employee:", error);
       res.status(500).json({ message: "Failed to delete employee" });
+    }
+  });
+
+  // Staff Notes endpoints
+  app.get("/api/staff-notes", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const result = await db
+        .select({
+          id: staffNotes.id,
+          type: staffNotes.type,
+          notes: staffNotes.notes,
+          amount: staffNotes.amount,
+          hours: staffNotes.hours,
+          createdAt: staffNotes.createdAt,
+          updatedAt: staffNotes.updatedAt,
+          employee: {
+            id: employees.id,
+            firstName: employees.firstName,
+            lastName: employees.lastName,
+          },
+          createdBy: {
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+          },
+        })
+        .from(staffNotes)
+        .leftJoin(employees, eq(staffNotes.employeeId, employees.id))
+        .leftJoin(users, eq(staffNotes.createdBy, users.id))
+        .orderBy(staffNotes.createdAt);
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching staff notes:", error);
+      res.status(500).json({ message: "Failed to fetch staff notes" });
+    }
+  });
+
+  app.post("/api/staff-notes", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const validatedData = insertStaffNoteSchema.parse({
+        ...req.body,
+        createdBy: userId,
+      });
+
+      const [staffNote] = await db
+        .insert(staffNotes)
+        .values(validatedData)
+        .returning();
+
+      // Fetch the created note with employee and creator details
+      const result = await db
+        .select({
+          id: staffNotes.id,
+          type: staffNotes.type,
+          notes: staffNotes.notes,
+          amount: staffNotes.amount,
+          hours: staffNotes.hours,
+          createdAt: staffNotes.createdAt,
+          updatedAt: staffNotes.updatedAt,
+          employee: {
+            id: employees.id,
+            firstName: employees.firstName,
+            lastName: employees.lastName,
+          },
+          createdBy: {
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+          },
+        })
+        .from(staffNotes)
+        .leftJoin(employees, eq(staffNotes.employeeId, employees.id))
+        .leftJoin(users, eq(staffNotes.createdBy, users.id))
+        .where(eq(staffNotes.id, staffNote.id));
+
+      res.status(201).json(result[0]);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: fromZodError(error).toString() });
+      }
+      console.error("Error creating staff note:", error);
+      res.status(500).json({ message: "Failed to create staff note" });
+    }
+  });
+
+  app.patch("/api/staff-notes/:id", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const validatedData = insertStaffNoteSchema.partial().parse(req.body);
+
+      const [staffNote] = await db
+        .update(staffNotes)
+        .set({
+          ...validatedData,
+          updatedAt: new Date(),
+        })
+        .where(eq(staffNotes.id, req.params.id))
+        .returning();
+
+      if (!staffNote) {
+        return res.status(404).json({ message: "Staff note not found" });
+      }
+
+      // Fetch the updated note with employee and creator details
+      const result = await db
+        .select({
+          id: staffNotes.id,
+          type: staffNotes.type,
+          notes: staffNotes.notes,
+          amount: staffNotes.amount,
+          hours: staffNotes.hours,
+          createdAt: staffNotes.createdAt,
+          updatedAt: staffNotes.updatedAt,
+          employee: {
+            id: employees.id,
+            firstName: employees.firstName,
+            lastName: employees.lastName,
+          },
+          createdBy: {
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+          },
+        })
+        .from(staffNotes)
+        .leftJoin(employees, eq(staffNotes.employeeId, employees.id))
+        .leftJoin(users, eq(staffNotes.createdBy, users.id))
+        .where(eq(staffNotes.id, staffNote.id));
+
+      res.json(result[0]);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: fromZodError(error).toString() });
+      }
+      console.error("Error updating staff note:", error);
+      res.status(500).json({ message: "Failed to update staff note" });
+    }
+  });
+
+  app.delete("/api/staff-notes/:id", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const [deletedNote] = await db
+        .delete(staffNotes)
+        .where(eq(staffNotes.id, req.params.id))
+        .returning();
+
+      if (!deletedNote) {
+        return res.status(404).json({ message: "Staff note not found" });
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting staff note:", error);
+      res.status(500).json({ message: "Failed to delete staff note" });
     }
   });
 

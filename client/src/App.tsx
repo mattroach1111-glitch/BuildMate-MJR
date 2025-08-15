@@ -14,6 +14,7 @@ import { JobsList } from "@/pages/jobs-list";
 import NotFound from "@/pages/not-found";
 import FortnightTimesheetView from "@/pages/fortnight-timesheet-view";
 import StaffTimesheet from "@/pages/staff-timesheet";
+import StaffNotes from "@/pages/staff-notes";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -37,11 +38,12 @@ function Router() {
           <Route path="/jobs" component={JobsList} />
           <Route path="/timesheet" component={FortnightTimesheetView} />
           <Route path="/staff" component={AdminDashboard} />
+          <Route path="/staff-notes" component={StaffNotes} />
         </>
       ) : (
         <>
-          <Route path="/" component={StaffDashboard} />
-          <Route path="/staff" component={StaffDashboard} />
+          <Route path="/" component={() => <StaffDashboard isAdminView={false} />} />
+          <Route path="/staff" component={() => <StaffDashboard isAdminView={false} />} />
           <Route path="/timesheet" component={FortnightTimesheetView} />
         </>
       )}

@@ -1457,6 +1457,10 @@ export default function AdminDashboard() {
                 <Eye className="h-4 w-4 mr-2" />
                 Staff View
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.location.href = '/staff-notes'} data-testid="menu-staff-notes">
+                <FileText className="h-4 w-4 mr-2" />
+                Staff Notes
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setActiveTab("pending-users")} data-testid="menu-pending-users">
                 <Users className="h-4 w-4 mr-2" />
