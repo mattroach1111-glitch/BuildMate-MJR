@@ -74,7 +74,7 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Welcome, {user?.name || 'Staff Member'}
+              Welcome
             </h1>
             <p className="text-gray-600">
               Choose what you'd like to access

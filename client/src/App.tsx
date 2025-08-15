@@ -9,6 +9,7 @@ import { PWAInstallPrompt } from "./components/pwa-install-prompt";
 import { OrientationToggle } from "./components/orientation-toggle";
 import Landing from "@/pages/landing";
 import AdminDashboard from "@/pages/admin-dashboard";
+import StaffDashboard from "@/pages/staff-dashboard";
 import { JobsList } from "@/pages/jobs-list";
 import NotFound from "@/pages/not-found";
 import FortnightTimesheetView from "@/pages/fortnight-timesheet-view";
@@ -39,8 +40,8 @@ function Router() {
         </>
       ) : (
         <>
-          <Route path="/" component={FortnightTimesheetView} />
-          <Route path="/staff" component={FortnightTimesheetView} />
+          <Route path="/" component={StaffDashboard} />
+          <Route path="/staff" component={StaffDashboard} />
           <Route path="/timesheet" component={FortnightTimesheetView} />
         </>
       )}
