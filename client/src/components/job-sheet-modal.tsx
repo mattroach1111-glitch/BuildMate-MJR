@@ -1443,8 +1443,8 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
           ) : (
             <div className="space-y-6 p-4 sm:p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
             
-            {/* Action Buttons - Now Scrollable */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full bg-white pb-4 border-b">
+            {/* Action Buttons - Scrollable with content */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full pb-4 border-b border-gray-200">
               {!isEditing ? (
                 <>
                   <Button 
