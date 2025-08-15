@@ -9,6 +9,8 @@ import { Trash2, FolderX, AlertTriangle } from "lucide-react";
 import type { Job } from "@shared/schema";
 
 export function DeletedJobsView() {
+  console.log("DeletedJobsView: Component is rendering");
+  
   const { toast } = useToast();
 
   // Fetch deleted jobs
@@ -18,6 +20,21 @@ export function DeletedJobsView() {
   });
 
   console.log("DeletedJobsView render:", { deletedJobs, isLoading, error });
+  
+  // Force render something visible for testing
+  if (true) {
+    return (
+      <div className="p-6 bg-blue-50 border-2 border-blue-300 rounded-lg">
+        <div className="text-center">
+          <h3 className="text-lg font-bold text-blue-800 mb-2">Deleted Jobs Management</h3>
+          <p className="text-sm text-blue-600 mb-4">Component is working! Data: {JSON.stringify({ isLoading, error: error?.message, count: deletedJobs?.length })}</p>
+          {isLoading && <p className="text-blue-500">Loading...</p>}
+          {error && <p className="text-red-500">Error: {error.message}</p>}
+          {deletedJobs && deletedJobs.length === 0 && <p className="text-green-600">No deleted jobs found (as expected)</p>}
+        </div>
+      </div>
+    );
+  }
 
   // Delete individual job permanently
   const deleteJobMutation = useMutation({
