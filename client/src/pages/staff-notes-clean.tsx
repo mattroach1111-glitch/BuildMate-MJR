@@ -7,9 +7,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Plus, Edit3, Trash2, DollarSign, Clock, User, ArrowLeft, Save, X, Calculator } from 'lucide-react';
+import { Plus, Edit3, Trash2, DollarSign, Clock, User, ArrowLeft, Save, X, Calculator, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'wouter';
+import jsPDF from 'jspdf';
 
 interface StaffMember {
   id: string;
@@ -136,6 +137,118 @@ export default function StaffNotesClean() {
     setEditingStaff(null);
     setEditStaffRate('');
     showToast('Hourly rate updated');
+  };
+
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    const margin = 20;
+    let yPosition = 30;
+
+    // Title
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Staff Notes Report', pageWidth / 2, yPosition, { align: 'center' });
+    
+    // Date
+    yPosition += 10;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated: ${format(new Date(), 'PPP')}`, pageWidth / 2, yPosition, { align: 'center' });
+    
+    yPosition += 20;
+
+    staff.forEach((member, memberIndex) => {
+      // Check if we need a new page
+      if (yPosition > 250) {
+        doc.addPage();
+        yPosition = 30;
+      }
+
+      // Staff member header
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${member.name}`, margin, yPosition);
+      yPosition += 8;
+
+      // Summary info
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const summaryText = `Banked Hours: ${member.bankedHours} | RDO Hours: ${member.rdoHours} | Rate: $${member.hourlyRate}/hr | Value: $${(member.bankedHours * member.hourlyRate).toFixed(2)} | Tools Owed: $${member.toolCostOwed.toFixed(2)}`;
+      doc.text(summaryText, margin, yPosition);
+      yPosition += 15;
+
+      if (member.notes.length === 0) {
+        doc.setFont('helvetica', 'italic');
+        doc.text('No notes recorded', margin + 5, yPosition);
+        yPosition += 10;
+      } else {
+        // Notes header
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Notes:', margin + 5, yPosition);
+        yPosition += 8;
+
+        // Sort notes by date (newest first)
+        const sortedNotes = [...member.notes].sort((a, b) => 
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+
+        sortedNotes.forEach((note, noteIndex) => {
+          // Check if we need a new page for notes
+          if (yPosition > 270) {
+            doc.addPage();
+            yPosition = 30;
+          }
+
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          
+          const typeText = note.type === 'banked_hours' ? 'Banked Hours' :
+                          note.type === 'rdo_hours' ? 'RDO Hours' :
+                          note.type === 'tool_cost' ? 'Tool Cost' : 'General';
+          
+          const amountText = note.type === 'banked_hours' || note.type === 'rdo_hours' 
+            ? `${note.amount > 0 ? '+' : ''}${note.amount} hrs`
+            : `${note.amount > 0 ? '+' : ''}$${Math.abs(note.amount).toFixed(2)}`;
+
+          // Note line
+          const noteText = `${format(new Date(note.date), 'MMM dd, yyyy')} | ${typeText} | ${amountText} | ${note.description}`;
+          
+          // Split long text if needed
+          const textLines = doc.splitTextToSize(noteText, pageWidth - margin * 2 - 10);
+          textLines.forEach((line: string) => {
+            doc.text(line, margin + 10, yPosition);
+            yPosition += 5;
+          });
+          yPosition += 2;
+        });
+      }
+
+      yPosition += 10;
+
+      // Add separator line if not last member
+      if (memberIndex < staff.length - 1) {
+        doc.setDrawColor(200, 200, 200);
+        doc.line(margin, yPosition, pageWidth - margin, yPosition);
+        yPosition += 15;
+      }
+    });
+
+    // Footer on last page
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+      doc.text('BuildFlow Pro - Staff Notes Report', margin, doc.internal.pageSize.height - 10);
+    }
+
+    // Save the PDF
+    const fileName = `staff-notes-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+    doc.save(fileName);
+    showToast('PDF report generated successfully');
   };
 
   const addNote = () => {
@@ -350,14 +463,25 @@ export default function StaffNotesClean() {
                 </p>
               </div>
             </div>
-            <Button 
-              onClick={() => setIsAddStaffOpen(true)} 
-              className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
-              data-testid="button-add-staff"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Staff Member
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button 
+                onClick={generatePDF} 
+                variant="outline"
+                className="flex-1 sm:flex-none"
+                data-testid="button-export-pdf"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export PDF
+              </Button>
+              <Button 
+                onClick={() => setIsAddStaffOpen(true)} 
+                className="bg-blue-600 hover:bg-blue-700 flex-1 sm:flex-none"
+                data-testid="button-add-staff"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Staff
+              </Button>
+            </div>
           </div>
 
           {/* Staff Grid */}
