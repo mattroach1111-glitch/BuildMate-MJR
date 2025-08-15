@@ -14,7 +14,7 @@ import { JobsList } from "@/pages/jobs-list";
 import NotFound from "@/pages/not-found";
 import FortnightTimesheetView from "@/pages/fortnight-timesheet-view";
 import StaffTimesheet from "@/pages/staff-timesheet";
-import StaffNotes from "@/pages/staff-notes-standalone";
+import StaffNotes from "@/pages/staff-notes-simple";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
