@@ -9,29 +9,24 @@ import { Trash2, FolderX, AlertTriangle } from "lucide-react";
 import type { Job } from "@shared/schema";
 
 export function DeletedJobsView() {
-  console.log("DeletedJobsView: Component is rendering");
-  
-  const { toast } = useToast();
-
-  // Fetch deleted jobs
-  const { data: deletedJobs, isLoading, error } = useQuery<Job[]>({
-    queryKey: ["/api/deleted-jobs"],
-    retry: false,
-  });
-
-  console.log("DeletedJobsView render:", { deletedJobs, isLoading, error });
-  
-  // Force render something visible for testing
-  if (true) {
+  try {
+    console.log("DeletedJobsView: Component is rendering");
+    
     return (
-      <div className="p-6 bg-blue-50 border-2 border-blue-300 rounded-lg">
+      <div className="w-full h-full bg-blue-100 border-4 border-blue-500 p-8 rounded-lg">
         <div className="text-center">
-          <h3 className="text-lg font-bold text-blue-800 mb-2">Deleted Jobs Management</h3>
-          <p className="text-sm text-blue-600 mb-4">Component is working! Data: {JSON.stringify({ isLoading, error: error?.message, count: deletedJobs?.length })}</p>
-          {isLoading && <p className="text-blue-500">Loading...</p>}
-          {error && <p className="text-red-500">Error: {error.message}</p>}
-          {deletedJobs && deletedJobs.length === 0 && <p className="text-green-600">No deleted jobs found (as expected)</p>}
+          <h1 className="text-2xl font-bold text-blue-800 mb-4">🟦 DELETED JOBS TEST 🟦</h1>
+          <p className="text-lg text-blue-700 mb-2">If you can see this blue box, the component is working!</p>
+          <p className="text-sm text-blue-600">This is a test render - component loaded successfully</p>
         </div>
+      </div>
+    );
+  } catch (error) {
+    console.error("DeletedJobsView error:", error);
+    return (
+      <div className="w-full h-full bg-red-100 border-4 border-red-500 p-8 rounded-lg">
+        <h1 className="text-xl font-bold text-red-800">ERROR IN COMPONENT</h1>
+        <p className="text-red-600">Error: {error?.message || 'Unknown error'}</p>
       </div>
     );
   }
