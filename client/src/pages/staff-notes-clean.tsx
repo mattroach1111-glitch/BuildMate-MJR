@@ -8,45 +8,46 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Plus, Edit3, Trash2, DollarSign, Clock, User, ArrowLeft, Save, X, Calculator } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { Link } from 'wouter';
 
-type StaffMember = {
+interface StaffMember {
   id: string;
   name: string;
   bankedHours: number;
   toolCostOwed: number;
   notes: StaffNote[];
-};
+}
 
-type StaffNote = {
+interface StaffNote {
   id: string;
   type: 'banked_hours' | 'tool_cost' | 'general';
   description: string;
   amount: number;
   date: string;
-};
+}
+
+interface NoteFormData {
+  type: 'banked_hours' | 'tool_cost' | 'general';
+  description: string;
+  amount: string;
+}
 
 const STORAGE_KEY = 'buildflow-staff-notes';
 
-export default function StaffNotesSimple() {
+export default function StaffNotesClean() {
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
   const [isAddNoteOpen, setIsAddNoteOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<StaffNote | null>(null);
   const [newStaffName, setNewStaffName] = useState('');
-  const [noteForm, setNoteForm] = useState<{
-    type: 'banked_hours' | 'tool_cost' | 'general';
-    description: string;
-    amount: string;
-  }>({
+  const [noteForm, setNoteForm] = useState<NoteFormData>({
     type: 'general',
     description: '',
     amount: '',
   });
-  const { toast } = useToast();
+  const [toastMessage, setToastMessage] = useState<string>('');
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -65,13 +66,15 @@ export default function StaffNotesSimple() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(staff));
   }, [staff]);
 
+  // Simple toast replacement
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(''), 3000);
+  };
+
   const addStaffMember = () => {
     if (!newStaffName.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a staff member name",
-        variant: "destructive",
-      });
+      showToast('Please enter a staff member name');
       return;
     }
 
@@ -86,10 +89,7 @@ export default function StaffNotesSimple() {
     setStaff(prev => [...prev, newMember]);
     setNewStaffName('');
     setIsAddStaffOpen(false);
-    toast({
-      title: "Success",
-      description: `Added ${newMember.name} to staff`,
-    });
+    showToast(`Added ${newMember.name} to staff`);
   };
 
   const deleteStaffMember = (id: string) => {
@@ -99,20 +99,13 @@ export default function StaffNotesSimple() {
       if (selectedStaff?.id === id) {
         setSelectedStaff(null);
       }
-      toast({
-        title: "Removed",
-        description: "Staff member removed",
-      });
+      showToast('Staff member removed');
     }
   };
 
   const addNote = () => {
     if (!selectedStaff || !noteForm.description.trim()) {
-      toast({
-        title: "Error", 
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
+      showToast('Please fill in all required fields');
       return;
     }
 
@@ -158,10 +151,7 @@ export default function StaffNotesSimple() {
 
     setNoteForm({ type: 'general', description: '', amount: '' });
     setIsAddNoteOpen(false);
-    toast({
-      title: "Success",
-      description: "Note added successfully",
-    });
+    showToast('Note added successfully');
   };
 
   const updateNote = () => {
@@ -199,10 +189,7 @@ export default function StaffNotesSimple() {
     setEditingNote(null);
     setNoteForm({ type: 'general', description: '', amount: '' });
     setIsAddNoteOpen(false);
-    toast({
-      title: "Success",
-      description: "Note updated successfully",
-    });
+    showToast('Note updated successfully');
   };
 
   const deleteNote = (noteId: string) => {
@@ -242,10 +229,7 @@ export default function StaffNotesSimple() {
         return updated;
       });
 
-      toast({
-        title: "Deleted",
-        description: "Note removed",
-      });
+      showToast('Note removed');
     }
   };
 
@@ -292,6 +276,13 @@ export default function StaffNotesSimple() {
   if (!selectedStaff) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        {/* Toast notification */}
+        {toastMessage && (
+          <div className="fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-md shadow-lg z-50">
+            {toastMessage}
+          </div>
+        )}
+
         <div className="max-w-6xl mx-auto px-4 py-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
@@ -437,6 +428,13 @@ export default function StaffNotesSimple() {
   // Individual staff member view
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      {/* Toast notification */}
+      {toastMessage && (
+        <div className="fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-md shadow-lg z-50">
+          {toastMessage}
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
