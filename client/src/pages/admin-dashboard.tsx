@@ -1394,6 +1394,8 @@ export default function AdminDashboard() {
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
       case "job_in_progress":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+      case "job_on_hold":
+        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200";
       case "job_complete":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
       case "ready_for_billing":
@@ -2244,6 +2246,7 @@ export default function AdminDashboard() {
                                       <SelectContent>
                                         <SelectItem value="new_job">New Job</SelectItem>
                                         <SelectItem value="job_in_progress">Job In Progress</SelectItem>
+                                        <SelectItem value="job_on_hold">Job On Hold</SelectItem>
                                         <SelectItem value="job_complete">Job Complete</SelectItem>
                                         <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
                                       </SelectContent>
@@ -2296,10 +2299,11 @@ export default function AdminDashboard() {
                                     <div className="flex items-center gap-3">
                                       <div className="flex-shrink-0">
                                         <div className={`w-3 h-3 rounded-full ${
-                                          job.status === 'ready_for_billing' ? 'bg-green-500' :
-                                          job.status === 'job_complete' ? 'bg-blue-500' :
+                                          job.status === 'ready_for_billing' ? 'bg-purple-500' :
+                                          job.status === 'job_complete' ? 'bg-green-500' :
                                           job.status === 'job_in_progress' ? 'bg-yellow-500' :
-                                          'bg-gray-400'
+                                          job.status === 'job_on_hold' ? 'bg-orange-500' :
+                                          'bg-blue-400'
                                         }`} />
                                       </div>
                                       <div className="min-w-0 flex-1">
@@ -2342,6 +2346,7 @@ export default function AdminDashboard() {
                                         <SelectContent>
                                           <SelectItem value="new_job">New Job</SelectItem>
                                           <SelectItem value="job_in_progress">Job In Progress</SelectItem>
+                                          <SelectItem value="job_on_hold">Job On Hold</SelectItem>
                                           <SelectItem value="job_complete">Job Complete</SelectItem>
                                           <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
                                         </SelectContent>
