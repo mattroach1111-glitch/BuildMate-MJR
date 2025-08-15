@@ -139,6 +139,101 @@ export default function StaffNotesClean() {
     showToast('Hourly rate updated');
   };
 
+  const generateIndividualPDF = (staffMember: StaffMember) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    const margin = 20;
+    let yPosition = 30;
+
+    // Title
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Staff Notes - ${staffMember.name}`, pageWidth / 2, yPosition, { align: 'center' });
+    
+    // Date
+    yPosition += 10;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated: ${format(new Date(), 'PPP')}`, pageWidth / 2, yPosition, { align: 'center' });
+    
+    yPosition += 20;
+
+    // Staff member header
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${staffMember.name}`, margin, yPosition);
+    yPosition += 8;
+
+    // Summary info
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const summaryText = `Banked Hours: ${staffMember.bankedHours} | RDO Hours: ${staffMember.rdoHours} | Rate: $${staffMember.hourlyRate}/hr | Value: $${(staffMember.bankedHours * staffMember.hourlyRate).toFixed(2)} | Tools Owed: $${staffMember.toolCostOwed.toFixed(2)}`;
+    doc.text(summaryText, margin, yPosition);
+    yPosition += 15;
+
+    if (staffMember.notes.length === 0) {
+      doc.setFont('helvetica', 'italic');
+      doc.text('No notes recorded', margin + 5, yPosition);
+      yPosition += 10;
+    } else {
+      // Notes header
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Notes:', margin + 5, yPosition);
+      yPosition += 8;
+
+      // Sort notes by date (newest first)
+      const sortedNotes = [...staffMember.notes].sort((a, b) => 
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+
+      sortedNotes.forEach((note, noteIndex) => {
+        // Check if we need a new page for notes
+        if (yPosition > 270) {
+          doc.addPage();
+          yPosition = 30;
+        }
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        
+        const typeText = note.type === 'banked_hours' ? 'Banked Hours' :
+                        note.type === 'rdo_hours' ? 'RDO Hours' :
+                        note.type === 'tool_cost' ? 'Tool Cost' : 'General';
+        
+        const amountText = note.type === 'banked_hours' || note.type === 'rdo_hours' 
+          ? `${note.amount > 0 ? '+' : ''}${note.amount} hrs`
+          : `${note.amount > 0 ? '+' : ''}$${Math.abs(note.amount).toFixed(2)}`;
+
+        // Note line
+        const noteText = `${format(new Date(note.date), 'MMM dd, yyyy')} | ${typeText} | ${amountText} | ${note.description}`;
+        
+        // Split long text if needed
+        const textLines = doc.splitTextToSize(noteText, pageWidth - margin * 2 - 10);
+        textLines.forEach((line: string) => {
+          doc.text(line, margin + 10, yPosition);
+          yPosition += 5;
+        });
+        yPosition += 2;
+      });
+    }
+
+    // Footer
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+      doc.text(`BuildFlow Pro - ${staffMember.name} Notes`, margin, doc.internal.pageSize.height - 10);
+    }
+
+    // Save the PDF
+    const fileName = `staff-notes-${staffMember.name.replace(/\s+/g, '-').toLowerCase()}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+    doc.save(fileName);
+    showToast(`PDF generated for ${staffMember.name}`);
+  };
+
   const generatePDF = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
@@ -497,18 +592,33 @@ export default function StaffNotesClean() {
                     <CardTitle className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
                       {member.name}
                     </CardTitle>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteStaffMember(member.id);
-                      }}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
-                      data-testid={`button-delete-staff-${member.id}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          generateIndividualPDF(member);
+                        }}
+                        className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1"
+                        data-testid={`button-export-staff-pdf-${member.id}`}
+                        title={`Export PDF for ${member.name}`}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteStaffMember(member.id);
+                        }}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
+                        data-testid={`button-delete-staff-${member.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
