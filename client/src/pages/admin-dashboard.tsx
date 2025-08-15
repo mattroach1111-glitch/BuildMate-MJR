@@ -3236,7 +3236,112 @@ export default function AdminDashboard() {
             <GoogleDriveIntegration />
             <UserManagement />
             
-
+            {/* Previous Completed Jobs Section */}
+            {deletedJobs && deletedJobs.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Trash2 className="h-5 w-5 text-muted-foreground" />
+                      Previous Completed Job Sheets
+                    </CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsDeletedFolderExpanded(!isDeletedFolderExpanded)}
+                      data-testid="button-toggle-deleted-folder"
+                    >
+                      {isDeletedFolderExpanded ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                      <Badge variant="secondary" className="ml-2">
+                        {deletedJobs.length}
+                      </Badge>
+                    </Button>
+                  </div>
+                  <CardDescription>
+                    Archived job sheets that have been moved to completed status
+                  </CardDescription>
+                </CardHeader>
+                {isDeletedFolderExpanded && (
+                  <CardContent>
+                    <div className="space-y-3">
+                      {deletedJobs.map((job) => (
+                        <Card 
+                          key={job.id}
+                          className="cursor-pointer hover:shadow-md transition-shadow"
+                          onClick={() => setSelectedJob(job.id)}
+                          data-testid={`card-deleted-job-${job.id}`}
+                        >
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                              <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">
+                                  Archived
+                                </Badge>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-7 w-7 p-0"
+                                      onClick={(e) => e.stopPropagation()}
+                                      data-testid={`menu-deleted-${job.id}`}
+                                    >
+                                      <MoreVertical className="h-3 w-3" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        restoreJobMutation.mutate(job.id);
+                                      }}
+                                      className="text-green-600 focus:text-green-600"
+                                      data-testid={`restore-job-${job.id}`}
+                                    >
+                                      <RotateCcw className="h-4 w-4 mr-2" />
+                                      Restore Job
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (confirm(`⚠️ PERMANENT DELETE WARNING\n\nThis will permanently delete the job "${job.jobAddress}" and ALL associated data including:\n• Labor entries\n• Materials\n• Sub-trades\n• Other costs\n• Timesheet entries\n• Job files\n\nThis action CANNOT be undone.\n\nAre you sure you want to permanently delete this job?`)) {
+                                          permanentDeleteJobMutation.mutate(job.id);
+                                        }
+                                      }}
+                                      className="text-red-600 focus:text-red-600 focus:bg-red-50 hover:bg-red-50 font-medium"
+                                      data-testid={`permanent-delete-job-${job.id}`}
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      🗑️ Permanently Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <p className="text-sm text-muted-foreground mb-2">PM: {job.projectManager || job.projectName}</p>
+                            <div className="text-xs text-muted-foreground">
+                              Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
+                            </div>
+                            <div className="text-xs text-red-600 mt-1">
+                              Archived: {job.deletedAt ? new Date(job.deletedAt).toLocaleDateString() : 'Unknown'}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            )}
 
             {/* Placeholder for future integrations */}
             <Card>
