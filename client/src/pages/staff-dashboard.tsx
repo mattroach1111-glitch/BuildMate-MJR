@@ -123,8 +123,11 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
               </Button>
             </div>
             
-            {/* Weekly Organizer */}
-            <WeeklyOrganizer isAdminView={false} />
+            {/* Weekly Organizer - Temporarily disabled for debugging */}
+            <div className="p-4 border rounded-lg bg-gray-50">
+              <p className="text-center text-gray-600">Weekly Organizer temporarily disabled for debugging</p>
+            </div>
+            {/* <WeeklyOrganizer isAdminView={false} /> */}
           </div>
         )}
       </div>
