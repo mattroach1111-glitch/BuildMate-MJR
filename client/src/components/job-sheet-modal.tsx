@@ -952,6 +952,37 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     }
   }, [jobDetails]);
 
+  // Custom employee sort order
+  const employeeSortOrder = [
+    'Matt', 'Mark', 'Will', 'Logan', 'Tim', 'Greg', 'Jesse', 'Liam', 'Hamish', 'Mark Plastering'
+  ];
+
+  const getSortedLaborEntries = (laborEntries: LaborEntry[]) => {
+    return [...laborEntries].sort((a, b) => {
+      const nameA = a.staff?.name || a.staffId;
+      const nameB = b.staff?.name || b.staffId;
+      
+      const indexA = employeeSortOrder.findIndex(name => 
+        nameA.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(nameA.toLowerCase())
+      );
+      const indexB = employeeSortOrder.findIndex(name => 
+        nameB.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(nameB.toLowerCase())
+      );
+      
+      // If both are in the sort order, sort by their position
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB;
+      }
+      
+      // If only one is in the sort order, prioritize it
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      
+      // If neither is in the sort order, sort alphabetically
+      return nameA.localeCompare(nameB);
+    });
+  };
+
   const calculateTotals = () => {
     if (!jobDetails) return { laborTotal: 0, materialsTotal: 0, subTradesTotal: 0, otherCostsTotal: 0, tipFeesTotal: 0, subtotal: 0, marginAmount: 0, subtotalWithMargin: 0, gstAmount: 0, total: 0 };
 
@@ -1547,7 +1578,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       </tr>
                     </thead>
                     <tbody className="space-y-2">
-                      {jobDetails.laborEntries.map((entry) => (
+                      {getSortedLaborEntries(jobDetails.laborEntries).map((entry) => (
                         <tr key={entry.id} className="border-b border-gray-100 group">
                           <td className="py-3">
                             <div className="flex items-center gap-2">
