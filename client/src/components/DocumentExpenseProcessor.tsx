@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { DocumentUploader } from "./DocumentUploader";
 import { DocumentPreviewModal } from "./DocumentPreviewModal";
 import { EmailInboxInfo } from "./EmailInboxInfo";
+import { JobAddressSearch } from "./job-address-search";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -540,18 +541,12 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
         {/* Job Selection */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Select Job</label>
-          <Select value={selectedJobId} onValueChange={setSelectedJobId}>
-            <SelectTrigger data-testid="select-job">
-              <SelectValue placeholder="Choose a job to add expenses to" />
-            </SelectTrigger>
-            <SelectContent>
-              {(jobs as any[]).map((job: any) => (
-                <SelectItem key={job.id} value={job.id} data-testid={`job-option-${job.id}`}>
-                  {job.jobAddress} - {job.clientName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <JobAddressSearch
+            value={selectedJobId}
+            onValueChange={setSelectedJobId}
+            jobs={jobs as any[]}
+            placeholder="Search job address..."
+          />
         </div>
 
         {/* Upload Area */}

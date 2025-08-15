@@ -1,6 +1,11 @@
 import { useState, useRef } from "react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
+import { MapPin } from "lucide-react";
 
 interface ObjectUploaderProps {
   maxNumberOfFiles?: number;
@@ -13,6 +18,7 @@ interface ObjectUploaderProps {
   onComplete?: (result: any) => void;
   buttonClassName?: string;
   children: ReactNode;
+  showExpenseFields?: boolean;
 }
 
 /**
@@ -37,10 +43,21 @@ export function ObjectUploader({
   onComplete,
   buttonClassName,
   children,
+  showExpenseFields = false,
 }: ObjectUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [showExpenseDialog, setShowExpenseDialog] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [expenseAmount, setExpenseAmount] = useState("");
+  const [selectedJobAddress, setSelectedJobAddress] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch jobs for address dropdown
+  const { data: jobs } = useQuery({
+    queryKey: ["/api/jobs"],
+    enabled: showExpenseFields,
+  });
 
   const uploadFile = async (file: File) => {
     try {
@@ -101,16 +118,39 @@ export function ObjectUploader({
       return;
     }
     
-    // Upload files
+    // If expense fields are enabled, show dialog first
+    if (showExpenseFields) {
+      setPendingFiles(files);
+      setShowExpenseDialog(true);
+      return;
+    }
+    
+    // Upload files directly
+    await uploadFiles(files);
+  };
+
+  const uploadFiles = async (files: File[]) => {
     const results = await Promise.all(files.map(uploadFile));
     
-    // Combine results
+    // Combine results and add expense data
     const combinedResult = {
-      successful: results.flatMap(r => r.successful),
+      successful: results.flatMap(r => r.successful.map(f => ({
+        ...f,
+        expenseAmount: expenseAmount ? parseFloat(expenseAmount) : undefined,
+        expenseAddress: selectedJobAddress || undefined,
+      }))),
       failed: results.flatMap(r => r.failed)
     };
     
     onComplete?.(combinedResult);
+  };
+
+  const handleExpenseSubmit = () => {
+    setShowExpenseDialog(false);
+    uploadFiles(pendingFiles);
+    setPendingFiles([]);
+    setExpenseAmount("");
+    setSelectedJobAddress("");
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -195,6 +235,63 @@ export function ObjectUploader({
           </div>
         )}
       </div>
+
+      {/* Simple Expense Dialog */}
+      {showExpenseDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Expense Document Details</h3>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="expense-amount">Amount ($)</Label>
+                <Input
+                  id="expense-amount"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={expenseAmount}
+                  onChange={(e) => setExpenseAmount(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="job-address">Job Address</Label>
+                <Select value={selectedJobAddress} onValueChange={setSelectedJobAddress}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select job address" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {jobs?.map((job: any) => (
+                      <SelectItem key={job.id} value={job.jobAddress}>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-3 w-3 text-gray-400" />
+                          {job.jobAddress}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowExpenseDialog(false);
+                  setPendingFiles([]);
+                  setExpenseAmount("");
+                  setSelectedJobAddress("");
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleExpenseSubmit} className="flex-1">
+                Upload
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
