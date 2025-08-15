@@ -77,8 +77,8 @@ export default function AdminDashboard() {
   const [deletePassword, setDeletePassword] = useState('');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
-  // Define the deletion password (you can store this securely or use environment variable)
-  const DELETION_PASSWORD = 'CONFIRM_DELETE_2024';
+  // Define the deletion password - you can change this to whatever you prefer
+  const DELETION_PASSWORD = 'DELETE123'; // Change this password to whatever you want
 
   const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
   const [isCreateEmployeeOpen, setIsCreateEmployeeOpen] = useState(false);
@@ -3663,7 +3663,7 @@ export default function AdminDashboard() {
                     data-testid="input-delete-password"
                   />
                   <p className="text-xs text-gray-500">
-                    Password: CONFIRM_DELETE_2024
+                    Password: {DELETION_PASSWORD}
                   </p>
                 </div>
 
