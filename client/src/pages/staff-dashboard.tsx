@@ -422,7 +422,7 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
                 {/* Timesheet Button */}
                 <Card 
                   className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 border-2 hover:border-blue-300"
-                  onClick={() => setActiveTab("timesheet")}
+                  onClick={handleViewFortnightTimesheet}
                   data-testid="card-timesheet"
                 >
                   <CardContent className="p-8 text-center space-y-4">

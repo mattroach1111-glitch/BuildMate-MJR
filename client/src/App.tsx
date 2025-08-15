@@ -42,7 +42,7 @@ function Router() {
         <>
           <Route path="/" component={StaffDashboard} />
           <Route path="/staff" component={StaffDashboard} />
-          <Route path="/timesheet" component={StaffDashboard} />
+          <Route path="/timesheet" component={FortnightTimesheetView} />
         </>
       )}
       <Route component={NotFound} />
