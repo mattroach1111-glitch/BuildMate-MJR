@@ -174,6 +174,30 @@ export function UserManagement() {
     },
   });
 
+  // Clear employee timesheet mutation
+  const clearTimesheetMutation = useMutation({
+    mutationFn: async (employeeId: string) => {
+      const response = await apiRequest("DELETE", `/api/admin/employee/${employeeId}/timesheets`);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/timesheets"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      
+      toast({
+        title: "Timesheet Cleared",
+        description: data.message,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Clear Failed",
+        description: error.message || "Failed to clear employee timesheet",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleUserEmployeeAssignment = () => {
     if (selectedUserId && selectedEmployeeId) {
       assignUserToEmployeeMutation.mutate({ userId: selectedUserId, employeeId: selectedEmployeeId });
@@ -305,6 +329,47 @@ export function UserManagement() {
                   
                   {/* Action buttons */}
                   <div className="flex items-center gap-2 ml-4">
+                    {/* Clear Timesheet Button (only show if user has an employee assignment) */}
+                    {user.employeeId && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                            data-testid={`button-clear-timesheet-${user.id}`}
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Clear Employee Timesheet</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to clear all timesheet entries for <strong>{[user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'this employee'}</strong>?
+                              <br /><br />
+                              <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border-l-4 border-amber-400 mt-3">
+                                <span className="text-amber-800 dark:text-amber-200 text-sm block">
+                                  <strong>Note:</strong> This will permanently delete all their timesheet entries and reset labor hours in associated job sheets. 
+                                  Use this when an employee encounters timesheet errors and needs a fresh start.
+                                </span>
+                              </div>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => clearTimesheetMutation.mutate(user.employeeId!)}
+                              disabled={clearTimesheetMutation.isPending}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              {clearTimesheetMutation.isPending ? "Clearing..." : "Clear Timesheet"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+
                     {/* Reset Assignment Button (only show if user has an assignment) */}
                     {user.employeeId && (
                       <AlertDialog>
@@ -315,7 +380,7 @@ export function UserManagement() {
                             className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 border-orange-200"
                             data-testid={`button-reset-assignment-${user.id}`}
                           >
-                            <RotateCcw className="h-4 w-4" />
+                            <Link className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>

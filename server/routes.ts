@@ -2115,6 +2115,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin endpoint to clear all timesheet entries for a specific employee
+  app.delete("/api/admin/employee/:employeeId/timesheets", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { employeeId } = req.params;
+      
+      // Verify the employee exists
+      const employee = await storage.getEmployee(employeeId);
+      if (!employee) {
+        return res.status(404).json({ message: "Employee not found" });
+      }
+      
+      // Get all timesheet entries for this employee
+      const entries = await db
+        .select()
+        .from(timesheetEntries)
+        .where(eq(timesheetEntries.staffId, employeeId));
+      
+      if (entries.length === 0) {
+        return res.json({ 
+          message: `No timesheet entries found for ${employee.firstName} ${employee.lastName}`,
+          deletedCount: 0 
+        });
+      }
+      
+      // Delete all timesheet entries for this employee
+      await db
+        .delete(timesheetEntries)
+        .where(eq(timesheetEntries.staffId, employeeId));
+      
+      // Also update labor hours for all jobs this employee worked on
+      const jobIds = [...new Set(entries.map(entry => entry.jobId).filter(Boolean))];
+      for (const jobId of jobIds) {
+        if (jobId) {
+          await storage.updateLaborHoursFromTimesheet(employeeId, jobId);
+        }
+      }
+      
+      console.log(`🗑️ Admin cleared ${entries.length} timesheet entries for employee ${employeeId}`);
+      
+      res.json({ 
+        message: `Successfully cleared ${entries.length} timesheet entries for ${employee.firstName} ${employee.lastName}`,
+        deletedCount: entries.length,
+        employeeName: `${employee.firstName} ${employee.lastName}`
+      });
+    } catch (error) {
+      console.error("Error clearing employee timesheets:", error);
+      res.status(500).json({ message: "Failed to clear employee timesheets" });
+    }
+  });
+
   // Job file routes
   // Get upload URL for job files
   app.post("/api/job-files/upload-url", isAuthenticated, async (req: any, res) => {
