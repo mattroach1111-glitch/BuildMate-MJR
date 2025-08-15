@@ -15,6 +15,7 @@ interface StaffMember {
   id: string;
   name: string;
   bankedHours: number;
+  hourlyRate: number;
   toolCostOwed: number;
   notes: StaffNote[];
 }
@@ -42,6 +43,9 @@ export default function StaffNotesClean() {
   const [isAddNoteOpen, setIsAddNoteOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<StaffNote | null>(null);
   const [newStaffName, setNewStaffName] = useState('');
+  const [newStaffRate, setNewStaffRate] = useState('');
+  const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
+  const [editStaffRate, setEditStaffRate] = useState('');
   const [noteForm, setNoteForm] = useState<NoteFormData>({
     type: 'general',
     description: '',
@@ -78,16 +82,20 @@ export default function StaffNotesClean() {
       return;
     }
 
+    const hourlyRate = parseFloat(newStaffRate) || 0;
+    
     const newMember: StaffMember = {
       id: Date.now().toString(),
       name: newStaffName.trim(),
       bankedHours: 0,
+      hourlyRate,
       toolCostOwed: 0,
       notes: [],
     };
 
     setStaff(prev => [...prev, newMember]);
     setNewStaffName('');
+    setNewStaffRate('');
     setIsAddStaffOpen(false);
     showToast(`Added ${newMember.name} to staff`);
   };
@@ -101,6 +109,31 @@ export default function StaffNotesClean() {
       }
       showToast('Staff member removed');
     }
+  };
+
+  const startEditStaffRate = (member: StaffMember) => {
+    setEditingStaff(member);
+    setEditStaffRate(member.hourlyRate.toString());
+  };
+
+  const updateStaffRate = () => {
+    if (!editingStaff) return;
+    
+    const newRate = parseFloat(editStaffRate) || 0;
+    
+    setStaff(prev => prev.map(member => 
+      member.id === editingStaff.id 
+        ? { ...member, hourlyRate: newRate }
+        : member
+    ));
+
+    if (selectedStaff?.id === editingStaff.id) {
+      setSelectedStaff(prev => prev ? { ...prev, hourlyRate: newRate } : null);
+    }
+
+    setEditingStaff(null);
+    setEditStaffRate('');
+    showToast('Hourly rate updated');
   };
 
   const addNote = () => {
@@ -351,6 +384,12 @@ export default function StaffNotesClean() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-green-600 flex-shrink-0" />
+                      <span className="text-sm font-medium">
+                        Value: <span className="text-green-600">${(member.bankedHours * member.hourlyRate).toFixed(2)}</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
                       <DollarSign className="h-4 w-4 text-red-600 flex-shrink-0" />
                       <span className="text-sm font-medium">
                         Tools: <span className="text-red-600">${member.toolCostOwed.toFixed(2)}</span>
@@ -403,6 +442,19 @@ export default function StaffNotesClean() {
                   onChange={(e) => setNewStaffName(e.target.value)}
                   placeholder="Enter full name"
                   data-testid="input-staff-name"
+                  className="mt-1 h-11"
+                />
+              </div>
+              <div>
+                <Label htmlFor="staff-rate" className="text-sm font-medium">Hourly Rate ($)</Label>
+                <Input
+                  id="staff-rate"
+                  type="number"
+                  step="0.01"
+                  value={newStaffRate}
+                  onChange={(e) => setNewStaffRate(e.target.value)}
+                  placeholder="45.00"
+                  data-testid="input-staff-rate"
                   onKeyDown={(e) => e.key === 'Enter' && addStaffMember()}
                   className="mt-1 h-11"
                 />
@@ -413,6 +465,7 @@ export default function StaffNotesClean() {
                   onClick={() => {
                     setIsAddStaffOpen(false);
                     setNewStaffName('');
+                    setNewStaffRate('');
                   }}
                   data-testid="button-cancel-staff"
                   className="flex-1 h-11"
@@ -421,6 +474,47 @@ export default function StaffNotesClean() {
                 </Button>
                 <Button onClick={addStaffMember} data-testid="button-save-staff" className="flex-1 h-11">
                   Add Staff
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Staff Rate Dialog */}
+        <Dialog open={!!editingStaff} onOpenChange={() => { setEditingStaff(null); setEditStaffRate(''); }}>
+          <DialogContent className="max-w-md mx-4 sm:mx-auto">
+            <DialogHeader>
+              <DialogTitle className="text-lg">Edit Hourly Rate - {editingStaff?.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-staff-rate" className="text-sm font-medium">Hourly Rate ($)</Label>
+                <Input
+                  id="edit-staff-rate"
+                  type="number"
+                  step="0.01"
+                  value={editStaffRate}
+                  onChange={(e) => setEditStaffRate(e.target.value)}
+                  placeholder="45.00"
+                  data-testid="input-edit-staff-rate"
+                  onKeyDown={(e) => e.key === 'Enter' && updateStaffRate()}
+                  className="mt-1 h-11"
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setEditingStaff(null);
+                    setEditStaffRate('');
+                  }}
+                  data-testid="button-cancel-edit-rate"
+                  className="flex-1 h-11"
+                >
+                  Cancel
+                </Button>
+                <Button onClick={updateStaffRate} data-testid="button-save-edit-rate" className="flex-1 h-11">
+                  Update Rate
                 </Button>
               </div>
             </div>
@@ -473,7 +567,7 @@ export default function StaffNotesClean() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3 mb-6 sm:mb-8">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-6 sm:mb-8">
           <Card className="border-l-4 border-l-blue-500">
             <CardHeader className="pb-2 px-4 pt-3">
               <div className="flex items-center gap-2">
@@ -485,7 +579,33 @@ export default function StaffNotesClean() {
               <div className="text-xl sm:text-2xl font-bold text-blue-600">
                 {selectedStaff.bankedHours}
               </div>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total accumulated</p>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Hours accumulated</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-green-500">
+            <CardHeader className="pb-2 px-4 pt-3">
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100">Hours Value</h3>
+              </div>
+            </CardHeader>
+            <CardContent className="px-4 pb-3">
+              <div className="text-xl sm:text-2xl font-bold text-green-600">
+                ${(selectedStaff.bankedHours * selectedStaff.hourlyRate).toFixed(2)}
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">@ ${selectedStaff.hourlyRate}/hr</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => startEditStaffRate(selectedStaff)}
+                  className="h-6 px-2 text-xs"
+                  data-testid="button-edit-rate"
+                >
+                  <Edit3 className="h-3 w-3" />
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
