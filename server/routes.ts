@@ -399,7 +399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const validatedData = insertEmployeeSchema.parse(req.body);
-      const employee = await storage.createEmployee(validatedData);
+      const employee = await storage.createEmployeeWithAllJobs(validatedData);
       res.status(201).json(employee);
     } catch (error) {
       if (error instanceof z.ZodError) {
