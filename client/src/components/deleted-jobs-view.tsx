@@ -6,7 +6,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Trash2, FolderX, AlertTriangle, RotateCcw } from "lucide-react";
+import { Trash2, FolderX, AlertTriangle } from "lucide-react";
 import type { Job } from "@shared/schema";
 
 export function DeletedJobsView() {
@@ -70,7 +70,7 @@ export function DeletedJobsView() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
-        <RotateCcw className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
         <p className="text-sm text-muted-foreground">Loading deleted jobs...</p>
       </div>
     );
