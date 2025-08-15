@@ -778,6 +778,41 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     },
   });
 
+  // Employee deletion mutation
+  const deleteEmployeeMutation = useMutation({
+    mutationFn: async (employeeId: string) => {
+      const response = await apiRequest("DELETE", `/api/employees/${employeeId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
+      toast({
+        title: "Success",
+        description: "Employee deleted successfully",
+      });
+      setShowEmployeeManager(false);
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete employee",
+        variant: "destructive",
+      });
+    },
+  });
+
   // File upload mutations
   const uploadFileMutation = useMutation({
     mutationFn: async (fileData: { 
