@@ -115,20 +115,38 @@ export function ObjectUploader({
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragging(false);
+    e.stopPropagation();
+    // Only set dragging to false if we're leaving the actual drop zone
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
+      setIsDragging(false);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
     
     const files = Array.from(e.dataTransfer.files);
-    handleFiles(files);
+    if (files.length > 0) {
+      handleFiles(files);
+    }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -144,10 +162,11 @@ export function ObjectUploader({
   return (
     <div>
       <div 
-        className={`${buttonClassName} relative cursor-pointer transition-all duration-200 ${
-          isDragging ? 'border-blue-500 bg-blue-50' : 'hover:border-gray-400'
+        className={`${buttonClassName} relative cursor-pointer transition-all duration-200 border-2 border-dashed ${
+          isDragging ? 'border-blue-500 bg-blue-50 scale-105' : 'border-gray-300 hover:border-gray-400'
         } ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
         onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => !isUploading && fileInputRef.current?.click()}
