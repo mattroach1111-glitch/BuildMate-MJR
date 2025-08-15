@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { insertStaffNoteSchema } from '@shared/schema';
+// Temporarily comment out to fix import issue
+// import { insertStaffNoteSchema } from '@shared/schema';
 import { z } from 'zod';
 import { apiRequest } from '@/lib/queryClient';
 import { Plus, Edit2, Trash2, DollarSign, Clock, ArrowLeft } from 'lucide-react';
@@ -44,7 +45,12 @@ type Employee = {
   lastName: string;
 };
 
-const formSchema = insertStaffNoteSchema.extend({
+// Temporary schema until import issue is fixed
+const formSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  noteType: z.enum(['banked_hours', 'tool_bills', 'general']),
+  content: z.string().min(1, "Content is required"),
+  employeeId: z.string().min(1, "Employee is required"),
   amount: z.string().optional(),
   hours: z.string().optional(),
 });
