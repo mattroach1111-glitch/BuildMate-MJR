@@ -180,34 +180,7 @@ table tr.weekend-row button {
     }
   }
 
-/* Landscape mode - NATIVE ORIENTATION WITH CSS FALLBACK */
-html.landscape-mode {
-  /* Only apply CSS rotation if native orientation isn't available */
-  overflow: auto !important;
-}
-
-/* CSS fallback for browsers without orientation lock */
-@media (max-width: 768px) {
-  body.landscape-mode {
-    /* Only rotate if we're on mobile and native orientation failed */
-    transform: rotate(90deg) !important;
-    transform-origin: center center !important;
-    width: 100vh !important;
-    height: 100vw !important;
-    position: fixed !important;
-    top: calc((100vh - 100vw) / 2) !important;
-    left: calc((100vw - 100vh) / 2) !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-
-  body.landscape-mode #root {
-    width: 100% !important;
-    min-height: 100% !important;
-    overflow: visible !important;
-  }
-}
+/* Landscape mode disabled - users can physically rotate phones */
 
 /* Fix portal positioning in landscape mode */
 html.landscape-mode [data-radix-dropdown-menu-content],

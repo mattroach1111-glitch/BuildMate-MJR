@@ -3,7 +3,7 @@ import App from "./App";
 import "./index.css";
 
 // Force cache refresh with version
-console.log('BuildFlow Pro v1.0.8 - NATIVE ORIENTATION API:', Date.now());
+console.log('BuildFlow Pro v1.0.9 - LANDSCAPE MODE DISABLED, FOCUS ON CORE FEATURES:', Date.now());
 
 // Clear any existing caches on load
 if ('caches' in window) {
