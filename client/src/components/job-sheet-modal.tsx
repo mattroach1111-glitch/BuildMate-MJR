@@ -858,7 +858,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
   const deleteFileMutation = useMutation({
     mutationFn: async (fileId: string) => {
-      return await apiRequest(`/api/job-files/${fileId}`, "DELETE");
+      return await apiRequest("DELETE", `/api/job-files/${fileId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId, "files"] });
