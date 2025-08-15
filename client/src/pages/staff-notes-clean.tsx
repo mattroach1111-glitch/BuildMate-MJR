@@ -283,28 +283,28 @@ export default function StaffNotesClean() {
           </div>
         )}
 
-        <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
-              <Link href="/admin-dashboard">
-                <Button variant="ghost" size="sm" data-testid="button-back-admin">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <Link href="/">
+                <Button variant="ghost" size="sm" data-testid="button-back-admin" className="self-start">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Admin
+                  Back to Dashboard
                 </Button>
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
                   Staff Notes Manager
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
-                  Track banked hours, tool costs, and general notes for your team
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
+                  Track banked hours, tool costs, and general notes
                 </p>
               </div>
             </div>
             <Button 
               onClick={() => setIsAddStaffOpen(true)} 
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
               data-testid="button-add-staff"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -313,16 +313,16 @@ export default function StaffNotesClean() {
           </div>
 
           {/* Staff Grid */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {staff.map((member) => (
               <Card 
                 key={member.id} 
                 className="hover:shadow-lg transition-all duration-200 cursor-pointer border-2 hover:border-blue-200 dark:hover:border-blue-700"
                 onClick={() => setSelectedStaff(member)}
               >
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-2 sm:pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <CardTitle className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
                       {member.name}
                     </CardTitle>
                     <Button
@@ -332,29 +332,29 @@ export default function StaffNotesClean() {
                         e.stopPropagation();
                         deleteStaffMember(member.id);
                       }}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
                       data-testid={`button-delete-staff-${member.id}`}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
+                <CardContent className="pt-0">
+                  <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-blue-600" />
+                      <Clock className="h-4 w-4 text-blue-600 flex-shrink-0" />
                       <span className="text-sm font-medium">
-                        Banked Hours: <span className="text-blue-600">{member.bankedHours}</span>
+                        Hours: <span className="text-blue-600">{member.bankedHours}</span>
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-red-600" />
+                      <DollarSign className="h-4 w-4 text-red-600 flex-shrink-0" />
                       <span className="text-sm font-medium">
-                        Tool Cost: <span className="text-red-600">${member.toolCostOwed.toFixed(2)}</span>
+                        Tools: <span className="text-red-600">${member.toolCostOwed.toFixed(2)}</span>
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-600" />
+                      <User className="h-4 w-4 text-gray-600 flex-shrink-0" />
                       <span className="text-sm text-gray-600">
                         {member.notes.length} note{member.notes.length !== 1 ? 's' : ''}
                       </span>
@@ -366,17 +366,17 @@ export default function StaffNotesClean() {
           </div>
 
           {staff.length === 0 && (
-            <div className="text-center py-16">
-              <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">
+            <div className="text-center py-12 sm:py-16 px-4">
+              <User className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+              <h3 className="text-lg sm:text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">
                 No staff members yet
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Add your first staff member to start tracking notes and hours
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">
+                Add your first staff member to start tracking
               </p>
               <Button 
                 onClick={() => setIsAddStaffOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Staff Member
@@ -387,13 +387,13 @@ export default function StaffNotesClean() {
 
         {/* Add Staff Dialog */}
         <Dialog open={isAddStaffOpen} onOpenChange={setIsAddStaffOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md mx-4 sm:mx-auto">
             <DialogHeader>
-              <DialogTitle>Add Staff Member</DialogTitle>
+              <DialogTitle className="text-lg">Add Staff Member</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="staff-name">Staff Member Name</Label>
+                <Label htmlFor="staff-name" className="text-sm font-medium">Staff Member Name</Label>
                 <Input
                   id="staff-name"
                   value={newStaffName}
@@ -401,9 +401,10 @@ export default function StaffNotesClean() {
                   placeholder="Enter full name"
                   data-testid="input-staff-name"
                   onKeyDown={(e) => e.key === 'Enter' && addStaffMember()}
+                  className="mt-1 h-11"
                 />
               </div>
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex gap-2 pt-2">
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -411,11 +412,12 @@ export default function StaffNotesClean() {
                     setNewStaffName('');
                   }}
                   data-testid="button-cancel-staff"
+                  className="flex-1 h-11"
                 >
                   Cancel
                 </Button>
-                <Button onClick={addStaffMember} data-testid="button-save-staff">
-                  Add Staff Member
+                <Button onClick={addStaffMember} data-testid="button-save-staff" className="flex-1 h-11">
+                  Add Staff
                 </Button>
               </div>
             </div>
@@ -435,30 +437,31 @@ export default function StaffNotesClean() {
         </div>
       )}
 
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
             <Button
               variant="ghost"
               onClick={() => setSelectedStaff(null)}
               data-testid="button-back-staff-list"
+              className="self-start"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Staff List
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {selectedStaff.name}
               </h1>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                 Staff member details and notes
               </p>
             </div>
           </div>
           <Button 
             onClick={() => setIsAddNoteOpen(true)}
-            className="bg-green-600 hover:bg-green-700"
+            className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
             data-testid="button-add-note"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -467,49 +470,49 @@ export default function StaffNotesClean() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid gap-4 md:grid-cols-3 mb-8">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3 mb-6 sm:mb-8">
           <Card className="border-l-4 border-l-blue-500">
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 px-4 pt-3">
               <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-blue-600" />
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Banked Hours</h3>
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100">Banked Hours</h3>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
+            <CardContent className="px-4 pb-3">
+              <div className="text-xl sm:text-2xl font-bold text-blue-600">
                 {selectedStaff.bankedHours}
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total accumulated</p>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total accumulated</p>
             </CardContent>
           </Card>
 
           <Card className="border-l-4 border-l-red-500">
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 px-4 pt-3">
               <div className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-red-600" />
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Tool Costs</h3>
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100">Tool Costs</h3>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
+            <CardContent className="px-4 pb-3">
+              <div className="text-xl sm:text-2xl font-bold text-red-600">
                 ${selectedStaff.toolCostOwed.toFixed(2)}
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Amount owed</p>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Amount owed</p>
             </CardContent>
           </Card>
 
           <Card className="border-l-4 border-l-gray-500">
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 px-4 pt-3">
               <div className="flex items-center gap-2">
-                <Calculator className="h-5 w-5 text-gray-600" />
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Total Notes</h3>
+                <Calculator className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100">Total Notes</h3>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">
+            <CardContent className="px-4 pb-3">
+              <div className="text-xl sm:text-2xl font-bold text-gray-700 dark:text-gray-300">
                 {selectedStaff.notes.length}
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">All entries</p>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">All entries</p>
             </CardContent>
           </Card>
         </div>
@@ -521,9 +524,9 @@ export default function StaffNotesClean() {
           </CardHeader>
           <CardContent>
             {selectedStaff.notes.length === 0 ? (
-              <div className="text-center py-12">
-                <User className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-600 dark:text-gray-400">
+              <div className="text-center py-8 sm:py-12 px-4">
+                <User className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                   No notes yet. Add the first note to start tracking.
                 </p>
               </div>
@@ -534,26 +537,26 @@ export default function StaffNotesClean() {
                   .map((note) => (
                     <div 
                       key={note.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors gap-3 sm:gap-4"
                     >
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="flex items-center gap-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           {getTypeIcon(note.type)}
-                          <Badge className={getTypeBadgeColor(note.type)}>
+                          <Badge className={`${getTypeBadgeColor(note.type)} text-xs`}>
                             {formatTypeName(note.type)}
                           </Badge>
                         </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900 dark:text-gray-100">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm sm:text-base text-gray-900 dark:text-gray-100 break-words">
                             {note.description}
                           </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                             {format(new Date(note.date), 'MMM d, yyyy h:mm a')}
                           </p>
                         </div>
                         {note.amount !== 0 && (
-                          <div className="text-right">
-                            <div className={`font-semibold ${
+                          <div className="text-left sm:text-right flex-shrink-0">
+                            <div className={`font-semibold text-sm sm:text-base ${
                               note.amount > 0 ? 'text-green-600' : 'text-red-600'
                             }`}>
                               {note.type === 'banked_hours' 
@@ -564,12 +567,13 @@ export default function StaffNotesClean() {
                           </div>
                         )}
                       </div>
-                      <div className="flex gap-1 ml-4">
+                      <div className="flex gap-2 justify-end flex-shrink-0">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => startEditNote(note)}
                           data-testid={`button-edit-note-${note.id}`}
+                          className="h-8 w-8 p-0"
                         >
                           <Edit3 className="h-4 w-4" />
                         </Button>
@@ -577,7 +581,7 @@ export default function StaffNotesClean() {
                           variant="ghost"
                           size="sm"
                           onClick={() => deleteNote(note.id)}
-                          className="text-red-500 hover:text-red-700"
+                          className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
                           data-testid={`button-delete-note-${note.id}`}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -593,22 +597,22 @@ export default function StaffNotesClean() {
 
       {/* Add/Edit Note Dialog */}
       <Dialog open={isAddNoteOpen} onOpenChange={resetNoteForm}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-lg">
               {editingNote ? 'Edit Note' : 'Add Note'}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="note-type">Note Type</Label>
+              <Label htmlFor="note-type" className="text-sm font-medium">Note Type</Label>
               <Select 
                 value={noteForm.type} 
                 onValueChange={(value: 'banked_hours' | 'tool_cost' | 'general') => 
                   setNoteForm(prev => ({ ...prev, type: value }))
                 }
               >
-                <SelectTrigger data-testid="select-note-type">
+                <SelectTrigger data-testid="select-note-type" className="mt-1 h-11">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -620,7 +624,7 @@ export default function StaffNotesClean() {
             </div>
 
             <div>
-              <Label htmlFor="note-description">Description</Label>
+              <Label htmlFor="note-description" className="text-sm font-medium">Description</Label>
               <Textarea
                 id="note-description"
                 value={noteForm.description}
@@ -628,11 +632,12 @@ export default function StaffNotesClean() {
                 placeholder="Enter note description..."
                 rows={3}
                 data-testid="textarea-description"
+                className="mt-1 resize-none"
               />
             </div>
 
             <div>
-              <Label htmlFor="note-amount">
+              <Label htmlFor="note-amount" className="text-sm font-medium">
                 {noteForm.type === 'banked_hours' ? 'Hours (+/-)' : 'Amount (+/-)'}
               </Label>
               <Input
@@ -643,28 +648,30 @@ export default function StaffNotesClean() {
                 onChange={(e) => setNoteForm(prev => ({ ...prev, amount: e.target.value }))}
                 placeholder={noteForm.type === 'banked_hours' ? '8.0' : '50.00'}
                 data-testid="input-amount"
+                className="mt-1 h-11"
               />
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                 Use positive numbers to add, negative to subtract
               </p>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex gap-2 pt-2">
               <Button
                 variant="outline"
                 onClick={resetNoteForm}
                 data-testid="button-cancel-note"
+                className="flex-1 h-11"
               >
                 <X className="h-4 w-4 mr-2" />
                 Cancel
               </Button>
               <Button 
                 onClick={editingNote ? updateNote : addNote}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700 flex-1 h-11"
                 data-testid="button-save-note"
               >
                 <Save className="h-4 w-4 mr-2" />
-                {editingNote ? 'Update' : 'Add'} Note
+                {editingNote ? 'Update' : 'Add'}
               </Button>
             </div>
           </div>
