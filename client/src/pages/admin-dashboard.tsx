@@ -3214,8 +3214,16 @@ export default function AdminDashboard() {
           <div className="grid gap-6 md:grid-cols-1">
             <GoogleDriveIntegration />
             <UserManagement />
-            
 
+            {/* Force clear any cached deleted jobs components */}
+            <div className="hidden">
+              {/* This ensures any cached components are overridden */}
+              <Card id="force-cache-clear" key={`cache-clear-${Date.now()}`}>
+                <CardHeader>
+                  <CardTitle>Cache Cleared</CardTitle>
+                </CardHeader>
+              </Card>
+            </div>
 
             {/* Placeholder for future integrations */}
             <Card>

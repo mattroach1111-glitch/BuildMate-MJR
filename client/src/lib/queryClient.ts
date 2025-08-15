@@ -49,7 +49,7 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
+      staleTime: 0, // Force cache invalidation for deleted jobs cleanup
       retry: false,
     },
     mutations: {
@@ -57,3 +57,7 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Force invalidate all deleted jobs related queries on startup
+queryClient.invalidateQueries({ queryKey: ['/api/deleted-jobs'] });
+queryClient.removeQueries({ queryKey: ['/api/deleted-jobs'] });

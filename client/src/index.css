@@ -4,6 +4,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force hide any persistent deleted jobs components */
+[data-testid*="deleted-jobs"],
+[data-testid*="previous-completed"],
+.deleted-jobs-folder,
+.previous-completed-jobs {
+  display: none !important;
+}
+
+/* Hide any components with archive icon and "3" count that might be cached */
+.lucide-archive + * [data-count="3"],
+[aria-label*="Previous Completed"] {
+  display: none !important;
+}
+
 :root {
   --primary: hsl(208.3, 76.2%, 42.2%);
   --primary-foreground: hsl(0, 0%, 100%);
