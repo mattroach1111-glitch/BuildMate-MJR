@@ -2706,8 +2706,8 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure you want to delete this job?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action will move the job "{jobDetails?.jobAddress}" to the deleted folder.
-                          The job can be restored later from the deleted jobs section.
+                          This action will archive the job "{jobDetails?.jobAddress}".
+                          Archived jobs are removed from the active job list but can be restored using the dropdown options.
                           This action cannot be undone without admin intervention.
                         </AlertDialogDescription>
                       </AlertDialogHeader>

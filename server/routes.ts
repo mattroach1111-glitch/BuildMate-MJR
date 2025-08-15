@@ -594,8 +594,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await storage.softDeleteJob(jobId);
-      console.log(`Successfully deleted job: ${jobId}`);
-      res.json({ message: "Job moved to deleted folder" });
+      console.log(`Successfully archived job: ${jobId}`);
+      res.json({ message: "Job archived successfully" });
     } catch (error) {
       console.error("Error deleting job:", error);
       console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
@@ -603,21 +603,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add route to get deleted jobs - must come before generic job routes
-  app.get("/api/deleted-jobs", isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (user?.role !== "admin") {
-        return res.status(403).json({ message: "Admin access required" });
-      }
 
-      const deletedJobs = await storage.getDeletedJobs();
-      res.json(deletedJobs);
-    } catch (error) {
-      console.error("Error fetching deleted jobs:", error);
-      res.status(500).json({ message: "Failed to fetch deleted jobs" });
-    }
-  });
 
   // Add route to restore deleted job
   app.patch("/api/jobs/:id/restore", isAuthenticated, async (req: any, res) => {
