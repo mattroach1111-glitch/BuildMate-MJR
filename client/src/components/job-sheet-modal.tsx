@@ -267,7 +267,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
       toast({
         title: "Success", 
-        description: "Job has been archived",
+        description: "Job has been permanently deleted and PDF saved to Google Drive",
       });
       onClose(); // Close modal after successful deletion
     },
@@ -2706,9 +2706,9 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure you want to delete this job?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action will archive the job "{jobDetails?.jobAddress}".
-                          Archived jobs are removed from the active job list but can be restored using the dropdown options.
-                          This action cannot be undone without admin intervention.
+                          This action will permanently delete the job "{jobDetails?.jobAddress}".
+                          A PDF copy will be automatically saved to your Google Drive in the "Saved Job sheets Pdfs" folder before deletion.
+                          This action cannot be undone.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
