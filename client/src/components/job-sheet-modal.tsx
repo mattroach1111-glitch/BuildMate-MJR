@@ -889,12 +889,42 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
   // Handle file upload
   const handleGetUploadParameters = async () => {
-    const response = await apiRequest("/api/job-files/upload-url", "POST");
-    const data = await response.json();
-    return {
-      method: "PUT" as const,
-      url: data.uploadURL,
-    };
+    try {
+      console.log("Getting upload parameters...");
+      const response = await apiRequest("/api/job-files/upload-url", "POST");
+      console.log("Upload URL response:", response);
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast({
+            title: "Authentication Error",
+            description: "You are logged out. Please log in again.",
+            variant: "destructive",
+          });
+          setTimeout(() => {
+            window.location.href = "/api/login";
+          }, 500);
+          throw new Error("Authentication required");
+        }
+        throw new Error(`Failed to get upload URL: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("Upload URL data:", data);
+      
+      return {
+        method: "PUT" as const,
+        url: data.uploadURL,
+      };
+    } catch (error) {
+      console.error("Error getting upload parameters:", error);
+      toast({
+        title: "Upload Error",
+        description: "Failed to prepare file upload. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
   const handleFileUploadComplete = (result: any) => {
