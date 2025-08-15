@@ -2250,49 +2250,7 @@ export default function AdminDashboard() {
             </Card>
           )}
 
-          {/* Previous Completed Job Sheets Folder - Pinned to Bottom */}
-          {deletedJobs && deletedJobs.length > 0 && (
-            <div className="mt-8 pt-6 border-t">
-              <div 
-                className="border rounded-lg p-4 transition-colors bg-red-50 border-red-200"
-              >
-                <div 
-                  className="flex items-center gap-2 p-2 rounded transition-colors bg-red-100 hover:bg-red-150"
-                >
-                  <div 
-                    className="flex items-center gap-2 flex-1 cursor-pointer"
-                    onClick={() => setIsDeletedFolderExpanded(!isDeletedFolderExpanded)}
-                    data-testid="folder-previous-completed"
-                  >
-                    {isDeletedFolderExpanded ? (
-                      <ChevronDown className="h-4 w-4" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4" />
-                    )}
-                    {isDeletedFolderExpanded ? (
-                      <FolderOpen className="h-5 w-5 text-red-600" />
-                    ) : (
-                      <Folder className="h-5 w-5 text-red-600" />
-                    )}
-                    <span className="font-medium text-red-800">📋 Previous completed job sheets</span>
-                    <Badge 
-                      variant="secondary" 
-                      className="ml-2 bg-red-200 text-red-800 border-red-300"
-                    >
-                      {deletedJobs.length} job{deletedJobs.length !== 1 ? 's' : ''}
-                    </Badge>
-                  </div>
-                </div>
-                
-                {isDeletedFolderExpanded && (
-                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {deletedJobs.map((job) => (
-                      <Card 
-                        key={job.id} 
-                        className="cursor-pointer hover:shadow-md transition-shadow bg-white relative opacity-75"
-                        onClick={() => setSelectedJob(job.id)}
-                        data-testid={`card-deleted-job-${job.id}`}
-                      >
+          {/* Previous completed job sheets moved to Settings tab - removed from Jobs tab */}
                         <CardHeader className="pb-3">
                           <div className="flex items-start justify-between">
                             <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
