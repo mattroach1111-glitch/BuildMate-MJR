@@ -53,6 +53,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const [newClientName, setNewClientName] = useState("");
   const [isAddingNewProjectManager, setIsAddingNewProjectManager] = useState(false);
   const [newProjectManagerName, setNewProjectManagerName] = useState("");
+  const [showEmployeeManager, setShowEmployeeManager] = useState(false);
   const [extraHours, setExtraHours] = useState<Record<string, string>>({});
   
   // Email PDF dialog state
@@ -104,6 +105,13 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   // Get unique project managers and clients from existing jobs
   const projectManagers = allJobs ? Array.from(new Set(allJobs.map(job => job.projectManager || job.projectName).filter(Boolean))) : [];
   const clientNames = allJobs ? Array.from(new Set(allJobs.map(job => job.clientName).filter(Boolean))) : [];
+
+  // Get all employees for management
+  const { data: allEmployees = [] } = useQuery<any[]>({
+    queryKey: ["/api/employees"],
+    enabled: isAdmin,
+    retry: false,
+  });
 
   const handleAddClient = () => {
     if (newClientName.trim()) {
@@ -1431,6 +1439,9 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
           </div>
         </DialogHeader>
 
+        {/* Orientation toggle for job sheets */}
+        <OrientationToggle show={true} />
+        
         <div className="flex-1 overflow-y-auto min-h-0 relative" style={{ WebkitOverflowScrolling: 'touch' }}>
           {isLoading ? (
             <div className="flex justify-center py-8">
@@ -1469,6 +1480,15 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       title="Sync all staff to this job"
                     >
                       <i className="fas fa-sync"></i>
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setShowEmployeeManager(true)}
+                      data-testid="button-manage-employees"
+                      title="Manage employees"
+                    >
+                      <i className="fas fa-users"></i>
                     </Button>
                   </div>
                 </div>
