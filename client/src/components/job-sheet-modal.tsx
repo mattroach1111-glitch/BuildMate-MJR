@@ -73,6 +73,14 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const [editTipFeeForm, setEditTipFeeForm] = useState<{description: string; amount: string}>({description: "", amount: ""});
   
   // Labor entry editing states
+  
+  // Password-protected deletion states
+  const [deleteJobDialogOpen, setDeleteJobDialogOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  
+  // Define the deletion password - you can change this to whatever you prefer
+  const DELETION_PASSWORD = 'DELETE123'; // Change this password to whatever you want
   const [editingLaborEntry, setEditingLaborEntry] = useState<string | null>(null);
   const [editLaborHours, setEditLaborHours] = useState<string>("");
 
@@ -266,6 +274,8 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/deleted-jobs"] });
+      setDeleteJobDialogOpen(false);
+      setDeletePassword('');
       toast({
         title: "Success", 
         description: "Job has been moved to deleted folder",
@@ -291,6 +301,66 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       });
     },
   });
+
+  const handleDeleteJobClick = () => {
+    setDeleteJobDialogOpen(true);
+  };
+
+  const handleSavePDFBeforeDelete = async () => {
+    if (!jobDetails) return;
+    
+    setIsGeneratingPDF(true);
+    try {
+      const response = await fetch(`/api/jobs/${jobId}/pdf`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `job-sheet-${jobDetails.jobAddress.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "PDF Saved",
+        description: "Job sheet PDF has been downloaded successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (!jobDetails) return;
+    
+    if (deletePassword !== DELETION_PASSWORD) {
+      toast({
+        title: "Invalid Password",
+        description: "Please enter the correct deletion password",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    deleteJobMutation.mutate();
+  };
 
   const addLaborMutation = useMutation({
     mutationFn: async (data: { staffId: string; hourlyRate: string }) => {
@@ -2691,42 +2761,16 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     <Mail className="h-4 w-4 mr-2" />
                     Email PDF
                   </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button 
-                        variant="destructive"
-                        size="sm"
-                        disabled={!jobDetails}
-                        data-testid="button-delete-job"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Job
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure you want to delete this job?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action will move the job "{jobDetails?.jobAddress}" to the deleted folder.
-                          The job can be restored later from the deleted jobs section.
-                          This action cannot be undone without admin intervention.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel data-testid="button-cancel-delete">
-                          Cancel
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => deleteJobMutation.mutate()}
-                          disabled={deleteJobMutation.isPending}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          data-testid="button-confirm-delete"
-                        >
-                          {deleteJobMutation.isPending ? "Deleting..." : "Delete Job"}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <Button 
+                    variant="destructive"
+                    size="sm"
+                    disabled={!jobDetails}
+                    onClick={handleDeleteJobClick}
+                    data-testid="button-delete-job"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Job
+                  </Button>
                 </>
               ) : (
                 <>
@@ -2875,6 +2919,141 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
               <p className="text-center text-gray-500 py-4">No employees found</p>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Password Protected Job Deletion Dialog */}
+      <Dialog open={deleteJobDialogOpen} onOpenChange={setDeleteJobDialogOpen}>
+        <DialogContent className="max-w-md mx-4 sm:max-w-lg" aria-describedby="delete-job-description">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <Trash2 className="h-5 w-5" />
+              ⚠️ Delete Job Sheet
+            </DialogTitle>
+            <p id="delete-job-description" className="text-sm text-muted-foreground">
+              This will move the job to the deleted folder. Please save the PDF before deletion.
+            </p>
+          </DialogHeader>
+          
+          {jobDetails && (
+            <div className="space-y-4">
+              {/* Job Details */}
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h4 className="font-semibold text-red-800 mb-2">Job to be deleted:</h4>
+                <p className="text-sm text-red-700">
+                  <strong>Address:</strong> {jobDetails.jobAddress}
+                </p>
+                <p className="text-sm text-red-700">
+                  <strong>Client:</strong> {jobDetails.clientName}
+                </p>
+                <p className="text-sm text-red-700">
+                  <strong>PM:</strong> {jobDetails.projectManager || 'N/A'}
+                </p>
+              </div>
+
+              {/* PDF Save Recommendation */}
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-start gap-2">
+                  <FileText className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-yellow-800 mb-1">
+                      📄 Save PDF Before Deletion
+                    </h4>
+                    <p className="text-sm text-yellow-700 mb-3">
+                      We recommend saving the job sheet PDF for your records before deletion.
+                    </p>
+                    <Button
+                      onClick={handleSavePDFBeforeDelete}
+                      disabled={isGeneratingPDF}
+                      variant="outline"
+                      size="sm"
+                      className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
+                      data-testid="button-save-pdf-before-delete"
+                    >
+                      {isGeneratingPDF ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 border-2 border-yellow-600 border-t-transparent rounded-full mr-2" />
+                          Generating PDF...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4 mr-2" />
+                          Save PDF Now
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Deletion Warning */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-2">
+                  <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-blue-800 mb-1">
+                      📁 Moving to Deleted Folder
+                    </h4>
+                    <p className="text-sm text-blue-700">
+                      This job will be moved to the deleted folder. You can restore it later from the admin dashboard if needed.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Password Entry */}
+              <div className="space-y-2">
+                <Label htmlFor="delete-password" className="text-sm font-semibold text-red-700">
+                  🔒 Enter deletion password to confirm:
+                </Label>
+                <Input
+                  id="delete-password"
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder="Enter password"
+                  className="border-red-200 focus:border-red-400"
+                  data-testid="input-delete-password"
+                />
+                <p className="text-xs text-gray-500">
+                  Password: {DELETION_PASSWORD}
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDeleteJobDialogOpen(false);
+                    setDeletePassword('');
+                  }}
+                  className="flex-1"
+                  data-testid="button-cancel-delete"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleConfirmDelete}
+                  disabled={!deletePassword || deleteJobMutation.isPending}
+                  className="flex-1 bg-red-600 hover:bg-red-700"
+                  data-testid="button-confirm-delete"
+                >
+                  {deleteJobMutation.isPending ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Confirm Delete
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
       
