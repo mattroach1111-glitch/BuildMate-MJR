@@ -827,7 +827,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       mimeType: string; 
       objectPath: string; 
     }) => {
-      return await apiRequest("/api/job-files", "POST", fileData);
+      return await apiRequest("POST", "/api/job-files", fileData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId, "files"] });
