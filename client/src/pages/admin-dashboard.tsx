@@ -39,6 +39,7 @@ import JobUpdateDialog from "@/components/job-update-form";
 import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor";
 import { EmailProcessingReview } from "@/components/EmailProcessingReview";
 import { NotificationSettings } from "@/components/NotificationSettings";
+import { WeeklyOrganizer } from "@/components/weekly-organizer";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -1436,6 +1437,16 @@ export default function AdminDashboard() {
             >
               <Search className="h-4 w-4" />
               <span className="hidden sm:inline">Search</span>
+            </Button>
+            <Button
+              variant={activeTab === "organizer" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveTab("organizer")}
+              className="flex items-center gap-2"
+              data-testid="tab-organizer"
+            >
+              <Calendar className="h-4 w-4" />
+              <span className="hidden sm:inline">Organizer</span>
             </Button>
           </div>
 
@@ -3458,6 +3469,17 @@ export default function AdminDashboard() {
           </div>
           
           <TimesheetSearch />
+        </TabsContent>
+
+        <TabsContent value="organizer" className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div>
+              <h2 className="text-xl font-semibold">Weekly Staff Organizer</h2>
+              <p className="text-sm text-muted-foreground">Plan and organize staff assignments for the week</p>
+            </div>
+          </div>
+          
+          <WeeklyOrganizer isAdminView={true} />
         </TabsContent>
 
         {/* Settings Tab */}

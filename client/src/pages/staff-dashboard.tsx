@@ -21,6 +21,7 @@ import { format, addDays, startOfWeek, endOfWeek, isSameWeek, parseISO } from "d
 import PageLayout from "@/components/page-layout";
 import { OnboardingTour, WelcomeAnimation } from "@/components/onboarding-tour";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { WeeklyOrganizer } from "@/components/weekly-organizer";
 
 const timesheetFormSchema = insertTimesheetEntrySchema.extend({
   hours: z.string().min(1, "Hours is required"),
@@ -41,6 +42,9 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
     completeTour, 
     skipTour 
   } = useOnboarding();
+  
+  // Tab state for staff dashboard
+  const [activeTab, setActiveTab] = useState<"timesheet" | "organizer">("timesheet");
   
   // Current fortnight state
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -401,10 +405,36 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
 
   return (
     <PageLayout 
-      title="My Timesheet" 
+      title={activeTab === "timesheet" ? "My Timesheet" : "Weekly Schedule"}
       subtitle={`Welcome back, ${(user as any)?.firstName || 'Staff'}`}
     >
       <div className="max-w-4xl mx-auto space-y-6" data-testid="container-timesheet">
+        {/* Tab Navigation */}
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            variant={activeTab === "timesheet" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setActiveTab("timesheet")}
+            className="flex items-center gap-2"
+            data-testid="tab-timesheet"
+          >
+            <Clock className="h-4 w-4" />
+            My Timesheet
+          </Button>
+          <Button
+            variant={activeTab === "organizer" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setActiveTab("organizer")}
+            className="flex items-center gap-2"
+            data-testid="tab-organizer"
+          >
+            <Calendar className="h-4 w-4" />
+            Weekly Schedule
+          </Button>
+        </div>
+
+        {activeTab === "timesheet" ? (
+      <div className="space-y-6">
         {/* Quick Actions */}
         <div className="flex flex-col sm:flex-row justify-center gap-2">
           <Button 
@@ -902,6 +932,13 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
               )}
             </CardContent>
           </Card>
+          </div>
+        ) : (
+          /* Weekly Organizer Tab */
+          <div className="space-y-6">
+            <WeeklyOrganizer isAdminView={false} />
+          </div>
+        )}
       </div>
 
       {/* Onboarding Components - Only show for staff (not in admin view) */}

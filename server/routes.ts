@@ -21,6 +21,7 @@ import {
   insertTimesheetEntrySchema,
   insertJobFileSchema,
   insertNotificationSchema,
+  insertWeeklyScheduleSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -3547,6 +3548,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: "Failed to add expense to job", 
         details: (error as Error).message 
       });
+    }
+  });
+
+  // Weekly Schedule Routes
+  
+  // Get weekly schedule for a specific week
+  app.get("/api/weekly-schedule/:weekStartDate", isAuthenticated, async (req: any, res) => {
+    try {
+      const { weekStartDate } = req.params;
+      const schedule = await storage.getWeeklySchedule(weekStartDate);
+      res.json(schedule);
+    } catch (error) {
+      console.error("Error fetching weekly schedule:", error);
+      res.status(500).json({ message: "Failed to fetch weekly schedule" });
+    }
+  });
+
+  // Update weekly schedule (admin only)
+  app.post("/api/weekly-schedule", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { weekStartDate, scheduleEntries } = req.body;
+      
+      if (!Array.isArray(scheduleEntries)) {
+        return res.status(400).json({ message: "Schedule entries must be an array" });
+      }
+
+      // Validate each schedule entry
+      const validatedEntries = scheduleEntries.map(entry => {
+        try {
+          return insertWeeklyScheduleSchema.parse({
+            ...entry,
+            weekStartDate
+          });
+        } catch (error) {
+          throw new Error(`Invalid schedule entry for ${entry.employeeName}: ${error.message}`);
+        }
+      });
+
+      const updatedSchedule = await storage.updateWeeklySchedule(weekStartDate, validatedEntries);
+      res.json(updatedSchedule);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      console.error("Error updating weekly schedule:", error);
+      res.status(500).json({ message: "Failed to update weekly schedule" });
     }
   });
 
