@@ -40,6 +40,7 @@ import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor"
 import { EmailProcessingReview } from "@/components/EmailProcessingReview";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import { WeeklyOrganizer } from "@/components/weekly-organizer";
+import { DeletedJobsView } from "@/components/deleted-jobs-view";
 
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
@@ -3214,8 +3215,22 @@ export default function AdminDashboard() {
           <div className="grid gap-6 md:grid-cols-1">
             <GoogleDriveIntegration />
             <UserManagement />
-
-
+            
+            {/* Deleted Jobs Cleanup */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trash2 className="h-5 w-5 text-muted-foreground" />
+                  Previous Completed Job Sheets
+                </CardTitle>
+                <CardDescription>
+                  Clean up old deleted jobs - all new jobs automatically save PDFs to Google Drive
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DeletedJobsView />
+              </CardContent>
+            </Card>
 
             {/* Placeholder for future integrations */}
             <Card>
