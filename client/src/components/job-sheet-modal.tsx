@@ -1443,100 +1443,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
           ) : (
             <div className="space-y-6 p-4 sm:p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
             
-            {/* Action Buttons - Scrollable with content */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full pb-4 border-b border-gray-200">
-              {!isEditing ? (
-                <>
-                  <Button 
-                    onClick={() => setIsEditing(true)}
-                    variant="outline"
-                    size="sm"
-                    disabled={!jobDetails}
-                    data-testid="button-edit-job"
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                  <Button 
-                    onClick={handleDownloadPDF}
-                    className="bg-secondary hover:bg-green-700 w-full sm:w-auto"
-                    size="sm"
-                    disabled={!jobDetails}
-                    data-testid="button-download-pdf"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download PDF
-                  </Button>
-                  <Button 
-                    onClick={handleEmailPDF}
-                    className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
-                    size="sm"
-                    disabled={!jobDetails}
-                    data-testid="button-email-pdf"
-                  >
-                    <Mail className="h-4 w-4 mr-2" />
-                    Email PDF
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button 
-                        variant="destructive"
-                        size="sm"
-                        disabled={!jobDetails}
-                        data-testid="button-delete-job"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Job
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure you want to delete this job?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action will move the job "{jobDetails?.jobAddress}" to the deleted folder.
-                          The job can be restored later from the deleted jobs section.
-                          This action cannot be undone without admin intervention.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel data-testid="button-cancel-delete">
-                          Cancel
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => deleteJobMutation.mutate()}
-                          disabled={deleteJobMutation.isPending}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          data-testid="button-confirm-delete"
-                        >
-                          {deleteJobMutation.isPending ? "Deleting..." : "Delete Job"}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </>
-              ) : (
-                <>
-                  <Button 
-                    onClick={handleEditSave}
-                    size="sm"
-                    disabled={updateJobMutation.isPending}
-                    data-testid="button-save-edit"
-                  >
-                    <Clock className="h-4 w-4 mr-2" />
-                    {updateJobMutation.isPending ? "Saving..." : "Save"}
-                  </Button>
-                  <Button 
-                    onClick={handleEditCancel}
-                    variant="outline"
-                    size="sm"
-                    data-testid="button-cancel-edit"
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
-                </>
-              )}
-            </div>
+
             
             {/* Labour Section */}
             <Card>
@@ -2589,6 +2496,101 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                 </div>
               </CardContent>
             </Card>
+
+            {/* Action Buttons - At bottom of scrollable content */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full pt-4 border-t border-gray-200 mt-6">
+              {!isEditing ? (
+                <>
+                  <Button 
+                    onClick={() => setIsEditing(true)}
+                    variant="outline"
+                    size="sm"
+                    disabled={!jobDetails}
+                    data-testid="button-edit-job"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                  <Button 
+                    onClick={handleDownloadPDF}
+                    className="bg-secondary hover:bg-green-700 w-full sm:w-auto"
+                    size="sm"
+                    disabled={!jobDetails}
+                    data-testid="button-download-pdf"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download PDF
+                  </Button>
+                  <Button 
+                    onClick={handleEmailPDF}
+                    className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
+                    size="sm"
+                    disabled={!jobDetails}
+                    data-testid="button-email-pdf"
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    Email PDF
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="destructive"
+                        size="sm"
+                        disabled={!jobDetails}
+                        data-testid="button-delete-job"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Job
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure you want to delete this job?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action will move the job "{jobDetails?.jobAddress}" to the deleted folder.
+                          The job can be restored later from the deleted jobs section.
+                          This action cannot be undone without admin intervention.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel data-testid="button-cancel-delete">
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => deleteJobMutation.mutate()}
+                          disabled={deleteJobMutation.isPending}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          data-testid="button-confirm-delete"
+                        >
+                          {deleteJobMutation.isPending ? "Deleting..." : "Delete Job"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              ) : (
+                <>
+                  <Button 
+                    onClick={handleEditSave}
+                    size="sm"
+                    disabled={updateJobMutation.isPending}
+                    data-testid="button-save-edit"
+                  >
+                    <Clock className="h-4 w-4 mr-2" />
+                    {updateJobMutation.isPending ? "Saving..." : "Save"}
+                  </Button>
+                  <Button 
+                    onClick={handleEditCancel}
+                    variant="outline"
+                    size="sm"
+                    data-testid="button-cancel-edit"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                </>
+              )}
+            </div>
             </div>
           )}
         </div>
