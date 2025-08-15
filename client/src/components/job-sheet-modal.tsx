@@ -2595,8 +2595,6 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       </DialogContent>
       </Dialog>
       
-      {/* Landscape toggle for job sheet */}
-      {isOpen && <OrientationToggle show={true} />}
       
       {/* Email PDF Dialog */}
       <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
