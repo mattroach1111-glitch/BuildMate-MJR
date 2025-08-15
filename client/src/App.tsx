@@ -18,6 +18,15 @@ import StaffDashboard from "@/pages/staff-dashboard";
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
 
+  // Debug logging
+  console.log("🚀 Router Debug:", { 
+    isLoading, 
+    isAuthenticated, 
+    role: (user as any)?.role, 
+    user: user ? "User exists" : "No user",
+    currentPath: window.location.pathname 
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -36,13 +45,17 @@ function Router() {
           <Route path="/admin" component={AdminDashboard} />
           <Route path="/jobs" component={JobsList} />
           <Route path="/timesheet" component={FortnightTimesheetView} />
-          <Route path="/staff" component={AdminDashboard} />
+          <Route path="/staff" component={StaffDashboard} />
+          <Route path="/staff-timesheet" component={StaffTimesheet} />
         </>
       ) : (
         <>
           <Route path="/" component={StaffDashboard} />
           <Route path="/staff" component={StaffDashboard} />
           <Route path="/timesheet" component={FortnightTimesheetView} />
+          <Route path="/staff-timesheet" component={StaffTimesheet} />
+          <Route path="/admin" component={StaffDashboard} />
+          <Route path="/jobs" component={StaffDashboard} />
         </>
       )}
       <Route component={NotFound} />
