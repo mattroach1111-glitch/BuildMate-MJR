@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft, Users, Plus, Trash2, Save, Clock, CheckCircle, Calendar, Lock, Unlock, Edit } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft, Users, Plus, Trash2, Save, Clock, CheckCircle, Calendar, Lock, Unlock, Edit, Search, X } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { OrientationToggle } from "@/components/orientation-toggle";
@@ -49,6 +51,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const [showLowHoursDialog, setShowLowHoursDialog] = useState(false);
   const [lowHoursTotal, setLowHoursTotal] = useState(0);
   const [pendingSubmission, setPendingSubmission] = useState<(() => void) | null>(null);
+  const [jobSearchOpen, setJobSearchOpen] = useState<{[key: string]: boolean}>({});
+  const [jobSearchQuery, setJobSearchQuery] = useState<{[key: string]: string}>({});
   
   // Use refs to persist dialog state across re-renders
   const lowHoursDialogRef = useRef({
@@ -59,6 +63,37 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   
 
   const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null); // Single timeout for all auto-saves
+  
+  // Helper function to sort job addresses numerically  
+  const sortJobsNumerically = (jobs: any[]) => {
+    return jobs.sort((a: any, b: any) => {
+      const addressA = a.jobAddress || a.address || a.jobName || a.name || `Job ${a.id}`;
+      const addressB = b.jobAddress || b.address || b.jobName || b.name || `Job ${b.id}`;
+      
+      // Extract leading numbers for proper numeric sorting
+      const getLeadingNumber = (str: string) => {
+        const match = str.match(/^(\d+)/);
+        return match ? parseInt(match[1], 10) : 0;
+      };
+      
+      const numA = getLeadingNumber(addressA);
+      const numB = getLeadingNumber(addressB);
+      
+      // If both have leading numbers, sort by number
+      if (numA > 0 && numB > 0) {
+        if (numA !== numB) return numA - numB;
+        // If numbers are the same, fall back to string comparison
+        return addressA.localeCompare(addressB);
+      }
+      
+      // If only one has a leading number, prioritize it
+      if (numA > 0) return -1;
+      if (numB > 0) return 1;
+      
+      // Neither has leading numbers, use alphabetical sort
+      return addressA.localeCompare(addressB);
+    });
+  };
   
   // Function to show low hours dialog using DOM manipulation (avoids React re-render issues)
   const showLowHoursDialogDOM = (totalHours: number, onConfirm: () => void) => {
@@ -1428,114 +1463,226 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           />
                         </td>
                         <td className="p-3">
-                          <Select
-                            value={
-                              // Handle custom addresses properly
-                              entry?.jobId === 'custom-address' || (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:')) 
-                                ? 'custom-address' 
-                                : entry?.jobId || 'no-job'
-                            }
-                            onValueChange={(value) => {
-                              const dateKey = format(day, 'yyyy-MM-dd');
-                              if (isWeekend && !isWeekendUnlocked(dateKey)) {
-                                console.log(`🚫 STAFF WEEKEND JOB BLOCKED: ${dateKey} - Weekend is locked!`);
-                                return; // Prevent job selection on locked weekends
+                          {(() => {
+                            const cellKey = `${format(day, 'yyyy-MM-dd')}-${entryIndex}`;
+                            const currentValue = entry?.jobId === 'custom-address' || (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:')) 
+                              ? 'custom-address' 
+                              : entry?.jobId || 'no-job';
+                            
+                            // Get current job display name
+                            const getJobDisplayName = (jobId: string) => {
+                              if (jobId === 'no-job') return 'No job';
+                              if (jobId === 'other-address') return 'Other Address';
+                              if (jobId === 'custom-address') {
+                                return entry?.description ? entry.description.replace('CUSTOM_ADDRESS: ', '') : 'Custom Address';
+                              }
+                              if (['tafe', 'rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay'].includes(jobId)) {
+                                const leaveTypes: {[key: string]: string} = {
+                                  'tafe': 'Tafe',
+                                  'rdo': 'RDO (Rest Day Off)',
+                                  'sick-leave': 'Sick Leave',
+                                  'personal-leave': 'Personal Leave',
+                                  'annual-leave': 'Annual Leave',
+                                  'leave-without-pay': 'Leave without pay'
+                                };
+                                return leaveTypes[jobId] || jobId;
                               }
                               
-                              if (value === 'other-address') {
-                                // Clear hours when selecting other-address to start fresh
-                                if (entry?.id && !entry?.approved) {
-                                  editSavedEntry(entry.id, 'hours', '');
-                                } else {
-                                  handleCellChange(day, entryIndex, 'hours', '');
+                              const job = jobs?.find((j: any) => j.id === jobId);
+                              return job ? (job.jobAddress || job.address || job.jobName || job.name || `Job ${job.id}`) : 'Select job';
+                            };
+                            
+                            return (
+                              <Popover open={jobSearchOpen[cellKey] || false} onOpenChange={(open) => {
+                                setJobSearchOpen(prev => ({ ...prev, [cellKey]: open }));
+                                if (!open) {
+                                  setJobSearchQuery(prev => ({ ...prev, [cellKey]: '' }));
                                 }
-                                
-                                // Show address input dialog
-                                console.log('🏠 OTHER ADDRESS SELECTED - Opening dialog for dayIndex:', dayIndex, 'entryIndex:', entryIndex);
-                                console.log('🏠 BEFORE setState - showAddressDialog:', showAddressDialog);
-                                setAddressDialogData({dayIndex, entryIndex});
-                                setCurrentAddress({houseNumber: '', streetAddress: ''});
-                                setShowAddressDialog(true);
-                                console.log('🏠 AFTER setState call - should show dialog now');
-                                return;
-                              }
-                              
-                              // Validate job selection with current hours
-                              const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
-                              const currentEntry = dayEntries[entryIndex] || {};
-                              const currentHours = parseFloat(currentEntry.hours || entry?.hours || '0');
-                              
-                              // If selecting leave-without-pay and hours > 0, show warning
-                              if (value === 'leave-without-pay' && currentHours > 0) {
-                                toast({
-                                  title: "Hours Cleared",
-                                  description: "Leave without pay requires 0 hours. Hours have been reset to 0.",
-                                  variant: "default",
-                                });
-                                // Clear hours when selecting leave-without-pay
-                                if (entry?.id && !entry?.approved) {
-                                  editSavedEntry(entry.id, 'hours', '0');
-                                } else {
-                                  handleCellChange(day, entryIndex, 'hours', '0');
-                                }
-                              }
-                              
-                              if (entry?.id && !entry?.approved) {
-                                editSavedEntry(entry.id, 'jobId', value);
-                              } else {
-                                handleCellChange(day, entryIndex, 'jobId', value);
-                              }
-                            }}
-                            disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))}
-                          >
-                            <SelectTrigger className={`min-w-40 ${isWeekend ? 'text-white bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}>
-                              <SelectValue 
-                                placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "Select job"}
-                              />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="no-job">No job</SelectItem>
-                              <SelectItem value="other-address">Other Address (Enter manually)</SelectItem>
-                              {/* Show custom address if it exists */}
-                              {(entry?.jobId === 'custom-address' || (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:'))) && (
-                                <SelectItem value="custom-address">
-                                  {entry?.description 
-                                    ? entry.description.replace('CUSTOM_ADDRESS: ', '')
-                                    : 'Custom Address'
-                                  }
-                                </SelectItem>
-                              )}
-                              {jobsLoading ? (
-                                <SelectItem value="loading" disabled>Loading jobs...</SelectItem>
-                              ) : jobsError ? (
-                                <SelectItem value="error" disabled>Error loading jobs</SelectItem>
-                              ) : Array.isArray(jobs) && jobs.length > 0 ? (
-                                jobs
-                                  .filter((job: any) => job.id && job.id.trim() !== '')
-                                  .sort((a: any, b: any) => {
-                                    const addressA = a.jobAddress || a.address || a.jobName || a.name || `Job ${a.id}`;
-                                    const addressB = b.jobAddress || b.address || b.jobName || b.name || `Job ${b.id}`;
-                                    return addressA.localeCompare(addressB);
-                                  })
-                                  .map((job: any) => (
-                                  <SelectItem key={job.id} value={job.id}>
-                                    {job.jobAddress || job.address || job.jobName || job.name || `Job ${job.id}`}
-                                  </SelectItem>
-                                ))
-                              ) : (
-                                <SelectItem value="no-jobs" disabled>No jobs available</SelectItem>
-                              )}
-                              
-                              {/* Tafe and Leave Types pinned at bottom */}
-                              <Separator className="my-2" />
-                              <SelectItem value="tafe">Tafe</SelectItem>
-                              <SelectItem value="rdo">RDO (Rest Day Off)</SelectItem>
-                              <SelectItem value="sick-leave">Sick Leave</SelectItem>
-                              <SelectItem value="personal-leave">Personal Leave</SelectItem>
-                              <SelectItem value="annual-leave">Annual Leave</SelectItem>
-                              <SelectItem value="leave-without-pay">Leave without pay</SelectItem>
-                            </SelectContent>
-                          </Select>
+                              }}>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={jobSearchOpen[cellKey] || false}
+                                    className={`min-w-40 justify-between ${isWeekend ? 'text-white bg-blue-800 border-blue-600 hover:bg-blue-700' : ''} ${isWeekend && !isWeekendUnlocked(format(day, 'yyyy-MM-dd')) ? 'cursor-not-allowed opacity-75' : ''}`}
+                                    disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(format(day, 'yyyy-MM-dd')))}
+                                  >
+                                    <span className="truncate">
+                                      {isWeekend && !isWeekendUnlocked(format(day, 'yyyy-MM-dd')) ? "🔒 LOCKED" : getJobDisplayName(currentValue)}
+                                    </span>
+                                    <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80 p-0" align="start">
+                                  <Command>
+                                    <CommandInput 
+                                      placeholder="Search jobs..." 
+                                      value={jobSearchQuery[cellKey] || ''}
+                                      onValueChange={(search) => setJobSearchQuery(prev => ({ ...prev, [cellKey]: search }))}
+                                    />
+                                    <CommandList className="max-h-64">
+                                      <CommandEmpty>No job found.</CommandEmpty>
+                                      <CommandGroup>
+                                        <CommandItem
+                                          key="no-job"
+                                          value="no-job"
+                                          onSelect={() => {
+                                            const dateKey = format(day, 'yyyy-MM-dd');
+                                            if (entry?.id && !entry?.approved) {
+                                              editSavedEntry(entry.id, 'jobId', 'no-job');
+                                            } else {
+                                              handleCellChange(day, entryIndex, 'jobId', 'no-job');
+                                            }
+                                            setJobSearchOpen(prev => ({ ...prev, [cellKey]: false }));
+                                          }}
+                                        >
+                                          No job
+                                        </CommandItem>
+                                        
+                                        <CommandItem
+                                          key="other-address"
+                                          value="other-address"
+                                          onSelect={() => {
+                                            const dateKey = format(day, 'yyyy-MM-dd');
+                                            if (isWeekend && !isWeekendUnlocked(dateKey)) {
+                                              console.log(`🚫 STAFF WEEKEND JOB BLOCKED: ${dateKey} - Weekend is locked!`);
+                                              return;
+                                            }
+                                            
+                                            // Clear hours when selecting other-address to start fresh
+                                            if (entry?.id && !entry?.approved) {
+                                              editSavedEntry(entry.id, 'hours', '');
+                                            } else {
+                                              handleCellChange(day, entryIndex, 'hours', '');
+                                            }
+                                            
+                                            // Show address input dialog
+                                            setAddressDialogData({dayIndex, entryIndex});
+                                            setCurrentAddress({houseNumber: '', streetAddress: ''});
+                                            setShowAddressDialog(true);
+                                            setJobSearchOpen(prev => ({ ...prev, [cellKey]: false }));
+                                          }}
+                                        >
+                                          Other Address (Enter manually)
+                                        </CommandItem>
+                                        
+                                        {/* Show custom address if it exists */}
+                                        {(entry?.jobId === 'custom-address' || (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:'))) && (
+                                          <CommandItem
+                                            key="custom-address"
+                                            value={entry?.description ? entry.description.replace('CUSTOM_ADDRESS: ', '') : 'Custom Address'}
+                                            onSelect={() => {
+                                              const dateKey = format(day, 'yyyy-MM-dd');
+                                              if (entry?.id && !entry?.approved) {
+                                                editSavedEntry(entry.id, 'jobId', 'custom-address');
+                                              } else {
+                                                handleCellChange(day, entryIndex, 'jobId', 'custom-address');
+                                              }
+                                              setJobSearchOpen(prev => ({ ...prev, [cellKey]: false }));
+                                            }}
+                                          >
+                                            {entry?.description 
+                                              ? entry.description.replace('CUSTOM_ADDRESS: ', '')
+                                              : 'Custom Address'
+                                            }
+                                          </CommandItem>
+                                        )}
+                                        
+                                        {/* Regular Jobs */}
+                                        {jobsLoading ? (
+                                          <CommandItem disabled>Loading jobs...</CommandItem>
+                                        ) : jobsError ? (
+                                          <CommandItem disabled>Error loading jobs</CommandItem>
+                                        ) : Array.isArray(jobs) && jobs.length > 0 ? (
+                                          sortJobsNumerically(jobs.filter((job: any) => job.id && job.id.trim() !== ''))
+                                            .map((job: any) => {
+                                              const displayName = job.jobAddress || job.address || job.jobName || job.name || `Job ${job.id}`;
+                                              return (
+                                                <CommandItem
+                                                  key={job.id}
+                                                  value={displayName}
+                                                  onSelect={() => {
+                                                    const dateKey = format(day, 'yyyy-MM-dd');
+                                                    if (isWeekend && !isWeekendUnlocked(dateKey)) {
+                                                      console.log(`🚫 STAFF WEEKEND JOB BLOCKED: ${dateKey} - Weekend is locked!`);
+                                                      return;
+                                                    }
+                                                    
+                                                    if (entry?.id && !entry?.approved) {
+                                                      editSavedEntry(entry.id, 'jobId', job.id);
+                                                    } else {
+                                                      handleCellChange(day, entryIndex, 'jobId', job.id);
+                                                    }
+                                                    setJobSearchOpen(prev => ({ ...prev, [cellKey]: false }));
+                                                  }}
+                                                >
+                                                  {displayName}
+                                                </CommandItem>
+                                              );
+                                            })
+                                        ) : (
+                                          <CommandItem disabled>No jobs available</CommandItem>
+                                        )}
+                                        
+                                        {/* Leave Types at bottom */}
+                                        {Array.isArray(jobs) && jobs.length > 0 && <Separator className="my-2" />}
+                                        
+                                        {[
+                                          { id: 'tafe', name: 'Tafe' },
+                                          { id: 'rdo', name: 'RDO (Rest Day Off)' },
+                                          { id: 'sick-leave', name: 'Sick Leave' },
+                                          { id: 'personal-leave', name: 'Personal Leave' },
+                                          { id: 'annual-leave', name: 'Annual Leave' },
+                                          { id: 'leave-without-pay', name: 'Leave without pay' }
+                                        ].map((leaveType) => (
+                                          <CommandItem
+                                            key={leaveType.id}
+                                            value={leaveType.name}
+                                            onSelect={() => {
+                                              const dateKey = format(day, 'yyyy-MM-dd');
+                                              if (isWeekend && !isWeekendUnlocked(dateKey)) {
+                                                console.log(`🚫 STAFF WEEKEND JOB BLOCKED: ${dateKey} - Weekend is locked!`);
+                                                return;
+                                              }
+                                              
+                                              // Validate job selection with current hours
+                                              const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
+                                              const currentEntry = dayEntries[entryIndex] || {};
+                                              const currentHours = parseFloat(currentEntry.hours || entry?.hours || '0');
+                                              
+                                              // If selecting leave-without-pay and hours > 0, show warning
+                                              if (leaveType.id === 'leave-without-pay' && currentHours > 0) {
+                                                toast({
+                                                  title: "Hours Cleared",
+                                                  description: "Leave without pay requires 0 hours. Hours have been reset to 0.",
+                                                  variant: "default",
+                                                });
+                                                // Clear hours when selecting leave-without-pay
+                                                if (entry?.id && !entry?.approved) {
+                                                  editSavedEntry(entry.id, 'hours', '0');
+                                                } else {
+                                                  handleCellChange(day, entryIndex, 'hours', '0');
+                                                }
+                                              }
+                                              
+                                              if (entry?.id && !entry?.approved) {
+                                                editSavedEntry(entry.id, 'jobId', leaveType.id);
+                                              } else {
+                                                handleCellChange(day, entryIndex, 'jobId', leaveType.id);
+                                              }
+                                              setJobSearchOpen(prev => ({ ...prev, [cellKey]: false }));
+                                            }}
+                                          >
+                                            {leaveType.name}
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
+                            );
+                          })()}
                         </td>
                         <td className="p-3">
                           <Input
