@@ -2497,8 +2497,8 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
               </CardContent>
             </Card>
 
-            {/* Action Buttons - At bottom of scrollable content */}
-            <div className="flex flex-col sm:flex-row gap-3 w-full pt-4 border-t border-gray-200 mt-6">
+            {/* Action Buttons - Fixed at bottom of content area - v2 */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full pt-4 border-t border-gray-200 mt-6 bg-white" id="bottom-action-buttons">
               {!isEditing ? (
                 <>
                   <Button 
