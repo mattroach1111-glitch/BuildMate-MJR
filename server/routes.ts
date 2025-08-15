@@ -603,7 +603,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
+  // Return empty array for deleted jobs - endpoint kept for compatibility but functionality removed
+  app.get("/api/deleted-jobs", isAuthenticated, async (req: any, res) => {
+    res.json([]);
+  });
 
   // Add route to restore deleted job
   app.patch("/api/jobs/:id/restore", isAuthenticated, async (req: any, res) => {
