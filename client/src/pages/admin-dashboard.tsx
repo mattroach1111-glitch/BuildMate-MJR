@@ -23,7 +23,7 @@ import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 import { JobProgressVisualization } from "@/components/JobProgressVisualization";
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, RotateCcw, Grid3X3, List, Settings, UserPlus, Download, Edit, BarChart3, DollarSign, TrendingUp, Building2, Bell } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, Grid3X3, List, Settings, UserPlus, Download, Edit, BarChart3, DollarSign, TrendingUp, Building2, Bell } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
@@ -3473,43 +3473,7 @@ export default function AdminDashboard() {
             <GoogleDriveIntegration />
             <UserManagement />
             
-            {/* Database Management */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <RotateCcw className="h-5 w-5 text-muted-foreground" />
-                  Database Management
-                </CardTitle>
-                <CardDescription>
-                  Testing and maintenance tools for the application database
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="bg-amber-100 rounded-full p-2">
-                      <RotateCcw className="h-4 w-4 text-amber-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-amber-800 mb-1">Reset Database for Testing</h4>
-                      <p className="text-sm text-amber-700 mb-3">
-                        This will permanently delete all timesheet entries and reset job labor hours to zero. 
-                        Use this for testing purposes only.
-                      </p>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => resetDatabaseMutation.mutate()}
-                        disabled={resetDatabaseMutation.isPending}
-                        data-testid="button-reset-database"
-                      >
-                        {resetDatabaseMutation.isPending ? "Resetting..." : "Reset Database"}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+
 
             {/* Placeholder for future integrations */}
             <Card>
