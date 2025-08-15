@@ -1246,9 +1246,10 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
         className="sm:max-w-6xl sm:max-h-[95vh] 
-                   max-sm:w-screen max-sm:h-screen max-sm:max-w-none max-sm:max-h-none 
-                   max-sm:rounded-none max-sm:border-0 max-sm:m-0 max-sm:p-0
-                   overflow-hidden flex flex-col bg-white" 
+                   max-sm:!fixed max-sm:!inset-0 max-sm:!w-screen max-sm:!h-screen max-sm:!max-w-none max-sm:!max-h-none 
+                   max-sm:!rounded-none max-sm:!border-0 max-sm:!m-0 max-sm:!p-0 max-sm:!translate-x-0 max-sm:!translate-y-0 
+                   max-sm:!left-0 max-sm:!top-0 max-sm:!z-[60]
+                   overflow-hidden flex flex-col !bg-white" 
         style={{ WebkitOverflowScrolling: 'touch' }}
         aria-describedby="job-sheet-description"
       >
@@ -1430,7 +1431,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto min-h-0" style={{ WebkitOverflowScrolling: 'touch', overflowY: 'auto' }}>
+        <div className="flex-1 overflow-y-auto min-h-0 relative" style={{ WebkitOverflowScrolling: 'touch' }}>
           {isLoading ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
