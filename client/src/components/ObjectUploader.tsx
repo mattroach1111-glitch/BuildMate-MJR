@@ -27,8 +27,8 @@ interface ObjectUploaderProps {
  *   - Upload progress tracking
  *   - Upload status display
  * 
- * The component uses Uppy under the hood to handle all file upload functionality.
- * All file management features are automatically handled by the Uppy dashboard modal.
+ * The component uses native drag and drop with direct upload functionality.
+ * Supports file validation, progress tracking, and visual feedback during uploads.
  */
 export function ObjectUploader({
   maxNumberOfFiles = 5,
