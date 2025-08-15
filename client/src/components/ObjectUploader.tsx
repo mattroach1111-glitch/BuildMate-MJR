@@ -57,7 +57,9 @@ export function ObjectUploader({
     })
       .use(AwsS3, {
         shouldUseMultipart: false,
-        getUploadParameters: onGetUploadParameters,
+        getUploadParameters: (file) => {
+          return onGetUploadParameters(file);
+        },
       })
       .on("complete", (result) => {
         onComplete?.(result);
