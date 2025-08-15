@@ -323,10 +323,10 @@ export default function StaffNotesClean() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-              <Link href="/">
+              <Link href="/admin">
                 <Button variant="ghost" size="sm" data-testid="button-back-admin" className="self-start">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
+                  Back to Admin
                 </Button>
               </Link>
               <div>
