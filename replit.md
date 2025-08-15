@@ -46,7 +46,7 @@ Preferred communication style: Simple, everyday language.
 - **Inline Editing**: For job sheet items (materials, sub-trades, other costs) with edit/delete buttons, inline forms, save/cancel options, confirmation dialogs, and automatic data refresh.
 - **AI Document Processing**: AI-powered expense extraction for all document types (PDF, JPG, PNG) including drag-and-drop upload, intelligent categorization, vendor/amount extraction, automatic PDF-to-image conversion, and integration. Includes a document review system allowing category selection and approval.
 - **Job Creation from PDF**: Comprehensive system for creating jobs from PDF documents with authentic data extraction, including labor entries, materials, sub-trades, tip fees, and automatic consumables calculation. Features fuzzy employee and client matching. Operates automatically upon upload without approval steps.
-- **Permanent Delete Functionality**: Two-tier job deletion (soft delete to folder, then permanent delete) with API endpoint, confirmation dialogs, and complete removal of all associated data.
+- **Permanent Delete Functionality**: Jobs are permanently deleted immediately with automatic PDF backup to Google Drive. No soft delete or archiving system.
 - **Client/Project Manager Filtered Email Updates**: Granular filtering for job updates, updated email subjects with client/PM names, and visual filtering badges.
 - **Multiple Email Recipient Support**: For job updates with comma-separated addresses, smart email suggestions, and persistence.
 - **Job Update Email System**: Fully operational using Onlydomains.com Titan email service.

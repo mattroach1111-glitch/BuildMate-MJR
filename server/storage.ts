@@ -457,18 +457,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getDeletedJobs(): Promise<Job[]> {
-    try {
-      const result = await db
-        .select()
-        .from(jobs)
-        .where(eq(jobs.isDeleted, true));
-      return result;
-    } catch (error) {
-      console.error("Error fetching deleted jobs:", error);
-      throw error;
-    }
-  }
+
 
   async restoreJob(id: string): Promise<void> {
     await db
