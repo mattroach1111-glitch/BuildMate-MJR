@@ -78,7 +78,7 @@ export default function AdminDashboard() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   // Define the deletion password - you can change this to whatever you prefer
-  const DELETION_PASSWORD = 'DELETE123'; // Change this password to whatever you want
+  const DELETION_PASSWORD = 'Festool1!'; // Change this password to whatever you want
 
   const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
   const [isCreateEmployeeOpen, setIsCreateEmployeeOpen] = useState(false);
