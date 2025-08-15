@@ -45,8 +45,6 @@ function Router() {
           <Route path="/staff" component={StaffDashboard} />
           <Route path="/timesheet" component={FortnightTimesheetView} />
           <Route path="/staff-timesheet" component={StaffTimesheet} />
-          <Route path="/admin" component={StaffDashboard} />
-          <Route path="/jobs" component={StaffDashboard} />
         </>
       )}
       <Route component={NotFound} />
