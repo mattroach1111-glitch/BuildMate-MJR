@@ -404,7 +404,13 @@ export function UserManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   {Array.isArray(users) && users.length > 0 ? (
-                    users.map((user) => {
+                    users
+                      .sort((a, b) => {
+                        const nameA = [a.firstName, a.lastName].filter(Boolean).join(' ').trim() || a.email || 'Unknown User';
+                        const nameB = [b.firstName, b.lastName].filter(Boolean).join(' ').trim() || b.email || 'Unknown User';
+                        return nameA.localeCompare(nameB);
+                      })
+                      .map((user) => {
                       // Create a display name, falling back to email if no name is available
                       const displayName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim() 
                         || user.email 
@@ -535,7 +541,13 @@ export function UserManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   {Array.isArray(users) && users.length > 0 ? (
-                    users.map((user) => (
+                    users
+                      .sort((a, b) => {
+                        const nameA = [a.firstName, a.lastName].filter(Boolean).join(' ') || a.email || 'Unknown User';
+                        const nameB = [b.firstName, b.lastName].filter(Boolean).join(' ') || b.email || 'Unknown User';
+                        return nameA.localeCompare(nameB);
+                      })
+                      .map((user) => (
                       <SelectItem key={`assign-${user.id}`} value={user.id}>
                         <div className="flex items-center gap-2">
                           <span>{[user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'Unknown User'}</span>
@@ -566,7 +578,9 @@ export function UserManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   {Array.isArray(employees) && employees.length > 0 ? (
-                    employees.map((employee: Employee) => (
+                    employees
+                      .sort((a: Employee, b: Employee) => a.name.localeCompare(b.name))
+                      .map((employee: Employee) => (
                       <SelectItem key={employee.id} value={employee.id}>
                         <div className="flex items-center gap-2">
                           <UserPlus className="h-4 w-4" />

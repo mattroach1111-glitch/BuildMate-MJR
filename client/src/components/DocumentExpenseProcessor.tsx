@@ -89,8 +89,8 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     queryKey: ["/api/jobs"],
   });
 
-  // Get unique project managers from existing jobs  
-  const projectManagers = jobs ? Array.from(new Set((jobs as any[]).map(job => job.projectManager || job.projectName).filter(Boolean))) : [];
+  // Get unique project managers from existing jobs and sort alphabetically
+  const projectManagers = jobs ? Array.from(new Set((jobs as any[]).map(job => job.projectManager || job.projectName).filter(Boolean))).sort() : [];
 
   // Get upload URL mutation
   const getUploadUrlMutation = useMutation({

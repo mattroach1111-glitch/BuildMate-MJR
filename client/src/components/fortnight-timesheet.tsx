@@ -1510,7 +1510,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               ) : jobsError ? (
                                 <SelectItem value="error" disabled>Error loading jobs</SelectItem>
                               ) : Array.isArray(jobs) && jobs.length > 0 ? (
-                                jobs.filter((job: any) => job.id && job.id.trim() !== '').map((job: any) => (
+                                jobs
+                                  .filter((job: any) => job.id && job.id.trim() !== '')
+                                  .sort((a: any, b: any) => {
+                                    const addressA = a.jobAddress || a.address || a.jobName || a.name || `Job ${a.id}`;
+                                    const addressB = b.jobAddress || b.address || b.jobName || b.name || `Job ${b.id}`;
+                                    return addressA.localeCompare(addressB);
+                                  })
+                                  .map((job: any) => (
                                   <SelectItem key={job.id} value={job.id}>
                                     {job.jobAddress || job.address || job.jobName || job.name || `Job ${job.id}`}
                                   </SelectItem>
@@ -1863,7 +1870,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     </SelectTrigger>
                     <SelectContent>
                       {Array.isArray(staffMembers) && staffMembers.length > 0 ? 
-                        staffMembers.filter((staff: any) => staff.id && staff.id.trim() !== '').map((staff: any) => (
+                        staffMembers
+                          .filter((staff: any) => staff.id && staff.id.trim() !== '')
+                          .sort((a: any, b: any) => (a.name || 'No Name').localeCompare(b.name || 'No Name'))
+                          .map((staff: any) => (
                           <SelectItem key={staff.id} value={staff.id}>
                             {staff.name || 'No Name'}
                           </SelectItem>
@@ -2195,7 +2205,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   ) : jobsError ? (
                                     <SelectItem value="error" disabled>Error loading jobs</SelectItem>
                                   ) : Array.isArray(jobs) && jobs.length > 0 ? (
-                                    jobs.filter((job: any) => job.id && job.id.trim() !== '').map((job: any) => (
+                                    jobs
+                                      .filter((job: any) => job.id && job.id.trim() !== '')
+                                      .sort((a: any, b: any) => {
+                                        const addressA = a.jobAddress || a.address || a.jobName || a.name || `Job ${a.id}`;
+                                        const addressB = b.jobAddress || b.address || b.jobName || b.name || `Job ${b.id}`;
+                                        return addressA.localeCompare(addressB);
+                                      })
+                                      .map((job: any) => (
                                       <SelectItem key={job.id} value={job.id}>
                                         {job.jobAddress || job.address || job.jobName || job.name || `Job ${job.id}`}
                                       </SelectItem>

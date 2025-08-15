@@ -2543,7 +2543,7 @@ export default function AdminDashboard() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {validStaff.map((staff) => (
+                              {validStaff.sort((a, b) => a.name.localeCompare(b.name)).map((staff) => (
                                 <SelectItem key={`staff-${staff.id}-${staff.type}`} value={staff.id}>
                                   {staff.name} {staff.type === 'employee' ? '(Employee)' : '(User)'}
                                 </SelectItem>
@@ -2568,7 +2568,9 @@ export default function AdminDashboard() {
                             </FormControl>
                             <SelectContent>
                               {/* Regular Jobs Section - Updated for consistency */}
-                              {jobs?.filter(job => job.id && job.id.trim() !== '').map((job) => (
+                              {jobs?.filter(job => job.id && job.id.trim() !== '')
+                                .sort((a, b) => a.jobAddress.localeCompare(b.jobAddress))
+                                .map((job) => (
                                 <SelectItem key={job.id} value={job.id}>
                                   {job.jobAddress}
                                 </SelectItem>

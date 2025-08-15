@@ -33,17 +33,21 @@ export function JobAddressSearch({
   // Find the selected job to display
   const selectedJob = jobs.find(job => job.id === value);
 
-  // Filter jobs based on search text
+  // Filter jobs based on search text and sort alphabetically
   useEffect(() => {
-    if (!searchText.trim()) {
-      setFilteredJobs(jobs);
-    } else {
-      const filtered = jobs.filter(job =>
+    let filtered = jobs;
+    
+    if (searchText.trim()) {
+      filtered = jobs.filter(job =>
         job.jobAddress.toLowerCase().includes(searchText.toLowerCase()) ||
         job.clientName.toLowerCase().includes(searchText.toLowerCase())
       );
-      setFilteredJobs(filtered);
     }
+    
+    // Sort alphabetically by job address
+    filtered = filtered.sort((a, b) => a.jobAddress.localeCompare(b.jobAddress));
+    
+    setFilteredJobs(filtered);
   }, [searchText, jobs]);
 
   const handleJobSelect = (job: Job) => {
