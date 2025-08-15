@@ -1,17 +1,17 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
-// Cache buster: force new build hash
-console.log("BuildFlow Pro loaded fresh:", new Date().toISOString());
 
-// Force cache refresh with version - DELETED JOBS REMOVED
-console.log('BuildFlow Pro v2.0.0 - DELETED JOBS FUNCTIONALITY COMPLETELY REMOVED:', Date.now());
+// Force cache refresh with version
+console.log('BuildFlow Pro v1.0.9 - LANDSCAPE MODE DISABLED, FOCUS ON CORE FEATURES:', Date.now());
 
-// Clear ALL caches on load - force fresh start
+// Clear any existing caches on load
 if ('caches' in window) {
   caches.keys().then((names) => {
     names.forEach(name => {
-      caches.delete(name);
+      if (name.startsWith('buildflow-pro-v1.0.0')) {
+        caches.delete(name);
+      }
     });
   });
 }

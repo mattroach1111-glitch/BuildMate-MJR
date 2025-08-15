@@ -4,13 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* COMPLETELY REMOVE ALL DELETED/ARCHIVED JOB COMPONENTS */
-/* Allow deleted jobs folder to be visible for cleanup */
-
-/* Removed all CSS rules that were hiding archive/deleted elements */
-
-/* Remove aggressive overrides - allow deleted jobs folder to show for cleanup */
-
 :root {
   --primary: hsl(208.3, 76.2%, 42.2%);
   --primary-foreground: hsl(0, 0%, 100%);

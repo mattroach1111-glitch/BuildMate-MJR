@@ -148,7 +148,8 @@ export interface IStorage {
   updateJobFile(id: string, updates: Partial<InsertJobFile>): Promise<JobFile>;
   deleteJobFile(id: string): Promise<void>;
   
-  // Soft delete operations (REMOVED - jobs are now permanently deleted with PDF backup)
+  // Soft delete operations  
+  getDeletedJobs(): Promise<Job[]>;
   softDeleteJob(id: string): Promise<void>;
   restoreJob(id: string): Promise<void>;
   
@@ -457,7 +458,11 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-
+  async getDeletedJobs(): Promise<Job[]> {
+    return await db.select().from(jobs)
+      .where(eq(jobs.isDeleted, true))
+      .orderBy(desc(jobs.deletedAt));
+  }
 
   async restoreJob(id: string): Promise<void> {
     await db
@@ -478,7 +483,6 @@ export class DatabaseStorage implements IStorage {
     await db.delete(otherCosts).where(eq(otherCosts.jobId, id));
     await db.delete(timesheetEntries).where(eq(timesheetEntries.jobId, id));
     await db.delete(jobFiles).where(eq(jobFiles.jobId, id));
-    await db.delete(tipFees).where(eq(tipFees.jobId, id));
     
     // Finally delete the job itself
     await db.delete(jobs).where(eq(jobs.id, id));

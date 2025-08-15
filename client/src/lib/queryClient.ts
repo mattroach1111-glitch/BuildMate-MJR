@@ -49,7 +49,7 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 0, // Force cache invalidation for deleted jobs cleanup
+      staleTime: Infinity,
       retry: false,
     },
     mutations: {
@@ -57,5 +57,3 @@ export const queryClient = new QueryClient({
     },
   },
 });
-
-// Deleted jobs functionality completely removed

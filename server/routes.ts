@@ -588,97 +588,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Job not found" });
       }
       
-      console.log(`Generating PDF for job: ${existingJob.projectName || existingJob.jobAddress}`);
-      
-      try {
-        // Get job details including all related data
-        const jobDetails = await storage.getJob(jobId);
-        if (!jobDetails) {
-          throw new Error("Could not retrieve job details for PDF generation");
-        }
-        
-        // Use jsPDF to generate PDF on server side
-        const jsPDF = require('jspdf');
-        
-        // Get all related data for the job
-        const laborEntries = await storage.getLaborEntriesForJob(jobId);
-        const materials = await storage.getMaterialsForJob(jobId);
-        const subTrades = await storage.getSubTradesForJob(jobId);
-        const otherCosts = await storage.getOtherCostsForJob(jobId);
-        const tipFees = await storage.getTipFeesForJob(jobId);
-        
-        // Generate job sheet PDF
-        const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.width;
-        
-        // Header
-        doc.setFontSize(20);
-        doc.setFont('helvetica', 'bold');
-        doc.text('BuildFlow Pro - Job Sheet', pageWidth / 2, 25, { align: 'center' });
-        
-        // Job details
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Project: ${existingJob.projectName || 'N/A'}`, 20, 45);
-        doc.text(`Client: ${existingJob.clientName || 'N/A'}`, 20, 55);
-        doc.text(`Address: ${existingJob.jobAddress || 'N/A'}`, 20, 65);
-        doc.text(`Status: ${existingJob.status || 'N/A'}`, 20, 75);
-        doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 85);
-        
-        // Add labor entries, materials etc. if needed
-        let yPos = 100;
-        if (laborEntries && laborEntries.length > 0) {
-          doc.text('Labor Entries:', 20, yPos);
-          yPos += 10;
-          laborEntries.forEach((entry: any) => {
-            doc.text(`• ${entry.description || 'Labor'}: ${entry.hours || 0}h at $${entry.hourlyRate || 0}/h`, 25, yPos);
-            yPos += 8;
-          });
-        }
-        
-        const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
-        
-        // Try to upload to Google Drive
-        try {
-          const driveAuth = new GoogleDriveAuth();
-          const driveService = new GoogleDriveService();
-          
-          // Set user tokens for authentication
-          const userTokens = await driveAuth.getTokens();
-          if (userTokens) {
-            driveService.setUserTokens(userTokens);
-            
-            const fileName = `${existingJob.projectName || existingJob.jobAddress}_JobSheet_${new Date().toISOString().split('T')[0]}.pdf`;
-            
-            // Create the "Saved Job sheets Pdfs" folder structure
-            const mainFolderId = await driveService.findOrCreateFolder('BuildFlow Pro');
-            const savedPdfsFolderId = await driveService.findOrCreateFolder('Saved Job sheets Pdfs', mainFolderId || undefined);
-            
-            // Upload PDF to the folder
-            const result = await driveService.uploadFile(fileName, pdfBuffer, 'application/pdf', savedPdfsFolderId);
-            
-            if (result) {
-              console.log(`Successfully saved PDF to Google Drive: ${fileName}`);
-            } else {
-              console.log("Failed to upload PDF to Google Drive");
-            }
-          } else {
-            console.log("Google Drive not connected, PDF not uploaded");
-          }
-        } catch (driveError) {
-          console.warn("Failed to upload to Google Drive:", driveError);
-          // Continue with deletion even if Drive upload fails
-        }
-        
-      } catch (pdfError) {
-        console.warn("PDF generation failed:", pdfError);
-        // Continue with deletion even if PDF generation fails
+      if (existingJob.isDeleted) {
+        console.error(`Delete job failed: Job ${jobId} is already deleted`);
+        return res.status(400).json({ message: "Job is already deleted" });
       }
 
-      // Permanently delete the job (no archiving)
-      await storage.permanentlyDeleteJob(jobId);
+      await storage.softDeleteJob(jobId);
       console.log(`Successfully deleted job: ${jobId}`);
-      res.json({ message: "Job deleted successfully and PDF saved to Google Drive" });
+      res.json({ message: "Job moved to deleted folder" });
     } catch (error) {
       console.error("Error deleting job:", error);
       console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
@@ -686,7 +603,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add route to get deleted jobs - must come before generic job routes
+  app.get("/api/deleted-jobs", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
 
+      const deletedJobs = await storage.getDeletedJobs();
+      res.json(deletedJobs);
+    } catch (error) {
+      console.error("Error fetching deleted jobs:", error);
+      res.status(500).json({ message: "Failed to fetch deleted jobs" });
+    }
+  });
+
+  // Add route to restore deleted job
+  app.patch("/api/jobs/:id/restore", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      await storage.restoreJob(req.params.id);
+      res.json({ message: "Job restored successfully" });
+    } catch (error) {
+      console.error("Error restoring job:", error);
+      res.status(500).json({ message: "Failed to restore job" });
+    }
+  });
+
+  // Add route to permanently delete a job
+  app.delete("/api/jobs/:id/permanent", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      await storage.permanentlyDeleteJob(req.params.id);
+      res.json({ message: "Job permanently deleted" });
+    } catch (error) {
+      console.error("Error permanently deleting job:", error);
+      res.status(500).json({ message: "Failed to permanently delete job" });
+    }
+  });
 
   // Get timesheet data for a specific job
   app.get("/api/jobs/:id/timesheets", isAuthenticated, async (req: any, res) => {

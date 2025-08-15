@@ -265,9 +265,10 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/deleted-jobs"] });
       toast({
         title: "Success", 
-        description: "Job has been permanently deleted and PDF saved to Google Drive",
+        description: "Job has been moved to deleted folder",
       });
       onClose(); // Close modal after successful deletion
     },
@@ -2706,9 +2707,9 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure you want to delete this job?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action will permanently delete the job "{jobDetails?.jobAddress}".
-                          A PDF copy will be automatically saved to your Google Drive in the "Saved Job sheets Pdfs" folder before deletion.
-                          This action cannot be undone.
+                          This action will move the job "{jobDetails?.jobAddress}" to the deleted folder.
+                          The job can be restored later from the deleted jobs section.
+                          This action cannot be undone without admin intervention.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

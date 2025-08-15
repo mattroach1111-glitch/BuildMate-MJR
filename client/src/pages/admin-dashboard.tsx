@@ -41,7 +41,6 @@ import { EmailProcessingReview } from "@/components/EmailProcessingReview";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import { WeeklyOrganizer } from "@/components/weekly-organizer";
 
-
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
     .min(1, "Builder margin is required")
@@ -98,7 +97,7 @@ export default function AdminDashboard() {
   const [newClientName, setNewClientName] = useState("");
   const [folderColors, setFolderColors] = useState<Record<string, number>>({});
   const [colorPickerOpen, setColorPickerOpen] = useState<string | null>(null);
-
+  const [isDeletedFolderExpanded, setIsDeletedFolderExpanded] = useState(false);
 
   const [sortBy, setSortBy] = useState<'address' | 'client' | 'manager' | 'status'>('address');
   const [activeTab, setActiveTab] = useState("jobs");
@@ -142,7 +141,10 @@ export default function AdminDashboard() {
     retry: false,
   });
 
-
+  const { data: deletedJobs, isLoading: deletedJobsLoading } = useQuery<Job[]>({
+    queryKey: ["/api/deleted-jobs"],
+    retry: false,
+  });
 
   const { data: employees, isLoading: employeesLoading } = useQuery<Employee[]>({
     queryKey: ["/api/employees"],
@@ -482,9 +484,10 @@ export default function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/deleted-jobs"] });
       toast({
         title: "Success",
-        description: "Job archived successfully",
+        description: "Job moved to deleted folder",
       });
     },
     onError: (error) => {
@@ -507,7 +510,38 @@ export default function AdminDashboard() {
     },
   });
 
-
+  const restoreJobMutation = useMutation({
+    mutationFn: async (jobId: string) => {
+      const response = await apiRequest("PATCH", `/api/jobs/${jobId}/restore`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/deleted-jobs"] });
+      toast({
+        title: "Success",
+        description: "Job restored successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to restore job",
+        variant: "destructive",
+      });
+    },
+  });
 
   const permanentDeleteJobMutation = useMutation({
     mutationFn: async (jobId: string) => {
@@ -515,7 +549,7 @@ export default function AdminDashboard() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/deleted-jobs"] });
       toast({
         title: "Success",
         description: "Job permanently deleted",
@@ -2158,29 +2192,15 @@ export default function AdminDashboard() {
                                         <DropdownMenuItem 
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            if (confirm(`Archive this job?\n\n"${job.jobAddress}" will be moved to archive. You can restore it later if needed.`)) {
+                                            if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
                                               deleteJobMutation.mutate(job.id);
                                             }
                                           }}
-                                          className="text-orange-600 focus:text-orange-600"
-                                          data-testid={`archive-job-${job.id}`}
+                                          className="text-red-600 focus:text-red-600"
+                                          data-testid={`delete-job-${job.id}`}
                                         >
                                           <Trash2 className="h-4 w-4 mr-2" />
-                                          Archive Job
-                                        </DropdownMenuItem>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem 
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (confirm(`⚠️ PERMANENT DELETE WARNING\n\nThis will permanently delete "${job.jobAddress}" and ALL associated data including:\n• Labor entries\n• Materials\n• Sub-trades\n• Other costs\n• Timesheet entries\n• Job files\n\nThis action CANNOT be undone.\n\nAre you absolutely sure?`)) {
-                                              permanentDeleteJobMutation.mutate(job.id);
-                                            }
-                                          }}
-                                          className="text-red-600 focus:text-red-600 focus:bg-red-50 hover:bg-red-50 font-medium"
-                                          data-testid={`permanent-delete-job-${job.id}`}
-                                        >
-                                          <Trash2 className="h-4 w-4 mr-2" />
-                                          🗑️ Permanent Delete
+                                          Delete Job
                                         </DropdownMenuItem>
                                       </DropdownMenuContent>
                                     </DropdownMenu>
@@ -2230,7 +2250,116 @@ export default function AdminDashboard() {
             </Card>
           )}
 
-          {/* Previous completed job sheets moved to Settings tab - removed from Jobs tab */}
+          {/* Previous Completed Job Sheets Folder - Pinned to Bottom */}
+          {deletedJobs && deletedJobs.length > 0 && (
+            <div className="mt-8 pt-6 border-t">
+              <div 
+                className="border rounded-lg p-4 transition-colors bg-red-50 border-red-200"
+              >
+                <div 
+                  className="flex items-center gap-2 p-2 rounded transition-colors bg-red-100 hover:bg-red-150"
+                >
+                  <div 
+                    className="flex items-center gap-2 flex-1 cursor-pointer"
+                    onClick={() => setIsDeletedFolderExpanded(!isDeletedFolderExpanded)}
+                    data-testid="folder-previous-completed"
+                  >
+                    {isDeletedFolderExpanded ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                    {isDeletedFolderExpanded ? (
+                      <FolderOpen className="h-5 w-5 text-red-600" />
+                    ) : (
+                      <Folder className="h-5 w-5 text-red-600" />
+                    )}
+                    <span className="font-medium text-red-800">📋 Previous completed job sheets</span>
+                    <Badge 
+                      variant="secondary" 
+                      className="ml-2 bg-red-200 text-red-800 border-red-300"
+                    >
+                      {deletedJobs.length} job{deletedJobs.length !== 1 ? 's' : ''}
+                    </Badge>
+                  </div>
+                </div>
+                
+                {isDeletedFolderExpanded && (
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {deletedJobs.map((job) => (
+                      <Card 
+                        key={job.id} 
+                        className="cursor-pointer hover:shadow-md transition-shadow bg-white relative opacity-75"
+                        onClick={() => setSelectedJob(job.id)}
+                        data-testid={`card-deleted-job-${job.id}`}
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">
+                                Archived
+                              </Badge>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-7 w-7 p-0"
+                                    onClick={(e) => e.stopPropagation()}
+                                    data-testid={`menu-deleted-${job.id}`}
+                                  >
+                                    <MoreVertical className="h-3 w-3" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      restoreJobMutation.mutate(job.id);
+                                    }}
+                                    className="text-green-600 focus:text-green-600"
+                                    data-testid={`restore-job-${job.id}`}
+                                  >
+                                    <RotateCcw className="h-4 w-4 mr-2" />
+                                    Restore Job
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (confirm(`⚠️ PERMANENT DELETE WARNING\n\nThis will permanently delete the job "${job.jobAddress}" and ALL associated data including:\n• Labor entries\n• Materials\n• Sub-trades\n• Other costs\n• Timesheet entries\n• Job files\n\nThis action CANNOT be undone.\n\nAre you sure you want to permanently delete this job?`)) {
+                                        permanentDeleteJobMutation.mutate(job.id);
+                                      }
+                                    }}
+                                    className="text-red-600 focus:text-red-600 focus:bg-red-50 hover:bg-red-50 font-medium"
+                                    data-testid={`permanent-delete-job-${job.id}`}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    🗑️ Permanently Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+                          <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <p className="text-sm text-muted-foreground mb-2">PM: {job.projectManager || job.projectName}</p>
+                          <div className="text-xs text-muted-foreground">
+                            Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
+                          </div>
+                          <div className="text-xs text-red-600 mt-1">
+                            Archived: {job.deletedAt ? new Date(job.deletedAt).toLocaleDateString() : 'Unknown'}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         <TabsContent value="timesheets" className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h2 className="text-xl font-semibold">Fortnight Timesheet Management</h2>
@@ -3215,6 +3344,7 @@ export default function AdminDashboard() {
           <div className="grid gap-6 md:grid-cols-1">
             <GoogleDriveIntegration />
             <UserManagement />
+            
 
 
             {/* Placeholder for future integrations */}
