@@ -23,7 +23,7 @@ import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, List, Settings, UserPlus, Download, Edit, DollarSign, TrendingUp, Building2, Bell, RotateCcw } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, List, Settings, UserPlus, Download, Edit, DollarSign, TrendingUp, Building2, Bell } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
@@ -97,7 +97,7 @@ export default function AdminDashboard() {
   const [newClientName, setNewClientName] = useState("");
   const [folderColors, setFolderColors] = useState<Record<string, number>>({});
   const [colorPickerOpen, setColorPickerOpen] = useState<string | null>(null);
-  const [isDeletedFolderExpanded, setIsDeletedFolderExpanded] = useState(false);
+
 
   const [sortBy, setSortBy] = useState<'address' | 'client' | 'manager' | 'status'>('address');
   const [activeTab, setActiveTab] = useState("jobs");
@@ -2192,15 +2192,29 @@ export default function AdminDashboard() {
                                         <DropdownMenuItem 
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+                                            if (confirm(`Archive this job?\n\n"${job.jobAddress}" will be moved to archive. You can restore it later if needed.`)) {
                                               deleteJobMutation.mutate(job.id);
                                             }
                                           }}
-                                          className="text-red-600 focus:text-red-600"
-                                          data-testid={`delete-job-${job.id}`}
+                                          className="text-orange-600 focus:text-orange-600"
+                                          data-testid={`archive-job-${job.id}`}
                                         >
                                           <Trash2 className="h-4 w-4 mr-2" />
-                                          Delete Job
+                                          Archive Job
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (confirm(`⚠️ PERMANENT DELETE WARNING\n\nThis will permanently delete "${job.jobAddress}" and ALL associated data including:\n• Labor entries\n• Materials\n• Sub-trades\n• Other costs\n• Timesheet entries\n• Job files\n\nThis action CANNOT be undone.\n\nAre you absolutely sure?`)) {
+                                              permanentDeleteJobMutation.mutate(job.id);
+                                            }
+                                          }}
+                                          className="text-red-600 focus:text-red-600 focus:bg-red-50 hover:bg-red-50 font-medium"
+                                          data-testid={`permanent-delete-job-${job.id}`}
+                                        >
+                                          <Trash2 className="h-4 w-4 mr-2" />
+                                          🗑️ Permanent Delete
                                         </DropdownMenuItem>
                                       </DropdownMenuContent>
                                     </DropdownMenu>
@@ -3236,112 +3250,7 @@ export default function AdminDashboard() {
             <GoogleDriveIntegration />
             <UserManagement />
             
-            {/* Previous Completed Jobs Section */}
-            {deletedJobs && deletedJobs.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <Trash2 className="h-5 w-5 text-muted-foreground" />
-                      Previous Completed Job Sheets
-                    </CardTitle>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsDeletedFolderExpanded(!isDeletedFolderExpanded)}
-                      data-testid="button-toggle-deleted-folder"
-                    >
-                      {isDeletedFolderExpanded ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                      <Badge variant="secondary" className="ml-2">
-                        {deletedJobs.length}
-                      </Badge>
-                    </Button>
-                  </div>
-                  <CardDescription>
-                    Archived job sheets that have been moved to completed status
-                  </CardDescription>
-                </CardHeader>
-                {isDeletedFolderExpanded && (
-                  <CardContent>
-                    <div className="space-y-3">
-                      {deletedJobs.map((job) => (
-                        <Card 
-                          key={job.id}
-                          className="cursor-pointer hover:shadow-md transition-shadow"
-                          onClick={() => setSelectedJob(job.id)}
-                          data-testid={`card-deleted-job-${job.id}`}
-                        >
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start justify-between">
-                              <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
-                              <div className="flex items-center gap-2 shrink-0">
-                                <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">
-                                  Archived
-                                </Badge>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      className="h-7 w-7 p-0"
-                                      onClick={(e) => e.stopPropagation()}
-                                      data-testid={`menu-deleted-${job.id}`}
-                                    >
-                                      <MoreVertical className="h-3 w-3" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem 
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        restoreJobMutation.mutate(job.id);
-                                      }}
-                                      className="text-green-600 focus:text-green-600"
-                                      data-testid={`restore-job-${job.id}`}
-                                    >
-                                      <RotateCcw className="h-4 w-4 mr-2" />
-                                      Restore Job
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem 
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (confirm(`⚠️ PERMANENT DELETE WARNING\n\nThis will permanently delete the job "${job.jobAddress}" and ALL associated data including:\n• Labor entries\n• Materials\n• Sub-trades\n• Other costs\n• Timesheet entries\n• Job files\n\nThis action CANNOT be undone.\n\nAre you sure you want to permanently delete this job?`)) {
-                                          permanentDeleteJobMutation.mutate(job.id);
-                                        }
-                                      }}
-                                      className="text-red-600 focus:text-red-600 focus:bg-red-50 hover:bg-red-50 font-medium"
-                                      data-testid={`permanent-delete-job-${job.id}`}
-                                    >
-                                      <Trash2 className="h-4 w-4 mr-2" />
-                                      🗑️ Permanently Delete
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            <p className="text-sm text-muted-foreground mb-2">PM: {job.projectManager || job.projectName}</p>
-                            <div className="text-xs text-muted-foreground">
-                              Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
-                            </div>
-                            <div className="text-xs text-red-600 mt-1">
-                              Archived: {job.deletedAt ? new Date(job.deletedAt).toLocaleDateString() : 'Unknown'}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </CardContent>
-                )}
-              </Card>
-            )}
+
 
             {/* Placeholder for future integrations */}
             <Card>
