@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-// Temporarily comment out to fix import issue
+// Using local schema due to import issue
 // import { insertStaffNoteSchema } from '@shared/schema';
 import { z } from 'zod';
 import { apiRequest } from '@/lib/queryClient';
