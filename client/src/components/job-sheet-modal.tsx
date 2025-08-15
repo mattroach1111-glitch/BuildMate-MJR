@@ -265,10 +265,9 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/deleted-jobs"] });
       toast({
         title: "Success", 
-        description: "Job has been moved to deleted folder",
+        description: "Job has been archived",
       });
       onClose(); // Close modal after successful deletion
     },
