@@ -457,7 +457,18 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // getDeletedJobs() method removed - jobs are now permanently deleted with PDF backup
+  async getDeletedJobs(): Promise<Job[]> {
+    try {
+      const result = await db
+        .select()
+        .from(jobs)
+        .where(eq(jobs.isDeleted, true));
+      return result;
+    } catch (error) {
+      console.error("Error fetching deleted jobs:", error);
+      throw error;
+    }
+  }
 
   async restoreJob(id: string): Promise<void> {
     await db
@@ -478,6 +489,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(otherCosts).where(eq(otherCosts.jobId, id));
     await db.delete(timesheetEntries).where(eq(timesheetEntries.jobId, id));
     await db.delete(jobFiles).where(eq(jobFiles.jobId, id));
+    await db.delete(tipFees).where(eq(tipFees.jobId, id));
     
     // Finally delete the job itself
     await db.delete(jobs).where(eq(jobs.id, id));

@@ -48,27 +48,7 @@ svg[data-lucide="archive"] {
   display: none !important;
 }
 
-/* Aggressive override - hide all cards/folders/buttons with trash icons in settings */
-[data-value="settings"] *[class*="card"],
-[data-value="settings"] *[class*="folder"],
-[data-value="settings"] *[class*="button"]:has(.lucide-trash-2),
-[data-value="settings"] *:has(svg[data-lucide="trash-2"]) {
-  display: none !important;
-}
-
-/* Force hide specific text content */
-*:before,
-*:after {
-  content: "" !important;
-}
-
-/* Hide any element containing these specific strings */
-*[aria-label*="Previous"],
-*[title*="Previous"],
-*[data-tooltip*="Previous"] {
-  visibility: hidden !important;
-  display: none !important;
-}
+/* Remove aggressive overrides - allow deleted jobs folder to show for cleanup */
 
 :root {
   --primary: hsl(208.3, 76.2%, 42.2%);

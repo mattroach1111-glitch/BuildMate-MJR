@@ -686,9 +686,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Deleted jobs functionality completely removed - return 404 to break cached components
+  // Get deleted jobs for cleanup purposes
   app.get("/api/deleted-jobs", isAuthenticated, async (req: any, res) => {
-    res.status(404).json({ message: "Deleted jobs functionality has been removed" });
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const deletedJobs = await storage.getDeletedJobs();
+      res.json(deletedJobs);
+    } catch (error) {
+      console.error("Error fetching deleted jobs:", error);
+      res.status(500).json({ message: "Failed to fetch deleted jobs" });
+    }
+  });
+
+  // Permanently delete a job from deleted folder
+  app.delete("/api/deleted-jobs/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const jobId = req.params.id;
+      await storage.permanentlyDeleteJob(jobId);
+      res.json({ message: "Job permanently deleted" });
+    } catch (error) {
+      console.error("Error permanently deleting job:", error);
+      res.status(500).json({ message: "Failed to permanently delete job" });
+    }
+  });
+
+  // Bulk delete all deleted jobs
+  app.delete("/api/deleted-jobs", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const deletedJobs = await storage.getDeletedJobs();
+      let deletedCount = 0;
+      
+      for (const job of deletedJobs) {
+        try {
+          await storage.permanentlyDeleteJob(job.id);
+          deletedCount++;
+        } catch (error) {
+          console.error(`Failed to delete job ${job.id}:`, error);
+        }
+      }
+
+      res.json({ message: `Successfully deleted ${deletedCount} jobs from deleted folder` });
+    } catch (error) {
+      console.error("Error bulk deleting jobs:", error);
+      res.status(500).json({ message: "Failed to bulk delete jobs" });
+    }
   });
 
   // Get timesheet data for a specific job
