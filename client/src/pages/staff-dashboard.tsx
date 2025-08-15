@@ -16,6 +16,18 @@ interface StaffDashboardProps {
 export default function StaffDashboard({ isAdminView = false }: StaffDashboardProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+  
+  // Clear admin-specific queries when in staff view to prevent data leakage
+  useEffect(() => {
+    if (!isAdminView && typeof window !== 'undefined') {
+      import("@/lib/queryClient").then(({ queryClient }) => {
+        queryClient.removeQueries({ queryKey: ["/api/deleted-jobs"] });
+        queryClient.removeQueries({ queryKey: ["/api/admin/timesheets"] });
+        queryClient.removeQueries({ queryKey: ["/api/jobs"] });
+        queryClient.removeQueries({ queryKey: ["/api/staff-users"] });
+      });
+    }
+  }, [isAdminView]);
   const { 
     showWelcome, 
     showTour, 

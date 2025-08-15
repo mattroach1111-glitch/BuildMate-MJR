@@ -18,15 +18,6 @@ import StaffDashboard from "@/pages/staff-dashboard";
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
 
-  // Debug logging
-  console.log("🚀 Router Debug:", { 
-    isLoading, 
-    isAuthenticated, 
-    role: (user as any)?.role, 
-    user: user ? "User exists" : "No user",
-    currentPath: window.location.pathname 
-  });
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
