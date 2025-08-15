@@ -141,10 +141,7 @@ export default function AdminDashboard() {
     retry: false,
   });
 
-  const { data: deletedJobs, isLoading: deletedJobsLoading } = useQuery<Job[]>({
-    queryKey: ["/api/deleted-jobs"],
-    retry: false,
-  });
+
 
   const { data: employees, isLoading: employeesLoading } = useQuery<Employee[]>({
     queryKey: ["/api/employees"],
@@ -484,10 +481,9 @@ export default function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/deleted-jobs"] });
       toast({
         title: "Success",
-        description: "Job moved to deleted folder",
+        description: "Job archived successfully",
       });
     },
     onError: (error) => {
@@ -510,38 +506,7 @@ export default function AdminDashboard() {
     },
   });
 
-  const restoreJobMutation = useMutation({
-    mutationFn: async (jobId: string) => {
-      const response = await apiRequest("PATCH", `/api/jobs/${jobId}/restore`);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/deleted-jobs"] });
-      toast({
-        title: "Success",
-        description: "Job restored successfully",
-      });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to restore job",
-        variant: "destructive",
-      });
-    },
-  });
+
 
   const permanentDeleteJobMutation = useMutation({
     mutationFn: async (jobId: string) => {
@@ -549,7 +514,7 @@ export default function AdminDashboard() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/deleted-jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
       toast({
         title: "Success",
         description: "Job permanently deleted",
