@@ -15,6 +15,7 @@ interface StaffMember {
   id: string;
   name: string;
   bankedHours: number;
+  rdoHours: number;
   hourlyRate: number;
   toolCostOwed: number;
   notes: StaffNote[];
@@ -88,6 +89,7 @@ export default function StaffNotesClean() {
       id: Date.now().toString(),
       name: newStaffName.trim(),
       bankedHours: 0,
+      rdoHours: 0,
       hourlyRate,
       toolCostOwed: 0,
       notes: [],
@@ -159,8 +161,10 @@ export default function StaffNotesClean() {
         };
 
         // Update running totals
-        if (newNote.type === 'banked_hours' || newNote.type === 'rdo_hours') {
+        if (newNote.type === 'banked_hours') {
           updatedMember.bankedHours += amount;
+        } else if (newNote.type === 'rdo_hours') {
+          updatedMember.rdoHours += amount;
         } else if (newNote.type === 'tool_cost') {
           updatedMember.toolCostOwed += amount;
         }
@@ -174,8 +178,10 @@ export default function StaffNotesClean() {
     setSelectedStaff(prev => {
       if (!prev) return null;
       const updated = { ...prev, notes: [...prev.notes, newNote] };
-      if (newNote.type === 'banked_hours' || newNote.type === 'rdo_hours') {
+      if (newNote.type === 'banked_hours') {
         updated.bankedHours += amount;
+      } else if (newNote.type === 'rdo_hours') {
+        updated.rdoHours += amount;
       } else if (newNote.type === 'tool_cost') {
         updated.toolCostOwed += amount;
       }
@@ -208,8 +214,10 @@ export default function StaffNotesClean() {
         };
 
         // Update running totals
-        if (editingNote.type === 'banked_hours' || editingNote.type === 'rdo_hours') {
+        if (editingNote.type === 'banked_hours') {
           updatedMember.bankedHours += amountDiff;
+        } else if (editingNote.type === 'rdo_hours') {
+          updatedMember.rdoHours += amountDiff;
         } else if (editingNote.type === 'tool_cost') {
           updatedMember.toolCostOwed += amountDiff;
         }
@@ -240,8 +248,10 @@ export default function StaffNotesClean() {
           };
 
           // Update running totals
-          if (noteToDelete.type === 'banked_hours' || noteToDelete.type === 'rdo_hours') {
+          if (noteToDelete.type === 'banked_hours') {
             updatedMember.bankedHours -= noteToDelete.amount;
+          } else if (noteToDelete.type === 'rdo_hours') {
+            updatedMember.rdoHours -= noteToDelete.amount;
           } else if (noteToDelete.type === 'tool_cost') {
             updatedMember.toolCostOwed -= noteToDelete.amount;
           }
@@ -254,8 +264,10 @@ export default function StaffNotesClean() {
       setSelectedStaff(prev => {
         if (!prev) return null;
         const updated = { ...prev, notes: prev.notes.filter(note => note.id !== noteId) };
-        if (noteToDelete.type === 'banked_hours' || noteToDelete.type === 'rdo_hours') {
+        if (noteToDelete.type === 'banked_hours') {
           updated.bankedHours -= noteToDelete.amount;
+        } else if (noteToDelete.type === 'rdo_hours') {
+          updated.rdoHours -= noteToDelete.amount;
         } else if (noteToDelete.type === 'tool_cost') {
           updated.toolCostOwed -= noteToDelete.amount;
         }
@@ -380,7 +392,13 @@ export default function StaffNotesClean() {
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-blue-600 flex-shrink-0" />
                       <span className="text-sm font-medium">
-                        Hours: <span className="text-blue-600">{member.bankedHours}</span>
+                        Banked: <span className="text-blue-600">{member.bankedHours} hrs</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-purple-600 flex-shrink-0" />
+                      <span className="text-sm font-medium">
+                        RDO: <span className="text-purple-600">{member.rdoHours} hrs</span>
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -567,7 +585,7 @@ export default function StaffNotesClean() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-6 sm:mb-8">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 mb-6 sm:mb-8">
           <Card className="border-l-4 border-l-blue-500">
             <CardHeader className="pb-2 px-4 pt-3">
               <div className="flex items-center gap-2">
@@ -579,7 +597,22 @@ export default function StaffNotesClean() {
               <div className="text-xl sm:text-2xl font-bold text-blue-600">
                 {selectedStaff.bankedHours}
               </div>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Hours accumulated</p>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Overtime hours</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-purple-500">
+            <CardHeader className="pb-2 px-4 pt-3">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100">RDO Hours</h3>
+              </div>
+            </CardHeader>
+            <CardContent className="px-4 pb-3">
+              <div className="text-xl sm:text-2xl font-bold text-purple-600">
+                {selectedStaff.rdoHours}
+              </div>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Rostered days off</p>
             </CardContent>
           </Card>
 
