@@ -1,85 +1,77 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Trash2, FolderX, AlertTriangle } from "lucide-react";
+import { Trash2, FolderX, AlertTriangle, RotateCcw } from "lucide-react";
 import type { Job } from "@shared/schema";
 
 export function DeletedJobsView() {
-  try {
-    console.log("DeletedJobsView: Component is rendering");
-    
-    return (
-      <div className="w-full h-full bg-blue-100 border-4 border-blue-500 p-8 rounded-lg">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-blue-800 mb-4">🟦 DELETED JOBS TEST 🟦</h1>
-          <p className="text-lg text-blue-700 mb-2">If you can see this blue box, the component is working!</p>
-          <p className="text-sm text-blue-600">This is a test render - component loaded successfully</p>
-        </div>
-      </div>
-    );
-  } catch (error) {
-    console.error("DeletedJobsView error:", error);
-    return (
-      <div className="w-full h-full bg-red-100 border-4 border-red-500 p-8 rounded-lg">
-        <h1 className="text-xl font-bold text-red-800">ERROR IN COMPONENT</h1>
-        <p className="text-red-600">Error: {error?.message || 'Unknown error'}</p>
-      </div>
-    );
-  }
+  const { toast } = useToast();
 
-  // Delete individual job permanently
-  const deleteJobMutation = useMutation({
-    mutationFn: async (jobId: string) => {
-      return await apiRequest("DELETE", `/api/deleted-jobs/${jobId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/deleted-jobs"] });
-      toast({
-        title: "Success",
-        description: "Job permanently deleted",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete job",
-        variant: "destructive",
-      });
-    },
+  // Fetch deleted jobs
+  const { data: deletedJobs, isLoading, error } = useQuery<Job[]>({
+    queryKey: ["/api/deleted-jobs"],
+    retry: false,
   });
 
-  // Bulk delete all jobs
+  console.log("DeletedJobsView render:", { deletedJobs, isLoading, error });
+
+  // Bulk delete mutation
   const bulkDeleteMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("DELETE", "/api/deleted-jobs");
+      return apiRequest("/api/deleted-jobs/bulk-delete", {
+        method: "DELETE",
+      });
     },
-    onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/deleted-jobs"] });
+    onSuccess: () => {
       toast({
         title: "Success",
-        description: data.message || "All deleted jobs have been permanently removed",
+        description: "All deleted jobs have been permanently removed.",
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/deleted-jobs"] });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to bulk delete jobs",
+        description: error.message || "Failed to delete jobs permanently.",
         variant: "destructive",
       });
     },
   });
 
+  // Individual delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (jobId: string) => {
+      return apiRequest(`/api/deleted-jobs/${jobId}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success", 
+        description: "Job permanently deleted.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/deleted-jobs"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete job permanently.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Show loading state
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="text-sm text-muted-foreground mt-2">Loading deleted jobs...</p>
-        </div>
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+        <RotateCcw className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
+        <p className="text-sm text-muted-foreground">Loading deleted jobs...</p>
       </div>
     );
   }
@@ -145,8 +137,8 @@ export function DeletedJobsView() {
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => bulkDeleteMutation.mutate()}
-                  disabled={bulkDeleteMutation.isPending}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  disabled={bulkDeleteMutation.isPending}
                 >
                   {bulkDeleteMutation.isPending ? "Deleting..." : "Delete All"}
                 </AlertDialogAction>
@@ -156,50 +148,53 @@ export function DeletedJobsView() {
         )}
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {deletedJobs.map((job) => (
-          <Card key={job.id} className="border-l-4 border-l-orange-500">
+          <Card key={job.id} className="relative">
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-sm font-medium">{job.jobAddress}</CardTitle>
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="text-base line-clamp-2">{job.jobName}</CardTitle>
                   <CardDescription className="text-xs">
-                    {job.clientName} • {job.projectName}
+                    Client: {job.clientName}
                   </CardDescription>
                 </div>
-                
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm">
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
+                    <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive hover:text-destructive-foreground">
+                      <Trash2 className="h-3 w-3" />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Permanently Delete Job?</AlertDialogTitle>
+                      <AlertDialogTitle className="flex items-center gap-2">
+                        <AlertTriangle className="h-5 w-5 text-destructive" />
+                        Permanently Delete Job?
+                      </AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will permanently delete "{job.jobAddress}" and all associated data. 
+                        This will permanently delete "{job.jobName}" for {job.clientName}. 
                         This action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => deleteJobMutation.mutate(job.id)}
-                        disabled={deleteJobMutation.isPending}
+                        onClick={() => deleteMutation.mutate(job.id)}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        disabled={deleteMutation.isPending}
                       >
-                        {deleteJobMutation.isPending ? "Deleting..." : "Delete"}
+                        {deleteMutation.isPending ? "Deleting..." : "Delete Permanently"}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
               </div>
             </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-xs text-muted-foreground">
-                Status: {job.status} • Created: {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : 'Unknown'}
+            <CardContent>
+              <div className="space-y-2 text-xs text-muted-foreground">
+                <div>Address: {job.address}</div>
+                <div>Builder Margin: {job.builderMargin}%</div>
+                <div>Status: {job.status}</div>
               </div>
             </CardContent>
           </Card>
