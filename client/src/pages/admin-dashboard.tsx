@@ -1891,9 +1891,13 @@ export default function AdminDashboard() {
                                     <div className="text-gray-600">{job.projectManager || '-'}</div>
                                   </td>
                                   <td className="p-4">
-                                    <Badge className={getStatusColor(job.status)}>
-                                      {formatStatus(job.status)}
-                                    </Badge>
+                                    <div className={`w-12 h-2 rounded-full ${
+                                      job.status === 'ready_for_billing' ? 'bg-purple-500' :
+                                      job.status === 'job_complete' ? 'bg-green-500' :
+                                      job.status === 'job_in_progress' ? 'bg-yellow-500' :
+                                      job.status === 'job_on_hold' ? 'bg-orange-500' :
+                                      'bg-blue-400'
+                                    }`} title={formatStatus(job.status)} />
                                   </td>
                                   <td className="p-4">
                                     <Button
@@ -1931,7 +1935,13 @@ export default function AdminDashboard() {
                           <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
-                                <div className={`w-3 h-3 rounded-full ${getStatusColor(job.status).replace('bg-', 'bg-').replace('text-white', '').replace('text-black', '')}`} />
+                                <div className={`w-8 h-1.5 rounded-full ${
+                                  job.status === 'ready_for_billing' ? 'bg-purple-500' :
+                                  job.status === 'job_complete' ? 'bg-green-500' :
+                                  job.status === 'job_in_progress' ? 'bg-yellow-500' :
+                                  job.status === 'job_on_hold' ? 'bg-orange-500' :
+                                  'bg-blue-400'
+                                }`} title={formatStatus(job.status)} />
                                 <div>
                                   <h3 className="font-semibold text-gray-900">{job.jobAddress}</h3>
                                   <p className="text-sm text-gray-600">
@@ -1940,9 +1950,6 @@ export default function AdminDashboard() {
                                   </p>
                                 </div>
                               </div>
-                              <Badge className={getStatusColor(job.status)}>
-                                {formatStatus(job.status)}
-                              </Badge>
                             </div>
                           </CardContent>
                         </Card>
@@ -2078,7 +2085,7 @@ export default function AdminDashboard() {
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-3">
                                     <div className="flex-shrink-0">
-                                      <div className={`w-3 h-3 rounded-full ${
+                                      <div className={`w-8 h-1.5 rounded-full ${
                                         job.status === 'ready_for_billing' ? 'bg-purple-500' :
                                         job.status === 'job_complete' ? 'bg-green-500' :
                                         job.status === 'job_in_progress' ? 'bg-yellow-500' :
