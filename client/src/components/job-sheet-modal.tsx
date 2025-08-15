@@ -1431,7 +1431,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="flex-1 overflow-y-auto min-h-0" style={{ WebkitOverflowScrolling: 'touch', overflowY: 'auto' }}>
           {isLoading ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
