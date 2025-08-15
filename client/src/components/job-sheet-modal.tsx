@@ -1481,19 +1481,17 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     >
                       <RefreshCw className="h-4 w-4" />
                     </Button>
-                    {isAdmin && (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setShowEmployeeManager(true)}
-                        data-testid="button-manage-employees"
-                        title="Manage employees"
-                        className="border-blue-200 text-blue-600 hover:bg-blue-50"
-                      >
-                        <Users className="h-4 w-4 mr-1" />
-                        <span className="text-xs">Staff</span>
-                      </Button>
-                    )}
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setShowEmployeeManager(true)}
+                      data-testid="button-manage-employees"
+                      title="Manage employees"
+                      className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                    >
+                      <Users className="h-4 w-4 mr-1" />
+                      <span className="text-xs">Staff</span>
+                    </Button>
                   </div>
                 </div>
               </CardHeader>
