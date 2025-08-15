@@ -30,7 +30,7 @@ export default function FortnightTimesheetView() {
     if ((user as any)?.role === "admin") {
       setLocation("/admin");
     } else {
-      // For staff, this is their main page so no back navigation needed
+      // For staff, go back to staff dashboard
       setLocation("/");
     }
   };
@@ -49,15 +49,36 @@ export default function FortnightTimesheetView() {
     return "Track your hours and submit timesheet entries";
   };
 
-  // For staff users, show only the timesheet table without any navigation
+  // For staff users, show timesheet with back navigation to staff dashboard
   if ((user as any)?.role !== "admin") {
     return (
-      <div className="min-h-screen bg-white">
-        <FortnightTimesheet 
-          selectedEmployeeId=""
-          isAdminView={false}
-        />
-      </div>
+      <PageLayout 
+        title="Fortnight Timesheet"
+        subtitle="Track your hours and submit timesheet entries"
+      >
+        <div className="space-y-6">
+          {/* Back Button for Staff */}
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              onClick={handleBackNavigation}
+              className="flex items-center gap-2"
+              data-testid="button-back-to-staff-dashboard"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
+          </div>
+
+          {/* Staff Timesheet */}
+          <div className="max-w-6xl mx-auto">
+            <FortnightTimesheet 
+              selectedEmployeeId=""
+              isAdminView={false}
+            />
+          </div>
+        </div>
+      </PageLayout>
     );
   }
 
