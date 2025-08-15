@@ -7,7 +7,7 @@ import { ChevronLeft, ClipboardList, Users } from "lucide-react";
 import PageLayout from "@/components/page-layout";
 import { OnboardingTour, WelcomeAnimation } from "@/components/onboarding-tour";
 import { useOnboarding } from "@/hooks/useOnboarding";
-import { WeeklyOrganizer } from "@/components/weekly-organizer";
+// import { WeeklyOrganizer } from "@/components/weekly-organizer"; // Temporarily removed
 
 interface StaffDashboardProps {
   isAdminView?: boolean;
@@ -123,11 +123,19 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
               </Button>
             </div>
             
-            {/* Weekly Organizer - Temporarily disabled for debugging */}
-            <div className="p-4 border rounded-lg bg-gray-50">
-              <p className="text-center text-gray-600">Weekly Organizer temporarily disabled for debugging</p>
+            {/* Coming Soon - Weekly Organizer */}
+            <div className="p-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 text-center">
+              <div className="space-y-4">
+                <div className="w-16 h-16 mx-auto bg-gray-200 rounded-full flex items-center justify-center">
+                  <Users className="h-8 w-8 text-gray-500" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">Weekly Organizer</h3>
+                  <p className="text-gray-600 mt-2">Coming Soon</p>
+                  <p className="text-sm text-gray-500 mt-1">This feature is being updated and will be available shortly.</p>
+                </div>
+              </div>
             </div>
-            {/* <WeeklyOrganizer isAdminView={false} /> */}
           </div>
         )}
       </div>
