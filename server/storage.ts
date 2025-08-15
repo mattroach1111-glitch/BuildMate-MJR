@@ -56,6 +56,7 @@ export interface IStorage {
   getEmployees(): Promise<Employee[]>;
   getEmployee(id: string): Promise<Employee | undefined>;
   createEmployee(employee: InsertEmployee): Promise<Employee>;
+  createEmployeeForJob(employee: InsertEmployee, jobId: string, hourlyRate: number): Promise<Employee>;
   updateEmployee(id: string, employee: Partial<InsertEmployee>): Promise<Employee>;
   deleteEmployee(id: string): Promise<void>;
   
@@ -268,16 +269,22 @@ export class DatabaseStorage implements IStorage {
   async createEmployee(employee: InsertEmployee): Promise<Employee> {
     const [createdEmployee] = await db.insert(employees).values(employee).returning();
     
-    // Add this employee to all existing jobs with each job's default hourly rate
-    const jobs = await this.getJobs();
-    for (const job of jobs) {
-      await this.createLaborEntry({
-        jobId: job.id,
-        staffId: createdEmployee.id,
-        hourlyRate: job.defaultHourlyRate, // Use job's default rate, not employee's rate
-        hoursLogged: "0",
-      });
-    }
+    // NOTE: Removed automatic addition to all jobs - employees should only be added to specific jobs when needed
+    
+    return createdEmployee;
+  }
+
+  // Create employee and add to specific job only
+  async createEmployeeForJob(employee: InsertEmployee, jobId: string, hourlyRate: number): Promise<Employee> {
+    const [createdEmployee] = await db.insert(employees).values(employee).returning();
+    
+    // Add this employee only to the specified job
+    await this.createLaborEntry({
+      jobId: jobId,
+      staffId: createdEmployee.id,
+      hourlyRate: hourlyRate,
+      hoursLogged: "0",
+    });
     
     return createdEmployee;
   }

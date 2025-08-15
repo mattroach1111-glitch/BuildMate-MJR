@@ -2653,11 +2653,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             employeeId = fuzzyMatch.employee.id;
             console.log(`🔵 Fuzzy matched "${laborEntry.employeeName}" to existing employee "${fuzzyMatch.employee.name}" (${fuzzyMatch.score}% match)`);
           } else {
-            // If no fuzzy match, create new employee
-            console.log(`🔵 Creating new employee: ${laborEntry.employeeName}`);
-            const newEmployee = await storage.createEmployee({
+            // If no fuzzy match, create new employee for this job only
+            console.log(`🔵 Creating new employee for this job only: ${laborEntry.employeeName}`);
+            const newEmployee = await storage.createEmployeeForJob({
               name: laborEntry.employeeName
-            });
+            }, newJob.id, parseFloat(laborEntry.rate) || parseFloat(defaultHourlyRate));
             employeeId = newEmployee.id;
           }
           

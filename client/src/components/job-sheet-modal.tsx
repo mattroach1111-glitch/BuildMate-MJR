@@ -2682,6 +2682,61 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Employee Management Dialog */}
+      <Dialog open={showEmployeeManager} onOpenChange={setShowEmployeeManager}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Manage Employees</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Remove employees that were auto-created from document uploads. This will permanently delete the employee and all their data.
+            </p>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {allEmployees.map((employee) => (
+                <div key={employee.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{employee.name}</p>
+                    <p className="text-sm text-gray-500">Created: {new Date(employee.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        data-testid={`button-delete-employee-${employee.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Employee</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to permanently delete {employee.name}? This will remove all their timesheet entries and labor records from all jobs. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => deleteEmployeeMutation.mutate(employee.id)}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          Delete Employee
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              ))}
+            </div>
+            {allEmployees.length === 0 && (
+              <p className="text-center text-gray-500 py-4">No employees found</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
       
     </>
   );
