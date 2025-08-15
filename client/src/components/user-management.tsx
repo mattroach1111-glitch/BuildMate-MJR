@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Users, Crown, UserCheck, Shield, AlertTriangle, UserPlus, Link, Trash2, RotateCcw } from "lucide-react";
+import { Users, Crown, UserCheck, Shield, AlertTriangle, UserPlus, Link, Trash2, RefreshCw } from "lucide-react";
 import type { User, Employee } from "@shared/schema";
 
 export function UserManagement() {
@@ -339,7 +339,7 @@ export function UserManagement() {
                             className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
                             data-testid={`button-clear-timesheet-${user.id}`}
                           >
-                            <RotateCcw className="h-4 w-4" />
+                            <RefreshCw className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>

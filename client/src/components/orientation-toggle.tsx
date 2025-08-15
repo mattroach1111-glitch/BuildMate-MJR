@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, Smartphone } from "lucide-react";
+import { RefreshCw, Smartphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface OrientationToggleProps {
@@ -74,7 +74,7 @@ export function OrientationToggle({ show = false }: OrientationToggleProps) {
       {isLandscape ? (
         <Smartphone className="h-4 w-4" />
       ) : (
-        <RotateCcw className="h-4 w-4" />
+        <RefreshCw className="h-4 w-4" />
       )}
     </Button>
   );
