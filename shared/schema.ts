@@ -136,6 +136,12 @@ export const jobFiles = pgTable("job_files", {
   googleDriveLink: varchar("google_drive_link"), // Link to file on Google Drive
   googleDriveFileId: varchar("google_drive_file_id"), // Google Drive file ID
   uploadedById: varchar("uploaded_by_id").notNull().references(() => users.id),
+  // Expense tracking fields
+  expenseAmount: decimal("expense_amount", { precision: 10, scale: 2 }),
+  expenseAddress: varchar("expense_address"),
+  expenseDescription: varchar("expense_description"),
+  expenseCategory: varchar("expense_category", { enum: ["materials", "equipment", "services", "transport", "other"] }),
+  isExpense: boolean("is_expense").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
