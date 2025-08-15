@@ -54,6 +54,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const [jobSearchOpen, setJobSearchOpen] = useState<{[key: string]: boolean}>({});
   const [jobSearchQuery, setJobSearchQuery] = useState<{[key: string]: string}>({});
   
+  // Zoom state for mobile pinch-to-zoom
+  const [zoomScale, setZoomScale] = useState(1);
+  const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
+  const [initialDistance, setInitialDistance] = useState<number | null>(null);
+  const [initialScale, setInitialScale] = useState(1);
+  const [isPanning, setIsPanning] = useState(false);
+  const [lastPanPosition, setLastPanPosition] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  
   // Use refs to persist dialog state across re-renders
   const lowHoursDialogRef = useRef({
     isOpen: false,
@@ -63,6 +72,73 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   
 
   const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null); // Single timeout for all auto-saves
+  
+  // Helper function to calculate distance between two touch points
+  const getDistance = (touch1: Touch, touch2: Touch) => {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  // Touch event handlers for pinch-to-zoom
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      // Pinch gesture start
+      const distance = getDistance(e.touches[0], e.touches[1]);
+      setInitialDistance(distance);
+      setInitialScale(zoomScale);
+    } else if (e.touches.length === 1) {
+      // Pan gesture start
+      setIsPanning(true);
+      setLastPanPosition({
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY
+      });
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault(); // Prevent default scrolling
+
+    if (e.touches.length === 2 && initialDistance !== null) {
+      // Pinch gesture
+      const currentDistance = getDistance(e.touches[0], e.touches[1]);
+      const scale = (currentDistance / initialDistance) * initialScale;
+      
+      // Limit zoom scale between 0.5x and 3x
+      const clampedScale = Math.max(0.5, Math.min(3, scale));
+      setZoomScale(clampedScale);
+    } else if (e.touches.length === 1 && isPanning) {
+      // Pan gesture (only when zoomed)
+      if (zoomScale > 1) {
+        const deltaX = e.touches[0].clientX - lastPanPosition.x;
+        const deltaY = e.touches[0].clientY - lastPanPosition.y;
+        
+        setPanPosition(prev => ({
+          x: prev.x + deltaX,
+          y: prev.y + deltaY
+        }));
+        
+        setLastPanPosition({
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY
+        });
+      }
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (e.touches.length === 0) {
+      setInitialDistance(null);
+      setIsPanning(false);
+    }
+  };
+
+  // Double tap to reset zoom
+  const handleDoubleClick = () => {
+    setZoomScale(1);
+    setPanPosition({ x: 0, y: 0 });
+  };
   
   // Helper function to sort job addresses numerically  
   const sortJobsNumerically = (jobs: any[]) => {
@@ -2112,13 +2188,53 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           <>
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Daily Timesheet Entries
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Daily Timesheet Entries
+                  </CardTitle>
+                  
+                  {/* Zoom controls for mobile */}
+                  {(zoomScale !== 1 || panPosition.x !== 0 || panPosition.y !== 0) && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground">
+                        {Math.round(zoomScale * 100)}%
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDoubleClick}
+                        className="h-8 text-xs"
+                        data-testid="button-reset-zoom"
+                      >
+                        Reset View
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Zoom instruction for mobile users */}
+                <div className="block sm:hidden">
+                  <p className="text-xs text-muted-foreground mt-2">
+                    💡 Use pinch gestures to zoom out and see more content. Double-tap to reset view.
+                  </p>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
+                <div 
+                  ref={containerRef}
+                  className="overflow-x-auto touch-manipulation select-none"
+                  style={{
+                    transform: `scale(${zoomScale}) translate(${panPosition.x}px, ${panPosition.y}px)`,
+                    transformOrigin: 'center center',
+                    transition: initialDistance === null ? 'transform 0.1s ease-out' : 'none',
+                    cursor: zoomScale > 1 ? 'grab' : 'default'
+                  }}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  onDoubleClick={handleDoubleClick}
+                >
                   <table className="w-full border-collapse">
                     <thead>
                       <tr className="border-b">
