@@ -3915,9 +3915,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Get prizes from database
+      let prizes: any[] = [];
+      try {
+        const prizesResult = await db.select().from(rewardCatalog).where(eq(rewardCatalog.isActive, true));
+        prizes = prizesResult.map(prize => ({
+          id: prize.id,
+          title: prize.name,
+          description: prize.description,
+          pointsCost: prize.pointsCost,
+          category: prize.category,
+          stockQuantity: prize.maxRedemptionsPerMonth,
+          isActive: prize.isActive,
+          createdAt: prize.createdAt
+        }));
+      } catch (e) {
+        console.log("reward_catalog table not found, using empty prizes array");
+      }
+
       res.json({
         settings,
-        prizes: [], // Will be implemented when prize catalog is added to database
+        prizes,
         totalPointsAwarded,
         totalRedemptions,
         activeUsers,
