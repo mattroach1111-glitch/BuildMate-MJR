@@ -157,6 +157,7 @@ export default function StaffNotesServer() {
 
   // Helper functions for calculations
   const getNotesForEmployee = (employeeId: string) => {
+    if (!staffNotes || !Array.isArray(staffNotes)) return [];
     return staffNotes.filter(note => note.employee?.id === employeeId);
   };
 
