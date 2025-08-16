@@ -66,9 +66,13 @@ interface NoteFormData {
 export default function StaffNotesClean() {
   const [selectedStaff, setSelectedStaff] = useState<StaffMemberWithNotes | null>(null);
   const [isAddNoteOpen, setIsAddNoteOpen] = useState(false);
+  const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<StaffNote | null>(null);
   const [editingRate, setEditingRate] = useState<string | null>(null);
   const [newRate, setNewRate] = useState('');
+  const [newStaffName, setNewStaffName] = useState('');
+  const [newStaffRate, setNewStaffRate] = useState('');
+  const [staffMembers, setStaffMembers] = useState<StaffMemberWithNotes[]>([]);
   const [noteForm, setNoteForm] = useState<NoteFormData>({
     employeeId: '',
     noteType: 'general',
@@ -80,12 +84,7 @@ export default function StaffNotesClean() {
   });
   const { toast } = useToast();
 
-  // Fetch employees
-  const { data: employees = [], isLoading: employeesLoading } = useQuery({
-    queryKey: ['/api/employees'],
-  });
-
-  // Fetch staff notes
+  // Fetch staff notes only
   const { data: staffNotes = [], isLoading: notesLoading } = useQuery({
     queryKey: ['/api/staff-notes'],
   });
@@ -219,26 +218,41 @@ export default function StaffNotesClean() {
     }
   });
 
-  // Process employees with their notes and calculations
-  const staffMembersWithNotes: StaffMemberWithNotes[] = (employees as Employee[]).map((employee: Employee) => {
-    const employeeNotes = (staffNotes as StaffNote[]).filter((note: StaffNote) => note.employee?.id === employee.id);
+  // Load staff members from localStorage on mount
+  React.useEffect(() => {
+    const saved = localStorage.getItem('staffNotesMembers');
+    if (saved) {
+      try {
+        setStaffMembers(JSON.parse(saved));
+      } catch (error) {
+        console.error('Error loading staff members:', error);
+      }
+    }
+  }, []);
+
+  // Save staff members to localStorage whenever it changes
+  React.useEffect(() => {
+    localStorage.setItem('staffNotesMembers', JSON.stringify(staffMembers));
+  }, [staffMembers]);
+
+  // Process staff members with their notes and calculations
+  const staffMembersWithNotes: StaffMemberWithNotes[] = staffMembers.map((member: StaffMemberWithNotes) => {
+    const memberNotes = (staffNotes as StaffNote[]).filter((note: StaffNote) => note.employee?.id === member.id);
     
-    const totalBankedHours = employeeNotes
+    const totalBankedHours = memberNotes
       .filter((note: StaffNote) => note.noteType === 'banked_hours')
       .reduce((sum: number, note: StaffNote) => sum + (parseFloat(note.hours || '0')), 0);
     
-    const totalToolCosts = employeeNotes
+    const totalToolCosts = memberNotes
       .filter((note: StaffNote) => note.noteType === 'tool_bills')
       .reduce((sum: number, note: StaffNote) => sum + (parseFloat(note.amount || '0')), 0);
 
-    const hourlyRate = parseFloat(employee.defaultHourlyRate || '0');
+    const hourlyRate = parseFloat(member.defaultHourlyRate || '0');
     const totalMonetaryValue = (totalBankedHours * hourlyRate) + totalToolCosts;
 
     return {
-      id: employee.id,
-      name: employee.name,
-      defaultHourlyRate: employee.defaultHourlyRate,
-      notes: employeeNotes,
+      ...member,
+      notes: memberNotes,
       totalBankedHours,
       totalToolCosts,
       totalMonetaryValue,
