@@ -41,3 +41,6 @@ waitForPort = 5000
 
 [agent]
 integrations = ["javascript_object_storage==1.0.0", "javascript_anthropic==1.0.0", "javascript_sendgrid==1.0.0", "javascript_log_in_with_replit==1.0.0", "javascript_database==1.0.0"]
+
+[objectStorage]
+defaultBucketID = "replit-objstore-24d4ec2f-e1e3-47ea-be49-d2813cd4465c"
