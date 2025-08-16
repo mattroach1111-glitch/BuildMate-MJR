@@ -4047,23 +4047,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("🔄 Starting data export...");
 
       // Export all business data from database
-      const [jobs, employees, users, timesheetEntries, laborEntries, materials, subTrades, otherCosts, tipFees, jobFiles] = await Promise.all([
-        db.select().from(jobs),
-        db.select().from(employees), 
-        db.select().from(users),
-        db.select().from(timesheetEntries),
-        db.select().from(laborEntries),
-        db.select().from(materials),
-        db.select().from(subTrades),
-        db.select().from(otherCosts),
-        db.select().from(tipFees),
-        db.select().from(jobFiles)
-      ]);
+      const jobsData = await db.select().from(jobs);
+      const employeesData = await db.select().from(employees); 
+      const usersData = await db.select().from(users);
+      const timesheetEntriesData = await db.select().from(timesheetEntries);
+      const laborEntriesData = await db.select().from(laborEntries);
+      const materialsData = await db.select().from(materials);
+      const subTradesData = await db.select().from(subTrades);
+      const otherCostsData = await db.select().from(otherCosts);
+      const tipFeesData = await db.select().from(tipFees);
+      const jobFilesData = await db.select().from(jobFiles);
 
       // Get reward data if tables exist
       let rewardData = null;
       try {
-        // Check if reward tables exist by attempting to select from them
         let rewardPointsData: any[] = [];
         let rewardTransactionsData: any[] = [];
         let achievementsData: any[] = [];
@@ -4081,21 +4078,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         exportDate: new Date().toISOString(),
         version: "1.0",
         businessData: {
-          jobs: jobs.length,
-          employees: employees.length,
-          users: users.length,
-          timesheetEntries: timesheetEntries.length,
-          laborEntries: laborEntries.length,
-          materials: materials.length,
-          subTrades: subTrades.length,
-          otherCosts: otherCosts.length,
-          tipFees: tipFees.length,
-          jobFiles: jobFiles.length
+          jobs: jobsData.length,
+          employees: employeesData.length,
+          users: usersData.length,
+          timesheetEntries: timesheetEntriesData.length,
+          laborEntries: laborEntriesData.length,
+          materials: materialsData.length,
+          subTrades: subTradesData.length,
+          otherCosts: otherCostsData.length,
+          tipFees: tipFeesData.length,
+          jobFiles: jobFilesData.length
         },
         data: {
-          jobs,
-          employees,
-          users: users.map(u => ({ // Remove sensitive data
+          jobs: jobsData,
+          employees: employeesData,
+          users: usersData.map((u: any) => ({ // Remove sensitive data
             id: u.id,
             email: u.email,
             firstName: u.firstName,
@@ -4105,18 +4102,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             isAssigned: u.isAssigned,
             createdAt: u.createdAt
           })),
-          timesheetEntries,
-          laborEntries,
-          materials,
-          subTrades,
-          otherCosts,
-          tipFees,
-          jobFiles,
+          timesheetEntries: timesheetEntriesData,
+          laborEntries: laborEntriesData,
+          materials: materialsData,
+          subTrades: subTradesData,
+          otherCosts: otherCostsData,
+          tipFees: tipFeesData,
+          jobFiles: jobFilesData,
           rewards: rewardData
         }
       };
 
-      console.log(`✅ Data export completed: ${jobs.length} jobs, ${employees.length} employees, ${timesheetEntries.length} timesheet entries`);
+      console.log(`✅ Data export completed: ${jobsData.length} jobs, ${employeesData.length} employees, ${timesheetEntriesData.length} timesheet entries`);
 
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Content-Disposition', `attachment; filename="buildflow-data-export-${new Date().toISOString().split('T')[0]}.json"`);
@@ -4124,7 +4121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error("Error exporting data:", error);
-      res.status(500).json({ message: "Failed to export data" });
+      res.status(500).json({ message: "Failed to export data", error: error.message });
     }
   });
 
