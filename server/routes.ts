@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { db } from "./db";
-import { timesheetEntries, laborEntries, users, staffNotes, employees, staffMembers, staffNotesEntries } from "@shared/schema";
+import { timesheetEntries, laborEntries, users, staffNotes, employees, staffMembers, staffNotesEntries, rewardCatalog } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { TimesheetPDFGenerator } from "./pdfGenerator";
@@ -3964,24 +3964,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Title, description, and points cost are required" });
       }
 
-      // For now, just return a mock response - in future this would save to database
-      const newPrize = {
-        id: `prize_${Date.now()}`,
-        title,
+      // Save to database using the rewardCatalog table
+      const [newPrize] = await db.insert(rewardCatalog).values({
+        rewardType: category || 'other',
+        name: title,
         description,
-        pointsCost,
+        pointsCost: parseInt(pointsCost),
         category: category || 'other',
-        stockQuantity: stockQuantity || 1,
-        isActive: true,
-        createdAt: new Date().toISOString()
-      };
+        maxRedemptionsPerMonth: stockQuantity ? parseInt(stockQuantity) : null,
+        isActive: true
+      }).returning();
 
-      console.log("New prize added:", newPrize);
+      console.log("New prize saved to database:", newPrize);
       
       res.json({ 
         success: true, 
         message: "Prize added successfully",
-        prize: newPrize 
+        prize: {
+          id: newPrize.id,
+          title: newPrize.name,
+          description: newPrize.description,
+          pointsCost: newPrize.pointsCost,
+          category: newPrize.category,
+          stockQuantity: newPrize.maxRedemptionsPerMonth,
+          isActive: newPrize.isActive,
+          createdAt: newPrize.createdAt
+        }
       });
     } catch (error) {
       console.error("Error adding prize:", error);
@@ -3994,8 +4002,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { prizeId } = req.params;
       
-      // For now, just return success - in future this would delete from database
-      console.log("Prize deleted:", prizeId);
+      // Delete from database
+      await db.delete(rewardCatalog).where(eq(rewardCatalog.id, prizeId));
+      
+      console.log("Prize deleted from database:", prizeId);
       
       res.json({ 
         success: true, 
