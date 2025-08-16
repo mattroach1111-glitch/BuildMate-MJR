@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { db } from "./db";
-import { timesheetEntries, laborEntries, users, staffNotes, employees, staffMembers } from "@shared/schema";
+import { timesheetEntries, laborEntries, users, staffNotes, employees } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { TimesheetPDFGenerator } from "./pdfGenerator";
@@ -13,7 +13,6 @@ import { DocumentProcessor } from "./services/documentProcessor";
 import {
   insertJobSchema,
   insertEmployeeSchema,
-  insertStaffMemberSchema,
   insertLaborEntrySchema,
   insertMaterialSchema,
   insertSubTradeSchema,
@@ -442,55 +441,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting employee:", error);
       res.status(500).json({ message: "Failed to delete employee" });
-    }
-  });
-
-  // Staff Member routes
-  app.get("/api/staff-members", isAuthenticated, isAdmin, async (req: any, res) => {
-    try {
-      const staffMembers = await storage.getStaffMembers();
-      res.json(staffMembers);
-    } catch (error) {
-      console.error("Error fetching staff members:", error);
-      res.status(500).json({ message: "Failed to fetch staff members" });
-    }
-  });
-
-  app.post("/api/staff-members", isAuthenticated, isAdmin, async (req: any, res) => {
-    try {
-      const validatedData = insertStaffMemberSchema.parse(req.body);
-      const staffMember = await storage.createStaffMember(validatedData);
-      res.status(201).json(staffMember);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: fromZodError(error).toString() });
-      }
-      console.error("Error creating staff member:", error);
-      res.status(500).json({ message: "Failed to create staff member" });
-    }
-  });
-
-  app.patch("/api/staff-members/:id", isAuthenticated, isAdmin, async (req: any, res) => {
-    try {
-      const validatedData = insertStaffMemberSchema.partial().parse(req.body);
-      const staffMember = await storage.updateStaffMember(req.params.id, validatedData);
-      res.json(staffMember);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: fromZodError(error).toString() });
-      }
-      console.error("Error updating staff member:", error);
-      res.status(500).json({ message: "Failed to update staff member" });
-    }
-  });
-
-  app.delete("/api/staff-members/:id", isAuthenticated, isAdmin, async (req: any, res) => {
-    try {
-      await storage.deleteStaffMember(req.params.id);
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting staff member:", error);
-      res.status(500).json({ message: "Failed to delete staff member" });
     }
   });
 

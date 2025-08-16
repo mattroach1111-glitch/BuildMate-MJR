@@ -2,8 +2,6 @@ import {
   users,
   jobs,
   employees,
-  staffMembers,
-  staffNotes,
   laborEntries,
   materials,
   subTrades,
@@ -18,8 +16,6 @@ import {
   type UpsertUser,
   type Employee,
   type InsertEmployee,
-  type StaffMember,
-  type InsertStaffMember,
   type Job,
   type InsertJob,
   type LaborEntry,
@@ -64,13 +60,6 @@ export interface IStorage {
   createEmployeeWithAllJobs(employee: InsertEmployee): Promise<Employee>;
   updateEmployee(id: string, employee: Partial<InsertEmployee>): Promise<Employee>;
   deleteEmployee(id: string): Promise<void>;
-
-  // Staff member operations
-  getStaffMembers(): Promise<StaffMember[]>;
-  getStaffMember(id: string): Promise<StaffMember | undefined>;
-  createStaffMember(staffMember: InsertStaffMember): Promise<StaffMember>;
-  updateStaffMember(id: string, staffMember: Partial<InsertStaffMember>): Promise<StaffMember>;
-  deleteStaffMember(id: string): Promise<void>;
   
   // Job operations
   getJobs(): Promise<Job[]>;
@@ -351,41 +340,6 @@ export class DatabaseStorage implements IStorage {
     
     // Finally delete the employee
     await db.delete(employees).where(eq(employees.id, id));
-  }
-
-  // Staff member operations
-  async getStaffMembers(): Promise<StaffMember[]> {
-    return await db.select().from(staffMembers).orderBy(desc(staffMembers.createdAt));
-  }
-
-  async getStaffMember(id: string): Promise<StaffMember | undefined> {
-    const [staffMember] = await db.select().from(staffMembers).where(eq(staffMembers.id, id));
-    return staffMember;
-  }
-
-  async createStaffMember(staffMember: InsertStaffMember): Promise<StaffMember> {
-    const [createdStaffMember] = await db.insert(staffMembers).values(staffMember).returning();
-    return createdStaffMember;
-  }
-
-  async updateStaffMember(id: string, staffMember: Partial<InsertStaffMember>): Promise<StaffMember> {
-    const [updatedStaffMember] = await db
-      .update(staffMembers)
-      .set({
-        ...staffMember,
-        updatedAt: new Date(),
-      })
-      .where(eq(staffMembers.id, id))
-      .returning();
-    return updatedStaffMember;
-  }
-
-  async deleteStaffMember(id: string): Promise<void> {
-    // First delete all staff notes for this staff member (cascade should handle this, but being explicit)
-    await db.delete(staffNotes).where(eq(staffNotes.employeeId, id));
-    
-    // Then delete the staff member
-    await db.delete(staffMembers).where(eq(staffMembers.id, id));
   }
 
   // Job operations
