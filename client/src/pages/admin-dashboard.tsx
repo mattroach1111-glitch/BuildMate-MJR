@@ -3622,7 +3622,7 @@ export default function AdminDashboard() {
                       <div>
                         <h4 className="font-medium">Import Business Data</h4>
                         <p className="text-sm text-muted-foreground">
-                          Restore data from a previous backup file (JSON format)
+                          Restore data from backup file (JSON format) - Safe: Won't overwrite existing data
                         </p>
                       </div>
                       <div className="flex gap-2">
@@ -3654,7 +3654,7 @@ export default function AdminDashboard() {
                               if (result.success) {
                                 toast({
                                   title: "Import Successful",
-                                  description: `Imported ${result.totalRecordsImported} records${result.results.errors.length > 0 ? ` with ${result.results.errors.length} errors` : ''}`,
+                                  description: `Imported ${result.totalRecordsImported} new records safely${result.results.errors.length > 0 ? ` with ${result.results.errors.length} conflicts skipped` : ''}`,
                                 });
                               } else {
                                 throw new Error(result.message || 'Import failed');
