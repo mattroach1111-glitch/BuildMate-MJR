@@ -21,22 +21,14 @@ import { format, subDays, startOfDay, endOfDay, isWeekend, startOfWeek, endOfWee
 // =============================================================================
 
 let REWARD_CONFIG = {
-  DAILY_SUBMISSION_POINTS: 10,
-  WEEKEND_SUBMISSION_BONUS: 5, // Extra points for weekend submissions
-  WEEKLY_COMPLETION_BONUS: 25, // Bonus for completing all 5 weekdays
-  PERFECT_WEEK_BONUS: 100, // Bonus for completing all 7 days including weekends
-  STREAK_MULTIPLIER: 1.2, // 20% bonus for streaks >= 5 days
+  // Simple reward system - configurable points
+  DAILY_POINTS: 10,
+  WEEKLY_POINTS: 50,
+  FORTNIGHTLY_POINTS: 120,
+  MONTHLY_POINTS: 250,
   
-  // Achievement thresholds
-  ACHIEVEMENTS: {
-    STREAK_5: { points: 50, name: "5-Day Streak", icon: "🔥", description: "Submitted timesheets for 5 consecutive days" },
-    STREAK_10: { points: 100, name: "10-Day Streak", icon: "⚡", description: "Submitted timesheets for 10 consecutive days" },
-    STREAK_20: { points: 200, name: "20-Day Streak", icon: "💪", description: "Submitted timesheets for 20 consecutive days" },
-    PERFECT_WEEK: { points: 75, name: "Perfect Week", icon: "⭐", description: "Submitted all weekday timesheets in a week" },
-    PERFECT_MONTH: { points: 300, name: "Perfect Month", icon: "👑", description: "Submitted all weekday timesheets in a month" },
-    EARLY_BIRD: { points: 30, name: "Early Bird", icon: "🌅", description: "Submitted timesheet before 9 AM" },
-    WEEKEND_WARRIOR: { points: 40, name: "Weekend Warrior", icon: "⚔️", description: "Submitted 5 weekend timesheets" }
-  }
+  // Weekend bonus (optional extra points for weekend submissions)
+  WEEKEND_BONUS: 5
 };
 
 // =============================================================================
@@ -46,12 +38,7 @@ let REWARD_CONFIG = {
 export class RewardsService {
   // Get current reward configuration for display in rules/admin
   getRewardConfiguration() {
-    return {
-      ...REWARD_CONFIG,
-      // Calculate derived values for display
-      DAILY_SUBMISSION_WITH_STREAK: Math.round(REWARD_CONFIG.DAILY_SUBMISSION_POINTS * REWARD_CONFIG.STREAK_MULTIPLIER),
-      WEEKEND_SUBMISSION_WITH_STREAK: Math.round((REWARD_CONFIG.DAILY_SUBMISSION_POINTS + REWARD_CONFIG.WEEKEND_SUBMISSION_BONUS) * REWARD_CONFIG.STREAK_MULTIPLIER)
-    };
+    return { ...REWARD_CONFIG };
   }
 
   // Update reward configuration (for admin use)

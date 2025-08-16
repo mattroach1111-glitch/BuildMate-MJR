@@ -1,14 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, AlertTriangle, Trophy, Zap, Gift, Crown, Target, Calendar, Clock, XCircle } from "lucide-react";
+import { ArrowLeft, Trophy, RefreshCw, Calendar, Clock, AlertTriangle } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 
 export default function RewardsRules() {
   const [, setLocation] = useLocation();
 
-  // Fetch dynamic reward configuration with no caching to ensure fresh data
+  // Fetch dynamic reward configuration
   const { data: config, isLoading, refetch } = useQuery({
     queryKey: ["/api/rewards/config"],
     queryFn: async () => {
@@ -18,21 +17,11 @@ export default function RewardsRules() {
       }
       return response.json();
     },
-    staleTime: 0, // Always refetch
-    gcTime: 0     // Don't cache
+    staleTime: 0,
+    gcTime: 0
   });
 
-  // Show loading state while fetching config
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // Don't render until we have config data
-  if (!config) {
+  if (isLoading || !config) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -43,8 +32,6 @@ export default function RewardsRules() {
     );
   }
 
-  const points = config;
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
@@ -54,7 +41,7 @@ export default function RewardsRules() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setLocation("/")}
+              onClick={() => setLocation("/admin-dashboard")}
               className="flex items-center gap-2"
               data-testid="button-back"
             >
@@ -63,7 +50,7 @@ export default function RewardsRules() {
             </Button>
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Rewards System Rules</h1>
-              <p className="text-gray-600 dark:text-gray-300">Complete guide to earning points and rewards</p>
+              <p className="text-gray-600 dark:text-gray-300">Simple guide to earning points</p>
             </div>
             <Button
               variant="outline"
@@ -72,192 +59,158 @@ export default function RewardsRules() {
               className="flex items-center gap-2"
               data-testid="button-refresh"
             >
-              <Trophy className="h-4 w-4" />
+              <RefreshCw className="h-4 w-4" />
               Refresh
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* Leave Type Warning */}
-        <Card className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-300">
-              <AlertTriangle className="h-5 w-5" />
-              Important: Leave Days & Rewards
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="text-red-800 dark:text-red-200">
-              <p className="font-semibold mb-2">Leave types and their impact on rewards:</p>
-              <div className="space-y-2">
-                <div className="grid grid-cols-1 gap-2">
-                  <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
-                    <XCircle className="h-4 w-4" />
-                    <span><strong>Sick Leave, Personal Leave, Annual Leave:</strong> No points + breaks streaks</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
-                    <AlertTriangle className="h-4 w-4" />
-                    <span><strong>RDO (Rostered Day Off):</strong> No points but streak continues</span>
-                  </div>
-                </div>
+      {/* Content */}
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+        
+        {/* Main Rewards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          
+          {/* Daily Rewards */}
+          <Card className="border-2 border-blue-200 dark:border-blue-800">
+            <CardHeader className="text-center pb-3">
+              <div className="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-2">
+                <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <p className="mt-3 text-sm">
-                <strong>Weekly Bonus Impact:</strong> If any day in your week contains sick leave, personal leave, or annual leave, you won't receive the weekly completion bonus. RDO days don't affect weekly bonuses.
+              <CardTitle className="text-lg text-blue-700 dark:text-blue-300">Daily Rewards</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                {config.DAILY_POINTS} pts
               </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Point Earning System */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-yellow-500" />
-              Point Earning System
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Calendar className="h-4 w-4 text-blue-600" />
-                  <span className="font-semibold">Daily Submission</span>
-                </div>
-                <p className="text-2xl font-bold text-blue-600 mb-1">{points.DAILY_SUBMISSION_POINTS} points</p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">For each timesheet submitted</p>
-              </div>
-              
-              <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Clock className="h-4 w-4 text-green-600" />
-                  <span className="font-semibold">Weekend Bonus</span>
-                </div>
-                <p className="text-2xl font-bold text-green-600 mb-1">+{points.WEEKEND_SUBMISSION_BONUS} points</p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">Extra points for weekend work</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Streak System */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-orange-500" />
-              Streak Bonuses
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Target className="h-4 w-4 text-orange-600" />
-                <span className="font-semibold">5+ Day Streak</span>
-              </div>
-              <p className="text-2xl font-bold text-orange-600 mb-1">+{Math.round((points.STREAK_MULTIPLIER - 1) * 100)}% bonus</p>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Extra {Math.round((points.STREAK_MULTIPLIER - 1) * 100)}% points on daily submissions when you have a 5+ day streak
+                For each timesheet submitted
               </p>
-            </div>
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg">
-              <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                <strong>Streak Rules:</strong> Streaks continue over weekends (Friday to Monday counts as consecutive). 
-                Sick leave, personal leave, and annual leave break your streak. RDO days maintain your streak.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+              {config.WEEKEND_BONUS > 0 && (
+                <p className="text-xs text-blue-500 mt-2">
+                  +{config.WEEKEND_BONUS} bonus on weekends
+                </p>
+              )}
+            </CardContent>
+          </Card>
 
-        {/* Weekly & Monthly Bonuses */}
+          {/* Weekly Rewards */}
+          <Card className="border-2 border-green-200 dark:border-green-800">
+            <CardHeader className="text-center pb-3">
+              <div className="mx-auto w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-2">
+                <Clock className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
+              <CardTitle className="text-lg text-green-700 dark:text-green-300">Weekly Rewards</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+                {config.WEEKLY_POINTS} pts
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                For completing a full week
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Fortnightly Rewards */}
+          <Card className="border-2 border-purple-200 dark:border-purple-800">
+            <CardHeader className="text-center pb-3">
+              <div className="mx-auto w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mb-2">
+                <Trophy className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              </div>
+              <CardTitle className="text-lg text-purple-700 dark:text-purple-300">Fortnightly Rewards</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">
+                {config.FORTNIGHTLY_POINTS} pts
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                For completing two weeks
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Monthly Rewards */}
+          <Card className="border-2 border-orange-200 dark:border-orange-800">
+            <CardHeader className="text-center pb-3">
+              <div className="mx-auto w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center mb-2">
+                <Trophy className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+              </div>
+              <CardTitle className="text-lg text-orange-700 dark:text-orange-300">Monthly Rewards</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-2">
+                {config.MONTHLY_POINTS} pts
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                For completing a full month
+              </p>
+            </CardContent>
+          </Card>
+
+        </div>
+
+        {/* Streak Rules */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-purple-500" />
-              Weekly & Monthly Bonuses
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Streak Rules
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Calendar className="h-4 w-4 text-purple-600" />
-                  <span className="font-semibold">Weekly Completion</span>
-                </div>
-                <p className="text-2xl font-bold text-purple-600 mb-1">{points.WEEKLY_COMPLETION_BONUS} points</p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Complete all 5 weekdays (Monday-Friday) with no sick/personal/annual leave
-                </p>
-              </div>
-              
-              <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Crown className="h-4 w-4 text-indigo-600" />
-                  <span className="font-semibold">Perfect Week</span>
-                </div>
-                <p className="text-2xl font-bold text-indigo-600 mb-1">{points.PERFECT_WEEK_BONUS} points</p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Complete all 7 days including weekends with no sick/personal/annual leave
-                </p>
-              </div>
+            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+              <h3 className="font-semibold text-green-800 dark:text-green-200 mb-2">
+                Keep Your Streak Going
+              </h3>
+              <p className="text-sm text-green-700 dark:text-green-300">
+                Submit your timesheets every working day to maintain your streak and earn daily rewards.
+                RDOs (Rostered Days Off) will not break your streak but won't earn points either.
+              </p>
+            </div>
+            
+            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
+              <h3 className="font-semibold text-red-800 dark:text-red-200 mb-2">
+                Streak Breakers
+              </h3>
+              <p className="text-sm text-red-700 dark:text-red-300 mb-2">
+                These leave types will reset your streak to zero:
+              </p>
+              <ul className="list-disc list-inside text-sm text-red-700 dark:text-red-300 space-y-1">
+                <li>Sick Leave</li>
+                <li>Personal Leave</li>
+                <li>Annual Leave</li>
+                <li>Leave Without Pay</li>
+              </ul>
             </div>
           </CardContent>
         </Card>
 
-        {/* Achievements */}
+        {/* How It Works */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Gift className="h-5 w-5 text-pink-500" />
-              Achievement Badges
-            </CardTitle>
+            <CardTitle>How It Works</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-3">
-                {config?.ACHIEVEMENTS && Object.entries(config.ACHIEVEMENTS).slice(0, 3).map(([key, badge]: [string, any]) => (
-                  <div key={key} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <div>
-                      <div className="font-semibold">{badge.name}</div>
-                      <div className="text-sm text-gray-600 dark:text-gray-300">{badge.description}</div>
-                    </div>
-                    <Badge variant="secondary">{badge.points} pts</Badge>
-                  </div>
-                ))}
+              <div>
+                <h3 className="font-semibold mb-2">Daily Points</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Earn {config.DAILY_POINTS} points for each timesheet you submit. 
+                  {config.WEEKEND_BONUS > 0 && ` Get an extra ${config.WEEKEND_BONUS} points for weekend submissions.`}
+                </p>
               </div>
-              
-              <div className="space-y-3">
-                {config?.ACHIEVEMENTS && Object.entries(config.ACHIEVEMENTS).slice(3).map(([key, badge]: [string, any]) => (
-                  <div key={key} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <div>
-                      <div className="font-semibold">{badge.name}</div>
-                      <div className="text-sm text-gray-600 dark:text-gray-300">{badge.description}</div>
-                    </div>
-                    <Badge variant="secondary">{badge.points} pts</Badge>
-                  </div>
-                ))}
+              <div>
+                <h3 className="font-semibold mb-2">Completion Bonuses</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Complete full periods (week, fortnight, month) to earn bonus points on top of your daily rewards.
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Summary */}
-        <Card className="border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
-          <CardHeader>
-            <CardTitle className="text-green-700 dark:text-green-300">Quick Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="text-green-800 dark:text-green-200">
-            <ul className="space-y-2">
-              <li>• Submit timesheets daily to earn points and build streaks</li>
-              <li>• Avoid sick/personal/annual leave to maintain streaks and weekly bonuses</li>
-              <li>• RDO days don't earn points but won't break your streak</li>
-              <li>• Weekend work earns extra points</li>
-              <li>• 5+ day streaks give 20% bonus on all daily submissions</li>
-              <li>• Complete work weeks (no sick/personal/annual leave) earn substantial bonuses</li>
-              <li>• Unlock one-time achievement badges for major milestones</li>
-            </ul>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
