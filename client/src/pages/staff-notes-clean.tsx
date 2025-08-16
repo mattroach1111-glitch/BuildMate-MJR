@@ -11,144 +11,235 @@ import { Plus, Edit3, Trash2, DollarSign, Clock, User, ArrowLeft, Save, X, Calcu
 import { format } from 'date-fns';
 import { Link } from 'wouter';
 import jsPDF from 'jspdf';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
-interface StaffMember {
+interface Employee {
   id: string;
   name: string;
-  bankedHours: number;
-  rdoHours: number;
-  hourlyRate: number;
-  toolCostOwed: number;
-  notes: StaffNote[];
+  defaultHourlyRate: string;
+  createdAt: string;
 }
 
 interface StaffNote {
   id: string;
-  type: 'banked_hours' | 'tool_cost' | 'rdo_hours' | 'general';
-  description: string;
-  amount: number;
-  date: string;
+  noteType: 'banked_hours' | 'tool_bills' | 'general';
+  title: string;
+  content: string;
+  amount: string | null;
+  hours: string | null;
+  createdAt: string;
+  updatedAt: string;
+  employee: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+  createdBy: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
 }
 
 interface NoteFormData {
-  type: 'banked_hours' | 'tool_cost' | 'rdo_hours' | 'general';
-  description: string;
+  noteType: 'banked_hours' | 'tool_bills' | 'general';
+  title: string;
+  content: string;
   amount: string;
+  hours: string;
+  employeeId: string;
 }
 
-const STORAGE_KEY = 'buildflow-staff-notes';
-
 export default function StaffNotesClean() {
-  const [staff, setStaff] = useState<StaffMember[]>([]);
-  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
-  const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isAddNoteOpen, setIsAddNoteOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<StaffNote | null>(null);
-  const [newStaffName, setNewStaffName] = useState('');
-  const [newStaffRate, setNewStaffRate] = useState('');
-  const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
-  const [editStaffRate, setEditStaffRate] = useState('');
   const [noteForm, setNoteForm] = useState<NoteFormData>({
-    type: 'general',
-    description: '',
+    noteType: 'general',
+    title: '',
+    content: '',
     amount: '',
+    hours: '',
+    employeeId: '',
   });
-  const [toastMessage, setToastMessage] = useState<string>('');
 
-  // Load data from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        setStaff(JSON.parse(saved));
-      } catch (error) {
-        console.error('Error loading staff data:', error);
-      }
-    }
-  }, []);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Save to localStorage whenever staff changes
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(staff));
-  }, [staff]);
+  // Fetch employees
+  const { data: employees = [], isLoading: employeesLoading } = useQuery({
+    queryKey: ['/api/employees'],
+  });
 
-  // Simple toast replacement
-  const showToast = (message: string) => {
-    setToastMessage(message);
-    setTimeout(() => setToastMessage(''), 3000);
+  // Fetch staff notes
+  const { data: staffNotes = [], isLoading: notesLoading } = useQuery({
+    queryKey: ['/api/staff-notes'],
+  });
+
+  // Create note mutation
+  const createNoteMutation = useMutation({
+    mutationFn: async (data: Omit<NoteFormData, 'employeeId'> & { employeeId: string }) => {
+      return apiRequest('/api/staff-notes', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/staff-notes'] });
+      toast({ title: 'Note created successfully' });
+      setIsAddNoteOpen(false);
+      resetNoteForm();
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Error creating note', 
+        description: error.message,
+        variant: 'destructive' 
+      });
+    },
+  });
+
+  // Update note mutation
+  const updateNoteMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<NoteFormData> }) => {
+      return apiRequest(`/api/staff-notes/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/staff-notes'] });
+      toast({ title: 'Note updated successfully' });
+      setEditingNote(null);
+      resetNoteForm();
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Error updating note', 
+        description: error.message,
+        variant: 'destructive' 
+      });
+    },
+  });
+
+  // Delete note mutation
+  const deleteNoteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest(`/api/staff-notes/${id}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/staff-notes'] });
+      toast({ title: 'Note deleted successfully' });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Error deleting note', 
+        description: error.message,
+        variant: 'destructive' 
+      });
+    },
+  });
+
+  const resetNoteForm = () => {
+    setNoteForm({
+      noteType: 'general',
+      title: '',
+      content: '',
+      amount: '',
+      hours: '',
+      employeeId: '',
+    });
   };
 
-  const addStaffMember = () => {
-    if (!newStaffName.trim()) {
-      showToast('Please enter a staff member name');
+  // Helper functions for calculations
+  const getNotesForEmployee = (employeeId: string) => {
+    return staffNotes.filter(note => note.employee?.id === employeeId);
+  };
+
+  const calculateTotals = (employeeId: string) => {
+    const notes = getNotesForEmployee(employeeId);
+    const bankedHours = notes
+      .filter(note => note.noteType === 'banked_hours')
+      .reduce((sum, note) => sum + (parseFloat(note.hours || '0')), 0);
+    
+    const toolCosts = notes
+      .filter(note => note.noteType === 'tool_bills')
+      .reduce((sum, note) => sum + (parseFloat(note.amount || '0')), 0);
+    
+    return { bankedHours, toolCosts };
+  };
+
+  const handleCreateNote = () => {
+    if (!noteForm.title.trim() || !noteForm.employeeId) {
+      toast({ 
+        title: 'Missing information', 
+        description: 'Please fill in all required fields',
+        variant: 'destructive' 
+      });
       return;
     }
 
-    const hourlyRate = parseFloat(newStaffRate) || 0;
-    
-    const newMember: StaffMember = {
-      id: Date.now().toString(),
-      name: newStaffName.trim(),
-      bankedHours: 0,
-      rdoHours: 0,
-      hourlyRate,
-      toolCostOwed: 0,
-      notes: [],
-    };
-
-    setStaff(prev => [...prev, newMember]);
-    setNewStaffName('');
-    setNewStaffRate('');
-    setIsAddStaffOpen(false);
-    showToast(`Added ${newMember.name} to staff`);
+    createNoteMutation.mutate({
+      noteType: noteForm.noteType,
+      title: noteForm.title,
+      content: noteForm.content,
+      amount: noteForm.amount ? parseFloat(noteForm.amount).toString() : null,
+      hours: noteForm.hours ? parseFloat(noteForm.hours).toString() : null,
+      employeeId: noteForm.employeeId,
+    });
   };
 
-  const deleteStaffMember = (id: string) => {
-    const member = staff.find(s => s.id === id);
-    if (confirm(`Are you sure you want to remove ${member?.name} and all their notes?`)) {
-      setStaff(prev => prev.filter(s => s.id !== id));
-      if (selectedStaff?.id === id) {
-        setSelectedStaff(null);
-      }
-      showToast('Staff member removed');
+  const handleUpdateNote = () => {
+    if (!editingNote) return;
+    
+    updateNoteMutation.mutate({
+      id: editingNote.id,
+      data: {
+        noteType: noteForm.noteType,
+        title: noteForm.title,
+        content: noteForm.content,
+        amount: noteForm.amount ? parseFloat(noteForm.amount).toString() : null,
+        hours: noteForm.hours ? parseFloat(noteForm.hours).toString() : null,
+      },
+    });
+  };
+
+  const handleDeleteNote = (noteId: string) => {
+    if (confirm('Are you sure you want to delete this note?')) {
+      deleteNoteMutation.mutate(noteId);
     }
   };
 
-  const startEditStaffRate = (member: StaffMember) => {
-    setEditingStaff(member);
-    setEditStaffRate(member.hourlyRate.toString());
+  const openEditNote = (note: StaffNote) => {
+    setEditingNote(note);
+    setNoteForm({
+      noteType: note.noteType,
+      title: note.title,
+      content: note.content,
+      amount: note.amount || '',
+      hours: note.hours || '',
+      employeeId: note.employee.id,
+    });
+    setIsAddNoteOpen(true);
   };
 
-  const updateStaffRate = () => {
-    if (!editingStaff) return;
-    
-    const newRate = parseFloat(editStaffRate) || 0;
-    
-    setStaff(prev => prev.map(member => 
-      member.id === editingStaff.id 
-        ? { ...member, hourlyRate: newRate }
-        : member
-    ));
-
-    if (selectedStaff?.id === editingStaff.id) {
-      setSelectedStaff(prev => prev ? { ...prev, hourlyRate: newRate } : null);
-    }
-
-    setEditingStaff(null);
-    setEditStaffRate('');
-    showToast('Hourly rate updated');
-  };
-
-  const generateIndividualPDF = (staffMember: StaffMember) => {
+  const generateIndividualPDF = (employee: Employee) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
     const margin = 20;
     let yPosition = 30;
 
+    const employeeNotes = getNotesForEmployee(employee.id);
+    const totals = calculateTotals(employee.id);
+
     // Title
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text(`Staff Notes - ${staffMember.name}`, pageWidth / 2, yPosition, { align: 'center' });
+    doc.text(`Staff Notes - ${employee.name}`, pageWidth / 2, yPosition, { align: 'center' });
     
     // Date
     yPosition += 10;
@@ -161,17 +252,18 @@ export default function StaffNotesClean() {
     // Staff member header
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(`${staffMember.name}`, margin, yPosition);
+    doc.text(`${employee.name}`, margin, yPosition);
     yPosition += 8;
 
     // Summary info
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    const summaryText = `Banked Hours: ${staffMember.bankedHours} | RDO Hours: ${staffMember.rdoHours} | Rate: $${staffMember.hourlyRate}/hr | Value: $${(staffMember.bankedHours * staffMember.hourlyRate).toFixed(2)} | Tools Owed: $${staffMember.toolCostOwed.toFixed(2)}`;
+    const hourlyRate = parseFloat(employee.defaultHourlyRate);
+    const summaryText = `Banked Hours: ${totals.bankedHours} | Rate: $${hourlyRate}/hr | Value: $${(totals.bankedHours * hourlyRate).toFixed(2)} | Tools Owed: $${totals.toolCosts.toFixed(2)}`;
     doc.text(summaryText, margin, yPosition);
     yPosition += 15;
 
-    if (staffMember.notes.length === 0) {
+    if (employeeNotes.length === 0) {
       doc.setFont('helvetica', 'italic');
       doc.text('No notes recorded', margin + 5, yPosition);
       yPosition += 10;
@@ -183,8 +275,8 @@ export default function StaffNotesClean() {
       yPosition += 8;
 
       // Sort notes by date (newest first)
-      const sortedNotes = [...staffMember.notes].sort((a, b) => 
-        new Date(b.date).getTime() - new Date(a.date).getTime()
+      const sortedNotes = [...employeeNotes].sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
 
       sortedNotes.forEach((note, noteIndex) => {
@@ -197,16 +289,15 @@ export default function StaffNotesClean() {
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
         
-        const typeText = note.type === 'banked_hours' ? 'Banked Hours' :
-                        note.type === 'rdo_hours' ? 'RDO Hours' :
-                        note.type === 'tool_cost' ? 'Tool Cost' : 'General';
+        const typeText = note.noteType === 'banked_hours' ? 'Banked Hours' :
+                        note.noteType === 'tool_bills' ? 'Tool Bills' : 'General';
         
-        const amountText = note.type === 'banked_hours' || note.type === 'rdo_hours' 
-          ? `${note.amount > 0 ? '+' : ''}${note.amount} hrs`
-          : `${note.amount > 0 ? '+' : ''}$${Math.abs(note.amount).toFixed(2)}`;
+        const amountText = note.noteType === 'banked_hours' 
+          ? `${note.hours || 0} hrs`
+          : `$${parseFloat(note.amount || '0').toFixed(2)}`;
 
         // Note line
-        const noteText = `${format(new Date(note.date), 'MMM dd, yyyy')} | ${typeText} | ${amountText} | ${note.description}`;
+        const noteText = `${format(new Date(note.createdAt), 'MMM dd, yyyy')} | ${typeText} | ${amountText} | ${note.title}`;
         
         // Split long text if needed
         const textLines = doc.splitTextToSize(noteText, pageWidth - margin * 2 - 10);
@@ -214,7 +305,16 @@ export default function StaffNotesClean() {
           doc.text(line, margin + 10, yPosition);
           yPosition += 5;
         });
-        yPosition += 2;
+        
+        // Add content if available
+        if (note.content) {
+          const contentLines = doc.splitTextToSize(`   ${note.content}`, pageWidth - margin * 2 - 20);
+          contentLines.forEach((line: string) => {
+            doc.text(line, margin + 15, yPosition);
+            yPosition += 4;
+          });
+        }
+        yPosition += 3;
       });
     }
 
@@ -225,126 +325,25 @@ export default function StaffNotesClean() {
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
-      doc.text(`BuildFlow Pro - ${staffMember.name} Notes`, margin, doc.internal.pageSize.height - 10);
+      doc.text(`BuildFlow Pro - ${employee.name} Notes`, margin, doc.internal.pageSize.height - 10);
     }
 
     // Save the PDF
-    const fileName = `staff-notes-${staffMember.name.replace(/\s+/g, '-').toLowerCase()}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+    const fileName = `staff-notes-${employee.name.replace(/\s+/g, '-').toLowerCase()}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
     doc.save(fileName);
-    showToast(`PDF generated for ${staffMember.name}`);
+    toast({ title: `PDF generated for ${employee.name}` });
   };
 
-  const generatePDF = () => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.width;
-    const margin = 20;
-    let yPosition = 30;
-
-    // Title
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Staff Notes Report', pageWidth / 2, yPosition, { align: 'center' });
-    
-    // Date
-    yPosition += 10;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Generated: ${format(new Date(), 'PPP')}`, pageWidth / 2, yPosition, { align: 'center' });
-    
-    yPosition += 20;
-
-    staff.forEach((member, memberIndex) => {
-      // Check if we need a new page
-      if (yPosition > 250) {
-        doc.addPage();
-        yPosition = 30;
-      }
-
-      // Staff member header
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`${member.name}`, margin, yPosition);
-      yPosition += 8;
-
-      // Summary info
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      const summaryText = `Banked Hours: ${member.bankedHours} | RDO Hours: ${member.rdoHours} | Rate: $${member.hourlyRate}/hr | Value: $${(member.bankedHours * member.hourlyRate).toFixed(2)} | Tools Owed: $${member.toolCostOwed.toFixed(2)}`;
-      doc.text(summaryText, margin, yPosition);
-      yPosition += 15;
-
-      if (member.notes.length === 0) {
-        doc.setFont('helvetica', 'italic');
-        doc.text('No notes recorded', margin + 5, yPosition);
-        yPosition += 10;
-      } else {
-        // Notes header
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Notes:', margin + 5, yPosition);
-        yPosition += 8;
-
-        // Sort notes by date (newest first)
-        const sortedNotes = [...member.notes].sort((a, b) => 
-          new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-
-        sortedNotes.forEach((note, noteIndex) => {
-          // Check if we need a new page for notes
-          if (yPosition > 270) {
-            doc.addPage();
-            yPosition = 30;
-          }
-
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'normal');
-          
-          const typeText = note.type === 'banked_hours' ? 'Banked Hours' :
-                          note.type === 'rdo_hours' ? 'RDO Hours' :
-                          note.type === 'tool_cost' ? 'Tool Cost' : 'General';
-          
-          const amountText = note.type === 'banked_hours' || note.type === 'rdo_hours' 
-            ? `${note.amount > 0 ? '+' : ''}${note.amount} hrs`
-            : `${note.amount > 0 ? '+' : ''}$${Math.abs(note.amount).toFixed(2)}`;
-
-          // Note line
-          const noteText = `${format(new Date(note.date), 'MMM dd, yyyy')} | ${typeText} | ${amountText} | ${note.description}`;
-          
-          // Split long text if needed
-          const textLines = doc.splitTextToSize(noteText, pageWidth - margin * 2 - 10);
-          textLines.forEach((line: string) => {
-            doc.text(line, margin + 10, yPosition);
-            yPosition += 5;
-          });
-          yPosition += 2;
-        });
-      }
-
-      yPosition += 10;
-
-      // Add separator line if not last member
-      if (memberIndex < staff.length - 1) {
-        doc.setDrawColor(200, 200, 200);
-        doc.line(margin, yPosition, pageWidth - margin, yPosition);
-        yPosition += 15;
-      }
-    });
-
-    // Footer on last page
-    const totalPages = doc.getNumberOfPages();
-    for (let i = 1; i <= totalPages; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
-      doc.text('BuildFlow Pro - Staff Notes Report', margin, doc.internal.pageSize.height - 10);
-    }
-
-    // Save the PDF
-    const fileName = `staff-notes-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
-    doc.save(fileName);
-    showToast('PDF report generated successfully');
-  };
+  if (employeesLoading || notesLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading staff notes...</p>
+        </div>
+      </div>
+    );
+  }
 
   const addNote = () => {
     if (!selectedStaff || !noteForm.description.trim()) {
