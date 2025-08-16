@@ -4128,6 +4128,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Download migration guide
+  app.get("/api/download/migration-guide", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      
+      const guidePath = path.join(process.cwd(), 'PLATFORM_MIGRATION_GUIDE.md');
+      
+      if (!fs.existsSync(guidePath)) {
+        return res.status(404).json({ message: "Migration guide not found" });
+      }
+
+      const guideContent = fs.readFileSync(guidePath, 'utf8');
+      
+      res.setHeader('Content-Type', 'text/plain');
+      res.setHeader('Content-Disposition', 'attachment; filename="Platform_Migration_Guide.txt"');
+      res.send(guideContent);
+    } catch (error) {
+      console.error("Error downloading migration guide:", error);
+      res.status(500).json({ message: "Failed to download migration guide" });
+    }
+  });
+
   // Delete prize from catalog
   app.delete("/api/admin/rewards/prizes/:prizeId", isAuthenticated, async (req: any, res) => {
     try {

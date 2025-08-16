@@ -3555,16 +3555,29 @@ export default function AdminDashboard() {
                         Download all jobs, timesheets, employees, and business records
                       </p>
                     </div>
-                    <Button 
-                      onClick={() => {
-                        window.open('/api/export-data', '_blank');
-                      }}
-                      data-testid="button-export-data"
-                      className="flex items-center gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      Export Data
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline"
+                        onClick={() => {
+                          window.open('/api/download/migration-guide', '_blank');
+                        }}
+                        data-testid="button-download-migration-guide"
+                        className="flex items-center gap-2"
+                      >
+                        <FileText className="h-4 w-4" />
+                        Migration Guide
+                      </Button>
+                      <Button 
+                        onClick={() => {
+                          window.open('/api/export-data', '_blank');
+                        }}
+                        data-testid="button-export-data"
+                        className="flex items-center gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        Export Data
+                      </Button>
+                    </div>
                   </div>
                   <div className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
                     <div className="flex items-center gap-2">
