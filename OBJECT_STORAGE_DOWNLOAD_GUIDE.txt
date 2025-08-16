@@ -1,0 +1,51 @@
+📥 HOW TO DOWNLOAD OBJECT STORAGE FILES
+
+Object Storage files are located in the left sidebar of your Replit project.
+
+STEP 1: Find Object Storage
+- Look at the left sidebar in Replit
+- Find and click "Object Storage" (bucket icon)
+- This opens the Object Storage pane
+
+STEP 2: Navigate Folders
+You'll see two main folders:
+- "public" folder - Contains public assets
+- ".private" folder - Contains private user files
+
+STEP 3: Download Files
+Method 1 - Individual Files:
+- Click on any file to select it
+- Right-click and choose "Download"
+- Or use the download button in the file preview
+
+Method 2 - Multiple Files:
+- Select multiple files (Ctrl+click or Cmd+click)
+- Right-click and choose "Download selected"
+- Files will download as a zip
+
+Method 3 - Entire Folders:
+- Right-click on "public" folder
+- Choose "Download folder"
+- Repeat for ".private" folder
+
+WHAT'S IN EACH FOLDER:
+- public/: Website assets, shared files
+- .private/: User uploaded files, job documents
+
+WHY DOWNLOAD THESE:
+These files are part of your complete backup strategy. They contain:
+- Job site photos uploaded by users
+- PDF documents attached to jobs
+- Generated reports and files
+- Any files created by your application
+
+BACKUP FREQUENCY:
+- Download monthly or when you add important files
+- Critical for complete data protection
+- Store with your other backup files
+
+Your complete backup includes:
+1. Database backup (tar.gz file) ✓
+2. Live data export (JSON from app) ✓  
+3. Attached files backup (FILES_BACKUP.tar.gz) ✓
+4. Object storage files (downloaded from sidebar) ← YOU ARE HERE
