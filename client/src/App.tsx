@@ -58,15 +58,11 @@ function Router() {
 }
 
 function AppContent() {
-  const { user, isAuthenticated } = useAuth();
-  
   return (
     <div id="app-container">
       <TooltipProvider>
         <Toaster />
         <Router />
-        <NotificationPopup userEmail={(user as any)?.email} />
-        {isAuthenticated && <PWAInstallPrompt />}
       </TooltipProvider>
     </div>
   );
