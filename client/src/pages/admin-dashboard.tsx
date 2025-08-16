@@ -1579,47 +1579,17 @@ export default function AdminDashboard() {
             </Button>
           </div>
 
-          {/* More Menu - Less Frequently Used */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">More</span>
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => setActiveTab("employees")} data-testid="menu-employees">
-                <Users className="h-4 w-4 mr-2" />
-                Staff Management
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveTab("staff-view")} data-testid="menu-staff-view">
-                <Eye className="h-4 w-4 mr-2" />
-                Staff View
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => window.location.href = '/staff-notes'} data-testid="menu-staff-notes">
-                <FileText className="h-4 w-4 mr-2" />
-                Staff Notes
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setActiveTab("documents")} data-testid="menu-documents">
-                <FileText className="h-4 w-4 mr-2" />
-                Document Processing
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveTab("notifications")} data-testid="menu-notifications">
-                <Bell className="h-4 w-4 mr-2" />
-                Notification Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveTab("deleted-jobs")} data-testid="menu-deleted-jobs">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Deleted Jobs
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveTab("settings")} data-testid="menu-settings">
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* More Button - Opens App Grid Page */}
+          <Button 
+            variant={activeTab === "more" ? "default" : "outline"} 
+            size="sm" 
+            onClick={() => setActiveTab("more")}
+            className="flex items-center gap-2"
+            data-testid="tab-more"
+          >
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">More</span>
+          </Button>
         </div>
 
 
@@ -2488,6 +2458,138 @@ export default function AdminDashboard() {
                 <p className="text-muted-foreground">Deleted job sheets will appear here</p>
               </Card>
             )}
+          </TabsContent>
+
+          {/* More Apps Grid Page */}
+          <TabsContent value="more" className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-xl font-semibold">More Apps</h2>
+                <p className="text-sm text-muted-foreground">Access additional features and settings</p>
+              </div>
+            </div>
+
+            {/* App Grid Layout */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {/* Staff Management App */}
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200"
+                onClick={() => setActiveTab("employees")}
+                data-testid="app-employees"
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-blue-500 rounded-full flex items-center justify-center">
+                    <Users className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-medium text-sm">Staff Management</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Manage employees</p>
+                </CardContent>
+              </Card>
+
+              {/* Staff View App */}
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-green-50 to-green-100 border-green-200"
+                onClick={() => setActiveTab("staff-view")}
+                data-testid="app-staff-view"
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-green-500 rounded-full flex items-center justify-center">
+                    <Eye className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-medium text-sm">Staff View</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Preview staff dashboard</p>
+                </CardContent>
+              </Card>
+
+              {/* Staff Notes App */}
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200"
+                onClick={() => window.location.href = '/staff-notes'}
+                data-testid="app-staff-notes"
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-purple-500 rounded-full flex items-center justify-center">
+                    <FileText className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-medium text-sm">Staff Notes</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Manage staff records</p>
+                </CardContent>
+              </Card>
+
+              {/* Document Processing App */}
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200"
+                onClick={() => setActiveTab("documents")}
+                data-testid="app-documents"
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-orange-500 rounded-full flex items-center justify-center">
+                    <FileText className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-medium text-sm">Documents</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Process uploads</p>
+                </CardContent>
+              </Card>
+
+              {/* Notification Settings App */}
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200"
+                onClick={() => setActiveTab("notifications")}
+                data-testid="app-notifications"
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-yellow-500 rounded-full flex items-center justify-center">
+                    <Bell className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-medium text-sm">Notifications</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Email preferences</p>
+                </CardContent>
+              </Card>
+
+              {/* Settings App */}
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200"
+                onClick={() => setActiveTab("settings")}
+                data-testid="app-settings"
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-gray-500 rounded-full flex items-center justify-center">
+                    <Settings className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-medium text-sm">Settings</h3>
+                  <p className="text-xs text-muted-foreground mt-1">App configuration</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Quick Access Section */}
+            <div className="mt-8">
+              <h3 className="text-lg font-medium mb-4">Quick Access</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Card className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center">
+                      <Users className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-sm">User Management</h4>
+                      <p className="text-xs text-muted-foreground">Found in Settings → User Management</p>
+                    </div>
+                  </div>
+                </Card>
+                <Card className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center">
+                      <Shield className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-sm">Security Settings</h4>
+                      <p className="text-xs text-muted-foreground">Found in Settings → Security</p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="timesheets" className="space-y-6">
