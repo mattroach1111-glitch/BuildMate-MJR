@@ -2,7 +2,7 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationPopup } from "@/components/notification-popup";
 import { PWAInstallPrompt } from "./components/pwa-install-prompt";
@@ -16,8 +16,7 @@ import FortnightTimesheetView from "@/pages/fortnight-timesheet-view";
 import StaffTimesheet from "@/pages/staff-timesheet";
 import StaffNotes from "@/pages/staff-notes-clean";
 import RewardsDashboard from "@/pages/rewards-dashboard";
-import AdminRewards from "@/pages/admin-rewards-simple";
-import RewardsRules from "@/pages/rewards-rules";
+import AdminRewards from "@/pages/admin-rewards";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -43,8 +42,7 @@ function Router() {
           <Route path="/staff" component={AdminDashboard} />
           <Route path="/staff-notes" component={StaffNotes} />
           <Route path="/rewards" component={RewardsDashboard} />
-          <Route path="/admin-rewards" component={AdminRewards} />
-          <Route path="/rewards-rules" component={RewardsRules} />
+          <Route path="/admin/rewards" component={AdminRewards} />
         </>
       ) : (
         <>
@@ -52,7 +50,6 @@ function Router() {
           <Route path="/staff" component={() => <StaffDashboard isAdminView={false} />} />
           <Route path="/timesheet" component={FortnightTimesheetView} />
           <Route path="/rewards" component={RewardsDashboard} />
-          <Route path="/rewards-rules" component={RewardsRules} />
         </>
       )}
       <Route component={NotFound} />
@@ -61,17 +58,26 @@ function Router() {
 }
 
 function AppContent() {
+  const { user, isAuthenticated } = useAuth();
+  
   return (
     <div id="app-container">
-      <Router />
+      <TooltipProvider>
+        <Toaster />
+        <Router />
+        <NotificationPopup userEmail={(user as any)?.email} />
+        {isAuthenticated && <PWAInstallPrompt />}
+      </TooltipProvider>
     </div>
   );
 }
 
-export default function App() {
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppContent />
     </QueryClientProvider>
   );
 }
+
+export default App;

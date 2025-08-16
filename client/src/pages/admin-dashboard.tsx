@@ -23,7 +23,7 @@ import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, Settings, UserPlus, Download, Edit, DollarSign, TrendingUp, Building2, Bell, RotateCcw, Shield, Lock, RefreshCw, Trophy, BookOpen } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, Settings, UserPlus, Download, Edit, DollarSign, TrendingUp, Building2, Bell, RotateCcw, Shield, Lock, RefreshCw, Trophy } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
@@ -2505,21 +2505,6 @@ export default function AdminDashboard() {
                   </div>
                   <h3 className="font-medium text-sm">Rewards Config</h3>
                   <p className="text-xs text-muted-foreground mt-1">Manage rewards</p>
-                </CardContent>
-              </Card>
-
-              {/* Rewards Rules App */}
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-indigo-50 to-purple-100 border-indigo-200"
-                onClick={() => window.location.href = '/rewards-rules'}
-                data-testid="app-rewards-rules"
-              >
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 mx-auto mb-3 bg-indigo-500 rounded-full flex items-center justify-center">
-                    <BookOpen className="h-6 w-6 text-white" />
-                  </div>
-                  <h3 className="font-medium text-sm">Rewards Rules</h3>
-                  <p className="text-xs text-muted-foreground mt-1">View point rules</p>
                 </CardContent>
               </Card>
 

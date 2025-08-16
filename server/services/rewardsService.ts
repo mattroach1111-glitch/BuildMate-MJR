@@ -20,15 +20,22 @@ import { format, subDays, startOfDay, endOfDay, isWeekend, startOfWeek, endOfWee
 // REWARD CONFIGURATION
 // =============================================================================
 
-let REWARD_CONFIG = {
-  // Simple reward system - configurable points
-  DAILY_POINTS: 10,
-  WEEKLY_POINTS: 50,
-  FORTNIGHTLY_POINTS: 120,
-  MONTHLY_POINTS: 250,
+const REWARD_CONFIG = {
+  DAILY_SUBMISSION_POINTS: 10,
+  WEEKEND_SUBMISSION_BONUS: 5, // Extra points for weekend submissions
+  WEEKLY_COMPLETION_BONUS: 25, // Bonus for completing all 5 weekdays
+  STREAK_MULTIPLIER: 1.2, // 20% bonus for streaks >= 5 days
   
-  // Weekend bonus (optional extra points for weekend submissions)
-  WEEKEND_BONUS: 5
+  // Achievement thresholds
+  ACHIEVEMENTS: {
+    STREAK_5: { points: 50, name: "5-Day Streak", icon: "🔥", description: "Submitted timesheets for 5 consecutive days" },
+    STREAK_10: { points: 100, name: "10-Day Streak", icon: "⚡", description: "Submitted timesheets for 10 consecutive days" },
+    STREAK_20: { points: 200, name: "20-Day Streak", icon: "💪", description: "Submitted timesheets for 20 consecutive days" },
+    PERFECT_WEEK: { points: 75, name: "Perfect Week", icon: "⭐", description: "Submitted all weekday timesheets in a week" },
+    PERFECT_MONTH: { points: 300, name: "Perfect Month", icon: "👑", description: "Submitted all weekday timesheets in a month" },
+    EARLY_BIRD: { points: 30, name: "Early Bird", icon: "🌅", description: "Submitted timesheet before 9 AM" },
+    WEEKEND_WARRIOR: { points: 40, name: "Weekend Warrior", icon: "⚔️", description: "Submitted 5 weekend timesheets" }
+  }
 };
 
 // =============================================================================
@@ -36,16 +43,6 @@ let REWARD_CONFIG = {
 // =============================================================================
 
 export class RewardsService {
-  // Get current reward configuration for display in rules/admin
-  getRewardConfiguration() {
-    return { ...REWARD_CONFIG };
-  }
-
-  // Update reward configuration (for admin use)
-  updateRewardConfiguration(updates: Partial<typeof REWARD_CONFIG>) {
-    REWARD_CONFIG = { ...REWARD_CONFIG, ...updates };
-    return this.getRewardConfiguration();
-  }
   
   // Initialize user's reward points record
   async initializeUserRewards(userId: string): Promise<RewardPoints> {
@@ -79,38 +76,13 @@ export class RewardsService {
   }
 
   // Process timesheet submission for rewards
-  async processTimesheetSubmission(userId: string, submissionDate: string, timesheetEntries?: any[]): Promise<{
+  async processTimesheetSubmission(userId: string, submissionDate: string): Promise<{
     pointsEarned: number;
     newStreak: number;
     achievements: RewardAchievement[];
     description: string;
   }> {
     console.log(`Processing timesheet submission rewards for user ${userId} on ${submissionDate}`);
-    
-    // Check if any timesheet entries for this date contain leave types that break streaks/bonuses
-    // Note: RDO days still don't earn points, but don't break streaks
-    const hasLeaveType = await this.checkForLeaveTypes(userId, submissionDate);
-    const hasRDO = await this.checkForRDO(userId, submissionDate);
-    
-    if (hasRDO) {
-      console.log(`🚫 No rewards for ${userId} on ${submissionDate} - RDO day (no points but streak continues)`);
-      return {
-        pointsEarned: 0,
-        newStreak: await this.calculateNewStreak(userId, submissionDate, (await this.getUserRewardPoints(userId))?.lastSubmissionDate || null),
-        achievements: [],
-        description: "No points awarded - RDO day (streak maintained)"
-      };
-    }
-    
-    if (hasLeaveType) {
-      console.log(`🚫 No rewards for ${userId} on ${submissionDate} - contains leave type that breaks streaks`);
-      return {
-        pointsEarned: 0,
-        newStreak: 0,
-        achievements: [],
-        description: "No points awarded - leave days break streaks and bonuses"
-      };
-    }
     
     // Initialize user rewards if needed
     await this.initializeUserRewards(userId);
@@ -131,7 +103,7 @@ export class RewardsService {
       description += " (weekend bonus)";
     }
     
-    // Calculate new streak (consider leave types)
+    // Calculate new streak
     const newStreak = await this.calculateNewStreak(userId, submissionDate, currentPoints.lastSubmissionDate);
     
     // Streak bonus (20% extra for streaks >= 5)
@@ -193,13 +165,6 @@ export class RewardsService {
 
     const current = new Date(currentSubmissionDate);
     const last = new Date(lastSubmissionDate);
-    
-    // Check if any day between last submission and current has leave types
-    const hasLeaveInBetween = await this.checkForLeaveTypesBetweenDates(userId, lastSubmissionDate, currentSubmissionDate);
-    if (hasLeaveInBetween) {
-      console.log(`🚫 Streak broken for ${userId} - leave type found between ${lastSubmissionDate} and ${currentSubmissionDate}`);
-      return 1; // Reset streak due to leave type
-    }
     
     // Check if it's consecutive days (considering weekends)
     const dayDifference = Math.floor((current.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
@@ -350,13 +315,6 @@ export class RewardsService {
 
   // Check for weekly completion bonus
   private async checkWeeklyCompletion(userId: string, submissionDate: string) {
-    // Check if this week has any leave types - if so, no weekly bonus
-    const hasLeaveThisWeek = await this.checkForLeaveTypesInWeek(userId, submissionDate);
-    if (hasLeaveThisWeek) {
-      console.log(`🚫 No weekly bonus for ${userId} - leave type found in week of ${submissionDate}`);
-      return;
-    }
-    
     const weekStats = await this.getWeekStats(userId, submissionDate);
     
     if (weekStats.weekdaysSubmitted === 5) {
@@ -474,107 +432,6 @@ export class RewardsService {
       userRank: userRank > 0 ? userRank : null,
       totalUsers: leaderboard.length
     };
-  }
-
-  // Check if a specific date has leave types for a user (excludes RDO from breaking streaks)
-  private async checkForLeaveTypes(userId: string, date: string): Promise<boolean> {
-    const { timesheetEntries } = await import("@shared/schema");
-    const { eq, and } = await import("drizzle-orm");
-    
-    const entries = await db
-      .select()
-      .from(timesheetEntries)
-      .where(
-        and(
-          eq(timesheetEntries.staffId, userId),
-          eq(timesheetEntries.date, date),
-          eq(timesheetEntries.submitted, true)
-        )
-      );
-
-    // Check if any entry has leave types in the materials field (when jobId is null)
-    // RDO is excluded from breaking streaks/bonuses per user request
-    const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay'];
-    return entries.some(entry => 
-      !entry.jobId && entry.materials && leaveTypes.includes(entry.materials)
-    );
-  }
-
-  // Check if there are leave types between two dates (excludes RDO from breaking streaks)
-  private async checkForLeaveTypesBetweenDates(userId: string, startDate: string, endDate: string): Promise<boolean> {
-    const { timesheetEntries } = await import("@shared/schema");
-    const { eq, and, gte, lte } = await import("drizzle-orm");
-    
-    const entries = await db
-      .select()
-      .from(timesheetEntries)
-      .where(
-        and(
-          eq(timesheetEntries.staffId, userId),
-          gte(timesheetEntries.date, startDate),
-          lte(timesheetEntries.date, endDate),
-          eq(timesheetEntries.submitted, true)
-        )
-      );
-
-    // Check if any entry has leave types in the materials field (when jobId is null)
-    // RDO is excluded from breaking streaks/bonuses per user request
-    const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay'];
-    return entries.some(entry => 
-      !entry.jobId && entry.materials && leaveTypes.includes(entry.materials)
-    );
-  }
-
-  // Check if the week containing the given date has any leave types (excludes RDO from breaking weekly bonuses)
-  private async checkForLeaveTypesInWeek(userId: string, submissionDate: string): Promise<boolean> {
-    const { startOfWeek, endOfWeek, format } = await import("date-fns");
-    const { timesheetEntries } = await import("@shared/schema");
-    const { eq, and, gte, lte } = await import("drizzle-orm");
-    
-    const date = new Date(submissionDate);
-    const weekStart = startOfWeek(date, { weekStartsOn: 1 }); // Monday
-    const weekEnd = endOfWeek(date, { weekStartsOn: 1 }); // Sunday
-    
-    const entries = await db
-      .select()
-      .from(timesheetEntries)
-      .where(
-        and(
-          eq(timesheetEntries.staffId, userId),
-          gte(timesheetEntries.date, format(weekStart, 'yyyy-MM-dd')),
-          lte(timesheetEntries.date, format(weekEnd, 'yyyy-MM-dd')),
-          eq(timesheetEntries.submitted, true)
-        )
-      );
-
-    // Check if any entry has leave types in the materials field (when jobId is null)
-    // RDO is excluded from breaking streaks/bonuses per user request
-    const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay'];
-    return entries.some(entry => 
-      !entry.jobId && entry.materials && leaveTypes.includes(entry.materials)
-    );
-  }
-
-  // Check specifically for RDO days (separate from other leave types)
-  private async checkForRDO(userId: string, date: string): Promise<boolean> {
-    const { timesheetEntries } = await import("@shared/schema");
-    const { eq, and } = await import("drizzle-orm");
-    
-    const entries = await db
-      .select()
-      .from(timesheetEntries)
-      .where(
-        and(
-          eq(timesheetEntries.staffId, userId),
-          eq(timesheetEntries.date, date),
-          eq(timesheetEntries.submitted, true)
-        )
-      );
-
-    // Check if any entry is an RDO
-    return entries.some(entry => 
-      !entry.jobId && entry.materials === 'rdo'
-    );
   }
 }
 
