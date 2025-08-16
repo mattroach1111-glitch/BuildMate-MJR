@@ -2546,6 +2546,36 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
 
+              {/* Rewards Dashboard App */}
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-yellow-50 to-amber-100 border-yellow-200"
+                onClick={() => window.location.href = '/rewards'}
+                data-testid="app-rewards"
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-yellow-500 rounded-full flex items-center justify-center">
+                    <Trophy className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-medium text-sm">Rewards</h3>
+                  <p className="text-xs text-muted-foreground mt-1">View progress & leaderboard</p>
+                </CardContent>
+              </Card>
+
+              {/* Rewards Config App */}
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-emerald-50 to-green-100 border-emerald-200"
+                onClick={() => window.location.href = '/admin/rewards'}
+                data-testid="app-rewards-config"
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-emerald-500 rounded-full flex items-center justify-center">
+                    <Settings className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-medium text-sm">Rewards Config</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Manage points & prizes</p>
+                </CardContent>
+              </Card>
+
               {/* Settings App */}
               <Card 
                 className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200"

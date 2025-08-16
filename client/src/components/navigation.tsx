@@ -126,19 +126,6 @@ export default function Navigation({ title, subtitle }: NavigationProps) {
                   </div>
                 </div>
                 <DropdownMenuSeparator />
-                {isAdmin && (
-                  <>
-                    <DropdownMenuItem onClick={() => setLocation("/rewards")}>
-                      <Trophy className="mr-2 h-4 w-4" />
-                      <span>Rewards Dashboard</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setLocation("/admin/rewards")}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Rewards Config</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
                 <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
