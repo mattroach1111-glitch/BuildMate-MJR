@@ -4398,7 +4398,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     jobId: entry.jobId,
                     date: entry.date,
                     hours: entry.hours,
-                    hourlyRate: entry.hourlyRate,
                     notes: entry.notes,
                     status: entry.status,
                     customAddress: entry.customAddress,

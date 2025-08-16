@@ -23,7 +23,7 @@ import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, Settings, UserPlus, Download, Edit, DollarSign, TrendingUp, Building2, Bell, RotateCcw, Shield, Lock, RefreshCw, Trophy } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, Settings, UserPlus, Download, Edit, DollarSign, TrendingUp, Building2, Bell, RotateCcw, Shield, Lock, RefreshCw, Trophy, Upload } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
