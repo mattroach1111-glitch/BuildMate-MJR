@@ -16,6 +16,7 @@ import FortnightTimesheetView from "@/pages/fortnight-timesheet-view";
 import StaffTimesheet from "@/pages/staff-timesheet";
 import StaffNotes from "@/pages/staff-notes-clean";
 import RewardsDashboard from "@/pages/rewards-dashboard";
+import RewardsRules from "@/pages/rewards-rules";
 import AdminRewards from "@/pages/admin-rewards";
 
 function Router() {
@@ -42,6 +43,7 @@ function Router() {
           <Route path="/staff" component={AdminDashboard} />
           <Route path="/staff-notes" component={StaffNotes} />
           <Route path="/rewards" component={RewardsDashboard} />
+          <Route path="/rewards/rules" component={RewardsRules} />
           <Route path="/admin/rewards" component={AdminRewards} />
         </>
       ) : (
@@ -50,6 +52,7 @@ function Router() {
           <Route path="/staff" component={() => <StaffDashboard isAdminView={false} />} />
           <Route path="/timesheet" component={FortnightTimesheetView} />
           <Route path="/rewards" component={RewardsDashboard} />
+          <Route path="/rewards/rules" component={RewardsRules} />
         </>
       )}
       <Route component={NotFound} />

@@ -18,6 +18,7 @@ import PageLayout from '@/components/page-layout';
 interface RewardSettings {
   dailySubmissionPoints: number;
   weeklyBonusPoints: number;
+  fortnightlyBonusPoints: number;
   monthlyBonusPoints: number;
   streakBonusMultiplier: number;
   perfectWeekBonus: number;
@@ -302,6 +303,21 @@ const AdminRewards: React.FC = () => {
                     </div>
 
                     <div>
+                      <Label htmlFor="fortnightlyPoints">Fortnightly Bonus Points</Label>
+                      <Input
+                        id="fortnightlyPoints"
+                        type="number"
+                        value={editedSettings?.fortnightlyBonusPoints || 0}
+                        onChange={(e) => setEditedSettings(prev => prev ? {
+                          ...prev,
+                          fortnightlyBonusPoints: parseInt(e.target.value) || 0
+                        } : null)}
+                        className="mt-1"
+                      />
+                      <p className="text-xs text-gray-600 mt-1">Bonus points for completing a full fortnight (2 weeks)</p>
+                    </div>
+
+                    <div>
                       <Label htmlFor="monthlyPoints">Monthly Bonus Points</Label>
                       <Input
                         id="monthlyPoints"
@@ -383,18 +399,22 @@ const AdminRewards: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="bg-blue-50 p-4 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600">{adminData.settings.dailySubmissionPoints}</div>
-                      <div className="text-sm text-blue-800">Daily Submission Points</div>
+                      <div className="text-xl font-bold text-blue-600">{adminData.settings.dailySubmissionPoints}</div>
+                      <div className="text-sm text-blue-800">Daily Points</div>
                     </div>
                     <div className="bg-green-50 p-4 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">{adminData.settings.weeklyBonusPoints}</div>
-                      <div className="text-sm text-green-800">Weekly Bonus Points</div>
+                      <div className="text-xl font-bold text-green-600">{adminData.settings.weeklyBonusPoints}</div>
+                      <div className="text-sm text-green-800">Weekly Bonus</div>
+                    </div>
+                    <div className="bg-orange-50 p-4 rounded-lg">
+                      <div className="text-xl font-bold text-orange-600">{adminData.settings.fortnightlyBonusPoints}</div>
+                      <div className="text-sm text-orange-800">Fortnightly Bonus</div>
                     </div>
                     <div className="bg-purple-50 p-4 rounded-lg">
-                      <div className="text-2xl font-bold text-purple-600">{adminData.settings.perfectWeekBonus}</div>
-                      <div className="text-sm text-purple-800">Perfect Week Bonus</div>
+                      <div className="text-xl font-bold text-purple-600">{adminData.settings.monthlyBonusPoints}</div>
+                      <div className="text-sm text-purple-800">Monthly Bonus</div>
                     </div>
                   </div>
                 )}

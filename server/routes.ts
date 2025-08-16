@@ -3836,6 +3836,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const settings = {
         dailySubmissionPoints: 10,
         weeklyBonusPoints: 50,
+        fortnightlyBonusPoints: 100,
         monthlyBonusPoints: 200,
         streakBonusMultiplier: 1.5,
         perfectWeekBonus: 100,
@@ -3944,6 +3945,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching admin rewards dashboard:", error);
       res.status(500).json({ message: "Failed to fetch admin dashboard data" });
+    }
+  });
+
+  // Get reward settings for rules page
+  app.get("/api/rewards/settings", isAuthenticated, async (req: any, res) => {
+    try {
+      const settings = {
+        dailySubmissionPoints: 10,
+        weeklyBonusPoints: 50,
+        fortnightlyBonusPoints: 100,
+        monthlyBonusPoints: 200
+      };
+      
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching reward settings:", error);
+      res.status(500).json({ message: "Failed to fetch settings" });
     }
   });
 
