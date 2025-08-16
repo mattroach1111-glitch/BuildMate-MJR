@@ -3,7 +3,11 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { db } from "./db";
-import { timesheetEntries, laborEntries, users, staffNotes, employees, staffMembers, staffNotesEntries, rewardCatalog } from "@shared/schema";
+import { 
+  timesheetEntries, laborEntries, users, staffNotes, employees, staffMembers, 
+  staffNotesEntries, rewardCatalog, jobs, materials, subTrades, otherCosts, 
+  tipFees, jobFiles
+} from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { TimesheetPDFGenerator } from "./pdfGenerator";
@@ -4061,15 +4065,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get reward data if tables exist
       let rewardData = null;
       try {
-        let rewardPointsData: any[] = [];
-        let rewardTransactionsData: any[] = [];
-        let achievementsData: any[] = [];
-        
-        try { rewardPointsData = await db.select().from(rewardPoints); } catch {}
-        try { rewardTransactionsData = await db.select().from(rewardTransactions); } catch {}  
-        try { achievementsData = await db.select().from(userAchievements); } catch {}
-        
-        rewardData = { rewardPoints: rewardPointsData, rewardTransactions: rewardTransactionsData, achievements: achievementsData };
+        // Note: Reward tables may not exist yet
+        console.log("Skipping reward data - tables not implemented yet");
+        rewardData = { rewardCatalog: [], rewardTransactions: [], achievements: [] };
       } catch (e) {
         console.log("Reward tables not found, skipping reward data export");
       }
@@ -4142,18 +4140,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tipFeesData = await db.select().from(tipFees);
       const jobFilesData = await db.select().from(jobFiles);
 
-      // Get reward data if tables exist
+      // Get reward data if tables exist  
       let rewardData = null;
       try {
-        let rewardPointsData: any[] = [];
-        let rewardTransactionsData: any[] = [];
-        let achievementsData: any[] = [];
-        
-        try { rewardPointsData = await db.select().from(rewardPoints); } catch {}
-        try { rewardTransactionsData = await db.select().from(rewardTransactions); } catch {}  
-        try { achievementsData = await db.select().from(userAchievements); } catch {}
-        
-        rewardData = { rewardPoints: rewardPointsData, rewardTransactions: rewardTransactionsData, achievements: achievementsData };
+        // Note: Reward tables may not exist yet
+        console.log("Skipping reward data - tables not implemented yet");
+        rewardData = { rewardCatalog: [], rewardTransactions: [], achievements: [] };
       } catch (e) {
         console.log("Reward tables not found, skipping reward data export");
       }
