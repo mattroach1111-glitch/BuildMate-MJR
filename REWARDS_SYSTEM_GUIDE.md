@@ -4,13 +4,17 @@
 The BuildFlow Pro Rewards System incentivizes timely timesheet submissions through a comprehensive points-based rewards program. Staff earn points for consistent submissions, build streaks, unlock achievements, and compete on leaderboards.
 
 ## Important: Leave Type Exclusions
-**Leave days DO NOT earn points and BREAK streaks and weekly bonuses:**
+**Leave types and their impact on rewards:**
+
+**Break streaks and prevent bonuses:**
 - Sick Leave
-- Personal Leave
+- Personal Leave  
 - Annual Leave
+
+**Don't earn points but maintain streaks:**
 - RDO (Rostered Day Off)
 
-If any day in your week contains a leave type, you will not receive weekly completion bonuses, even if you submit all other weekdays. Leave types also immediately break streak counters.
+If any day in your week contains sick leave, personal leave, or annual leave, you will not receive weekly completion bonuses. RDO days don't affect weekly bonuses but still don't earn points.
 
 ## How Points Are Calculated
 

@@ -85,14 +85,27 @@ export class RewardsService {
     console.log(`Processing timesheet submission rewards for user ${userId} on ${submissionDate}`);
     
     // Check if any timesheet entries for this date contain leave types that break streaks/bonuses
+    // Note: RDO days still don't earn points, but don't break streaks
     const hasLeaveType = await this.checkForLeaveTypes(userId, submissionDate);
+    const hasRDO = await this.checkForRDO(userId, submissionDate);
+    
+    if (hasRDO) {
+      console.log(`🚫 No rewards for ${userId} on ${submissionDate} - RDO day (no points but streak continues)`);
+      return {
+        pointsEarned: 0,
+        newStreak: await this.calculateNewStreak(userId, submissionDate, (await this.getUserRewardPoints(userId))?.lastSubmissionDate || null),
+        achievements: [],
+        description: "No points awarded - RDO day (streak maintained)"
+      };
+    }
+    
     if (hasLeaveType) {
       console.log(`🚫 No rewards for ${userId} on ${submissionDate} - contains leave type that breaks streaks`);
       return {
         pointsEarned: 0,
         newStreak: 0,
         achievements: [],
-        description: "No points awarded - leave days do not count towards rewards"
+        description: "No points awarded - leave days break streaks and bonuses"
       };
     }
     
@@ -460,7 +473,7 @@ export class RewardsService {
     };
   }
 
-  // Check if a specific date has leave types for a user
+  // Check if a specific date has leave types for a user (excludes RDO from breaking streaks)
   private async checkForLeaveTypes(userId: string, date: string): Promise<boolean> {
     const { timesheetEntries } = await import("@shared/schema");
     const { eq, and } = await import("drizzle-orm");
@@ -477,13 +490,14 @@ export class RewardsService {
       );
 
     // Check if any entry has leave types in the materials field (when jobId is null)
-    const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'rdo'];
+    // RDO is excluded from breaking streaks/bonuses per user request
+    const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave'];
     return entries.some(entry => 
       !entry.jobId && entry.materials && leaveTypes.includes(entry.materials)
     );
   }
 
-  // Check if there are leave types between two dates
+  // Check if there are leave types between two dates (excludes RDO from breaking streaks)
   private async checkForLeaveTypesBetweenDates(userId: string, startDate: string, endDate: string): Promise<boolean> {
     const { timesheetEntries } = await import("@shared/schema");
     const { eq, and, gte, lte } = await import("drizzle-orm");
@@ -501,13 +515,14 @@ export class RewardsService {
       );
 
     // Check if any entry has leave types in the materials field (when jobId is null)
-    const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'rdo'];
+    // RDO is excluded from breaking streaks/bonuses per user request
+    const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave'];
     return entries.some(entry => 
       !entry.jobId && entry.materials && leaveTypes.includes(entry.materials)
     );
   }
 
-  // Check if the week containing the given date has any leave types
+  // Check if the week containing the given date has any leave types (excludes RDO from breaking weekly bonuses)
   private async checkForLeaveTypesInWeek(userId: string, submissionDate: string): Promise<boolean> {
     const { startOfWeek, endOfWeek, format } = await import("date-fns");
     const { timesheetEntries } = await import("@shared/schema");
@@ -530,9 +545,32 @@ export class RewardsService {
       );
 
     // Check if any entry has leave types in the materials field (when jobId is null)
-    const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'rdo'];
+    // RDO is excluded from breaking streaks/bonuses per user request
+    const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave'];
     return entries.some(entry => 
       !entry.jobId && entry.materials && leaveTypes.includes(entry.materials)
+    );
+  }
+
+  // Check specifically for RDO days (separate from other leave types)
+  private async checkForRDO(userId: string, date: string): Promise<boolean> {
+    const { timesheetEntries } = await import("@shared/schema");
+    const { eq, and } = await import("drizzle-orm");
+    
+    const entries = await db
+      .select()
+      .from(timesheetEntries)
+      .where(
+        and(
+          eq(timesheetEntries.staffId, userId),
+          eq(timesheetEntries.date, date),
+          eq(timesheetEntries.submitted, true)
+        )
+      );
+
+    // Check if any entry is an RDO
+    return entries.some(entry => 
+      !entry.jobId && entry.materials === 'rdo'
     );
   }
 }

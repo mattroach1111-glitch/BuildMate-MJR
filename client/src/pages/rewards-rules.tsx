@@ -42,27 +42,21 @@ export default function RewardsRules() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="text-red-800 dark:text-red-200">
-              <p className="font-semibold mb-2">The following leave types DO NOT earn points and BREAK streaks:</p>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex items-center gap-2">
-                  <XCircle className="h-4 w-4" />
-                  <span>Sick Leave</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <XCircle className="h-4 w-4" />
-                  <span>Personal Leave</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <XCircle className="h-4 w-4" />
-                  <span>Annual Leave</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <XCircle className="h-4 w-4" />
-                  <span>RDO (Rostered Day Off)</span>
+              <p className="font-semibold mb-2">Leave types and their impact on rewards:</p>
+              <div className="space-y-2">
+                <div className="grid grid-cols-1 gap-2">
+                  <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
+                    <XCircle className="h-4 w-4" />
+                    <span><strong>Sick Leave, Personal Leave, Annual Leave:</strong> No points + breaks streaks</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span><strong>RDO (Rostered Day Off):</strong> No points but streak continues</span>
+                  </div>
                 </div>
               </div>
               <p className="mt-3 text-sm">
-                <strong>Weekly Bonus Impact:</strong> If any day in your week contains a leave type, you won't receive the weekly completion bonus, even if you submit all other weekdays.
+                <strong>Weekly Bonus Impact:</strong> If any day in your week contains sick leave, personal leave, or annual leave, you won't receive the weekly completion bonus. RDO days don't affect weekly bonuses.
               </p>
             </div>
           </CardContent>
@@ -121,7 +115,7 @@ export default function RewardsRules() {
             <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg">
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
                 <strong>Streak Rules:</strong> Streaks continue over weekends (Friday to Monday counts as consecutive). 
-                However, any leave day breaks your streak immediately.
+                Sick leave, personal leave, and annual leave break your streak. RDO days maintain your streak.
               </p>
             </div>
           </CardContent>
@@ -144,7 +138,7 @@ export default function RewardsRules() {
                 </div>
                 <p className="text-2xl font-bold text-purple-600 mb-1">50 points</p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Complete all 5 weekdays (Monday-Friday) with NO leave days
+                  Complete all 5 weekdays (Monday-Friday) with no sick/personal/annual leave
                 </p>
               </div>
               
@@ -155,7 +149,7 @@ export default function RewardsRules() {
                 </div>
                 <p className="text-2xl font-bold text-indigo-600 mb-1">100 points</p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Complete all 7 days including weekends with NO leave days
+                  Complete all 7 days including weekends with no sick/personal/annual leave
                 </p>
               </div>
             </div>
@@ -235,10 +229,11 @@ export default function RewardsRules() {
           <CardContent className="text-green-800 dark:text-green-200">
             <ul className="space-y-2">
               <li>• Submit timesheets daily to earn points and build streaks</li>
-              <li>• Avoid leave days to maintain streaks and weekly bonuses</li>
+              <li>• Avoid sick/personal/annual leave to maintain streaks and weekly bonuses</li>
+              <li>• RDO days don't earn points but won't break your streak</li>
               <li>• Weekend work earns extra points</li>
               <li>• 5+ day streaks give 20% bonus on all daily submissions</li>
-              <li>• Complete work weeks (no leave) earn substantial bonuses</li>
+              <li>• Complete work weeks (no sick/personal/annual leave) earn substantial bonuses</li>
               <li>• Unlock one-time achievement badges for major milestones</li>
             </ul>
           </CardContent>
