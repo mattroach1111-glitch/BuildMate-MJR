@@ -4125,6 +4125,156 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Auto-backup data to Google Drive
+  app.post("/api/export-data-to-drive", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      console.log("🔄 Starting Google Drive data backup...");
+
+      // Get all business data (same as regular export)
+      const jobsData = await db.select().from(jobs);
+      const employeesData = await db.select().from(employees); 
+      const usersData = await db.select().from(users);
+      const timesheetEntriesData = await db.select().from(timesheetEntries);
+      const laborEntriesData = await db.select().from(laborEntries);
+      const materialsData = await db.select().from(materials);
+      const subTradesData = await db.select().from(subTrades);
+      const otherCostsData = await db.select().from(otherCosts);
+      const tipFeesData = await db.select().from(tipFees);
+      const jobFilesData = await db.select().from(jobFiles);
+
+      // Get reward data if tables exist
+      let rewardData = null;
+      try {
+        let rewardPointsData: any[] = [];
+        let rewardTransactionsData: any[] = [];
+        let achievementsData: any[] = [];
+        
+        try { rewardPointsData = await db.select().from(rewardPoints); } catch {}
+        try { rewardTransactionsData = await db.select().from(rewardTransactions); } catch {}  
+        try { achievementsData = await db.select().from(userAchievements); } catch {}
+        
+        rewardData = { rewardPoints: rewardPointsData, rewardTransactions: rewardTransactionsData, achievements: achievementsData };
+      } catch (e) {
+        console.log("Reward tables not found, skipping reward data export");
+      }
+
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        version: "1.0",
+        businessData: {
+          jobs: jobsData.length,
+          employees: employeesData.length,
+          users: usersData.length,
+          timesheetEntries: timesheetEntriesData.length,
+          laborEntries: laborEntriesData.length,
+          materials: materialsData.length,
+          subTrades: subTradesData.length,
+          otherCosts: otherCostsData.length,
+          tipFees: tipFeesData.length,
+          jobFiles: jobFilesData.length
+        },
+        data: {
+          jobs: jobsData,
+          employees: employeesData,
+          users: usersData.map((u: any) => ({
+            id: u.id,
+            email: u.email,
+            firstName: u.firstName,
+            lastName: u.lastName,
+            role: u.role,
+            employeeId: u.employeeId,
+            isAssigned: u.isAssigned,
+            createdAt: u.createdAt
+          })),
+          timesheetEntries: timesheetEntriesData,
+          laborEntries: laborEntriesData,
+          materials: materialsData,
+          subTrades: subTradesData,
+          otherCosts: otherCostsData,
+          tipFees: tipFeesData,
+          jobFiles: jobFilesData,
+          rewards: rewardData
+        }
+      };
+
+      // Convert to JSON string
+      const jsonContent = JSON.stringify(exportData, null, 2);
+      const fileName = `buildflow-data-export-${new Date().toISOString().split('T')[0]}.json`;
+      
+      // Upload to Google Drive
+      try {
+        const { google } = require('googleapis');
+        const { GoogleAuth } = require('google-auth-library');
+
+        // Set up Google Drive authentication
+        const auth = new GoogleAuth({
+          credentials: {
+            client_id: process.env.GOOGLE_CLIENT_ID,
+            client_secret: process.env.GOOGLE_CLIENT_SECRET,
+            refresh_token: req.session.googleTokens?.refresh_token,
+            access_token: req.session.googleTokens?.access_token,
+            token_type: "Bearer"
+          },
+          scopes: ['https://www.googleapis.com/auth/drive.file']
+        });
+
+        const drive = google.drive({ version: 'v3', auth });
+
+        // Create a buffer from the JSON content
+        const buffer = Buffer.from(jsonContent, 'utf8');
+
+        // Upload to Google Drive
+        const fileMetadata = {
+          name: fileName,
+          parents: ['1xOaFJtLYeOCzQxkqV_QQUUvFKGXb4VHg'] // BuildFlow Backups folder ID
+        };
+
+        const media = {
+          mimeType: 'application/json',
+          body: require('stream').Readable.from(buffer)
+        };
+
+        const driveResponse = await drive.files.create({
+          requestBody: fileMetadata,
+          media: media,
+          fields: 'id,name,webViewLink'
+        });
+
+        console.log(`✅ Data backup uploaded to Google Drive: ${driveResponse.data.name}`);
+
+        res.json({
+          success: true,
+          message: "Data successfully backed up to Google Drive",
+          fileId: driveResponse.data.id,
+          fileName: driveResponse.data.name,
+          link: driveResponse.data.webViewLink,
+          recordCount: {
+            jobs: jobsData.length,
+            employees: employeesData.length,
+            timesheetEntries: timesheetEntriesData.length
+          }
+        });
+
+      } catch (driveError: any) {
+        console.error("Google Drive upload error:", driveError);
+        res.status(500).json({ 
+          success: false,
+          message: "Failed to upload to Google Drive", 
+          error: driveError.message,
+          suggestion: "Try reconnecting Google Drive in Settings"
+        });
+      }
+
+    } catch (error: any) {
+      console.error("Error creating Google Drive backup:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to create backup", 
+        error: error.message 
+      });
+    }
+  });
+
   // Download migration guide
   app.get("/api/download/migration-guide", isAuthenticated, isAdmin, async (req: any, res) => {
     try {

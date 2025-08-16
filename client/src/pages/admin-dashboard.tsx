@@ -3555,7 +3555,7 @@ export default function AdminDashboard() {
                         Download all jobs, timesheets, employees, and business records
                       </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button 
                         variant="outline"
                         onClick={() => {
@@ -3576,6 +3576,34 @@ export default function AdminDashboard() {
                       >
                         <Download className="h-4 w-4" />
                         Export Data
+                      </Button>
+                      <Button 
+                        variant="default"
+                        onClick={async () => {
+                          try {
+                            const response = await apiRequest('/api/export-data-to-drive', {
+                              method: 'POST'
+                            });
+                            
+                            if (response.success) {
+                              toast({
+                                title: "Backup Successful",
+                                description: `Data backed up to Google Drive: ${response.fileName}`,
+                              });
+                            }
+                          } catch (error: any) {
+                            toast({
+                              title: "Backup Failed",
+                              description: error.message || "Failed to backup to Google Drive",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        data-testid="button-backup-to-drive"
+                        className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                      >
+                        <Download className="h-4 w-4" />
+                        Auto-Backup to Drive
                       </Button>
                     </div>
                   </div>
