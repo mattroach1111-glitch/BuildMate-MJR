@@ -8,16 +8,18 @@ import { useQuery } from "@tanstack/react-query";
 export default function RewardsRules() {
   const [, setLocation] = useLocation();
 
-  // Fetch dynamic reward configuration
-  const { data: config, isLoading } = useQuery({
+  // Fetch dynamic reward configuration with no caching to ensure fresh data
+  const { data: config, isLoading, refetch } = useQuery({
     queryKey: ["/api/rewards/config"],
     queryFn: async () => {
-      const response = await fetch("/api/rewards/config");
+      const response = await fetch(`/api/rewards/config?t=${Date.now()}`);
       if (!response.ok) {
         throw new Error("Failed to fetch reward configuration");
       }
       return response.json();
-    }
+    },
+    staleTime: 0, // Always refetch
+    gcTime: 0     // Don't cache
   });
 
   // Show loading state while fetching config
@@ -29,15 +31,19 @@ export default function RewardsRules() {
     );
   }
 
-  // Use fetched config or fallback values
-  const points = config || {
-    DAILY_SUBMISSION_POINTS: 10,
-    WEEKEND_SUBMISSION_BONUS: 5,
-    WEEKLY_COMPLETION_BONUS: 25,
-    PERFECT_WEEK_BONUS: 100,
-    DAILY_SUBMISSION_WITH_STREAK: 12,
-    WEEKEND_SUBMISSION_WITH_STREAK: 18
-  };
+  // Don't render until we have config data
+  if (!config) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300">Loading reward configuration...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const points = config;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -55,10 +61,20 @@ export default function RewardsRules() {
               <ArrowLeft className="h-4 w-4" />
               Back
             </Button>
-            <div>
+            <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Rewards System Rules</h1>
               <p className="text-gray-600 dark:text-gray-300">Complete guide to earning points and rewards</p>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              className="flex items-center gap-2"
+              data-testid="button-refresh"
+            >
+              <Trophy className="h-4 w-4" />
+              Refresh
+            </Button>
           </div>
         </div>
       </div>

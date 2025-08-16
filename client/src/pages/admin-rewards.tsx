@@ -133,6 +133,8 @@ const AdminRewards: React.FC = () => {
         description: "Reward configuration has been updated successfully",
       });
       setIsEditingBadges(false);
+      // Invalidate both the admin config and the public config cache
+      queryClient.invalidateQueries({ queryKey: ['/api/rewards/config'] });
       refetchConfig();
     },
     onError: () => {
@@ -538,7 +540,7 @@ const AdminRewards: React.FC = () => {
                   variant="outline"
                   onClick={() => {
                     setIsEditingBadges(!isEditingBadges);
-                    setEditedBadges(rewardConfig?.ACHIEVEMENTS);
+                    setEditedBadges(rewardConfig?.ACHIEVEMENTS || {});
                   }}
                   data-testid="button-edit-badges"
                 >
@@ -566,7 +568,7 @@ const AdminRewards: React.FC = () => {
                             value={badge.points}
                             onChange={(e) => {
                               const newPoints = parseInt(e.target.value) || 0;
-                              setEditedBadges(prev => ({
+                              setEditedBadges((prev: any) => ({
                                 ...prev,
                                 [key]: { ...badge, points: newPoints }
                               }));
@@ -599,7 +601,7 @@ const AdminRewards: React.FC = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {rewardConfig?.ACHIEVEMENTS && Object.entries(rewardConfig.ACHIEVEMENTS).map(([key, badge]: [string, any]) => (
+                    {rewardConfig?.ACHIEVEMENTS && Object.entries(rewardConfig.ACHIEVEMENTS || {}).map(([key, badge]: [string, any]) => (
                       <div key={key} className="p-4 border rounded-lg bg-white dark:bg-gray-800">
                         <div className="flex items-center gap-3">
                           <span className="text-2xl">{badge.icon}</span>
