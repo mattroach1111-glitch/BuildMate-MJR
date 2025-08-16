@@ -3663,7 +3663,7 @@ export default function AdminDashboard() {
                     data-testid="input-delete-password"
                   />
                   <p className="text-xs text-gray-500">
-                    Password: {DELETION_PASSWORD}
+                    Contact admin for deletion password if needed
                   </p>
                 </div>
 
