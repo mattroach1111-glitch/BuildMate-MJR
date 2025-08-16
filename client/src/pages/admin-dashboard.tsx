@@ -40,6 +40,16 @@ import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor"
 import { EmailProcessingReview } from "@/components/EmailProcessingReview";
 import { NotificationSettings } from "@/components/NotificationSettings";
 
+// Helper function to format date as "16th Aug" format
+const formatJobDate = (dateStr: string | Date) => {
+  const date = typeof dateStr === 'string' ? parseISO(dateStr) : dateStr;
+  const day = format(date, 'd');
+  const suffix = day.endsWith('1') && day !== '11' ? 'st' :
+                 day.endsWith('2') && day !== '12' ? 'nd' :
+                 day.endsWith('3') && day !== '13' ? 'rd' : 'th';
+  return format(date, `d'${suffix}' MMM`);
+};
+
 const jobFormSchema = insertJobSchema.extend({
   builderMargin: z.string()
     .min(1, "Builder margin is required")
@@ -1982,6 +1992,9 @@ export default function AdminDashboard() {
                                   {job.clientName && (
                                     <p className="text-xs text-muted-foreground mt-1 truncate">{job.clientName}</p>
                                   )}
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    Added {formatJobDate(job.createdAt)}
+                                  </p>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
                                   <div onClick={(e) => e.stopPropagation()}>
