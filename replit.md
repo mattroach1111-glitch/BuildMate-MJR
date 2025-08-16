@@ -1,6 +1,9 @@
 # Overview
 BuildFlow Pro is a mobile-first construction management system designed to streamline job costing, billing, and workforce management. It provides role-based access for administrators and staff, enabling comprehensive tracking of labor costs, materials, sub-trades, and project expenses for construction project oversight. The system's vision is to enhance efficiency in construction project management, offering a user-friendly interface for both on-site staff and administrative personnel, and consolidating critical project data for better decision-making.
 
+## Recent Updates (August 2025)
+- ✅ **Staff Notes System Migration**: Successfully migrated from localStorage to persistent PostgreSQL database storage while maintaining identical UI/UX. This enables cross-device synchronization and persistent data storage for staff member management and note tracking.
+
 # User Preferences
 Preferred communication style: Simple, everyday language.
 
@@ -14,7 +17,7 @@ Preferred communication style: Simple, everyday language.
 - **Routing**: Wouter
 - **Forms**: React Hook Form with Zod validation
 - **Design Philosophy**: Component-based architecture with reusable UI components and role-based routing. Modern UI/UX redesign focusing on mobile responsiveness, touch-friendly controls, and enhanced navigation. Features include a dedicated "Ready for Billing" folder, collapsible sections, smart job sorting, and adaptable grid/list views. Vibrant, customizable folder colors are used for visual organization.
-- **Key Features**: Mobile-first redesign, comprehensive job management (creation, editing, soft delete), integrated Australian GST, automated staff assignment to jobs, independent job sheet rates, folder grouping (client/project manager) with auto-expansion, real-time search, status-based job ordering, admin staff view access, interactive job progress visualization, and comprehensive file attachment system with PDF integration.
+- **Key Features**: Mobile-first redesign, comprehensive job management (creation, editing, soft delete), integrated Australian GST, automated staff assignment to jobs, independent job sheet rates, folder grouping (client/project manager) with auto-expansion, real-time search, status-based job ordering, admin staff view access, interactive job progress visualization, comprehensive file attachment system with PDF integration, and database-backed staff notes system with persistent cross-device synchronization.
 - **Timesheet System**: Mobile-first redesign supporting multiple job entries per day, auto-saving, fortnight periods, quick stats cards, and admin capabilities for entry creation and approval. Includes support for RDO, sick leave, personal leave, and annual leave. Supports custom address entry with persistence, weekend work protection, and robust validation, including fuzzy job matching.
 - **Onboarding**: Animated welcome screen and interactive guided tours (role-specific).
 - **Admin Features**: Compressed navigation menu, comprehensive timesheet search with advanced filtering, employee folder organization for approved timesheets, and admin edit functionality for custom addresses.
@@ -31,7 +34,7 @@ Preferred communication style: Simple, everyday language.
 ## Database Design
 - **ORM**: Drizzle with PostgreSQL dialect
 - **Schema**: Centralized in `/shared/schema.ts` for type sharing.
-- **Tables**: Users, jobs, labor entries, materials, sub-trades, timesheet entries, and sessions.
+- **Tables**: Users, jobs, labor entries, materials, sub-trades, timesheet entries, sessions, staff members, and staff notes.
 - **Relationships**: Comprehensive foreign key relationships for multi-tenant job management and cost tracking.
 
 ## Authentication & Authorization
