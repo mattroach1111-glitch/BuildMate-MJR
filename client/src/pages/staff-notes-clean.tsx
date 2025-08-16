@@ -45,6 +45,23 @@ interface NoteFormData {
 export default function StaffNotesClean() {
   const { data: staff = [], isLoading, error } = useQuery<StaffMember[]>({
     queryKey: ['/api/staff-notes'],
+    queryFn: async () => {
+      const response = await fetch('/api/staff-notes', {
+        credentials: 'include',
+      });
+      
+      if (response.status === 401) {
+        // Handle unauthorized access - redirect to auth or show appropriate message
+        window.location.href = '/';
+        return [];
+      }
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch staff notes: ${response.statusText}`);
+      }
+      
+      return response.json();
+    },
   });
 
   // Mutations for staff members
@@ -349,7 +366,10 @@ export default function StaffNotesClean() {
       // Summary info
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      const summaryText = `Banked Hours: ${member.bankedHours} | RDO Hours: ${member.rdoHours} | Rate: $${member.hourlyRate}/hr | Value: $${(member.bankedHours * member.hourlyRate).toFixed(2)} | Tools Owed: $${member.toolCostOwed.toFixed(2)}`;
+      const bankedHours = parseFloat(member.bankedHours) || 0;
+      const hourlyRate = parseFloat(member.hourlyRate) || 0;
+      const toolCostOwed = parseFloat(member.toolCostOwed) || 0;
+      const summaryText = `Banked Hours: ${bankedHours} | RDO Hours: ${member.rdoHours} | Rate: $${hourlyRate}/hr | Value: $${(bankedHours * hourlyRate).toFixed(2)} | Tools Owed: $${toolCostOwed.toFixed(2)}`;
       doc.text(summaryText, margin, yPosition);
       yPosition += 15;
 
@@ -383,9 +403,10 @@ export default function StaffNotesClean() {
                           note.type === 'rdo_hours' ? 'RDO Hours' :
                           note.type === 'tool_cost' ? 'Tool Cost' : 'General';
           
+          const amount = parseFloat(note.amount) || 0;
           const amountText = note.type === 'banked_hours' || note.type === 'rdo_hours' 
-            ? `${note.amount > 0 ? '+' : ''}${note.amount} hrs`
-            : `${note.amount > 0 ? '+' : ''}$${Math.abs(note.amount).toFixed(2)}`;
+            ? `${amount > 0 ? '+' : ''}${amount} hrs`
+            : `${amount > 0 ? '+' : ''}$${Math.abs(amount).toFixed(2)}`;
 
           // Note line
           const noteText = `${format(new Date(note.date), 'MMM dd, yyyy')} | ${typeText} | ${amountText} | ${note.description}`;

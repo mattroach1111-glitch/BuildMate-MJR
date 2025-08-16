@@ -301,7 +301,7 @@ export class DatabaseStorage implements IStorage {
     await this.createLaborEntry({
       jobId: jobId,
       staffId: createdEmployee.id,
-      hourlyRate: hourlyRate,
+      hourlyRate: hourlyRate.toString(),
       hoursLogged: "0",
     });
     
@@ -1770,7 +1770,7 @@ export class DatabaseStorage implements IStorage {
     
     // Update the staff member's totals based on the note type
     const member = await this.getStaffMember(entry.staffMemberId);
-    if (member) {
+    if (member && entry.amount !== undefined) {
       const amount = parseFloat(entry.amount);
       const updates: Partial<InsertStaffMember> = {};
       
