@@ -4041,6 +4041,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Data export endpoint - exports all live business data
+  app.get("/api/export-data", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      console.log("🔄 Starting data export...");
+
+      // Export all business data from database
+      const [jobs, employees, users, timesheetEntries, laborEntries, materials, subTrades, otherCosts, tipFees, jobFiles] = await Promise.all([
+        db.select().from(jobs),
+        db.select().from(employees), 
+        db.select().from(users),
+        db.select().from(timesheetEntries),
+        db.select().from(laborEntries),
+        db.select().from(materials),
+        db.select().from(subTrades),
+        db.select().from(otherCosts),
+        db.select().from(tipFees),
+        db.select().from(jobFiles)
+      ]);
+
+      // Get reward data if tables exist
+      let rewardData = null;
+      try {
+        // Check if reward tables exist by attempting to select from them
+        let rewardPointsData: any[] = [];
+        let rewardTransactionsData: any[] = [];
+        let achievementsData: any[] = [];
+        
+        try { rewardPointsData = await db.select().from(rewardPoints); } catch {}
+        try { rewardTransactionsData = await db.select().from(rewardTransactions); } catch {}  
+        try { achievementsData = await db.select().from(userAchievements); } catch {}
+        
+        rewardData = { rewardPoints: rewardPointsData, rewardTransactions: rewardTransactionsData, achievements: achievementsData };
+      } catch (e) {
+        console.log("Reward tables not found, skipping reward data export");
+      }
+
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        version: "1.0",
+        businessData: {
+          jobs: jobs.length,
+          employees: employees.length,
+          users: users.length,
+          timesheetEntries: timesheetEntries.length,
+          laborEntries: laborEntries.length,
+          materials: materials.length,
+          subTrades: subTrades.length,
+          otherCosts: otherCosts.length,
+          tipFees: tipFees.length,
+          jobFiles: jobFiles.length
+        },
+        data: {
+          jobs,
+          employees,
+          users: users.map(u => ({ // Remove sensitive data
+            id: u.id,
+            email: u.email,
+            firstName: u.firstName,
+            lastName: u.lastName,
+            role: u.role,
+            employeeId: u.employeeId,
+            isAssigned: u.isAssigned,
+            createdAt: u.createdAt
+          })),
+          timesheetEntries,
+          laborEntries,
+          materials,
+          subTrades,
+          otherCosts,
+          tipFees,
+          jobFiles,
+          rewards: rewardData
+        }
+      };
+
+      console.log(`✅ Data export completed: ${jobs.length} jobs, ${employees.length} employees, ${timesheetEntries.length} timesheet entries`);
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="buildflow-data-export-${new Date().toISOString().split('T')[0]}.json"`);
+      res.json(exportData);
+
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      res.status(500).json({ message: "Failed to export data" });
+    }
+  });
+
   // Delete prize from catalog
   app.delete("/api/admin/rewards/prizes/:prizeId", isAuthenticated, async (req: any, res) => {
     try {

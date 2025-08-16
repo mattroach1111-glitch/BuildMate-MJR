@@ -3535,6 +3535,47 @@ export default function AdminDashboard() {
             <UserManagement />
             
             {/* Password Management Section */}
+            {/* Data Export Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Download className="h-5 w-5 text-muted-foreground" />
+                  Data Export
+                </CardTitle>
+                <CardDescription>
+                  Export all your live business data for backup and protection
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">Export Business Data</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Download all jobs, timesheets, employees, and business records
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={() => {
+                        window.open('/api/export-data', '_blank');
+                      }}
+                      data-testid="button-export-data"
+                      className="flex items-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Export Data
+                    </Button>
+                  </div>
+                  <div className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      Exports all your live business data as JSON file for backup
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
