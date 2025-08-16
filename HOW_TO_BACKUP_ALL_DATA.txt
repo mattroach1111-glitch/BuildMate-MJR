@@ -1,0 +1,32 @@
+🔴 BACKUP ALL YOUR DATA - SIMPLE STEPS 🔴
+
+You have 3 things to download:
+
+STEP 1: Database & Code (✅ Done)
+   File: buildflow_complete_backup_20250816_221602.tar.gz
+   → Right-click → Download
+
+STEP 2: Uploaded Files (PDFs, Photos, Documents) 
+   File: FILES_BACKUP.tar.gz
+   → Right-click → Download
+   → Contains: All your job site photos, PDF documents, receipts (158MB)
+
+STEP 3: Object Storage Files (Manual Download)
+   → Click "Object Storage" button (left sidebar)
+   → Download everything in "public" folder  
+   → Download everything in ".private" folder
+   → These are your app-generated files
+
+WHAT YOU GET:
+✅ Complete business database (jobs, timesheets, employees)
+✅ All uploaded photos and PDFs 
+✅ All app-generated documents
+✅ Source code to rebuild everything
+
+KEEP SAFE:
+- Upload to Google Drive
+- Email to yourself  
+- Copy to USB drive
+- Keep on your computer
+
+With these 3 backups, you can restore everything if Replit fails!

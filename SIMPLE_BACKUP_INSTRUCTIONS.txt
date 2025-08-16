@@ -1,0 +1,21 @@
+🎯 SIMPLE BACKUP - ALL YOUR DATA
+
+You need to download 2 files:
+
+1. ✅ buildflow_complete_backup_20250816_221602.tar.gz
+   (Your database + code - 28KB)
+
+2. ✅ FILES_BACKUP.tar.gz  
+   (Your photos, PDFs, documents - about 150MB)
+
+HOW TO DOWNLOAD:
+- Right-click on each file
+- Click "Download"
+- Save to your computer
+
+PLUS: Object Storage Files
+- Click "Object Storage" pane (left side)
+- Download files from "public" folder
+- Download files from ".private" folder
+
+RESULT: Complete protection of your business data!
