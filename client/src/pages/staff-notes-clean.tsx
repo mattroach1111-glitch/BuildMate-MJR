@@ -46,22 +46,30 @@ export default function StaffNotesClean() {
   const { data: staff = [], isLoading, error } = useQuery<StaffMember[]>({
     queryKey: ['/api/staff-notes'],
     queryFn: async () => {
-      const response = await fetch('/api/staff-notes', {
-        credentials: 'include',
-      });
-      
-      if (response.status === 401) {
-        // Handle unauthorized access - redirect to auth or show appropriate message
-        window.location.href = '/';
-        return [];
+      try {
+        const response = await fetch('/api/staff-notes', {
+          credentials: 'include',
+        });
+        
+        if (response.status === 401) {
+          // Handle unauthorized access - show login message instead of redirecting
+          throw new Error('Please log in to access staff notes');
+        }
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to fetch staff notes (${response.status}): ${errorText || response.statusText}`);
+        }
+        
+        return response.json();
+      } catch (fetchError) {
+        if (fetchError instanceof Error) {
+          throw fetchError;
+        }
+        throw new Error('Network error: Unable to connect to server');
       }
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch staff notes: ${response.statusText}`);
-      }
-      
-      return response.json();
     },
+    retry: false,
   });
 
   // Mutations for staff members
