@@ -3581,15 +3581,23 @@ export default function AdminDashboard() {
                         variant="default"
                         onClick={async () => {
                           try {
-                            const response = await apiRequest('/api/export-data-to-drive', {
-                              method: 'POST'
+                            const response = await fetch('/api/export-data-to-drive', {
+                              method: 'POST',
+                              credentials: 'include',
+                              headers: {
+                                'Content-Type': 'application/json',
+                              },
                             });
                             
-                            if (response.success) {
+                            const data = await response.json();
+                            
+                            if (data.success) {
                               toast({
                                 title: "Backup Successful",
-                                description: `Data backed up to Google Drive: ${response.fileName}`,
+                                description: `Data backed up to Google Drive: ${data.fileName}`,
                               });
+                            } else {
+                              throw new Error(data.message || 'Backup failed');
                             }
                           } catch (error: any) {
                             toast({
