@@ -23,7 +23,7 @@ import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, Settings, UserPlus, Download, Edit, DollarSign, TrendingUp, Building2, Bell, RotateCcw } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, Settings, UserPlus, Download, Edit, DollarSign, TrendingUp, Building2, Bell, RotateCcw, Shield, Lock, RefreshCw } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
@@ -78,7 +78,60 @@ export default function AdminDashboard() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   // Define the deletion password - you can change this to whatever you prefer
-  const DELETION_PASSWORD = 'Festool1!'; // Change this password to whatever you want
+  const [DELETION_PASSWORD, setDELETION_PASSWORD] = useState(() => {
+    return localStorage.getItem('buildflow-deletion-password') || 'Festool1!';
+  });
+
+  // Password management functions
+  const handlePasswordUpdate = () => {
+    if (currentPasswordForEdit !== DELETION_PASSWORD) {
+      toast({
+        title: "Error",
+        description: "Current password is incorrect",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Error", 
+        description: "New passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 3) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 3 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setDELETION_PASSWORD(newPassword);
+    localStorage.setItem('buildflow-deletion-password', newPassword);
+    
+    // Reset form
+    setIsEditingPassword(false);
+    setNewPassword('');
+    setConfirmPassword('');
+    setCurrentPasswordForEdit('');
+    
+    toast({
+      title: "Success",
+      description: "Deletion password updated successfully",
+    });
+  };
+
+  const handleCancelPasswordEdit = () => {
+    setIsEditingPassword(false);
+    setNewPassword('');
+    setConfirmPassword('');
+    setCurrentPasswordForEdit('');
+  };
 
   const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
   const [isCreateEmployeeOpen, setIsCreateEmployeeOpen] = useState(false);
@@ -108,6 +161,12 @@ export default function AdminDashboard() {
   const [sortBy, setSortBy] = useState<'address' | 'client' | 'manager' | 'status'>('address');
   const [activeTab, setActiveTab] = useState("jobs");
   const [showEditAddressDialog, setShowEditAddressDialog] = useState(false);
+  
+  // Password management state
+  const [isEditingPassword, setIsEditingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [currentPasswordForEdit, setCurrentPasswordForEdit] = useState('');
   const [editAddressData, setEditAddressData] = useState<{entryId: string, currentAddress: string}>({entryId: '', currentAddress: ''});
   const [showLowHoursDialog, setShowLowHoursDialog] = useState(false);
   const [lowHoursTotal, setLowHoursTotal] = useState(0);
@@ -1489,6 +1548,16 @@ export default function AdminDashboard() {
               <span className="hidden sm:inline">Jobs</span>
             </Button>
             <Button
+              variant={activeTab === "deleted-jobs" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveTab("deleted-jobs")}
+              className="flex items-center gap-2"
+              data-testid="tab-deleted-jobs"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Archived</span>
+            </Button>
+            <Button
               variant={activeTab === "timesheets" ? "default" : "outline"}
               size="sm"
               onClick={() => setActiveTab("timesheets")}
@@ -1544,6 +1613,10 @@ export default function AdminDashboard() {
               <DropdownMenuItem onClick={() => setActiveTab("notifications")} data-testid="menu-notifications">
                 <Bell className="h-4 w-4 mr-2" />
                 Notification Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveTab("deleted-jobs")} data-testid="menu-deleted-jobs">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Deleted Jobs
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setActiveTab("settings")} data-testid="menu-settings">
                 <Settings className="h-4 w-4 mr-2" />
@@ -2330,114 +2403,95 @@ export default function AdminDashboard() {
             </Card>
           )}
 
-          {/* Previous Completed Job Sheets Folder - Pinned to Bottom */}
-          {deletedJobs && deletedJobs.length > 0 && (
-            <div className="mt-8 pt-6 border-t">
-              <div 
-                className="border rounded-lg p-4 transition-colors bg-red-50 border-red-200"
-              >
-                <div 
-                  className="flex items-center gap-2 p-2 rounded transition-colors bg-red-100 hover:bg-red-150"
-                >
-                  <div 
-                    className="flex items-center gap-2 flex-1 cursor-pointer"
-                    onClick={() => setIsDeletedFolderExpanded(!isDeletedFolderExpanded)}
-                    data-testid="folder-previous-completed"
-                  >
-                    {isDeletedFolderExpanded ? (
-                      <ChevronDown className="h-4 w-4" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4" />
-                    )}
-                    {isDeletedFolderExpanded ? (
-                      <FolderOpen className="h-5 w-5 text-red-600" />
-                    ) : (
-                      <Folder className="h-5 w-5 text-red-600" />
-                    )}
-                    <span className="font-medium text-red-800">📋 Previous completed job sheets</span>
-                    <Badge 
-                      variant="secondary" 
-                      className="ml-2 bg-red-200 text-red-800 border-red-300"
-                    >
-                      {deletedJobs.length} job{deletedJobs.length !== 1 ? 's' : ''}
-                    </Badge>
-                  </div>
-                </div>
-                
-                {isDeletedFolderExpanded && (
-                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {deletedJobs.map((job) => (
-                      <Card 
-                        key={job.id} 
-                        className="cursor-pointer hover:shadow-md transition-shadow bg-white relative opacity-75"
-                        onClick={() => setSelectedJob(job.id)}
-                        data-testid={`card-deleted-job-${job.id}`}
-                      >
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between">
-                            <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">
-                                Archived
-                              </Badge>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-7 w-7 p-0"
-                                    onClick={(e) => e.stopPropagation()}
-                                    data-testid={`menu-deleted-${job.id}`}
-                                  >
-                                    <MoreVertical className="h-3 w-3" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      restoreJobMutation.mutate(job.id);
-                                    }}
-                                    className="text-green-600 focus:text-green-600"
-                                    data-testid={`restore-job-${job.id}`}
-                                  >
-                                    <RotateCcw className="h-4 w-4 mr-2" />
-                                    Restore Job
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteJobClick(job);
-                                    }}
-                                    className="text-red-600 focus:text-red-600 focus:bg-red-50 hover:bg-red-50 font-medium"
-                                    data-testid={`permanent-delete-job-${job.id}`}
-                                  >
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    🗑️ Permanently Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </div>
-                          <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <p className="text-sm text-muted-foreground mb-2">PM: {job.projectManager || job.projectName}</p>
-                          <div className="text-xs text-muted-foreground">
-                            Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
-                          </div>
-                          <div className="text-xs text-red-600 mt-1">
-                            Archived: {job.deletedAt ? new Date(job.deletedAt).toLocaleDateString() : 'Unknown'}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
+
+          </TabsContent>
+
+          {/* Deleted Jobs Tab */}
+          <TabsContent value="deleted-jobs" className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-xl font-semibold">Previous Completed Job Sheets</h2>
+                <p className="text-sm text-muted-foreground">Manage archived and deleted job sheets</p>
               </div>
             </div>
-          )}
+
+            {deletedJobs && deletedJobs.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {deletedJobs.map((job) => (
+                  <Card 
+                    key={job.id} 
+                    className="cursor-pointer hover:shadow-md transition-shadow bg-white relative opacity-75"
+                    onClick={() => setSelectedJob(job.id)}
+                    data-testid={`card-deleted-job-${job.id}`}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <CardTitle className="text-lg leading-tight flex-1 pr-2">{job.jobAddress}</CardTitle>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">
+                            Archived
+                          </Badge>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-7 w-7 p-0"
+                                onClick={(e) => e.stopPropagation()}
+                                data-testid={`menu-deleted-${job.id}`}
+                              >
+                                <MoreVertical className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  restoreJobMutation.mutate(job.id);
+                                }}
+                                className="text-blue-600 focus:text-blue-600 focus:bg-blue-50 hover:bg-blue-50 font-medium"
+                                data-testid={`restore-job-${job.id}`}
+                              >
+                                <RefreshCw className="h-4 w-4 mr-2" />
+                                ↩️ Restore Job
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setJobToDelete(job);
+                                  setDeleteJobDialogOpen(true);
+                                }}
+                                className="text-red-600 focus:text-red-600 focus:bg-red-50 hover:bg-red-50 font-medium"
+                                data-testid={`permanent-delete-job-${job.id}`}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                🗑️ Permanently Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground font-medium">{job.clientName}</p>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <p className="text-sm text-muted-foreground mb-2">PM: {job.projectManager || job.projectName}</p>
+                      <div className="text-xs text-muted-foreground">
+                        Rate: ${job.defaultHourlyRate}/hr • Margin: {job.builderMargin}%
+                      </div>
+                      <div className="text-xs text-red-600 mt-1">
+                        Archived: {job.deletedAt ? new Date(job.deletedAt).toLocaleDateString() : 'Unknown'}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card className="p-8 text-center">
+                <Trash2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">No archived jobs</h3>
+                <p className="text-muted-foreground">Deleted job sheets will appear here</p>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="timesheets" className="space-y-6">
@@ -3414,7 +3468,100 @@ export default function AdminDashboard() {
             <GoogleDriveIntegration />
             <UserManagement />
             
-
+            {/* Password Management Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-muted-foreground" />
+                  Security Settings
+                </CardTitle>
+                <CardDescription>
+                  Manage deletion password and security preferences
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!isEditingPassword ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">Deletion Password</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Required for permanent job sheet deletion
+                        </p>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setIsEditingPassword(true)}
+                        data-testid="button-change-password"
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Change Password
+                      </Button>
+                    </div>
+                    <div className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Lock className="h-4 w-4" />
+                        Current password is set and secure
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="current-password">Current Password</Label>
+                      <Input
+                        id="current-password"
+                        type="password"
+                        value={currentPasswordForEdit}
+                        onChange={(e) => setCurrentPasswordForEdit(e.target.value)}
+                        placeholder="Enter current password"
+                        data-testid="input-current-password"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="new-password">New Password</Label>
+                      <Input
+                        id="new-password"
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Enter new password"
+                        data-testid="input-new-password"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirm-password">Confirm New Password</Label>
+                      <Input
+                        id="confirm-password"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Confirm new password"
+                        data-testid="input-confirm-password"
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-4">
+                      <Button
+                        onClick={handlePasswordUpdate}
+                        disabled={!currentPasswordForEdit || !newPassword || !confirmPassword}
+                        data-testid="button-update-password"
+                      >
+                        Update Password
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={handleCancelPasswordEdit}
+                        data-testid="button-cancel-password"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Placeholder for future integrations */}
             <Card>

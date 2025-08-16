@@ -79,8 +79,8 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const [deletePassword, setDeletePassword] = useState('');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
-  // Define the deletion password - you can change this to whatever you prefer
-  const DELETION_PASSWORD = 'Festool1!'; // Change this password to whatever you want
+  // Get the deletion password from localStorage (set in admin settings)
+  const DELETION_PASSWORD = localStorage.getItem('buildflow-deletion-password') || 'Festool1!';
   const [editingLaborEntry, setEditingLaborEntry] = useState<string | null>(null);
   const [editLaborHours, setEditLaborHours] = useState<string>("");
 
