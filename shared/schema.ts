@@ -157,9 +157,21 @@ export const notifications = pgTable("notifications", {
   dismissedAt: timestamp("dismissed_at"),
 });
 
+// Staff members table for custom staff management
+export const staffMembers = pgTable("staff_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 255 }).notNull(),
+  hourlyRate: varchar("hourly_rate").notNull().default('0'),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type StaffMember = typeof staffMembers.$inferSelect;
+export type InsertStaffMember = typeof staffMembers.$inferInsert;
+
 export const staffNotes = pgTable("staff_notes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  employeeId: varchar("employee_id").notNull().references(() => employees.id, { onDelete: "cascade" }),
+  employeeId: varchar("employee_id").notNull().references(() => staffMembers.id, { onDelete: "cascade" }),
   createdById: varchar("created_by_id").notNull().references(() => users.id),
   noteType: varchar("note_type", { enum: ["banked_hours", "tool_bills", "general"] }).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
@@ -262,10 +274,14 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
 }));
 
+export const staffMembersRelations = relations(staffMembers, ({ many }) => ({
+  staffNotes: many(staffNotes),
+}));
+
 export const staffNotesRelations = relations(staffNotes, ({ one }) => ({
-  employee: one(employees, {
+  employee: one(staffMembers, {
     fields: [staffNotes.employeeId],
-    references: [employees.id],
+    references: [staffMembers.id],
   }),
   createdBy: one(users, {
     fields: [staffNotes.createdById],
@@ -345,6 +361,15 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
+// Staff member insert schema
+export const insertStaffMemberSchema = createInsertSchema(staffMembers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  hourlyRate: z.string().or(z.number()).transform(val => String(val)),
+});
+
 // Staff notes insert schema
 export const insertStaffNoteSchema = createInsertSchema(staffNotes).omit({
   id: true,
@@ -401,6 +426,7 @@ export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Employee = typeof employees.$inferSelect;
 export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;
+export type InsertStaffMember = z.infer<typeof insertStaffMemberSchema>;
 export type Job = typeof jobs.$inferSelect;
 export type InsertJob = z.infer<typeof insertJobSchema>;
 export type LaborEntry = typeof laborEntries.$inferSelect;

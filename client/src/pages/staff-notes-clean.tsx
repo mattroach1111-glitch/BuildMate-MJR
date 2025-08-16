@@ -187,21 +187,54 @@ export default function StaffNotesClean() {
     }
   });
 
-  // Update employee hourly rate mutation
-  const updateRateMutation = useMutation({
-    mutationFn: async ({ employeeId, newRate }: { employeeId: string, newRate: string }) => {
-      const response = await fetch(`/api/employees/${employeeId}`, {
-        method: 'PATCH',
+  // Add staff member mutation
+  const addStaffMutation = useMutation({
+    mutationFn: async ({ name, hourlyRate }: { name: string, hourlyRate: string }) => {
+      const response = await fetch('/api/staff-members', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          defaultHourlyRate: newRate,
+          name: name.trim(),
+          hourlyRate: hourlyRate,
         }),
       });
       if (!response.ok) throw new Error(`${response.status}: ${response.statusText}`);
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/staff-members'] });
+      setIsAddStaffOpen(false);
+      setNewStaffName('');
+      setNewStaffRate('');
+      toast({
+        title: "Success",
+        description: "Staff member added successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to add staff member",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Update staff member rate mutation
+  const updateRateMutation = useMutation({
+    mutationFn: async ({ staffId, newRate }: { staffId: string, newRate: string }) => {
+      const response = await fetch(`/api/staff-members/${staffId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hourlyRate: newRate,
+        }),
+      });
+      if (!response.ok) throw new Error(`${response.status}: ${response.statusText}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/staff-members'] });
       setEditingRate(null);
       setNewRate('');
       toast({
@@ -218,25 +251,38 @@ export default function StaffNotesClean() {
     }
   });
 
-  // Load staff members from localStorage on mount
-  React.useEffect(() => {
-    const saved = localStorage.getItem('staffNotesMembers');
-    if (saved) {
-      try {
-        setStaffMembers(JSON.parse(saved));
-      } catch (error) {
-        console.error('Error loading staff members:', error);
-      }
+  // Delete staff member mutation
+  const deleteStaffMutation = useMutation({
+    mutationFn: async (staffId: string) => {
+      const response = await fetch(`/api/staff-members/${staffId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error(`${response.status}: ${response.statusText}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/staff-members'] });
+      toast({
+        title: "Success",
+        description: "Staff member deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete staff member",
+        variant: "destructive",
+      });
     }
-  }, []);
+  });
 
-  // Save staff members to localStorage whenever it changes
-  React.useEffect(() => {
-    localStorage.setItem('staffNotesMembers', JSON.stringify(staffMembers));
-  }, [staffMembers]);
+  // Fetch staff members from our custom staff database table
+  const { data: staffMembersData = [], isLoading: staffMembersLoading } = useQuery({
+    queryKey: ['/api/staff-members'],
+  });
 
   // Process staff members with their notes and calculations
-  const staffMembersWithNotes: StaffMemberWithNotes[] = staffMembers.map((member: StaffMemberWithNotes) => {
+  const staffMembersWithNotes: StaffMemberWithNotes[] = (staffMembersData as any[]).map((member: any) => {
     const memberNotes = (staffNotes as StaffNote[]).filter((note: StaffNote) => note.employee?.id === member.id);
     
     const totalBankedHours = memberNotes
@@ -247,11 +293,13 @@ export default function StaffNotesClean() {
       .filter((note: StaffNote) => note.noteType === 'tool_bills')
       .reduce((sum: number, note: StaffNote) => sum + (parseFloat(note.amount || '0')), 0);
 
-    const hourlyRate = parseFloat(member.defaultHourlyRate || '0');
+    const hourlyRate = parseFloat(member.hourlyRate || '0');
     const totalMonetaryValue = (totalBankedHours * hourlyRate) + totalToolCosts;
 
     return {
-      ...member,
+      id: member.id,
+      name: member.name,
+      defaultHourlyRate: member.hourlyRate,
       notes: memberNotes,
       totalBankedHours,
       totalToolCosts,
@@ -308,7 +356,29 @@ export default function StaffNotesClean() {
     setNewRate(currentRate);
   };
 
-  const handleSaveRate = (employeeId: string) => {
+  const handleAddStaff = () => {
+    if (!newStaffName.trim() || !newStaffRate.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter both name and hourly rate",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (parseFloat(newStaffRate) < 0) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid hourly rate",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    addStaffMutation.mutate({ name: newStaffName, hourlyRate: newStaffRate });
+  };
+
+  const handleSaveRate = (staffId: string) => {
     if (!newRate.trim() || parseFloat(newRate) < 0) {
       toast({
         title: "Error",
@@ -318,7 +388,13 @@ export default function StaffNotesClean() {
       return;
     }
 
-    updateRateMutation.mutate({ employeeId, newRate: newRate.trim() });
+    updateRateMutation.mutate({ staffId, newRate: newRate.trim() });
+  };
+
+  const handleDeleteStaff = (staffId: string, staffName: string) => {
+    if (confirm(`Are you sure you want to remove ${staffName} and all their notes?`)) {
+      deleteStaffMutation.mutate(staffId);
+    }
   };
 
   const handleCancelEditRate = () => {
@@ -452,7 +528,7 @@ export default function StaffNotesClean() {
     }
   };
 
-  if (employeesLoading || notesLoading) {
+  if (staffMembersLoading || notesLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-4">
         <div className="flex items-center justify-center h-96">
@@ -692,13 +768,23 @@ export default function StaffNotesClean() {
               <p className="text-gray-600">Manage staff hours, tool costs, and records</p>
             </div>
           </div>
-          <Button 
-            onClick={() => setIsAddNoteOpen(true)}
-            data-testid="button-add-note-global"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Note
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => setIsAddStaffOpen(true)}
+              variant="outline"
+              data-testid="button-add-staff"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Staff
+            </Button>
+            <Button 
+              onClick={() => setIsAddNoteOpen(true)}
+              data-testid="button-add-note-global"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Note
+            </Button>
+          </div>
         </div>
 
         {/* Staff Grid */}
@@ -717,7 +803,20 @@ export default function StaffNotesClean() {
                   >
                     {member.name}
                   </span>
-                  <Badge variant="outline">{member.notes.length} notes</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">{member.notes.length} notes</Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteStaff(member.id, member.name);
+                      }}
+                      data-testid={`button-delete-staff-${member.id}`}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -818,9 +917,9 @@ export default function StaffNotesClean() {
                     <SelectValue placeholder="Select staff member" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(employees as Employee[]).map((employee: Employee) => (
-                      <SelectItem key={employee.id} value={employee.id}>
-                        {employee.name}
+                    {staffMembersWithNotes.map((member) => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -935,6 +1034,72 @@ export default function StaffNotesClean() {
                   <>
                     <Save className="h-4 w-4 mr-2" />
                     {editingNote ? 'Update Note' : 'Add Note'}
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Staff Modal */}
+        <Dialog open={isAddStaffOpen} onOpenChange={setIsAddStaffOpen}>
+          <DialogContent className="max-w-md mx-4 sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Add New Staff Member</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="staffName">Staff Name</Label>
+                <Input
+                  id="staffName"
+                  type="text"
+                  value={newStaffName}
+                  onChange={(e) => setNewStaffName(e.target.value)}
+                  placeholder="Enter staff member name"
+                  data-testid="input-staff-name"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="staffRate">Hourly Rate ($)</Label>
+                <Input
+                  id="staffRate"
+                  type="number"
+                  step="0.01"
+                  value={newStaffRate}
+                  onChange={(e) => setNewStaffRate(e.target.value)}
+                  placeholder="0.00"
+                  data-testid="input-staff-rate"
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setIsAddStaffOpen(false);
+                  setNewStaffName('');
+                  setNewStaffRate('');
+                }}
+                data-testid="button-cancel-staff"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleAddStaff}
+                disabled={addStaffMutation.isPending}
+                data-testid="button-save-staff"
+              >
+                {addStaffMutation.isPending ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Adding...
+                  </div>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Staff
                   </>
                 )}
               </Button>
