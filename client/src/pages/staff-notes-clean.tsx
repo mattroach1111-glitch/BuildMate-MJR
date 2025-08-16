@@ -67,6 +67,8 @@ export default function StaffNotesClean() {
   const [selectedStaff, setSelectedStaff] = useState<StaffMemberWithNotes | null>(null);
   const [isAddNoteOpen, setIsAddNoteOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<StaffNote | null>(null);
+  const [editingRate, setEditingRate] = useState<string | null>(null);
+  const [newRate, setNewRate] = useState('');
   const [noteForm, setNoteForm] = useState<NoteFormData>({
     employeeId: '',
     noteType: 'general',
@@ -91,8 +93,9 @@ export default function StaffNotesClean() {
   // Create staff note mutation
   const createNoteMutation = useMutation({
     mutationFn: async (noteData: Omit<NoteFormData, 'employeeId'> & { employeeId: string }) => {
-      return await apiRequest('/api/staff-notes', {
+      const response = await fetch('/api/staff-notes', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           employeeId: noteData.employeeId,
           noteType: noteData.noteType,
@@ -104,6 +107,8 @@ export default function StaffNotesClean() {
           status: 'active',
         }),
       });
+      if (!response.ok) throw new Error(`${response.status}: ${response.statusText}`);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/staff-notes'] });
@@ -126,8 +131,9 @@ export default function StaffNotesClean() {
   // Update staff note mutation
   const updateNoteMutation = useMutation({
     mutationFn: async ({ id, ...noteData }: { id: string } & Partial<NoteFormData>) => {
-      return await apiRequest(`/api/staff-notes/${id}`, {
+      const response = await fetch(`/api/staff-notes/${id}`, {
         method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: noteData.title,
           content: noteData.content,
@@ -136,6 +142,8 @@ export default function StaffNotesClean() {
           dueDate: noteData.dueDate ? noteData.dueDate : null,
         }),
       });
+      if (!response.ok) throw new Error(`${response.status}: ${response.statusText}`);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/staff-notes'] });
@@ -158,9 +166,11 @@ export default function StaffNotesClean() {
   // Delete staff note mutation
   const deleteNoteMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await apiRequest(`/api/staff-notes/${id}`, {
+      const response = await fetch(`/api/staff-notes/${id}`, {
         method: 'DELETE',
       });
+      if (!response.ok) throw new Error(`${response.status}: ${response.statusText}`);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/staff-notes'] });
@@ -178,17 +188,48 @@ export default function StaffNotesClean() {
     }
   });
 
+  // Update employee hourly rate mutation
+  const updateRateMutation = useMutation({
+    mutationFn: async ({ employeeId, newRate }: { employeeId: string, newRate: string }) => {
+      const response = await fetch(`/api/employees/${employeeId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          defaultHourlyRate: newRate,
+        }),
+      });
+      if (!response.ok) throw new Error(`${response.status}: ${response.statusText}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      setEditingRate(null);
+      setNewRate('');
+      toast({
+        title: "Success",
+        description: "Hourly rate updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update hourly rate",
+        variant: "destructive",
+      });
+    }
+  });
+
   // Process employees with their notes and calculations
-  const staffMembersWithNotes: StaffMemberWithNotes[] = employees.map((employee: Employee) => {
-    const employeeNotes = staffNotes.filter((note: StaffNote) => note.employee?.id === employee.id);
+  const staffMembersWithNotes: StaffMemberWithNotes[] = (employees as Employee[]).map((employee: Employee) => {
+    const employeeNotes = (staffNotes as StaffNote[]).filter((note: StaffNote) => note.employee?.id === employee.id);
     
     const totalBankedHours = employeeNotes
-      .filter(note => note.noteType === 'banked_hours')
-      .reduce((sum, note) => sum + (parseFloat(note.hours || '0')), 0);
+      .filter((note: StaffNote) => note.noteType === 'banked_hours')
+      .reduce((sum: number, note: StaffNote) => sum + (parseFloat(note.hours || '0')), 0);
     
     const totalToolCosts = employeeNotes
-      .filter(note => note.noteType === 'tool_bills')
-      .reduce((sum, note) => sum + (parseFloat(note.amount || '0')), 0);
+      .filter((note: StaffNote) => note.noteType === 'tool_bills')
+      .reduce((sum: number, note: StaffNote) => sum + (parseFloat(note.amount || '0')), 0);
 
     const hourlyRate = parseFloat(employee.defaultHourlyRate || '0');
     const totalMonetaryValue = (totalBankedHours * hourlyRate) + totalToolCosts;
@@ -246,6 +287,29 @@ export default function StaffNotesClean() {
     } else {
       createNoteMutation.mutate(noteForm);
     }
+  };
+
+  const handleStartEditRate = (employeeId: string, currentRate: string) => {
+    setEditingRate(employeeId);
+    setNewRate(currentRate);
+  };
+
+  const handleSaveRate = (employeeId: string) => {
+    if (!newRate.trim() || parseFloat(newRate) < 0) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid hourly rate",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateRateMutation.mutate({ employeeId, newRate: newRate.trim() });
+  };
+
+  const handleCancelEditRate = () => {
+    setEditingRate(null);
+    setNewRate('');
   };
 
   const generateIndividualPDF = (staffMember: StaffMemberWithNotes) => {
@@ -447,9 +511,48 @@ export default function StaffNotesClean() {
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5 text-green-600" />
-                  <div>
+                  <div className="flex-1">
                     <p className="text-sm text-gray-600">Hourly Rate</p>
-                    <p className="text-2xl font-bold">${selectedStaff.defaultHourlyRate}</p>
+                    {editingRate === selectedStaff.id ? (
+                      <div className="flex items-center gap-2 mt-1">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={newRate}
+                          onChange={(e) => setNewRate(e.target.value)}
+                          className="h-8 w-20 text-lg font-bold"
+                          data-testid="input-hourly-rate"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => handleSaveRate(selectedStaff.id)}
+                          disabled={updateRateMutation.isPending}
+                          data-testid="button-save-rate"
+                        >
+                          <Save className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleCancelEditRate}
+                          data-testid="button-cancel-rate"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <p className="text-2xl font-bold">${selectedStaff.defaultHourlyRate}</p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleStartEditRate(selectedStaff.id, selectedStaff.defaultHourlyRate)}
+                          data-testid="button-edit-rate"
+                        >
+                          <Edit3 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -589,13 +692,17 @@ export default function StaffNotesClean() {
           {staffMembersWithNotes.map((member) => (
             <Card 
               key={member.id} 
-              className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => setSelectedStaff(member)}
+              className="hover:shadow-lg transition-shadow"
               data-testid={`card-staff-${member.id}`}
             >
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>{member.name}</span>
+                  <span
+                    className="cursor-pointer hover:text-blue-600"
+                    onClick={() => setSelectedStaff(member)}
+                  >
+                    {member.name}
+                  </span>
                   <Badge variant="outline">{member.notes.length} notes</Badge>
                 </CardTitle>
               </CardHeader>
@@ -615,7 +722,55 @@ export default function StaffNotesClean() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Rate:</span>
-                    <span className="font-medium">${member.defaultHourlyRate}/hr</span>
+                    {editingRate === member.id ? (
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={newRate}
+                          onChange={(e) => setNewRate(e.target.value)}
+                          className="h-6 w-16 text-sm"
+                          data-testid={`input-rate-${member.id}`}
+                        />
+                        <Button
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSaveRate(member.id);
+                          }}
+                          disabled={updateRateMutation.isPending}
+                          data-testid={`button-save-rate-${member.id}`}
+                        >
+                          <Save className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCancelEditRate();
+                          }}
+                          data-testid={`button-cancel-rate-${member.id}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">${member.defaultHourlyRate}/hr</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStartEditRate(member.id, member.defaultHourlyRate);
+                          }}
+                          data-testid={`button-edit-rate-${member.id}`}
+                        >
+                          <Edit3 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -649,7 +804,7 @@ export default function StaffNotesClean() {
                     <SelectValue placeholder="Select staff member" />
                   </SelectTrigger>
                   <SelectContent>
-                    {employees.map((employee: Employee) => (
+                    {(employees as Employee[]).map((employee: Employee) => (
                       <SelectItem key={employee.id} value={employee.id}>
                         {employee.name}
                       </SelectItem>
