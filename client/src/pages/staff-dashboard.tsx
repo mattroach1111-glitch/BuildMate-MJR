@@ -139,27 +139,28 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
 
             {/* Rewards Card */}
             <Card 
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 border-2 border-green-200 hover:border-green-400"
-              onClick={() => navigate("/rewards")}
+              className="cursor-not-allowed opacity-75 border-2 border-gray-200 relative"
               data-testid="button-rewards"
             >
               <CardHeader className="text-center pb-4">
-                <div className="mx-auto mb-4 p-4 bg-green-100 rounded-full w-16 h-16 flex items-center justify-center">
-                  <Trophy className="h-8 w-8 text-green-600" />
+                <div className="mx-auto mb-4 p-4 bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center">
+                  <Trophy className="h-8 w-8 text-gray-500" />
                 </div>
-                <CardTitle className="text-xl font-semibold text-gray-900">
+                <CardTitle className="text-xl font-semibold text-gray-700">
                   Rewards
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-center">
-                <p className="text-gray-600 mb-4">
+                <p className="text-gray-500 mb-4">
                   Earn points and achievements for timely submissions
                 </p>
-                <div className="flex items-center justify-center text-green-600 font-medium">
-                  <span>View Dashboard</span>
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </div>
+                <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-200">
+                  Coming Soon
+                </Badge>
               </CardContent>
+              
+              {/* Coming Soon Overlay */}
+              <div className="absolute inset-0 bg-white bg-opacity-50 rounded-lg pointer-events-none"></div>
             </Card>
           </div>
 

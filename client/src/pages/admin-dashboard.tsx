@@ -2448,6 +2448,21 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
 
+              {/* Rewards Rules App */}
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200"
+                onClick={() => window.location.href = '/rewards/rules'}
+                data-testid="app-rewards-rules"
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-orange-500 rounded-full flex items-center justify-center">
+                    <Trophy className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-medium text-sm">Rewards Rules</h3>
+                  <p className="text-xs text-muted-foreground mt-1">View earning rules</p>
+                </CardContent>
+              </Card>
+
               {/* Document Processing App */}
               <Card 
                 className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200"

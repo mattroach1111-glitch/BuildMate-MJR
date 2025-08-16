@@ -80,11 +80,14 @@ const AdminRewards: React.FC = () => {
         description: "Reward settings have been updated successfully",
       });
       setIsEditingSettings(false);
-      refetch();
+      setEditedSettings(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/rewards/dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/rewards/rules'] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Settings update error:", error);
       toast({
-        title: "Error",
+        title: "Error", 
         description: "Failed to update settings",
         variant: "destructive",
       });
