@@ -4195,57 +4195,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Upload to Google Drive
       try {
-        const { google } = require('googleapis');
-        const { GoogleAuth } = require('google-auth-library');
+        console.log("🔍 Checking user's Google Drive connection...");
+        
+        // Get the current user
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
+        
+        if (!user || !user.googleDriveTokens) {
+          console.log("❌ User hasn't connected Google Drive");
+          return res.status(400).json({
+            success: false,
+            message: "Google Drive not connected. Please connect your Google Drive account first.",
+            suggestion: "Go to Settings and connect your Google Drive account"
+          });
+        }
 
-        // Set up Google Drive authentication
-        const auth = new GoogleAuth({
-          credentials: {
-            client_id: process.env.GOOGLE_CLIENT_ID,
-            client_secret: process.env.GOOGLE_CLIENT_SECRET,
-            refresh_token: req.session.googleTokens?.refresh_token,
-            access_token: req.session.googleTokens?.access_token,
-            token_type: "Bearer"
-          },
-          scopes: ['https://www.googleapis.com/auth/drive.file']
-        });
+        console.log("✅ User has Google Drive tokens, setting up service...");
 
-        const drive = google.drive({ version: 'v3', auth });
+        // Use the GoogleDriveService
+        const GoogleDriveService = (await import('./googleDriveService')).GoogleDriveService;
+        const googleDriveService = new GoogleDriveService();
+        
+        // Set user tokens
+        const tokens = JSON.parse(user.googleDriveTokens);
+        googleDriveService.setUserTokens(tokens);
+
+        // Check if service is ready
+        if (!googleDriveService.isReady()) {
+          console.log("❌ Google Drive service not ready");
+          return res.status(400).json({
+            success: false,
+            message: "Google Drive authentication expired. Please reconnect your Google Drive account.",
+            suggestion: "Go to Settings and reconnect your Google Drive account"
+          });
+        }
+
+        console.log("🗂️ Creating backup folder structure...");
+
+        // Create main BuildFlow Pro folder
+        const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
+        
+        // Create backups subfolder
+        const backupsFolderId = await googleDriveService.findOrCreateFolder('Backups', mainFolderId);
+
+        console.log("☁️ Uploading backup file to Google Drive...");
 
         // Create a buffer from the JSON content
         const buffer = Buffer.from(jsonContent, 'utf8');
 
-        // Upload to Google Drive
-        const fileMetadata = {
-          name: fileName,
-          parents: ['1xOaFJtLYeOCzQxkqV_QQUUvFKGXb4VHg'] // BuildFlow Backups folder ID
-        };
+        // Upload file to Google Drive
+        const uploadResult = await googleDriveService.uploadFile(
+          fileName, 
+          buffer, 
+          'application/json', 
+          backupsFolderId || undefined
+        );
 
-        const media = {
-          mimeType: 'application/json',
-          body: require('stream').Readable.from(buffer)
-        };
-
-        const driveResponse = await drive.files.create({
-          requestBody: fileMetadata,
-          media: media,
-          fields: 'id,name,webViewLink'
-        });
-
-        console.log(`✅ Data backup uploaded to Google Drive: ${driveResponse.data.name}`);
-
-        res.json({
-          success: true,
-          message: "Data successfully backed up to Google Drive",
-          fileId: driveResponse.data.id,
-          fileName: driveResponse.data.name,
-          link: driveResponse.data.webViewLink,
-          recordCount: {
-            jobs: jobsData.length,
-            employees: employeesData.length,
-            timesheetEntries: timesheetEntriesData.length
-          }
-        });
+        if (uploadResult) {
+          console.log(`✅ Data backup uploaded to Google Drive: ${fileName}`);
+          
+          res.json({
+            success: true,
+            message: "Data successfully backed up to Google Drive",
+            fileId: uploadResult.fileId,
+            fileName: fileName,
+            link: uploadResult.webViewLink,
+            recordCount: {
+              jobs: jobsData.length,
+              employees: employeesData.length,
+              timesheetEntries: timesheetEntriesData.length,
+              totalRecords: Object.values(exportData.businessData).reduce((sum, count) => sum + count, 0)
+            }
+          });
+        } else {
+          throw new Error("Failed to upload file to Google Drive");
+        }
 
       } catch (driveError: any) {
         console.error("Google Drive upload error:", driveError);
@@ -4253,7 +4277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           success: false,
           message: "Failed to upload to Google Drive", 
           error: driveError.message,
-          suggestion: "Try reconnecting Google Drive in Settings"
+          suggestion: "Check your Google Drive connection in Settings. You may need to reconnect your account."
         });
       }
 
