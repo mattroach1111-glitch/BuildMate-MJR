@@ -157,6 +157,29 @@ export const notifications = pgTable("notifications", {
   dismissedAt: timestamp("dismissed_at"),
 });
 
+// Staff Notes System Tables - matches the existing UI exactly
+export const staffMembers = pgTable("staff_members", {
+  id: varchar("id").primaryKey(),
+  name: varchar("name").notNull(),
+  bankedHours: decimal("banked_hours", { precision: 10, scale: 2 }).notNull().default("0"),
+  rdoHours: decimal("rdo_hours", { precision: 10, scale: 2 }).notNull().default("0"),
+  hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }).notNull().default("0"),
+  toolCostOwed: decimal("tool_cost_owed", { precision: 10, scale: 2 }).notNull().default("0"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const staffNotesEntries = pgTable("staff_notes_entries", {
+  id: varchar("id").primaryKey(),
+  staffMemberId: varchar("staff_member_id").notNull().references(() => staffMembers.id, { onDelete: "cascade" }),
+  type: varchar("type", { enum: ["banked_hours", "tool_cost", "rdo_hours", "general"] }).notNull(),
+  description: text("description").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull().default("0"),
+  date: varchar("date").notNull(), // ISO date string
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Legacy staff notes table (keeping for existing data)
 export const staffNotes = pgTable("staff_notes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   employeeId: varchar("employee_id").notNull().references(() => employees.id, { onDelete: "cascade" }),
@@ -262,6 +285,19 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
 }));
 
+// Staff Member Relations
+export const staffMembersRelations = relations(staffMembers, ({ many }) => ({
+  notes: many(staffNotesEntries),
+}));
+
+export const staffNotesEntriesRelations = relations(staffNotesEntries, ({ one }) => ({
+  staffMember: one(staffMembers, {
+    fields: [staffNotesEntries.staffMemberId],
+    references: [staffMembers.id],
+  }),
+}));
+
+// Legacy relations
 export const staffNotesRelations = relations(staffNotes, ({ one }) => ({
   employee: one(employees, {
     fields: [staffNotes.employeeId],
@@ -345,7 +381,24 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
-// Staff notes insert schema
+// Staff Members insert schemas
+export const insertStaffMemberSchema = createInsertSchema(staffMembers).omit({
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  bankedHours: z.string().or(z.number()).transform(val => String(val)).optional(),
+  rdoHours: z.string().or(z.number()).transform(val => String(val)).optional(),
+  hourlyRate: z.string().or(z.number()).transform(val => String(val)),
+  toolCostOwed: z.string().or(z.number()).transform(val => String(val)).optional(),
+});
+
+export const insertStaffNoteEntrySchema = createInsertSchema(staffNotesEntries).omit({
+  createdAt: true,
+}).extend({
+  amount: z.string().or(z.number()).transform(val => String(val)),
+});
+
+// Legacy staff notes insert schema
 export const insertStaffNoteSchema = createInsertSchema(staffNotes).omit({
   id: true,
   createdAt: true,
@@ -423,5 +476,9 @@ export type EmailProcessingLog = typeof emailProcessingLogs.$inferSelect;
 export type InsertEmailProcessingLog = z.infer<typeof insertEmailProcessingLogSchema>;
 export type EmailProcessedDocument = typeof emailProcessedDocuments.$inferSelect;
 export type InsertEmailProcessedDocument = z.infer<typeof insertEmailProcessedDocumentSchema>;
+export type StaffMember = typeof staffMembers.$inferSelect;
+export type InsertStaffMember = z.infer<typeof insertStaffMemberSchema>;
+export type StaffNoteEntry = typeof staffNotesEntries.$inferSelect;
+export type InsertStaffNoteEntry = z.infer<typeof insertStaffNoteEntrySchema>;
 export type StaffNote = typeof staffNotes.$inferSelect;
 export type InsertStaffNote = z.infer<typeof insertStaffNoteSchema>;

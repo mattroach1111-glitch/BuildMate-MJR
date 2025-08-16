@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { db } from "./db";
-import { timesheetEntries, laborEntries, users, staffNotes, employees } from "@shared/schema";
+import { timesheetEntries, laborEntries, users, staffNotes, employees, staffMembers, staffNotesEntries } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { TimesheetPDFGenerator } from "./pdfGenerator";
@@ -21,6 +21,8 @@ import {
   insertTimesheetEntrySchema,
   insertJobFileSchema,
   insertNotificationSchema,
+  insertStaffMemberSchema,
+  insertStaffNoteEntrySchema,
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -3703,6 +3705,123 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: "Failed to add expense to job", 
         details: (error as Error).message 
       });
+    }
+  });
+
+  // =============================================================================
+  // STAFF NOTES API ROUTES
+  // =============================================================================
+
+  // Get all staff members with their notes
+  app.get("/api/staff-notes", isAuthenticated, async (req: any, res) => {
+    try {
+      const staffMembersWithNotes = await storage.getStaffMembersWithNotes();
+      res.json(staffMembersWithNotes);
+    } catch (error) {
+      console.error("Error fetching staff members:", error);
+      res.status(500).json({ error: "Failed to fetch staff members" });
+    }
+  });
+
+  // Create a new staff member
+  app.post("/api/staff-notes/members", isAuthenticated, async (req: any, res) => {
+    try {
+      const validatedData = insertStaffMemberSchema.parse(req.body);
+      const newMember = await storage.createStaffMember(validatedData);
+      res.json(newMember);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          error: "Validation failed", 
+          details: fromZodError(error).message 
+        });
+      }
+      console.error("Error creating staff member:", error);
+      res.status(500).json({ error: "Failed to create staff member" });
+    }
+  });
+
+  // Update a staff member
+  app.put("/api/staff-notes/members/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const validatedData = insertStaffMemberSchema.partial().parse(req.body);
+      const updatedMember = await storage.updateStaffMember(id, validatedData);
+      res.json(updatedMember);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          error: "Validation failed", 
+          details: fromZodError(error).message 
+        });
+      }
+      console.error("Error updating staff member:", error);
+      res.status(500).json({ error: "Failed to update staff member" });
+    }
+  });
+
+  // Delete a staff member
+  app.delete("/api/staff-notes/members/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteStaffMember(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting staff member:", error);
+      res.status(500).json({ error: "Failed to delete staff member" });
+    }
+  });
+
+  // Create a note for a staff member
+  app.post("/api/staff-notes/members/:memberId/notes", isAuthenticated, async (req: any, res) => {
+    try {
+      const { memberId } = req.params;
+      const validatedData = insertStaffNoteEntrySchema.parse({
+        ...req.body,
+        staffMemberId: memberId,
+      });
+      const newNote = await storage.createStaffNoteEntry(validatedData);
+      res.json(newNote);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          error: "Validation failed", 
+          details: fromZodError(error).message 
+        });
+      }
+      console.error("Error creating staff note:", error);
+      res.status(500).json({ error: "Failed to create staff note" });
+    }
+  });
+
+  // Update a staff note
+  app.put("/api/staff-notes/notes/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const validatedData = insertStaffNoteEntrySchema.partial().parse(req.body);
+      const updatedNote = await storage.updateStaffNoteEntry(id, validatedData);
+      res.json(updatedNote);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          error: "Validation failed", 
+          details: fromZodError(error).message 
+        });
+      }
+      console.error("Error updating staff note:", error);
+      res.status(500).json({ error: "Failed to update staff note" });
+    }
+  });
+
+  // Delete a staff note
+  app.delete("/api/staff-notes/notes/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteStaffNoteEntry(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting staff note:", error);
+      res.status(500).json({ error: "Failed to delete staff note" });
     }
   });
 

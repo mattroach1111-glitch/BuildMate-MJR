@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -15,19 +17,23 @@ import jsPDF from 'jspdf';
 interface StaffMember {
   id: string;
   name: string;
-  bankedHours: number;
-  rdoHours: number;
-  hourlyRate: number;
-  toolCostOwed: number;
+  bankedHours: string;
+  rdoHours: string;
+  hourlyRate: string;
+  toolCostOwed: string;
   notes: StaffNote[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 interface StaffNote {
   id: string;
   type: 'banked_hours' | 'tool_cost' | 'rdo_hours' | 'general';
   description: string;
-  amount: number;
+  amount: string;
   date: string;
+  staffMemberId: string;
+  createdAt?: Date;
 }
 
 interface NoteFormData {
@@ -36,10 +42,90 @@ interface NoteFormData {
   amount: string;
 }
 
-const STORAGE_KEY = 'buildflow-staff-notes';
-
 export default function StaffNotesClean() {
-  const [staff, setStaff] = useState<StaffMember[]>([]);
+  const { data: staff = [], isLoading, error } = useQuery<StaffMember[]>({
+    queryKey: ['/api/staff-notes'],
+  });
+
+  // Mutations for staff members
+  const createStaffMutation = useMutation({
+    mutationFn: async (staffData: { id: string; name: string; hourlyRate: string }) => {
+      const response = await apiRequest('POST', '/api/staff-notes/members', staffData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/staff-notes'] });
+      setIsAddStaffOpen(false);
+      setNewStaffName('');
+      setNewStaffRate('');
+      showToast('Staff member added successfully');
+    },
+  });
+
+  const updateStaffMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<StaffMember> }) => {
+      const response = await apiRequest('PUT', `/api/staff-notes/members/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/staff-notes'] });
+      setEditingStaff(null);
+      setEditStaffRate('');
+      showToast('Staff member updated successfully');
+    },
+  });
+
+  const deleteStaffMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest('DELETE', `/api/staff-notes/members/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/staff-notes'] });
+      showToast('Staff member deleted successfully');
+    },
+  });
+
+  // Mutations for notes
+  const createNoteMutation = useMutation({
+    mutationFn: async ({ memberId, noteData }: { memberId: string; noteData: any }) => {
+      const response = await apiRequest('POST', `/api/staff-notes/members/${memberId}/notes`, noteData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/staff-notes'] });
+      setNoteForm({ type: 'general', description: '', amount: '' });
+      setIsAddNoteOpen(false);
+      setEditingNote(null);
+      showToast('Note added successfully');
+    },
+  });
+
+  const updateNoteMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<StaffNote> }) => {
+      const response = await apiRequest('PUT', `/api/staff-notes/notes/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/staff-notes'] });
+      setEditingNote(null);
+      setNoteForm({ type: 'general', description: '', amount: '' });
+      setIsAddNoteOpen(false);
+      showToast('Note updated successfully');
+    },
+  });
+
+  const deleteNoteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest('DELETE', `/api/staff-notes/notes/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/staff-notes'] });
+      showToast('Note deleted successfully');
+    },
+  });
+
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
   const [isAddNoteOpen, setIsAddNoteOpen] = useState(false);
@@ -55,22 +141,27 @@ export default function StaffNotesClean() {
   });
   const [toastMessage, setToastMessage] = useState<string>('');
 
-  // Load data from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        setStaff(JSON.parse(saved));
-      } catch (error) {
-        console.error('Error loading staff data:', error);
-      }
-    }
-  }, []);
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg font-medium text-gray-900 dark:text-gray-100">Loading staff notes...</div>
+        </div>
+      </div>
+    );
+  }
 
-  // Save to localStorage whenever staff changes
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(staff));
-  }, [staff]);
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg font-medium text-red-600">Error loading staff notes</div>
+          <div className="text-sm text-gray-600 dark:text-gray-400 mt-2">{(error as Error).message}</div>
+        </div>
+      </div>
+    );
+  }
 
   // Simple toast replacement
   const showToast = (message: string) => {
@@ -84,33 +175,22 @@ export default function StaffNotesClean() {
       return;
     }
 
-    const hourlyRate = parseFloat(newStaffRate) || 0;
+    const hourlyRate = newStaffRate || '0';
     
-    const newMember: StaffMember = {
+    createStaffMutation.mutate({
       id: Date.now().toString(),
       name: newStaffName.trim(),
-      bankedHours: 0,
-      rdoHours: 0,
       hourlyRate,
-      toolCostOwed: 0,
-      notes: [],
-    };
-
-    setStaff(prev => [...prev, newMember]);
-    setNewStaffName('');
-    setNewStaffRate('');
-    setIsAddStaffOpen(false);
-    showToast(`Added ${newMember.name} to staff`);
+    });
   };
 
   const deleteStaffMember = (id: string) => {
     const member = staff.find(s => s.id === id);
     if (confirm(`Are you sure you want to remove ${member?.name} and all their notes?`)) {
-      setStaff(prev => prev.filter(s => s.id !== id));
+      deleteStaffMutation.mutate(id);
       if (selectedStaff?.id === id) {
         setSelectedStaff(null);
       }
-      showToast('Staff member removed');
     }
   };
 
@@ -122,21 +202,17 @@ export default function StaffNotesClean() {
   const updateStaffRate = () => {
     if (!editingStaff) return;
     
-    const newRate = parseFloat(editStaffRate) || 0;
+    const newRate = editStaffRate || '0';
     
-    setStaff(prev => prev.map(member => 
-      member.id === editingStaff.id 
-        ? { ...member, hourlyRate: newRate }
-        : member
-    ));
+    updateStaffMutation.mutate({
+      id: editingStaff.id,
+      data: { hourlyRate: newRate }
+    });
 
+    // Update selected staff local state if it's the same member
     if (selectedStaff?.id === editingStaff.id) {
       setSelectedStaff(prev => prev ? { ...prev, hourlyRate: newRate } : null);
     }
-
-    setEditingStaff(null);
-    setEditStaffRate('');
-    showToast('Hourly rate updated');
   };
 
   const generateIndividualPDF = (staffMember: StaffMember) => {
@@ -167,7 +243,10 @@ export default function StaffNotesClean() {
     // Summary info
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    const summaryText = `Banked Hours: ${staffMember.bankedHours} | RDO Hours: ${staffMember.rdoHours} | Rate: $${staffMember.hourlyRate}/hr | Value: $${(staffMember.bankedHours * staffMember.hourlyRate).toFixed(2)} | Tools Owed: $${staffMember.toolCostOwed.toFixed(2)}`;
+    const bankedHours = parseFloat(staffMember.bankedHours) || 0;
+    const hourlyRate = parseFloat(staffMember.hourlyRate) || 0;
+    const toolCostOwed = parseFloat(staffMember.toolCostOwed) || 0;
+    const summaryText = `Banked Hours: ${bankedHours} | RDO Hours: ${staffMember.rdoHours} | Rate: $${hourlyRate}/hr | Value: $${(bankedHours * hourlyRate).toFixed(2)} | Tools Owed: $${toolCostOwed.toFixed(2)}`;
     doc.text(summaryText, margin, yPosition);
     yPosition += 15;
 
@@ -201,9 +280,10 @@ export default function StaffNotesClean() {
                         note.type === 'rdo_hours' ? 'RDO Hours' :
                         note.type === 'tool_cost' ? 'Tool Cost' : 'General';
         
+        const amount = parseFloat(note.amount) || 0;
         const amountText = note.type === 'banked_hours' || note.type === 'rdo_hours' 
-          ? `${note.amount > 0 ? '+' : ''}${note.amount} hrs`
-          : `${note.amount > 0 ? '+' : ''}$${Math.abs(note.amount).toFixed(2)}`;
+          ? `${amount > 0 ? '+' : ''}${amount} hrs`
+          : `${amount > 0 ? '+' : ''}$${Math.abs(amount).toFixed(2)}`;
 
         // Note line
         const noteText = `${format(new Date(note.date), 'MMM dd, yyyy')} | ${typeText} | ${amountText} | ${note.description}`;
@@ -352,53 +432,18 @@ export default function StaffNotesClean() {
       return;
     }
 
-    const amount = parseFloat(noteForm.amount) || 0;
-    const newNote: StaffNote = {
+    const noteData = {
       id: Date.now().toString(),
       type: noteForm.type,
       description: noteForm.description.trim(),
-      amount,
+      amount: noteForm.amount || '0',
       date: new Date().toISOString(),
     };
 
-    setStaff(prev => prev.map(member => {
-      if (member.id === selectedStaff.id) {
-        const updatedMember = {
-          ...member,
-          notes: [...member.notes, newNote],
-        };
-
-        // Update running totals
-        if (newNote.type === 'banked_hours') {
-          updatedMember.bankedHours += amount;
-        } else if (newNote.type === 'rdo_hours') {
-          updatedMember.rdoHours += amount;
-        } else if (newNote.type === 'tool_cost') {
-          updatedMember.toolCostOwed += amount;
-        }
-
-        return updatedMember;
-      }
-      return member;
-    }));
-
-    // Update selected staff to reflect changes
-    setSelectedStaff(prev => {
-      if (!prev) return null;
-      const updated = { ...prev, notes: [...prev.notes, newNote] };
-      if (newNote.type === 'banked_hours') {
-        updated.bankedHours += amount;
-      } else if (newNote.type === 'rdo_hours') {
-        updated.rdoHours += amount;
-      } else if (newNote.type === 'tool_cost') {
-        updated.toolCostOwed += amount;
-      }
-      return updated;
+    createNoteMutation.mutate({
+      memberId: selectedStaff.id,
+      noteData
     });
-
-    setNoteForm({ type: 'general', description: '', amount: '' });
-    setIsAddNoteOpen(false);
-    showToast('Note added successfully');
   };
 
   const updateNote = () => {
@@ -406,83 +451,22 @@ export default function StaffNotesClean() {
       return;
     }
 
-    const newAmount = parseFloat(noteForm.amount) || 0;
-    const oldAmount = editingNote.amount;
-    const amountDiff = newAmount - oldAmount;
+    const updatedData = {
+      description: noteForm.description.trim(),
+      amount: noteForm.amount || '0',
+    };
 
-    setStaff(prev => prev.map(member => {
-      if (member.id === selectedStaff.id) {
-        const updatedMember = {
-          ...member,
-          notes: member.notes.map(note => 
-            note.id === editingNote.id 
-              ? { ...note, description: noteForm.description.trim(), amount: newAmount }
-              : note
-          ),
-        };
-
-        // Update running totals
-        if (editingNote.type === 'banked_hours') {
-          updatedMember.bankedHours += amountDiff;
-        } else if (editingNote.type === 'rdo_hours') {
-          updatedMember.rdoHours += amountDiff;
-        } else if (editingNote.type === 'tool_cost') {
-          updatedMember.toolCostOwed += amountDiff;
-        }
-
-        return updatedMember;
-      }
-      return member;
-    }));
-
-    setEditingNote(null);
-    setNoteForm({ type: 'general', description: '', amount: '' });
-    setIsAddNoteOpen(false);
-    showToast('Note updated successfully');
+    updateNoteMutation.mutate({
+      id: editingNote.id,
+      data: updatedData
+    });
   };
 
   const deleteNote = (noteId: string) => {
     if (!selectedStaff) return;
 
-    const noteToDelete = selectedStaff.notes.find(n => n.id === noteId);
-    if (!noteToDelete) return;
-
     if (confirm('Are you sure you want to delete this note?')) {
-      setStaff(prev => prev.map(member => {
-        if (member.id === selectedStaff.id) {
-          const updatedMember = {
-            ...member,
-            notes: member.notes.filter(note => note.id !== noteId),
-          };
-
-          // Update running totals
-          if (noteToDelete.type === 'banked_hours') {
-            updatedMember.bankedHours -= noteToDelete.amount;
-          } else if (noteToDelete.type === 'rdo_hours') {
-            updatedMember.rdoHours -= noteToDelete.amount;
-          } else if (noteToDelete.type === 'tool_cost') {
-            updatedMember.toolCostOwed -= noteToDelete.amount;
-          }
-
-          return updatedMember;
-        }
-        return member;
-      }));
-
-      setSelectedStaff(prev => {
-        if (!prev) return null;
-        const updated = { ...prev, notes: prev.notes.filter(note => note.id !== noteId) };
-        if (noteToDelete.type === 'banked_hours') {
-          updated.bankedHours -= noteToDelete.amount;
-        } else if (noteToDelete.type === 'rdo_hours') {
-          updated.rdoHours -= noteToDelete.amount;
-        } else if (noteToDelete.type === 'tool_cost') {
-          updated.toolCostOwed -= noteToDelete.amount;
-        }
-        return updated;
-      });
-
-      showToast('Note removed');
+      deleteNoteMutation.mutate(noteId);
     }
   };
 
@@ -638,13 +622,13 @@ export default function StaffNotesClean() {
                     <div className="flex items-center gap-2">
                       <DollarSign className="h-4 w-4 text-green-600 flex-shrink-0" />
                       <span className="text-sm font-medium">
-                        Value: <span className="text-green-600">${(member.bankedHours * member.hourlyRate).toFixed(2)}</span>
+                        Value: <span className="text-green-600">${(parseFloat(member.bankedHours) * parseFloat(member.hourlyRate)).toFixed(2)}</span>
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <DollarSign className="h-4 w-4 text-red-600 flex-shrink-0" />
                       <span className="text-sm font-medium">
-                        Tools: <span className="text-red-600">${member.toolCostOwed.toFixed(2)}</span>
+                        Tools: <span className="text-red-600">${parseFloat(member.toolCostOwed).toFixed(2)}</span>
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -859,10 +843,10 @@ export default function StaffNotesClean() {
             </CardHeader>
             <CardContent className="px-4 pb-3">
               <div className="text-xl sm:text-2xl font-bold text-green-600">
-                ${(selectedStaff.bankedHours * selectedStaff.hourlyRate).toFixed(2)}
+                ${(parseFloat(selectedStaff.bankedHours) * parseFloat(selectedStaff.hourlyRate)).toFixed(2)}
               </div>
               <div className="flex items-center justify-between">
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">@ ${selectedStaff.hourlyRate}/hr</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">@ ${parseFloat(selectedStaff.hourlyRate)}/hr</p>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -885,7 +869,7 @@ export default function StaffNotesClean() {
             </CardHeader>
             <CardContent className="px-4 pb-3">
               <div className="text-xl sm:text-2xl font-bold text-red-600">
-                ${selectedStaff.toolCostOwed.toFixed(2)}
+                ${parseFloat(selectedStaff.toolCostOwed).toFixed(2)}
               </div>
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Amount owed</p>
             </CardContent>
@@ -944,14 +928,14 @@ export default function StaffNotesClean() {
                             {format(new Date(note.date), 'MMM d, yyyy h:mm a')}
                           </p>
                         </div>
-                        {note.amount !== 0 && (
+                        {parseFloat(note.amount) !== 0 && (
                           <div className="text-left sm:text-right flex-shrink-0">
                             <div className={`font-semibold text-sm sm:text-base ${
-                              note.amount > 0 ? 'text-green-600' : 'text-red-600'
+                              parseFloat(note.amount) > 0 ? 'text-green-600' : 'text-red-600'
                             }`}>
                               {note.type === 'banked_hours' || note.type === 'rdo_hours'
-                                ? `${note.amount > 0 ? '+' : ''}${note.amount} hrs`
-                                : `${note.amount > 0 ? '+' : ''}$${Math.abs(note.amount).toFixed(2)}`
+                                ? `${parseFloat(note.amount) > 0 ? '+' : ''}${parseFloat(note.amount)} hrs`
+                                : `${parseFloat(note.amount) > 0 ? '+' : ''}$${Math.abs(parseFloat(note.amount)).toFixed(2)}`
                               }
                             </div>
                           </div>

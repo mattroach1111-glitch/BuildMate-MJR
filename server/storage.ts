@@ -12,6 +12,8 @@ import {
   notifications,
   emailProcessingLogs,
   emailProcessedDocuments,
+  staffMembers,
+  staffNotesEntries,
   type User,
   type UpsertUser,
   type Employee,
@@ -38,6 +40,10 @@ import {
   type InsertEmailProcessingLog,
   type EmailProcessedDocument,
   type InsertEmailProcessedDocument,
+  type StaffMember,
+  type InsertStaffMember,
+  type StaffNoteEntry,
+  type InsertStaffNoteEntry,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sum, ne, gte, lte, lt, sql, isNull, or, ilike, inArray } from "drizzle-orm";
@@ -172,6 +178,18 @@ export interface IStorage {
   approveEmailProcessedDocument(id: string, jobId?: string): Promise<void>;
   rejectEmailProcessedDocument(id: string): Promise<void>;
   deleteOldRejectedEmailDocuments(cutoffTime: Date): Promise<void>;
+  
+  // Staff Notes System operations
+  getStaffMembers(): Promise<StaffMember[]>;
+  getStaffMember(id: string): Promise<StaffMember | undefined>;
+  createStaffMember(member: InsertStaffMember): Promise<StaffMember>;
+  updateStaffMember(id: string, member: Partial<InsertStaffMember>): Promise<StaffMember>;
+  deleteStaffMember(id: string): Promise<void>;
+  getStaffNoteEntriesForMember(staffMemberId: string): Promise<StaffNoteEntry[]>;
+  createStaffNoteEntry(entry: InsertStaffNoteEntry): Promise<StaffNoteEntry>;
+  updateStaffNoteEntry(id: string, entry: Partial<InsertStaffNoteEntry>): Promise<StaffNoteEntry>;
+  deleteStaffNoteEntry(id: string): Promise<void>;
+  getStaffMembersWithNotes(): Promise<(StaffMember & { notes: StaffNoteEntry[] })[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1710,7 +1728,141 @@ export class DatabaseStorage implements IStorage {
     console.log(`✅ Cleaned up old rejected documents`);
   }
 
+  // Staff Notes System operations
+  async getStaffMembers(): Promise<StaffMember[]> {
+    return await db.select().from(staffMembers).orderBy(staffMembers.name);
+  }
 
+  async getStaffMember(id: string): Promise<StaffMember | undefined> {
+    const [member] = await db.select().from(staffMembers).where(eq(staffMembers.id, id));
+    return member;
+  }
+
+  async createStaffMember(member: InsertStaffMember): Promise<StaffMember> {
+    const [createdMember] = await db.insert(staffMembers).values(member).returning();
+    return createdMember;
+  }
+
+  async updateStaffMember(id: string, member: Partial<InsertStaffMember>): Promise<StaffMember> {
+    const [updatedMember] = await db
+      .update(staffMembers)
+      .set({ ...member, updatedAt: new Date() })
+      .where(eq(staffMembers.id, id))
+      .returning();
+    return updatedMember;
+  }
+
+  async deleteStaffMember(id: string): Promise<void> {
+    // Delete all associated notes first
+    await db.delete(staffNotesEntries).where(eq(staffNotesEntries.staffMemberId, id));
+    // Delete the staff member
+    await db.delete(staffMembers).where(eq(staffMembers.id, id));
+  }
+
+  async getStaffNoteEntriesForMember(staffMemberId: string): Promise<StaffNoteEntry[]> {
+    return await db.select().from(staffNotesEntries)
+      .where(eq(staffNotesEntries.staffMemberId, staffMemberId))
+      .orderBy(staffNotesEntries.date);
+  }
+
+  async createStaffNoteEntry(entry: InsertStaffNoteEntry): Promise<StaffNoteEntry> {
+    const [createdEntry] = await db.insert(staffNotesEntries).values(entry).returning();
+    
+    // Update the staff member's totals based on the note type
+    const member = await this.getStaffMember(entry.staffMemberId);
+    if (member) {
+      const amount = parseFloat(entry.amount);
+      const updates: Partial<InsertStaffMember> = {};
+      
+      if (entry.type === 'banked_hours') {
+        updates.bankedHours = (parseFloat(member.bankedHours) + amount).toString();
+      } else if (entry.type === 'rdo_hours') {
+        updates.rdoHours = (parseFloat(member.rdoHours) + amount).toString();
+      } else if (entry.type === 'tool_cost') {
+        updates.toolCostOwed = (parseFloat(member.toolCostOwed) + amount).toString();
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        await this.updateStaffMember(entry.staffMemberId, updates);
+      }
+    }
+    
+    return createdEntry;
+  }
+
+  async updateStaffNoteEntry(id: string, entry: Partial<InsertStaffNoteEntry>): Promise<StaffNoteEntry> {
+    // Get the original entry to calculate the difference
+    const [originalEntry] = await db.select().from(staffNotesEntries).where(eq(staffNotesEntries.id, id));
+    
+    const [updatedEntry] = await db
+      .update(staffNotesEntries)
+      .set(entry)
+      .where(eq(staffNotesEntries.id, id))
+      .returning();
+    
+    // Update the staff member's totals if amount changed
+    if (originalEntry && entry.amount) {
+      const member = await this.getStaffMember(originalEntry.staffMemberId);
+      if (member) {
+        const oldAmount = parseFloat(originalEntry.amount);
+        const newAmount = parseFloat(entry.amount);
+        const amountDiff = newAmount - oldAmount;
+        const updates: Partial<InsertStaffMember> = {};
+        
+        if (originalEntry.type === 'banked_hours') {
+          updates.bankedHours = (parseFloat(member.bankedHours) + amountDiff).toString();
+        } else if (originalEntry.type === 'rdo_hours') {
+          updates.rdoHours = (parseFloat(member.rdoHours) + amountDiff).toString();
+        } else if (originalEntry.type === 'tool_cost') {
+          updates.toolCostOwed = (parseFloat(member.toolCostOwed) + amountDiff).toString();
+        }
+        
+        if (Object.keys(updates).length > 0) {
+          await this.updateStaffMember(originalEntry.staffMemberId, updates);
+        }
+      }
+    }
+    
+    return updatedEntry;
+  }
+
+  async deleteStaffNoteEntry(id: string): Promise<void> {
+    // Get the entry to update totals before deletion
+    const [entryToDelete] = await db.select().from(staffNotesEntries).where(eq(staffNotesEntries.id, id));
+    
+    if (entryToDelete) {
+      const member = await this.getStaffMember(entryToDelete.staffMemberId);
+      if (member) {
+        const amount = parseFloat(entryToDelete.amount);
+        const updates: Partial<InsertStaffMember> = {};
+        
+        if (entryToDelete.type === 'banked_hours') {
+          updates.bankedHours = (parseFloat(member.bankedHours) - amount).toString();
+        } else if (entryToDelete.type === 'rdo_hours') {
+          updates.rdoHours = (parseFloat(member.rdoHours) - amount).toString();
+        } else if (entryToDelete.type === 'tool_cost') {
+          updates.toolCostOwed = (parseFloat(member.toolCostOwed) - amount).toString();
+        }
+        
+        if (Object.keys(updates).length > 0) {
+          await this.updateStaffMember(entryToDelete.staffMemberId, updates);
+        }
+      }
+    }
+    
+    await db.delete(staffNotesEntries).where(eq(staffNotesEntries.id, id));
+  }
+
+  async getStaffMembersWithNotes(): Promise<(StaffMember & { notes: StaffNoteEntry[] })[]> {
+    const members = await this.getStaffMembers();
+    const membersWithNotes = await Promise.all(
+      members.map(async (member) => {
+        const notes = await this.getStaffNoteEntriesForMember(member.id);
+        return { ...member, notes };
+      })
+    );
+    return membersWithNotes;
+  }
 }
 
 export const storage = new DatabaseStorage();
