@@ -66,7 +66,7 @@ const RewardsRules: React.FC = () => {
     "Sick Leave",
     "Personal Leave", 
     "Annual Leave",
-    "Leave Without Pay"
+    "Leave without pay"
   ];
 
   return (
