@@ -1,0 +1,26 @@
+🔴 IMPORTANT: DOWNLOAD THIS BACKUP TO YOUR COMPUTER 🔴
+
+Your complete BuildFlow Pro backup is ready!
+
+STEP 1: Look in your file list (left side of screen)
+STEP 2: Find the file called "YOUR_BACKUP_FILE.tar.gz"
+STEP 3: Right-click on "YOUR_BACKUP_FILE.tar.gz"
+STEP 4: Click "Download"
+STEP 5: Save it to your computer
+
+This file contains:
+✅ Your complete database (all jobs, timesheets, employees)
+✅ All your source code
+✅ All configuration settings
+✅ Instructions to restore everything
+
+File size: 28KB (very small and quick to download)
+
+⚠️ KEEP THIS SAFE ⚠️
+- Save to Google Drive
+- Email it to yourself
+- Keep a copy on USB drive
+
+If Replit ever fails, this file will restore your entire business system.
+
+Questions? Just ask!
