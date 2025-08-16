@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { db } from "./db";
-import { timesheetEntries, laborEntries, users, staffNotes, employees, staffMembers, staffNotesEntries, rewardCatalog, rewardRules } from "@shared/schema";
+import { timesheetEntries, laborEntries, users, staffNotes, employees, staffMembers, staffNotesEntries, rewardCatalog, rewardRules, rewardSettings } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { TimesheetPDFGenerator } from "./pdfGenerator";
@@ -3832,14 +3832,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin rewards dashboard endpoint
   app.get("/api/admin/rewards/dashboard", isAuthenticated, async (req: any, res) => {
     try {
-      // Get current reward settings (hardcoded for now, could be moved to database)
+      // Get current reward settings from database
+      const dbSettings = await db.select().from(rewardSettings);
+      const settingsMap = dbSettings.reduce((acc, setting) => {
+        acc[setting.settingKey] = setting.settingValue;
+        return acc;
+      }, {} as Record<string, number>);
+      
       const settings = {
-        dailySubmissionPoints: 10,
-        weeklyBonusPoints: 50,
-        monthlyBonusPoints: 200,
-        streakBonusMultiplier: 1.5,
-        perfectWeekBonus: 100,
-        perfectMonthBonus: 500
+        dailySubmissionPoints: settingsMap.dailySubmissionPoints || 10,
+        weeklyBonusPoints: settingsMap.weeklyBonusPoints || 50,
+        monthlyBonusPoints: settingsMap.monthlyBonusPoints || 200,
+        streakBonusMultiplier: (settingsMap.streakBonusMultiplier || 150) / 100, // Convert back from integer
+        perfectWeekBonus: settingsMap.perfectWeekBonus || 100,
+        perfectMonthBonus: settingsMap.perfectMonthBonus || 500
       };
 
       // Get analytics data with error handling for missing tables
@@ -3947,7 +3953,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update reward settings (currently in-memory, could be moved to database)
+  // Update reward settings (saves to database)
   app.put("/api/admin/rewards/settings", isAuthenticated, async (req: any, res) => {
     try {
       const settings = req.body;
@@ -3959,8 +3965,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid settings format" });
       }
 
-      // For now, just return success - in future this would save to database
-      console.log("Reward settings updated:", settings);
+      // Save each setting to database with upsert
+      const settingsToSave = [
+        { key: 'dailySubmissionPoints', value: settings.dailySubmissionPoints },
+        { key: 'weeklyBonusPoints', value: settings.weeklyBonusPoints },
+        { key: 'monthlyBonusPoints', value: settings.monthlyBonusPoints || 200 },
+        { key: 'streakBonusMultiplier', value: Math.round((settings.streakBonusMultiplier || 1.5) * 100) },
+        { key: 'perfectWeekBonus', value: settings.perfectWeekBonus },
+        { key: 'perfectMonthBonus', value: settings.perfectMonthBonus || 500 }
+      ];
+
+      for (const setting of settingsToSave) {
+        await db
+          .insert(rewardSettings)
+          .values({
+            settingKey: setting.key,
+            settingValue: setting.value,
+            description: `Reward setting for ${setting.key}`
+          })
+          .onConflictDoUpdate({
+            target: rewardSettings.settingKey,
+            set: {
+              settingValue: setting.value,
+              updatedAt: new Date()
+            }
+          });
+      }
+
+      console.log("Reward settings saved to database:", settings);
       
       res.json({ 
         success: true, 
