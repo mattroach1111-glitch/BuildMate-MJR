@@ -33,7 +33,7 @@ import { TimesheetSearch } from "@/components/timesheet-search";
 import { OnboardingTour, WelcomeAnimation } from "@/components/onboarding-tour";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { UserManagement } from "@/components/user-management";
-import { PendingUsers } from "@/components/pending-users";
+
 import { generateJobListPDF } from "@/lib/pdfGenerator";
 import JobUpdateDialog from "@/components/job-update-form";
 import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor";
@@ -1602,10 +1602,6 @@ export default function AdminDashboard() {
                 Staff Notes
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setActiveTab("pending-users")} data-testid="menu-pending-users">
-                <Users className="h-4 w-4 mr-2" />
-                Pending Users
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setActiveTab("documents")} data-testid="menu-documents">
                 <FileText className="h-4 w-4 mr-2" />
                 Document Processing
@@ -3432,16 +3428,7 @@ export default function AdminDashboard() {
           </div>
           </TabsContent>
 
-        {/* Pending Users Tab */}
-        <TabsContent value="pending-users" className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-            <div>
-              <h2 className="text-xl font-semibold">Pending User Assignments</h2>
-              <p className="text-sm text-muted-foreground">Assign new users to existing employees</p>
-            </div>
-          </div>
-          <PendingUsers />
-        </TabsContent>
+
 
         {/* Search Tab */}
         <TabsContent value="search" className="space-y-6">
