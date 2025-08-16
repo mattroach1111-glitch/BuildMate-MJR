@@ -199,55 +199,27 @@ export default function RewardsRules() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div>
-                    <div className="font-semibold">First Timer</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">Your first submission</div>
+                {config?.ACHIEVEMENTS && Object.entries(config.ACHIEVEMENTS).slice(0, 3).map(([key, badge]: [string, any]) => (
+                  <div key={key} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div>
+                      <div className="font-semibold">{badge.name}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300">{badge.description}</div>
+                    </div>
+                    <Badge variant="secondary">{badge.points} pts</Badge>
                   </div>
-                  <Badge variant="secondary">25 pts</Badge>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div>
-                    <div className="font-semibold">Week Warrior</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">First perfect week</div>
-                  </div>
-                  <Badge variant="secondary">75 pts</Badge>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div>
-                    <div className="font-semibold">Streak Master</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">Reach 10-day streak</div>
-                  </div>
-                  <Badge variant="secondary">150 pts</Badge>
-                </div>
+                ))}
               </div>
               
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div>
-                    <div className="font-semibold">Month Champion</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">First perfect month</div>
+                {config?.ACHIEVEMENTS && Object.entries(config.ACHIEVEMENTS).slice(3).map(([key, badge]: [string, any]) => (
+                  <div key={key} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div>
+                      <div className="font-semibold">{badge.name}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300">{badge.description}</div>
+                    </div>
+                    <Badge variant="secondary">{badge.points} pts</Badge>
                   </div>
-                  <Badge variant="secondary">300 pts</Badge>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div>
-                    <div className="font-semibold">Consistency King</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">30-day streak</div>
-                  </div>
-                  <Badge variant="secondary">500 pts</Badge>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div>
-                    <div className="font-semibold">Weekend Warrior</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">5 weekend submissions</div>
-                  </div>
-                  <Badge variant="secondary">100 pts</Badge>
-                </div>
+                ))}
               </div>
             </div>
           </CardContent>

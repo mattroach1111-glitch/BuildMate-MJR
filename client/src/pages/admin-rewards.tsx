@@ -84,6 +84,8 @@ const AdminRewards: React.FC = () => {
     timeDeadline: '17:00',
     dayDeadline: ''
   });
+  const [isEditingBadges, setIsEditingBadges] = useState(false);
+  const [editedBadges, setEditedBadges] = useState<any>(null);
 
   const { data: adminData, isLoading, refetch } = useQuery<AdminRewardsData>({
     queryKey: ['/api/admin/rewards/dashboard'],
@@ -92,6 +94,11 @@ const AdminRewards: React.FC = () => {
 
   const { data: rewardRules, refetch: refetchRules } = useQuery<RewardRule[]>({
     queryKey: ['/api/admin/rewards/rules'],
+    refetchInterval: 30000,
+  });
+
+  const { data: rewardConfig, refetch: refetchConfig } = useQuery({
+    queryKey: ['/api/rewards/config'],
     refetchInterval: 30000,
   });
 
@@ -111,6 +118,27 @@ const AdminRewards: React.FC = () => {
       toast({
         title: "Error",
         description: "Failed to update settings",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateConfigMutation = useMutation({
+    mutationFn: async (config: any) => {
+      return await apiRequest('PUT', '/api/admin/rewards/config', config);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Configuration Updated",
+        description: "Reward configuration has been updated successfully",
+      });
+      setIsEditingBadges(false);
+      refetchConfig();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update configuration",
         variant: "destructive",
       });
     },
@@ -167,6 +195,12 @@ const AdminRewards: React.FC = () => {
   const handleSaveSettings = () => {
     if (editedSettings) {
       updateSettingsMutation.mutate(editedSettings);
+    }
+  };
+
+  const handleSaveBadges = () => {
+    if (editedBadges) {
+      updateConfigMutation.mutate({ ACHIEVEMENTS: editedBadges });
     }
   };
 
@@ -328,8 +362,9 @@ const AdminRewards: React.FC = () => {
         </div>
 
         <Tabs defaultValue="settings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="settings" data-testid="tab-settings">Point Settings</TabsTrigger>
+            <TabsTrigger value="badges" data-testid="tab-badges">Badge Points</TabsTrigger>
             <TabsTrigger value="prizes" data-testid="tab-prizes">Prize Catalog</TabsTrigger>
             <TabsTrigger value="rules" data-testid="tab-rules">Reward Rules</TabsTrigger>
             <TabsTrigger value="analytics" data-testid="tab-analytics">Analytics</TabsTrigger>
@@ -484,6 +519,102 @@ const AdminRewards: React.FC = () => {
                       <div className="text-2xl font-bold text-purple-600">{adminData.settings.perfectWeekBonus}</div>
                       <div className="text-sm text-purple-800">Perfect Week Bonus</div>
                     </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="badges">
+            <Card data-testid="card-badge-settings">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Achievement Badge Points</CardTitle>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Configure point values for achievement badges
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditingBadges(!isEditingBadges);
+                    setEditedBadges(rewardConfig?.ACHIEVEMENTS);
+                  }}
+                  data-testid="button-edit-badges"
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  {isEditingBadges ? 'Cancel' : 'Edit Badge Points'}
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {isEditingBadges && editedBadges ? (
+                  <div className="space-y-4">
+                    {Object.entries(editedBadges).map(([key, badge]: [string, any]) => (
+                      <div key={key} className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
+                        <div className="flex items-center gap-3 mb-3">
+                          <span className="text-2xl">{badge.icon}</span>
+                          <div className="flex-1">
+                            <h3 className="font-semibold">{badge.name}</h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">{badge.description}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor={`badge-${key}`} className="text-sm font-medium">Points:</Label>
+                          <Input
+                            id={`badge-${key}`}
+                            type="number"
+                            value={badge.points}
+                            onChange={(e) => {
+                              const newPoints = parseInt(e.target.value) || 0;
+                              setEditedBadges(prev => ({
+                                ...prev,
+                                [key]: { ...badge, points: newPoints }
+                              }));
+                            }}
+                            className="w-24"
+                            min="0"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    <div className="flex gap-3 pt-4">
+                      <Button
+                        onClick={handleSaveBadges}
+                        disabled={updateConfigMutation.isPending}
+                        className="bg-green-600 hover:bg-green-700"
+                        data-testid="button-save-badges"
+                      >
+                        {updateConfigMutation.isPending ? "Saving..." : "Save Badge Points"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setIsEditingBadges(false);
+                          setEditedBadges(null);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {rewardConfig?.ACHIEVEMENTS && Object.entries(rewardConfig.ACHIEVEMENTS).map(([key, badge]: [string, any]) => (
+                      <div key={key} className="p-4 border rounded-lg bg-white dark:bg-gray-800">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{badge.icon}</span>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h3 className="font-semibold">{badge.name}</h3>
+                              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                                {badge.points} pts
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{badge.description}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>

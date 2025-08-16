@@ -3730,6 +3730,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update reward configuration (admin only)
+  app.put("/api/admin/rewards/config", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const updates = req.body;
+      const updatedConfig = rewardsService.updateRewardConfiguration(updates);
+      res.json(updatedConfig);
+    } catch (error) {
+      console.error("Error updating reward configuration:", error);
+      res.status(500).json({ message: "Failed to update reward configuration" });
+    }
+  });
+
   app.get("/api/rewards/dashboard", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
