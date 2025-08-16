@@ -3540,10 +3540,10 @@ export default function AdminDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Download className="h-5 w-5 text-muted-foreground" />
-                  Data Export
+                  Data Backup & Restore
                 </CardTitle>
                 <CardDescription>
-                  Export all your live business data for backup and protection
+                  Export and import your live business data for backup and disaster recovery
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -3615,10 +3615,89 @@ export default function AdminDashboard() {
                       </Button>
                     </div>
                   </div>
+                  
+                  {/* Import Data Section */}
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">Import Business Data</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Restore data from a previous backup file (JSON format)
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="file"
+                          accept=".json"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            
+                            try {
+                              const text = await file.text();
+                              const backupData = JSON.parse(text);
+                              
+                              const response = await fetch('/api/import-data', {
+                                method: 'POST',
+                                credentials: 'include',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                  data: backupData,
+                                  overwriteExisting: false
+                                })
+                              });
+                              
+                              const result = await response.json();
+                              
+                              if (result.success) {
+                                toast({
+                                  title: "Import Successful",
+                                  description: `Imported ${result.totalRecordsImported} records${result.results.errors.length > 0 ? ` with ${result.results.errors.length} errors` : ''}`,
+                                });
+                              } else {
+                                throw new Error(result.message || 'Import failed');
+                              }
+                            } catch (error: any) {
+                              toast({
+                                title: "Import Failed",
+                                description: error.message || "Failed to import backup data",
+                                variant: "destructive",
+                              });
+                            }
+                            
+                            // Reset file input
+                            e.target.value = '';
+                          }}
+                          className="hidden"
+                          id="import-file-input"
+                        />
+                        <Button
+                          variant="outline"
+                          onClick={() => document.getElementById('import-file-input')?.click()}
+                          data-testid="button-import-data"
+                          className="flex items-center gap-2"
+                        >
+                          <Upload className="h-4 w-4" />
+                          Import Data
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <div className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      Exports all your live business data as JSON file for backup
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4" />
+                        <span className="font-medium">Complete Backup Solution:</span>
+                      </div>
+                      <div className="ml-6 space-y-1">
+                        <div>• Export: Download all business data as JSON</div>
+                        <div>• Auto-Backup: Save directly to Google Drive</div>
+                        <div>• Import: Restore data from backup files</div>
+                        <div>• Migration: Move to other platforms if needed</div>
+                      </div>
                     </div>
                   </div>
                 </div>

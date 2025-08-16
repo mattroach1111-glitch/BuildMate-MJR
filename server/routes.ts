@@ -4267,6 +4267,212 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Import data from JSON backup
+  app.post("/api/import-data", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      console.log("🔄 Starting data import...");
+
+      const { data, overwriteExisting = false } = req.body;
+
+      if (!data || !data.data) {
+        return res.status(400).json({ message: "Invalid backup data format" });
+      }
+
+      const importData = data.data;
+      let importResults = {
+        jobs: 0,
+        employees: 0,
+        timesheetEntries: 0,
+        laborEntries: 0,
+        materials: 0,
+        subTrades: 0,
+        otherCosts: 0,
+        tipFees: 0,
+        jobFiles: 0,
+        errors: [] as string[]
+      };
+
+      // Import employees first (since jobs reference them)
+      if (importData.employees && importData.employees.length > 0) {
+        try {
+          for (const employee of importData.employees) {
+            try {
+              if (overwriteExisting) {
+                await db.insert(employees).values({
+                  id: employee.id,
+                  name: employee.name,
+                  defaultHourlyRate: employee.defaultHourlyRate,
+                  createdAt: employee.createdAt
+                }).onConflictDoUpdate({
+                  target: employees.id,
+                  set: {
+                    name: employee.name,
+                    defaultHourlyRate: employee.defaultHourlyRate
+                  }
+                });
+              } else {
+                await db.insert(employees).values({
+                  id: employee.id,
+                  name: employee.name,
+                  defaultHourlyRate: employee.defaultHourlyRate,
+                  createdAt: employee.createdAt
+                }).onConflictDoNothing();
+              }
+              importResults.employees++;
+            } catch (e: any) {
+              importResults.errors.push(`Employee ${employee.name}: ${e.message}`);
+            }
+          }
+        } catch (e: any) {
+          importResults.errors.push(`Employees import error: ${e.message}`);
+        }
+      }
+
+      // Import jobs
+      if (importData.jobs && importData.jobs.length > 0) {
+        try {
+          for (const job of importData.jobs) {
+            try {
+              if (overwriteExisting) {
+                await db.insert(jobs).values({
+                  id: job.id,
+                  jobAddress: job.jobAddress,
+                  clientName: job.clientName,
+                  projectName: job.projectName,
+                  projectManager: job.projectManager,
+                  status: job.status || 'new_job',
+                  builderMargin: job.builderMargin || '0',
+                  defaultHourlyRate: job.defaultHourlyRate || '50',
+                  isDeleted: job.isDeleted || false,
+                  deletedAt: job.deletedAt,
+                  createdAt: job.createdAt,
+                  updatedAt: job.updatedAt
+                }).onConflictDoUpdate({
+                  target: jobs.id,
+                  set: {
+                    jobAddress: job.jobAddress,
+                    clientName: job.clientName,
+                    projectName: job.projectName,
+                    projectManager: job.projectManager,
+                    status: job.status || 'new_job',
+                    builderMargin: job.builderMargin || '0',
+                    defaultHourlyRate: job.defaultHourlyRate || '50'
+                  }
+                });
+              } else {
+                await db.insert(jobs).values({
+                  id: job.id,
+                  jobAddress: job.jobAddress,
+                  clientName: job.clientName,
+                  projectName: job.projectName,
+                  projectManager: job.projectManager,
+                  status: job.status || 'new_job',
+                  builderMargin: job.builderMargin || '0',
+                  defaultHourlyRate: job.defaultHourlyRate || '50',
+                  isDeleted: job.isDeleted || false,
+                  deletedAt: job.deletedAt,
+                  createdAt: job.createdAt,
+                  updatedAt: job.updatedAt
+                }).onConflictDoNothing();
+              }
+              importResults.jobs++;
+            } catch (e: any) {
+              importResults.errors.push(`Job ${job.projectName}: ${e.message}`);
+            }
+          }
+        } catch (e: any) {
+          importResults.errors.push(`Jobs import error: ${e.message}`);
+        }
+      }
+
+      // Import timesheet entries
+      if (importData.timesheetEntries && importData.timesheetEntries.length > 0) {
+        try {
+          for (const entry of importData.timesheetEntries) {
+            try {
+              if (overwriteExisting) {
+                await db.insert(timesheetEntries).values(entry).onConflictDoUpdate({
+                  target: timesheetEntries.id,
+                  set: {
+                    staffId: entry.staffId,
+                    jobId: entry.jobId,
+                    date: entry.date,
+                    hours: entry.hours,
+                    hourlyRate: entry.hourlyRate,
+                    notes: entry.notes,
+                    status: entry.status,
+                    customAddress: entry.customAddress,
+                    leaveType: entry.leaveType
+                  }
+                });
+              } else {
+                await db.insert(timesheetEntries).values(entry).onConflictDoNothing();
+              }
+              importResults.timesheetEntries++;
+            } catch (e: any) {
+              importResults.errors.push(`Timesheet entry: ${e.message}`);
+            }
+          }
+        } catch (e: any) {
+          importResults.errors.push(`Timesheet entries import error: ${e.message}`);
+        }
+      }
+
+      // Import other data types with similar pattern
+      const dataTypes = [
+        { data: importData.laborEntries, table: laborEntries, name: 'laborEntries' },
+        { data: importData.materials, table: materials, name: 'materials' },
+        { data: importData.subTrades, table: subTrades, name: 'subTrades' },
+        { data: importData.otherCosts, table: otherCosts, name: 'otherCosts' },
+        { data: importData.tipFees, table: tipFees, name: 'tipFees' },
+        { data: importData.jobFiles, table: jobFiles, name: 'jobFiles' }
+      ];
+
+      for (const { data: tableData, table, name } of dataTypes) {
+        if (tableData && tableData.length > 0) {
+          try {
+            for (const item of tableData) {
+              try {
+                if (overwriteExisting) {
+                  await db.insert(table).values(item).onConflictDoUpdate({
+                    target: (table as any).id,
+                    set: item
+                  });
+                } else {
+                  await db.insert(table).values(item).onConflictDoNothing();
+                }
+                (importResults as any)[name]++;
+              } catch (e: any) {
+                importResults.errors.push(`${name}: ${e.message}`);
+              }
+            }
+          } catch (e: any) {
+            importResults.errors.push(`${name} import error: ${e.message}`);
+          }
+        }
+      }
+
+      console.log(`✅ Data import completed:`, importResults);
+
+      res.json({
+        success: true,
+        message: "Data import completed",
+        results: importResults,
+        totalRecordsImported: importResults.jobs + importResults.employees + importResults.timesheetEntries + 
+                             importResults.laborEntries + importResults.materials + importResults.subTrades +
+                             importResults.otherCosts + importResults.tipFees + importResults.jobFiles
+      });
+
+    } catch (error: any) {
+      console.error("Error importing data:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to import data", 
+        error: error.message 
+      });
+    }
+  });
+
   // Download migration guide
   app.get("/api/download/migration-guide", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
