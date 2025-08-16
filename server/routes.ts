@@ -11,6 +11,17 @@ import { GoogleDriveService } from "./googleDriveService";
 import { GoogleDriveAuth } from "./googleAuth";
 import { DocumentProcessor } from "./services/documentProcessor";
 import { rewardsService } from "./services/rewardsService";
+
+// In-memory storage for reward settings (could be moved to database later)
+let rewardSettings = {
+  dailySubmissionPoints: 10,
+  weeklyBonusPoints: 50,
+  fortnightlyBonusPoints: 100,
+  monthlyBonusPoints: 200,
+  streakBonusMultiplier: 1.5,
+  perfectWeekBonus: 25,
+  perfectMonthBonus: 100
+};
 import {
   insertJobSchema,
   insertEmployeeSchema,
@@ -3832,16 +3843,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin rewards dashboard endpoint
   app.get("/api/admin/rewards/dashboard", isAuthenticated, async (req: any, res) => {
     try {
-      // Get current reward settings (hardcoded for now, could be moved to database)
-      const settings = {
-        dailySubmissionPoints: 10,
-        weeklyBonusPoints: 50,
-        fortnightlyBonusPoints: 100,
-        monthlyBonusPoints: 200,
-        streakBonusMultiplier: 1.5,
-        perfectWeekBonus: 100,
-        perfectMonthBonus: 500
-      };
+      // Use the persistent reward settings
+      const settings = rewardSettings;
 
       // Get analytics data with error handling for missing tables
       let totalPointsAwarded = 0;
@@ -3951,14 +3954,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get reward settings for rules page
   app.get("/api/rewards/settings", isAuthenticated, async (req: any, res) => {
     try {
-      const settings = {
-        dailySubmissionPoints: 10,
-        weeklyBonusPoints: 50,
-        fortnightlyBonusPoints: 100,
-        monthlyBonusPoints: 200
-      };
-      
-      res.json(settings);
+      // Return the current reward settings
+      res.json(rewardSettings);
     } catch (error) {
       console.error("Error fetching reward settings:", error);
       res.status(500).json({ message: "Failed to fetch settings" });
@@ -3968,22 +3965,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update reward settings (currently in-memory, could be moved to database)
   app.put("/api/admin/rewards/settings", isAuthenticated, async (req: any, res) => {
     try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
       const settings = req.body;
       
       // Validate settings
       if (typeof settings.dailySubmissionPoints !== 'number' || 
           typeof settings.weeklyBonusPoints !== 'number' ||
-          typeof settings.perfectWeekBonus !== 'number') {
+          typeof settings.fortnightlyBonusPoints !== 'number' ||
+          typeof settings.monthlyBonusPoints !== 'number') {
         return res.status(400).json({ message: "Invalid settings format" });
       }
 
-      // For now, just return success - in future this would save to database
-      console.log("Reward settings updated:", settings);
+      // Update the in-memory settings
+      rewardSettings = {
+        ...rewardSettings,
+        ...settings
+      };
+      
+      console.log("Reward settings updated successfully:", rewardSettings);
       
       res.json({ 
         success: true, 
         message: "Settings updated successfully",
-        settings 
+        settings: rewardSettings
       });
     } catch (error) {
       console.error("Error updating reward settings:", error);
