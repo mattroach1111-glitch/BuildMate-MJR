@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -43,6 +44,47 @@ interface NoteFormData {
 }
 
 export default function StaffNotesClean() {
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
+  // Show login message if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Authentication Required</h2>
+          <p className="text-gray-600 mb-6">Please log in to access the staff notes system.</p>
+          <button
+            onClick={() => window.location.href = '/api/login'}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Sign In
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  // Show admin required message if not admin
+  if (user?.role !== 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Admin Access Required</h2>
+          <p className="text-gray-600">You need admin privileges to access the staff notes system.</p>
+        </div>
+      </div>
+    );
+  }
+
   const { data: staff = [], isLoading, error } = useQuery<StaffMember[]>({
     queryKey: ['/api/staff-notes'],
     queryFn: async () => {
