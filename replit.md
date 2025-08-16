@@ -1,11 +1,6 @@
 # Overview
 BuildFlow Pro is a mobile-first construction management system designed to streamline job costing, billing, and workforce management. It provides role-based access for administrators and staff, enabling comprehensive tracking of labor costs, materials, sub-trades, and project expenses for construction project oversight. The system's vision is to enhance efficiency in construction project management, offering a user-friendly interface for both on-site staff and administrative personnel, and consolidating critical project data for better decision-making.
 
-## Recent Changes
-- **Modern App Grid Interface (Aug 2025)**: Replaced dropdown "More" menu with phone app-style grid layout featuring colorful gradient tiles, hover animations, and touch-friendly navigation for improved mobile experience.
-- **Dynamic Password Management**: Implemented configurable deletion passwords through admin interface instead of hardcoded values.
-- **Organized Navigation**: Moved archived jobs to dedicated tab and streamlined menu structure for better user experience.
-
 # User Preferences
 Preferred communication style: Simple, everyday language.
 

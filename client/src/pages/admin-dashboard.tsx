@@ -1533,115 +1533,63 @@ export default function AdminDashboard() {
       subtitle={`Welcome back, ${(user as any)?.firstName || 'Admin'}`}
     >
       <div className="space-y-6">
-        {/* App-style Navigation */}
-        <div className="flex flex-wrap gap-3 mb-6">
-          <div className="flex flex-wrap gap-3">
-            <Card 
-              className={`cursor-pointer transition-all duration-200 hover:scale-105 ${
-                activeTab === "jobs" 
-                  ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg" 
-                  : "bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-150 border-blue-200"
-              }`}
+        {/* Compact Navigation */}
+        <div className="flex items-center justify-between mb-6">
+          {/* Primary Navigation - Most Used */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant={activeTab === "jobs" ? "default" : "outline"}
+              size="sm"
               onClick={() => setActiveTab("jobs")}
+              className="flex items-center gap-2"
               data-testid="tab-jobs"
             >
-              <CardContent className="px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <Briefcase className="h-4 w-4" />
-                  <span className="text-sm font-medium hidden sm:inline">Jobs</span>
-                  {jobs.filter(j => !j.isDeleted).length > 0 && (
-                    <Badge 
-                      variant="secondary" 
-                      className={`ml-1 text-xs ${
-                        activeTab === "jobs" ? "bg-white/20 text-white" : ""
-                      }`}
-                    >
-                      {jobs.filter(j => !j.isDeleted).length}
-                    </Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card 
-              className={`cursor-pointer transition-all duration-200 hover:scale-105 ${
-                activeTab === "deleted-jobs" 
-                  ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg" 
-                  : "bg-gradient-to-r from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-150 border-orange-200"
-              }`}
+              <Briefcase className="h-4 w-4" />
+              <span className="hidden sm:inline">Jobs</span>
+            </Button>
+            <Button
+              variant={activeTab === "deleted-jobs" ? "default" : "outline"}
+              size="sm"
               onClick={() => setActiveTab("deleted-jobs")}
+              className="flex items-center gap-2"
               data-testid="tab-deleted-jobs"
             >
-              <CardContent className="px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <Trash2 className="h-4 w-4" />
-                  <span className="text-sm font-medium hidden sm:inline">Archived</span>
-                  {deletedJobs.length > 0 && (
-                    <Badge 
-                      variant="secondary" 
-                      className={`ml-1 text-xs ${
-                        activeTab === "deleted-jobs" ? "bg-white/20 text-white" : ""
-                      }`}
-                    >
-                      {deletedJobs.length}
-                    </Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card 
-              className={`cursor-pointer transition-all duration-200 hover:scale-105 ${
-                activeTab === "timesheets" 
-                  ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg" 
-                  : "bg-gradient-to-r from-green-50 to-green-100 hover:from-green-100 hover:to-green-150 border-green-200"
-              }`}
+              <Trash2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Archived</span>
+            </Button>
+            <Button
+              variant={activeTab === "timesheets" ? "default" : "outline"}
+              size="sm"
               onClick={() => setActiveTab("timesheets")}
+              className="flex items-center gap-2"
               data-testid="tab-timesheets"
             >
-              <CardContent className="px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  <span className="text-sm font-medium hidden sm:inline">Timesheets</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card 
-              className={`cursor-pointer transition-all duration-200 hover:scale-105 ${
-                activeTab === "search" 
-                  ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg" 
-                  : "bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-150 border-purple-200"
-              }`}
+              <Clock className="h-4 w-4" />
+              <span className="hidden sm:inline">Timesheets</span>
+            </Button>
+            <Button
+              variant={activeTab === "search" ? "default" : "outline"}
+              size="sm"
               onClick={() => setActiveTab("search")}
+              className="flex items-center gap-2"
               data-testid="tab-search"
             >
-              <CardContent className="px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <Search className="h-4 w-4" />
-                  <span className="text-sm font-medium hidden sm:inline">Search</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* More Button - Opens App Grid Page */}
-            <Card 
-              className={`cursor-pointer transition-all duration-200 hover:scale-105 ${
-                activeTab === "more" 
-                  ? "bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-lg" 
-                  : "bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-150 border-gray-200"
-              }`}
-              onClick={() => setActiveTab("more")}
-              data-testid="tab-more"
-            >
-              <CardContent className="px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <Settings className="h-4 w-4" />
-                  <span className="text-sm font-medium hidden sm:inline">More</span>
-                </div>
-              </CardContent>
-            </Card>
+              <Search className="h-4 w-4" />
+              <span className="hidden sm:inline">Search</span>
+            </Button>
           </div>
+
+          {/* More Button - Opens App Grid Page */}
+          <Button 
+            variant={activeTab === "more" ? "default" : "outline"} 
+            size="sm" 
+            onClick={() => setActiveTab("more")}
+            className="flex items-center gap-2"
+            data-testid="tab-more"
+          >
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">More</span>
+          </Button>
         </div>
 
 
@@ -2618,39 +2566,25 @@ export default function AdminDashboard() {
             <div className="mt-8">
               <h3 className="text-lg font-medium mb-4">Quick Access</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Card 
-                  className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-200 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
-                  onClick={() => {
-                    setActiveTab("settings");
-                    setActiveSettingsTab("user-management");
-                  }}
-                  data-testid="quick-user-management"
-                >
+                <Card className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-200">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center">
                       <Users className="h-5 w-5 text-white" />
                     </div>
                     <div>
                       <h4 className="font-medium text-sm">User Management</h4>
-                      <p className="text-xs text-muted-foreground">Manage staff accounts</p>
+                      <p className="text-xs text-muted-foreground">Found in Settings → User Management</p>
                     </div>
                   </div>
                 </Card>
-                <Card 
-                  className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
-                  onClick={() => {
-                    setActiveTab("settings");
-                    setActiveSettingsTab("security");
-                  }}
-                  data-testid="quick-security-settings"
-                >
+                <Card className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center">
                       <Shield className="h-5 w-5 text-white" />
                     </div>
                     <div>
                       <h4 className="font-medium text-sm">Security Settings</h4>
-                      <p className="text-xs text-muted-foreground">Manage passwords</p>
+                      <p className="text-xs text-muted-foreground">Found in Settings → Security</p>
                     </div>
                   </div>
                 </Card>
