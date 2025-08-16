@@ -63,7 +63,6 @@ function Router() {
 function AppContent() {
   return (
     <div id="app-container">
-      <Toaster />
       <Router />
     </div>
   );
