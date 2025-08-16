@@ -157,14 +157,14 @@ export const notifications = pgTable("notifications", {
   dismissedAt: timestamp("dismissed_at"),
 });
 
-// Staff Notes System Tables - matches the existing UI exactly
+// Staff Notes System Tables - simplified to avoid conflicts
 export const staffMembers = pgTable("staff_members", {
   id: varchar("id").primaryKey(),
   name: varchar("name").notNull(),
-  bankedHours: decimal("banked_hours", { precision: 10, scale: 2 }).notNull().default("0"),
-  rdoHours: decimal("rdo_hours", { precision: 10, scale: 2 }).notNull().default("0"),
-  hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }).notNull().default("0"),
-  toolCostOwed: decimal("tool_cost_owed", { precision: 10, scale: 2 }).notNull().default("0"),
+  bankedHours: varchar("banked_hours").notNull().default("0"),
+  rdoHours: varchar("rdo_hours").notNull().default("0"),
+  hourlyRate: varchar("hourly_rate").notNull().default("0"),
+  toolCostOwed: varchar("tool_cost_owed").notNull().default("0"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -174,7 +174,7 @@ export const staffNotesEntries = pgTable("staff_notes_entries", {
   staffMemberId: varchar("staff_member_id").notNull().references(() => staffMembers.id, { onDelete: "cascade" }),
   type: varchar("type", { enum: ["banked_hours", "tool_cost", "rdo_hours", "general"] }).notNull(),
   description: text("description").notNull(),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull().default("0"),
+  amount: varchar("amount").notNull().default("0"),
   date: varchar("date").notNull(), // ISO date string
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -385,17 +385,10 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
 export const insertStaffMemberSchema = createInsertSchema(staffMembers).omit({
   createdAt: true,
   updatedAt: true,
-}).extend({
-  bankedHours: z.string().or(z.number()).transform(val => String(val)).optional(),
-  rdoHours: z.string().or(z.number()).transform(val => String(val)).optional(),
-  hourlyRate: z.string().or(z.number()).transform(val => String(val)),
-  toolCostOwed: z.string().or(z.number()).transform(val => String(val)).optional(),
 });
 
 export const insertStaffNoteEntrySchema = createInsertSchema(staffNotesEntries).omit({
   createdAt: true,
-}).extend({
-  amount: z.string().or(z.number()).transform(val => String(val)),
 });
 
 // Legacy staff notes insert schema
