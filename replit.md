@@ -3,7 +3,7 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 
 ## Recent Updates (August 2025)
 - ✅ **Staff Notes System Migration**: Successfully migrated from localStorage to persistent PostgreSQL database storage while maintaining identical UI/UX. This enables cross-device synchronization and persistent data storage for staff member management and note tracking.
-- ✅ **Comprehensive Rewards System**: Implemented full rewards system with PostgreSQL integration, featuring points for timesheet submissions, daily streaks, achievement badges, leaderboards, and admin management interface. Includes automatic rewards processing on timesheet confirmation and live notifications for earned points and achievements.
+- ✅ **Simplified Rewards System**: Implemented streamlined rewards system with 4 clear reward types (Daily, Weekly, Fortnightly, Monthly) and simple streak reset rules. Features functional rewards dashboard, "More Apps" section with Rewards Rules page, admin configuration with fortnightly bonus settings, and dynamic rules that automatically update when admin changes settings. Terminology aligned between timesheet selections and rewards rules.
 
 # User Preferences
 Preferred communication style: Simple, everyday language.
@@ -23,6 +23,7 @@ Preferred communication style: Simple, everyday language.
 - **Onboarding**: Animated welcome screen and interactive guided tours (role-specific).
 - **Admin Features**: Compressed navigation menu, comprehensive timesheet search with advanced filtering, employee folder organization for approved timesheets, and admin edit functionality for custom addresses.
 - **Notification Preferences**: User-controllable notification settings (Document Processing, Job Updates, Timesheet Reminders) with options to disable email confirmations while maintaining full functionality via in-app notifications and dashboard indicators.
+- **Rewards System**: Simplified 4-tier system (Daily: timesheet submission, Weekly: full work week completion, Fortnightly: 2-week completion, Monthly: full month completion) with streak reset on sick leave, personal leave, annual leave, and leave without pay. Includes "More Apps" section navigation and dynamic rules display.
 
 ## Backend Architecture
 - **Runtime**: Node.js with Express.js
