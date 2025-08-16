@@ -11,7 +11,8 @@ import {
   LogOut,
   Menu,
   Building2,
-  List
+  List,
+  Trophy
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -46,8 +47,10 @@ export default function Navigation({ title, subtitle }: NavigationProps) {
     { icon: LayoutDashboard, label: "Dashboard", path: "/", active: location === "/" },
     { icon: List, label: "All Jobs", path: "/jobs", active: location === "/jobs" },
     { icon: FileText, label: "Timesheet", path: "/timesheet", active: location === "/timesheet" },
+    { icon: Trophy, label: "Rewards", path: "/rewards", active: location === "/rewards" },
   ] : [
     { icon: FileText, label: "Daily Timesheet", path: "/", active: location === "/" || location === "/timesheet" },
+    { icon: Trophy, label: "Rewards", path: "/rewards", active: location === "/rewards" },
   ];
 
   const handleLogout = () => {

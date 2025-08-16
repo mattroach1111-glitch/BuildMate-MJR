@@ -10,6 +10,7 @@ import { TimesheetPDFGenerator } from "./pdfGenerator";
 import { GoogleDriveService } from "./googleDriveService";
 import { GoogleDriveAuth } from "./googleAuth";
 import { DocumentProcessor } from "./services/documentProcessor";
+import { rewardsService } from "./services/rewardsService";
 import {
   insertJobSchema,
   insertEmployeeSchema,
@@ -23,6 +24,9 @@ import {
   insertNotificationSchema,
   insertStaffMemberSchema,
   insertStaffNoteEntrySchema,
+  insertRewardTransactionSchema,
+  insertRewardRedemptionSchema,
+  insertRewardCatalogSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -1621,6 +1625,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.markTimesheetEntriesConfirmed(userId, fortnightStart, fortnightEnd);
       console.log(`Marked timesheet entries as confirmed for user ${userId} from ${fortnightStart} to ${fortnightEnd}`);
       
+      // Process rewards for timesheet submission (if not admin confirming for someone else)
+      let rewardsResult = null;
+      if (!isAdmin) {
+        try {
+          // Process rewards for each day in the submission period
+          const startDate = new Date(fortnightStart);
+          const endDate = new Date(fortnightEnd);
+          const submittedDates = entries.map(entry => entry.date).filter(Boolean);
+          
+          // Award points for each unique submission date
+          const uniqueDates = [...new Set(submittedDates)];
+          let totalPointsEarned = 0;
+          let newAchievements: any[] = [];
+          let currentStreak = 0;
+          
+          for (const submissionDate of uniqueDates) {
+            const result = await rewardsService.processTimesheetSubmission(userId, submissionDate);
+            totalPointsEarned += result.pointsEarned;
+            newAchievements.push(...result.achievements);
+            currentStreak = result.newStreak; // Use the latest streak
+          }
+          
+          rewardsResult = {
+            totalPointsEarned,
+            newAchievements,
+            currentStreak,
+            daysProcessed: uniqueDates.length
+          };
+          
+          console.log(`Rewards processed for ${uniqueDates.length} days: +${totalPointsEarned} points, streak: ${currentStreak}`);
+        } catch (rewardsError) {
+          console.error("Error processing rewards:", rewardsError);
+          // Don't fail the whole timesheet submission if rewards fail
+        }
+      }
+      
       res.json({ 
         message: isAdmin 
           ? (googleDriveConnected && driveLink 
@@ -1633,7 +1673,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fortnightEnd,
         confirmedAt: new Date().toISOString(),
         driveLink: driveLink || null,
-        googleDriveConnected
+        googleDriveConnected,
+        rewards: rewardsResult
       });
     } catch (error) {
       console.error("Error confirming timesheet:", error);
@@ -3670,6 +3711,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting staff note:", error);
       res.status(500).json({ error: "Failed to delete staff note" });
+    }
+  });
+
+  // =============================================================================
+  // REWARDS SYSTEM API ENDPOINTS
+  // =============================================================================
+
+  // Get user's reward dashboard (points, transactions, achievements, leaderboard)
+  app.get("/api/rewards/dashboard", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const dashboard = await rewardsService.getUserDashboard(userId);
+      res.json(dashboard);
+    } catch (error) {
+      console.error("Error fetching rewards dashboard:", error);
+      res.status(500).json({ message: "Failed to fetch rewards dashboard" });
+    }
+  });
+
+  // Get user's reward points
+  app.get("/api/rewards/points", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const points = await rewardsService.getUserRewardPoints(userId);
+      if (!points) {
+        // Initialize if not exists
+        const newPoints = await rewardsService.initializeUserRewards(userId);
+        return res.json(newPoints);
+      }
+      res.json(points);
+    } catch (error) {
+      console.error("Error fetching reward points:", error);
+      res.status(500).json({ message: "Failed to fetch reward points" });
+    }
+  });
+
+  // Get user's transaction history
+  app.get("/api/rewards/transactions", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const transactions = await rewardsService.getUserTransactions(userId, limit);
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching reward transactions:", error);
+      res.status(500).json({ message: "Failed to fetch reward transactions" });
+    }
+  });
+
+  // Get user's achievements
+  app.get("/api/rewards/achievements", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const achievements = await rewardsService.getUserAchievements(userId);
+      res.json(achievements);
+    } catch (error) {
+      console.error("Error fetching achievements:", error);
+      res.status(500).json({ message: "Failed to fetch achievements" });
+    }
+  });
+
+  // Get leaderboard
+  app.get("/api/rewards/leaderboard", isAuthenticated, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const leaderboard = await rewardsService.getLeaderboard(limit);
+      res.json(leaderboard);
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+      res.status(500).json({ message: "Failed to fetch leaderboard" });
+    }
+  });
+
+  // Process timesheet submission for rewards (called automatically when timesheet is submitted)
+  app.post("/api/rewards/process-submission", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { submissionDate } = req.body;
+      
+      if (!submissionDate) {
+        return res.status(400).json({ message: "Submission date is required" });
+      }
+
+      const result = await rewardsService.processTimesheetSubmission(userId, submissionDate);
+      
+      console.log(`Rewards processed for user ${userId}: +${result.pointsEarned} points, streak: ${result.newStreak}`);
+      
+      res.json({
+        success: true,
+        pointsEarned: result.pointsEarned,
+        newStreak: result.newStreak,
+        achievements: result.achievements,
+        description: result.description
+      });
+    } catch (error) {
+      console.error("Error processing timesheet submission rewards:", error);
+      res.status(500).json({ message: "Failed to process rewards" });
+    }
+  });
+
+  // Admin endpoint to view all user rewards (for debugging and management)
+  app.get("/api/admin/rewards/all-users", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const leaderboard = await rewardsService.getLeaderboard(50); // Get top 50 for admin view
+      res.json(leaderboard);
+    } catch (error) {
+      console.error("Error fetching all user rewards:", error);
+      res.status(500).json({ message: "Failed to fetch all user rewards" });
     }
   });
 

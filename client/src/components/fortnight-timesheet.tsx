@@ -18,6 +18,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
+import RewardNotification from "@/components/rewards-notification";
 
 const FORTNIGHT_START_DATE = new Date(2025, 7, 11); // August 11, 2025 (month is 0-indexed)
 
@@ -53,6 +54,24 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const [pendingSubmission, setPendingSubmission] = useState<(() => void) | null>(null);
   const [jobSearchOpen, setJobSearchOpen] = useState<{[key: string]: boolean}>({});
   const [jobSearchQuery, setJobSearchQuery] = useState<{[key: string]: string}>({});
+  // Rewards notification state
+  const [rewardData, setRewardData] = useState<{
+    show: boolean;
+    pointsEarned: number;
+    newStreak: number;
+    achievements: Array<{
+      achievementName: string;
+      badgeIcon: string;
+      pointsAwarded: number;
+    }>;
+    description: string;
+  }>({
+    show: false,
+    pointsEarned: 0,
+    newStreak: 0,
+    achievements: [],
+    description: ''
+  });
   
   // Zoom state for mobile pinch-to-zoom
   const [zoomScale, setZoomScale] = useState(1);
@@ -725,6 +744,20 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         // Refresh timesheet data to reflect confirmed status
         console.log('🔄 Refreshing timesheet data...');
         await refetchTimesheetEntries();
+        
+        // Process rewards notification if present (staff only)
+        if (data?.rewards && !isAdminView) {
+          const rewards = data.rewards;
+          console.log('🏆 Processing rewards:', rewards);
+          
+          setRewardData({
+            show: true,
+            pointsEarned: rewards.totalPointsEarned || 0,
+            newStreak: rewards.currentStreak || 0,
+            achievements: rewards.newAchievements || [],
+            description: `Great work! You earned points for submitting your timesheet on time.`
+          });
+        }
         
         // Show success animation for timesheet completion
         console.log('✨ Showing success animation...');
@@ -2900,6 +2933,16 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             </div>
           </div>
         )}
+        
+        {/* Rewards Notification */}
+        <RewardNotification 
+          show={rewardData.show}
+          pointsEarned={rewardData.pointsEarned}
+          newStreak={rewardData.newStreak}
+          achievements={rewardData.achievements}
+          description={rewardData.description}
+          onClose={() => setRewardData(prev => ({ ...prev, show: false }))}
+        />
         
         </div>
       </div>

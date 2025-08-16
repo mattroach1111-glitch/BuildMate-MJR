@@ -475,3 +475,166 @@ export type StaffNoteEntry = typeof staffNotesEntries.$inferSelect;
 export type InsertStaffNoteEntry = z.infer<typeof insertStaffNoteEntrySchema>;
 export type StaffNote = typeof staffNotes.$inferSelect;
 export type InsertStaffNote = z.infer<typeof insertStaffNoteSchema>;
+
+// =============================================================================
+// REWARDS SYSTEM TABLES
+// =============================================================================
+
+// Core points tracking for each user
+export const rewardPoints = pgTable("reward_points", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  totalPoints: integer("total_points").notNull().default(0),
+  spentPoints: integer("spent_points").notNull().default(0),
+  availablePoints: integer("available_points").notNull().default(0),
+  currentStreak: integer("current_streak").notNull().default(0), // Current consecutive days
+  longestStreak: integer("longest_streak").notNull().default(0), // All-time best streak
+  lastSubmissionDate: date("last_submission_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// All point transactions (earned and spent)
+export const rewardTransactions = pgTable("reward_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  type: varchar("type", { enum: ["earned", "spent", "bonus", "penalty"] }).notNull(),
+  points: integer("points").notNull(),
+  reason: varchar("reason").notNull(), // "daily_submission", "weekly_bonus", "monthly_achievement", etc.
+  description: text("description"),
+  relatedDate: date("related_date"), // The date this transaction relates to (e.g., timesheet date)
+  metadata: jsonb("metadata"), // Store additional data like streak length, achievements, etc.
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Achievement badges and milestones
+export const rewardAchievements = pgTable("reward_achievements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  achievementType: varchar("achievement_type").notNull(), // "streak_5", "streak_10", "perfect_month", etc.
+  achievementName: varchar("achievement_name").notNull(),
+  description: text("description"),
+  pointsAwarded: integer("points_awarded").notNull().default(0),
+  badgeIcon: varchar("badge_icon"), // Icon name or emoji for the achievement
+  achievedAt: timestamp("achieved_at").defaultNow(),
+});
+
+// Reward redemptions and approval workflow
+export const rewardRedemptions = pgTable("reward_redemptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  rewardType: varchar("reward_type").notNull(), // "extra_break", "early_finish", "coffee_voucher", etc.
+  rewardName: varchar("reward_name").notNull(),
+  pointsCost: integer("points_cost").notNull(),
+  description: text("description"),
+  status: varchar("status", { enum: ["pending", "approved", "redeemed", "expired"] }).notNull().default("pending"),
+  requestedAt: timestamp("requested_at").defaultNow(),
+  approvedAt: timestamp("approved_at"),
+  redeemedAt: timestamp("redeemed_at"),
+  approvedBy: varchar("approved_by").references(() => users.id),
+  notes: text("notes"), // Admin notes for approval/redemption
+});
+
+// Available rewards catalog that admins can configure
+export const rewardCatalog = pgTable("reward_catalog", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  rewardType: varchar("reward_type").notNull(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  pointsCost: integer("points_cost").notNull(),
+  icon: varchar("icon"), // Icon for the reward
+  category: varchar("category").notNull(), // "time_off", "perks", "vouchers", etc.
+  isActive: boolean("is_active").notNull().default(true),
+  maxRedemptionsPerMonth: integer("max_redemptions_per_month").default(null), // null = unlimited
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// =============================================================================
+// REWARDS SYSTEM RELATIONS
+// =============================================================================
+
+export const rewardPointsRelations = relations(rewardPoints, ({ one, many }) => ({
+  user: one(users, {
+    fields: [rewardPoints.userId],
+    references: [users.id],
+  }),
+  transactions: many(rewardTransactions),
+}));
+
+export const rewardTransactionsRelations = relations(rewardTransactions, ({ one }) => ({
+  user: one(users, {
+    fields: [rewardTransactions.userId],
+    references: [users.id],
+  }),
+  rewardPoints: one(rewardPoints, {
+    fields: [rewardTransactions.userId],
+    references: [rewardPoints.userId],
+  }),
+}));
+
+export const rewardAchievementsRelations = relations(rewardAchievements, ({ one }) => ({
+  user: one(users, {
+    fields: [rewardAchievements.userId],
+    references: [users.id],
+  }),
+}));
+
+export const rewardRedemptionsRelations = relations(rewardRedemptions, ({ one }) => ({
+  user: one(users, {
+    fields: [rewardRedemptions.userId],
+    references: [users.id],
+  }),
+  approver: one(users, {
+    fields: [rewardRedemptions.approvedBy],
+    references: [users.id],
+  }),
+}));
+
+// =============================================================================
+// REWARDS SYSTEM INSERT SCHEMAS
+// =============================================================================
+
+export const insertRewardPointsSchema = createInsertSchema(rewardPoints).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertRewardTransactionSchema = createInsertSchema(rewardTransactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertRewardAchievementSchema = createInsertSchema(rewardAchievements).omit({
+  id: true,
+  achievedAt: true,
+});
+
+export const insertRewardRedemptionSchema = createInsertSchema(rewardRedemptions).omit({
+  id: true,
+  requestedAt: true,
+  approvedAt: true,
+  redeemedAt: true,
+});
+
+export const insertRewardCatalogSchema = createInsertSchema(rewardCatalog).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// =============================================================================
+// REWARDS SYSTEM TYPES
+// =============================================================================
+
+export type RewardPoints = typeof rewardPoints.$inferSelect;
+export type InsertRewardPoints = z.infer<typeof insertRewardPointsSchema>;
+export type RewardTransaction = typeof rewardTransactions.$inferSelect;
+export type InsertRewardTransaction = z.infer<typeof insertRewardTransactionSchema>;
+export type RewardAchievement = typeof rewardAchievements.$inferSelect;
+export type InsertRewardAchievement = z.infer<typeof insertRewardAchievementSchema>;
+export type RewardRedemption = typeof rewardRedemptions.$inferSelect;
+export type InsertRewardRedemption = z.infer<typeof insertRewardRedemptionSchema>;
+export type RewardCatalogItem = typeof rewardCatalog.$inferSelect;
+export type InsertRewardCatalogItem = z.infer<typeof insertRewardCatalogSchema>;
