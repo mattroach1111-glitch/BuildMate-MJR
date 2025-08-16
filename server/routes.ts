@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { db } from "./db";
-import { timesheetEntries, laborEntries, users, staffNotes, employees, staffMembers, staffNotesEntries, rewardCatalog } from "@shared/schema";
+import { timesheetEntries, laborEntries, users, staffNotes, employees, staffMembers, staffNotesEntries, rewardCatalog, rewardRules } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { TimesheetPDFGenerator } from "./pdfGenerator";
@@ -3915,9 +3915,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Get prizes from database
+      let prizes: any[] = [];
+      try {
+        const prizesResult = await db.select().from(rewardCatalog).where(eq(rewardCatalog.isActive, true));
+        prizes = prizesResult.map((prize) => ({
+          id: prize.id,
+          title: prize.name,
+          description: prize.description,
+          pointsCost: prize.pointsCost,
+          category: prize.category,
+          stockQuantity: prize.maxRedemptionsPerMonth,
+          isActive: prize.isActive,
+          createdAt: prize.createdAt
+        }));
+      } catch (e) {
+        console.log("reward_catalog table not found, using empty prizes array");
+      }
+
       res.json({
         settings,
-        prizes: [], // Will be implemented when prize catalog is added to database
+        prizes,
         totalPointsAwarded,
         totalRedemptions,
         activeUsers,
@@ -4014,6 +4032,140 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting prize:", error);
       res.status(500).json({ message: "Failed to delete prize" });
+    }
+  });
+
+  // Get reward rules
+  app.get("/api/admin/rewards/rules", isAuthenticated, async (req: any, res) => {
+    try {
+      let rules: any[] = [];
+      try {
+        const rulesResult = await db.select().from(rewardRules).where(eq(rewardRules.isActive, true));
+        rules = rulesResult;
+      } catch (e) {
+        console.log("reward_rules table not found, creating default rules");
+        
+        // Create default time-based rules as requested
+        const defaultRules = [
+          {
+            ruleType: 'daily_timesheet' as const,
+            name: 'Daily Timesheet Submission',
+            description: 'Submit daily timesheet by 5 PM for daily rewards',
+            pointsAwarded: 10,
+            timeDeadline: '17:00',
+            dayDeadline: null,
+            isActive: true
+          },
+          {
+            ruleType: 'fortnight_timesheet' as const,
+            name: 'Fortnightly Timesheet Submission',
+            description: 'Submit fortnightly timesheet by Friday 6 PM for weekly rewards',
+            pointsAwarded: 50,
+            timeDeadline: '18:00',
+            dayDeadline: 'friday',
+            isActive: true
+          }
+        ];
+
+        try {
+          for (const rule of defaultRules) {
+            await db.insert(rewardRules).values(rule);
+          }
+          const rulesResult = await db.select().from(rewardRules).where(eq(rewardRules.isActive, true));
+          rules = rulesResult;
+        } catch (insertError) {
+          console.log("Could not insert default rules:", insertError);
+        }
+      }
+      
+      res.json(rules);
+    } catch (error) {
+      console.error("Error fetching reward rules:", error);
+      res.status(500).json({ message: "Failed to fetch reward rules" });
+    }
+  });
+
+  // Add new reward rule
+  app.post("/api/admin/rewards/rules", isAuthenticated, async (req: any, res) => {
+    try {
+      const { ruleType, name, description, pointsAwarded, timeDeadline, dayDeadline } = req.body;
+      
+      if (!ruleType || !name || !pointsAwarded || !timeDeadline) {
+        return res.status(400).json({ message: "Rule type, name, points awarded, and time deadline are required" });
+      }
+
+      const newRule = await db.insert(rewardRules).values({
+        ruleType,
+        name,
+        description,
+        pointsAwarded: parseInt(pointsAwarded),
+        timeDeadline,
+        dayDeadline,
+        isActive: true
+      }).returning();
+
+      console.log("New reward rule saved to database:", newRule[0]);
+      
+      res.json({ 
+        success: true, 
+        message: "Reward rule added successfully",
+        rule: newRule[0]
+      });
+    } catch (error) {
+      console.error("Error adding reward rule:", error);
+      res.status(500).json({ message: "Failed to add reward rule" });
+    }
+  });
+
+  // Update reward rule
+  app.put("/api/admin/rewards/rules/:ruleId", isAuthenticated, async (req: any, res) => {
+    try {
+      const { ruleId } = req.params;
+      const { ruleType, name, description, pointsAwarded, timeDeadline, dayDeadline, isActive } = req.body;
+
+      const updatedRule = await db.update(rewardRules)
+        .set({
+          ruleType,
+          name,
+          description,
+          pointsAwarded: parseInt(pointsAwarded),
+          timeDeadline,
+          dayDeadline,
+          isActive,
+          updatedAt: new Date()
+        })
+        .where(eq(rewardRules.id, ruleId))
+        .returning();
+
+      console.log("Reward rule updated:", updatedRule[0]);
+      
+      res.json({ 
+        success: true, 
+        message: "Reward rule updated successfully",
+        rule: updatedRule[0]
+      });
+    } catch (error) {
+      console.error("Error updating reward rule:", error);
+      res.status(500).json({ message: "Failed to update reward rule" });
+    }
+  });
+
+  // Delete reward rule
+  app.delete("/api/admin/rewards/rules/:ruleId", isAuthenticated, async (req: any, res) => {
+    try {
+      const { ruleId } = req.params;
+      
+      await db.delete(rewardRules).where(eq(rewardRules.id, ruleId));
+      
+      console.log("Reward rule deleted from database:", ruleId);
+      
+      res.json({ 
+        success: true, 
+        message: "Reward rule deleted successfully" 
+      });
+    } catch (error) {
+      console.error("Error deleting reward rule:", error);
+      res.status(500).json({ message: "Failed to delete reward rule" });
     }
   });
 

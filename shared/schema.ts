@@ -550,6 +550,20 @@ export const rewardCatalog = pgTable("reward_catalog", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Reward rules for time-based point awarding
+export const rewardRules = pgTable("reward_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ruleType: varchar("rule_type", { enum: ["daily_timesheet", "weekly_timesheet", "fortnight_timesheet"] }).notNull(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  pointsAwarded: integer("points_awarded").notNull(),
+  timeDeadline: varchar("time_deadline").notNull(), // "17:00" for 5PM, "18:00" for 6PM etc
+  dayDeadline: varchar("day_deadline"), // "friday" for weekly rules, null for daily
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // =============================================================================
 // REWARDS SYSTEM RELATIONS
 // =============================================================================
@@ -624,6 +638,12 @@ export const insertRewardCatalogSchema = createInsertSchema(rewardCatalog).omit(
   updatedAt: true,
 });
 
+export const insertRewardRulesSchema = createInsertSchema(rewardRules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // =============================================================================
 // REWARDS SYSTEM TYPES
 // =============================================================================
@@ -638,3 +658,5 @@ export type RewardRedemption = typeof rewardRedemptions.$inferSelect;
 export type InsertRewardRedemption = z.infer<typeof insertRewardRedemptionSchema>;
 export type RewardCatalogItem = typeof rewardCatalog.$inferSelect;
 export type InsertRewardCatalogItem = z.infer<typeof insertRewardCatalogSchema>;
+export type RewardRule = typeof rewardRules.$inferSelect;
+export type InsertRewardRule = z.infer<typeof insertRewardRulesSchema>;

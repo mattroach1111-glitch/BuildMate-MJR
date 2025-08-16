@@ -36,6 +36,18 @@ interface Prize {
   createdAt: string;
 }
 
+interface RewardRule {
+  id: string;
+  ruleType: 'daily_timesheet' | 'weekly_timesheet' | 'fortnight_timesheet';
+  name: string;
+  description: string;
+  pointsAwarded: number;
+  timeDeadline: string;
+  dayDeadline?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
 interface AdminRewardsData {
   settings: RewardSettings;
   prizes: Prize[];
@@ -63,9 +75,23 @@ const AdminRewards: React.FC = () => {
     category: 'gift_card' as const,
     stockQuantity: 1
   });
+  const [showAddRule, setShowAddRule] = useState(false);
+  const [newRule, setNewRule] = useState({
+    ruleType: 'daily_timesheet' as const,
+    name: '',
+    description: '',
+    pointsAwarded: 10,
+    timeDeadline: '17:00',
+    dayDeadline: ''
+  });
 
   const { data: adminData, isLoading, refetch } = useQuery<AdminRewardsData>({
     queryKey: ['/api/admin/rewards/dashboard'],
+    refetchInterval: 30000,
+  });
+
+  const { data: rewardRules, refetch: refetchRules } = useQuery<RewardRule[]>({
+    queryKey: ['/api/admin/rewards/rules'],
     refetchInterval: 30000,
   });
 
@@ -144,6 +170,55 @@ const AdminRewards: React.FC = () => {
     }
   };
 
+  const addRuleMutation = useMutation({
+    mutationFn: async (rule: any) => {
+      return await apiRequest('POST', '/api/admin/rewards/rules', rule);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Rule Added",
+        description: "New reward rule has been added",
+      });
+      setShowAddRule(false);
+      setNewRule({
+        ruleType: 'daily_timesheet',
+        name: '',
+        description: '',
+        pointsAwarded: 10,
+        timeDeadline: '17:00',
+        dayDeadline: ''
+      });
+      refetchRules();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add reward rule",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteRuleMutation = useMutation({
+    mutationFn: async (ruleId: string) => {
+      return await apiRequest('DELETE', `/api/admin/rewards/rules/${ruleId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Rule Deleted",
+        description: "Reward rule has been removed",
+      });
+      refetchRules();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete reward rule",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleAddPrize = () => {
     if (!newPrize.title || !newPrize.description || newPrize.pointsCost <= 0) {
       toast({
@@ -154,6 +229,18 @@ const AdminRewards: React.FC = () => {
       return;
     }
     addPrizeMutation.mutate(newPrize);
+  };
+
+  const handleAddRule = () => {
+    if (!newRule.name || !newRule.description || newRule.pointsAwarded <= 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    addRuleMutation.mutate(newRule);
   };
 
   const getCategoryBadgeColor = (category: string) => {
@@ -241,9 +328,10 @@ const AdminRewards: React.FC = () => {
         </div>
 
         <Tabs defaultValue="settings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="settings" data-testid="tab-settings">Point Settings</TabsTrigger>
             <TabsTrigger value="prizes" data-testid="tab-prizes">Prize Catalog</TabsTrigger>
+            <TabsTrigger value="rules" data-testid="tab-rules">Reward Rules</TabsTrigger>
             <TabsTrigger value="analytics" data-testid="tab-analytics">Analytics</TabsTrigger>
           </TabsList>
 
@@ -555,6 +643,191 @@ const AdminRewards: React.FC = () => {
                     <Gift className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                     <p className="text-gray-600">No prizes added yet</p>
                     <p className="text-sm text-gray-500">Add your first prize to get started</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="rules">
+            <Card data-testid="card-reward-rules">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Reward Rules</CardTitle>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Configure time-based rules for point awarding
+                  </p>
+                </div>
+                <Dialog open={showAddRule} onOpenChange={setShowAddRule}>
+                  <DialogTrigger asChild>
+                    <Button data-testid="button-add-rule">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Rule
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Add New Reward Rule</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="ruleType">Rule Type *</Label>
+                        <select
+                          id="ruleType"
+                          value={newRule.ruleType}
+                          onChange={(e) => setNewRule(prev => ({ ...prev, ruleType: e.target.value as any }))}
+                          className="mt-1 w-full p-2 border rounded-md"
+                        >
+                          <option value="daily_timesheet">Daily Timesheet</option>
+                          <option value="fortnight_timesheet">Fortnightly Timesheet</option>
+                          <option value="weekly_timesheet">Weekly Timesheet</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label htmlFor="ruleName">Rule Name *</Label>
+                        <Input
+                          id="ruleName"
+                          placeholder="e.g., Daily Submission by 5 PM"
+                          value={newRule.name}
+                          onChange={(e) => setNewRule(prev => ({ ...prev, name: e.target.value }))}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="ruleDescription">Description *</Label>
+                        <Textarea
+                          id="ruleDescription"
+                          placeholder="Describe when this rule applies..."
+                          value={newRule.description}
+                          onChange={(e) => setNewRule(prev => ({ ...prev, description: e.target.value }))}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="rulePoints">Points Awarded *</Label>
+                        <Input
+                          id="rulePoints"
+                          type="number"
+                          placeholder="10"
+                          value={newRule.pointsAwarded || ''}
+                          onChange={(e) => setNewRule(prev => ({ ...prev, pointsAwarded: parseInt(e.target.value) || 0 }))}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="timeDeadline">Time Deadline (24hr format) *</Label>
+                        <Input
+                          id="timeDeadline"
+                          placeholder="17:00"
+                          value={newRule.timeDeadline}
+                          onChange={(e) => setNewRule(prev => ({ ...prev, timeDeadline: e.target.value }))}
+                          className="mt-1"
+                        />
+                      </div>
+                      {(newRule.ruleType === 'weekly_timesheet' || newRule.ruleType === 'fortnight_timesheet') && (
+                        <div>
+                          <Label htmlFor="dayDeadline">Day Deadline (optional)</Label>
+                          <select
+                            id="dayDeadline"
+                            value={newRule.dayDeadline}
+                            onChange={(e) => setNewRule(prev => ({ ...prev, dayDeadline: e.target.value }))}
+                            className="mt-1 w-full p-2 border rounded-md"
+                          >
+                            <option value="">No specific day</option>
+                            <option value="monday">Monday</option>
+                            <option value="tuesday">Tuesday</option>
+                            <option value="wednesday">Wednesday</option>
+                            <option value="thursday">Thursday</option>
+                            <option value="friday">Friday</option>
+                            <option value="saturday">Saturday</option>
+                            <option value="sunday">Sunday</option>
+                          </select>
+                        </div>
+                      )}
+                      <div className="flex gap-3 pt-4">
+                        <Button
+                          onClick={handleAddRule}
+                          disabled={addRuleMutation.isPending}
+                          className="flex-1"
+                        >
+                          {addRuleMutation.isPending ? "Adding..." : "Add Rule"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowAddRule(false)}
+                          className="flex-1"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </CardHeader>
+              <CardContent>
+                {rewardRules && rewardRules.length > 0 ? (
+                  <div className="space-y-4">
+                    {rewardRules.map((rule) => (
+                      <div key={rule.id} className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold">{rule.name}</h3>
+                            <p className="text-sm text-gray-600 mt-1">{rule.description}</p>
+                          </div>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Rule</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "{rule.name}"? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteRuleMutation.mutate(rule.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="font-medium">Type:</span> {rule.ruleType.replace('_', ' ')}
+                          </div>
+                          <div>
+                            <span className="font-medium">Points:</span> {rule.pointsAwarded}
+                          </div>
+                          <div>
+                            <span className="font-medium">Time Deadline:</span> {rule.timeDeadline}
+                          </div>
+                          {rule.dayDeadline && (
+                            <div>
+                              <span className="font-medium">Day:</span> {rule.dayDeadline}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Badge className={rule.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                            {rule.isActive ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Settings className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">No reward rules configured</p>
+                    <p className="text-sm text-gray-500">Add your first rule to set up time-based point awarding</p>
                   </div>
                 )}
               </CardContent>
