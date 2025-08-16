@@ -7,6 +7,7 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 
 # User Preferences
 Preferred communication style: Simple, everyday language.
+Data backup strategy: Comprehensive multi-location backup approach with automated scripts for database exports, source code versioning, and file storage redundancy to protect against platform failures.
 
 # System Architecture
 

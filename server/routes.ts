@@ -2192,7 +2192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (entries.length === 0) {
         return res.json({ 
-          message: `No timesheet entries found for ${employee.firstName} ${employee.lastName}`,
+          message: `No timesheet entries found for ${employee.name}`,
           deletedCount: 0 
         });
       }
@@ -2213,9 +2213,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🗑️ Admin cleared ${entries.length} timesheet entries for employee ${employeeId}`);
       
       res.json({ 
-        message: `Successfully cleared ${entries.length} timesheet entries for ${employee.firstName} ${employee.lastName}`,
+        message: `Successfully cleared ${entries.length} timesheet entries for ${employee.name}`,
         deletedCount: entries.length,
-        employeeName: `${employee.firstName} ${employee.lastName}`
+        employeeName: `${employee.name}`
       });
     } catch (error) {
       console.error("Error clearing employee timesheets:", error);
