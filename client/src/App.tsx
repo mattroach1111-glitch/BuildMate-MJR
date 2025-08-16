@@ -16,6 +16,7 @@ import FortnightTimesheetView from "@/pages/fortnight-timesheet-view";
 import StaffTimesheet from "@/pages/staff-timesheet";
 import StaffNotes from "@/pages/staff-notes-clean";
 import RewardsDashboard from "@/pages/rewards-dashboard";
+import AdminRewards from "@/pages/admin-rewards";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -41,6 +42,7 @@ function Router() {
           <Route path="/staff" component={AdminDashboard} />
           <Route path="/staff-notes" component={StaffNotes} />
           <Route path="/rewards" component={RewardsDashboard} />
+          <Route path="/admin/rewards" component={AdminRewards} />
         </>
       ) : (
         <>

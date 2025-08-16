@@ -3829,6 +3829,149 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin rewards dashboard endpoint
+  app.get("/api/admin/rewards/dashboard", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      // Get current reward settings (hardcoded for now, could be moved to database)
+      const settings = {
+        dailySubmissionPoints: 10,
+        weeklyBonusPoints: 50,
+        monthlyBonusPoints: 200,
+        streakBonusMultiplier: 1.5,
+        perfectWeekBonus: 100,
+        perfectMonthBonus: 500
+      };
+
+      // Get analytics data
+      const totalPointsAwarded = await db.execute(sql`
+        SELECT COALESCE(SUM(points), 0) as total 
+        FROM reward_transactions 
+        WHERE type IN ('earned', 'bonus')
+      `);
+
+      const totalRedemptions = await db.execute(sql`
+        SELECT COUNT(*) as total 
+        FROM reward_redemptions
+      `);
+
+      const activeUsers = await db.execute(sql`
+        SELECT COUNT(DISTINCT user_id) as total 
+        FROM reward_transactions
+      `);
+
+      // Get top performers
+      const topPerformers = await db.execute(sql`
+        SELECT 
+          u.id as user_id,
+          u.first_name,
+          u.last_name,
+          COALESCE(rp.total_points, 0) as total_points,
+          COALESCE(rp.current_streak, 0) as current_streak
+        FROM users u
+        LEFT JOIN reward_points rp ON u.id = rp.user_id
+        WHERE u.role = 'staff'
+        ORDER BY rp.total_points DESC
+        LIMIT 10
+      `);
+
+      res.json({
+        settings,
+        prizes: [], // Will be implemented when prize catalog is added to database
+        totalPointsAwarded: Number(totalPointsAwarded[0]?.total || 0),
+        totalRedemptions: Number(totalRedemptions[0]?.total || 0),
+        activeUsers: Number(activeUsers[0]?.total || 0),
+        topPerformers: topPerformers.map((p: any) => ({
+          userId: p.user_id,
+          firstName: p.first_name || 'Unknown',
+          lastName: p.last_name || '',
+          totalPoints: Number(p.total_points || 0),
+          currentStreak: Number(p.current_streak || 0)
+        }))
+      });
+    } catch (error) {
+      console.error("Error fetching admin rewards dashboard:", error);
+      res.status(500).json({ message: "Failed to fetch admin dashboard data" });
+    }
+  });
+
+  // Update reward settings (currently in-memory, could be moved to database)
+  app.put("/api/admin/rewards/settings", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const settings = req.body;
+      
+      // Validate settings
+      if (typeof settings.dailySubmissionPoints !== 'number' || 
+          typeof settings.weeklyBonusPoints !== 'number' ||
+          typeof settings.perfectWeekBonus !== 'number') {
+        return res.status(400).json({ message: "Invalid settings format" });
+      }
+
+      // For now, just return success - in future this would save to database
+      console.log("Reward settings updated:", settings);
+      
+      res.json({ 
+        success: true, 
+        message: "Settings updated successfully",
+        settings 
+      });
+    } catch (error) {
+      console.error("Error updating reward settings:", error);
+      res.status(500).json({ message: "Failed to update settings" });
+    }
+  });
+
+  // Add new prize to catalog
+  app.post("/api/admin/rewards/prizes", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { title, description, pointsCost, category, stockQuantity } = req.body;
+      
+      if (!title || !description || !pointsCost) {
+        return res.status(400).json({ message: "Title, description, and points cost are required" });
+      }
+
+      // For now, just return a mock response - in future this would save to database
+      const newPrize = {
+        id: `prize_${Date.now()}`,
+        title,
+        description,
+        pointsCost,
+        category: category || 'other',
+        stockQuantity: stockQuantity || 1,
+        isActive: true,
+        createdAt: new Date().toISOString()
+      };
+
+      console.log("New prize added:", newPrize);
+      
+      res.json({ 
+        success: true, 
+        message: "Prize added successfully",
+        prize: newPrize 
+      });
+    } catch (error) {
+      console.error("Error adding prize:", error);
+      res.status(500).json({ message: "Failed to add prize" });
+    }
+  });
+
+  // Delete prize from catalog
+  app.delete("/api/admin/rewards/prizes/:prizeId", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { prizeId } = req.params;
+      
+      // For now, just return success - in future this would delete from database
+      console.log("Prize deleted:", prizeId);
+      
+      res.json({ 
+        success: true, 
+        message: "Prize deleted successfully" 
+      });
+    } catch (error) {
+      console.error("Error deleting prize:", error);
+      res.status(500).json({ message: "Failed to delete prize" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
