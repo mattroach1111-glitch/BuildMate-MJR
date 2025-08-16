@@ -2177,99 +2177,8 @@ export default function AdminDashboard() {
                     </div>
                     
                     {isExpanded && (
-                      <div className={`mt-3 ${viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3" : "space-y-1.5"}`}>
-                        {groupJobs.map((job) => 
-                          viewMode === 'grid' ? (
-                            <Card 
-                              key={job.id} 
-                              className="cursor-pointer hover:shadow-md transition-shadow bg-white relative"
-                              onClick={() => setSelectedJob(job.id)}
-                              data-testid={`card-job-${job.id}`}
-                            >
-                            <CardHeader className="pb-2 p-3">
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <CardTitle className="text-sm leading-tight truncate">{job.jobAddress}</CardTitle>
-                                  {job.clientName && (
-                                    <p className="text-xs text-muted-foreground mt-1 truncate">{job.clientName}</p>
-                                  )}
-                                  <p className="text-xs text-muted-foreground mt-0.5">
-                                    {job.createdAt ? `Added ${formatJobDate(job.createdAt)}` : 'Date not available'}
-                                  </p>
-                                </div>
-                                <div className="flex items-center gap-1 shrink-0">
-                                  <div onClick={(e) => e.stopPropagation()}>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-8 w-8 p-0 bg-blue-50 hover:bg-blue-100 border-blue-200"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedJobForProgress(job.id);
-                                      }}
-                                      data-testid={`progress-${job.id}`}
-                                      title="View Progress Analytics"
-                                    >
-                                      <BarChart3 className="h-4 w-4 text-blue-600" />
-                                    </Button>
-                                  </div>
-                                  <div onClick={(e) => e.stopPropagation()}>
-                                    <Select 
-                                      value={job.status} 
-                                      onValueChange={(value) => updateJobStatusMutation.mutate({ jobId: job.id, status: value })}
-                                    >
-                                      <SelectTrigger 
-                                        className="w-auto h-7 text-xs border-0 bg-transparent p-1 focus:ring-0"
-                                        data-testid={`select-status-${job.id}`}
-                                      >
-                                        <Badge className={`${getStatusColor(job.status)} text-xs`}>
-                                          {formatStatus(job.status)}
-                                        </Badge>
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="new_job">New Job</SelectItem>
-                                        <SelectItem value="job_in_progress">Job In Progress</SelectItem>
-                                        <SelectItem value="job_on_hold">Job On Hold</SelectItem>
-                                        <SelectItem value="job_complete">Job Complete</SelectItem>
-                                        <SelectItem value="ready_for_billing">Ready For Billing</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  {job.status === 'ready_for_billing' && (
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <Button 
-                                          variant="ghost" 
-                                          size="sm" 
-                                          className="h-7 w-7 p-0"
-                                          onClick={(e) => e.stopPropagation()}
-                                          data-testid={`menu-${job.id}`}
-                                        >
-                                          <MoreVertical className="h-3 w-3" />
-                                        </Button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent align="end">
-                                        <DropdownMenuItem 
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
-                                              deleteJobMutation.mutate(job.id);
-                                            }
-                                          }}
-                                          className="text-red-600 focus:text-red-600"
-                                          data-testid={`delete-job-${job.id}`}
-                                        >
-                                          <Trash2 className="h-4 w-4 mr-2" />
-                                          Delete Job
-                                        </DropdownMenuItem>
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
-                                  )}
-                                </div>
-                              </div>
-                            </CardHeader>
-                            </Card>
-                          ) : (
+                      <div className="mt-3 space-y-1.5">
+                        {groupJobs.map((job) => (
                             <Card 
                               key={job.id} 
                               className="cursor-pointer hover:shadow-md transition-shadow bg-white relative border-l-4 border-r-4"
@@ -2360,8 +2269,7 @@ export default function AdminDashboard() {
                                 </div>
                               </CardContent>
                             </Card>
-                          )
-                        )}
+                        ))}
                       </div>
                     )}
                   </div>
