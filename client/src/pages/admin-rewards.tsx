@@ -72,17 +72,22 @@ const AdminRewards: React.FC = () => {
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (settings: RewardSettings) => {
+      console.log('Sending settings update:', settings);
       return await apiRequest('PUT', '/api/admin/rewards/settings', settings);
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
+      console.log('Settings update successful:', response);
       toast({
         title: "Settings Updated",
         description: "Reward settings have been updated successfully",
       });
       setIsEditingSettings(false);
       setEditedSettings(null);
+      // Invalidate all related queries
       queryClient.invalidateQueries({ queryKey: ['/api/admin/rewards/dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/rewards/rules'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/rewards/settings'] });
+      // Also force refetch
+      queryClient.refetchQueries({ queryKey: ['/api/rewards/settings'] });
     },
     onError: (error) => {
       console.error("Settings update error:", error);

@@ -15,7 +15,16 @@ interface RewardSettings {
 const RewardsRules: React.FC = () => {
   const { data: settings, isLoading } = useQuery<RewardSettings>({
     queryKey: ['/api/rewards/settings'],
+    refetchInterval: 5000, // Refetch every 5 seconds for testing
+    staleTime: 0, // Always consider data stale
   });
+
+  // Debug logging
+  React.useEffect(() => {
+    if (settings) {
+      console.log('Rewards Rules - Current settings:', settings);
+    }
+  }, [settings]);
 
   if (isLoading) {
     return (
