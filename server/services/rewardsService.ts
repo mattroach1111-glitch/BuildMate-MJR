@@ -20,10 +20,11 @@ import { format, subDays, startOfDay, endOfDay, isWeekend, startOfWeek, endOfWee
 // REWARD CONFIGURATION
 // =============================================================================
 
-const REWARD_CONFIG = {
+let REWARD_CONFIG = {
   DAILY_SUBMISSION_POINTS: 10,
   WEEKEND_SUBMISSION_BONUS: 5, // Extra points for weekend submissions
   WEEKLY_COMPLETION_BONUS: 25, // Bonus for completing all 5 weekdays
+  PERFECT_WEEK_BONUS: 100, // Bonus for completing all 7 days including weekends
   STREAK_MULTIPLIER: 1.2, // 20% bonus for streaks >= 5 days
   
   // Achievement thresholds
@@ -43,6 +44,21 @@ const REWARD_CONFIG = {
 // =============================================================================
 
 export class RewardsService {
+  // Get current reward configuration for display in rules/admin
+  getRewardConfiguration() {
+    return {
+      ...REWARD_CONFIG,
+      // Calculate derived values for display
+      DAILY_SUBMISSION_WITH_STREAK: Math.round(REWARD_CONFIG.DAILY_SUBMISSION_POINTS * REWARD_CONFIG.STREAK_MULTIPLIER),
+      WEEKEND_SUBMISSION_WITH_STREAK: Math.round((REWARD_CONFIG.DAILY_SUBMISSION_POINTS + REWARD_CONFIG.WEEKEND_SUBMISSION_BONUS) * REWARD_CONFIG.STREAK_MULTIPLIER)
+    };
+  }
+
+  // Update reward configuration (for admin use)
+  updateRewardConfiguration(updates: Partial<typeof REWARD_CONFIG>) {
+    REWARD_CONFIG = { ...REWARD_CONFIG, ...updates };
+    return this.getRewardConfiguration();
+  }
   
   // Initialize user's reward points record
   async initializeUserRewards(userId: string): Promise<RewardPoints> {

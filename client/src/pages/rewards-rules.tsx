@@ -3,9 +3,41 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, AlertTriangle, Trophy, Zap, Gift, Crown, Target, Calendar, Clock, XCircle } from "lucide-react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 
 export default function RewardsRules() {
   const [, setLocation] = useLocation();
+
+  // Fetch dynamic reward configuration
+  const { data: config, isLoading } = useQuery({
+    queryKey: ["/api/rewards/config"],
+    queryFn: async () => {
+      const response = await fetch("/api/rewards/config");
+      if (!response.ok) {
+        throw new Error("Failed to fetch reward configuration");
+      }
+      return response.json();
+    }
+  });
+
+  // Show loading state while fetching config
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Use fetched config or fallback values
+  const points = config || {
+    DAILY_SUBMISSION_POINTS: 10,
+    WEEKEND_SUBMISSION_BONUS: 5,
+    WEEKLY_COMPLETION_BONUS: 25,
+    PERFECT_WEEK_BONUS: 100,
+    DAILY_SUBMISSION_WITH_STREAK: 12,
+    WEEKEND_SUBMISSION_WITH_STREAK: 18
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -77,7 +109,7 @@ export default function RewardsRules() {
                   <Calendar className="h-4 w-4 text-blue-600" />
                   <span className="font-semibold">Daily Submission</span>
                 </div>
-                <p className="text-2xl font-bold text-blue-600 mb-1">10 points</p>
+                <p className="text-2xl font-bold text-blue-600 mb-1">{points.DAILY_SUBMISSION_POINTS} points</p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">For each timesheet submitted</p>
               </div>
               
@@ -86,7 +118,7 @@ export default function RewardsRules() {
                   <Clock className="h-4 w-4 text-green-600" />
                   <span className="font-semibold">Weekend Bonus</span>
                 </div>
-                <p className="text-2xl font-bold text-green-600 mb-1">+5 points</p>
+                <p className="text-2xl font-bold text-green-600 mb-1">+{points.WEEKEND_SUBMISSION_BONUS} points</p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">Extra points for weekend work</p>
               </div>
             </div>
@@ -107,9 +139,9 @@ export default function RewardsRules() {
                 <Target className="h-4 w-4 text-orange-600" />
                 <span className="font-semibold">5+ Day Streak</span>
               </div>
-              <p className="text-2xl font-bold text-orange-600 mb-1">+20% bonus</p>
+              <p className="text-2xl font-bold text-orange-600 mb-1">+{Math.round((points.STREAK_MULTIPLIER - 1) * 100)}% bonus</p>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Extra 20% points on daily submissions when you have a 5+ day streak
+                Extra {Math.round((points.STREAK_MULTIPLIER - 1) * 100)}% points on daily submissions when you have a 5+ day streak
               </p>
             </div>
             <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg">
@@ -136,7 +168,7 @@ export default function RewardsRules() {
                   <Calendar className="h-4 w-4 text-purple-600" />
                   <span className="font-semibold">Weekly Completion</span>
                 </div>
-                <p className="text-2xl font-bold text-purple-600 mb-1">50 points</p>
+                <p className="text-2xl font-bold text-purple-600 mb-1">{points.WEEKLY_COMPLETION_BONUS} points</p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
                   Complete all 5 weekdays (Monday-Friday) with no sick/personal/annual leave
                 </p>
@@ -147,7 +179,7 @@ export default function RewardsRules() {
                   <Crown className="h-4 w-4 text-indigo-600" />
                   <span className="font-semibold">Perfect Week</span>
                 </div>
-                <p className="text-2xl font-bold text-indigo-600 mb-1">100 points</p>
+                <p className="text-2xl font-bold text-indigo-600 mb-1">{points.PERFECT_WEEK_BONUS} points</p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
                   Complete all 7 days including weekends with no sick/personal/annual leave
                 </p>

@@ -3719,6 +3719,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =============================================================================
 
   // Get user's reward dashboard (points, transactions, achievements, leaderboard)
+  // Get reward configuration (public endpoint for rules display)
+  app.get("/api/rewards/config", async (req: any, res) => {
+    try {
+      const config = rewardsService.getRewardConfiguration();
+      res.json(config);
+    } catch (error) {
+      console.error("Error fetching reward configuration:", error);
+      res.status(500).json({ message: "Failed to fetch reward configuration" });
+    }
+  });
+
   app.get("/api/rewards/dashboard", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
