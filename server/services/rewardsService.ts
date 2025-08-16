@@ -494,7 +494,7 @@ export class RewardsService {
 
     // Check if any entry has leave types in the materials field (when jobId is null)
     // RDO is excluded from breaking streaks/bonuses per user request
-    const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave'];
+    const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay'];
     return entries.some(entry => 
       !entry.jobId && entry.materials && leaveTypes.includes(entry.materials)
     );
@@ -519,7 +519,7 @@ export class RewardsService {
 
     // Check if any entry has leave types in the materials field (when jobId is null)
     // RDO is excluded from breaking streaks/bonuses per user request
-    const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave'];
+    const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay'];
     return entries.some(entry => 
       !entry.jobId && entry.materials && leaveTypes.includes(entry.materials)
     );
@@ -549,7 +549,7 @@ export class RewardsService {
 
     // Check if any entry has leave types in the materials field (when jobId is null)
     // RDO is excluded from breaking streaks/bonuses per user request
-    const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave'];
+    const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay'];
     return entries.some(entry => 
       !entry.jobId && entry.materials && leaveTypes.includes(entry.materials)
     );
