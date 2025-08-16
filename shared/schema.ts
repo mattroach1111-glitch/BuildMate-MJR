@@ -167,7 +167,6 @@ export const staffMembers = pgTable("staff_members", {
 });
 
 export type StaffMember = typeof staffMembers.$inferSelect;
-export type InsertStaffMember = typeof staffMembers.$inferInsert;
 
 export const staffNotes = pgTable("staff_notes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
