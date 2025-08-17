@@ -6,7 +6,7 @@ import { db } from "./db";
 import { 
   timesheetEntries, laborEntries, users, staffNotes, employees, staffMembers, 
   staffNotesEntries, rewardCatalog, rewardSettings, jobs, materials, subTrades, otherCosts, 
-  tipFees, jobFiles
+  tipFees, jobFiles, jobNotes
 } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
@@ -115,6 +115,7 @@ import {
   insertTipFeeSchema,
   insertTimesheetEntrySchema,
   insertJobFileSchema,
+  insertJobNoteSchema,
   insertNotificationSchema,
   insertStaffMemberSchema,
   insertStaffNoteEntrySchema,
@@ -769,6 +770,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching job timesheets:", error);
       res.status(500).json({ message: "Failed to fetch job timesheets" });
+    }
+  });
+
+  // Job notes endpoints
+  app.get("/api/jobs/:id/notes", isAuthenticated, async (req: any, res) => {
+    try {
+      const jobNotes = await storage.getJobNotes(req.params.id);
+      res.json(jobNotes);
+    } catch (error) {
+      console.error("Error fetching job notes:", error);
+      res.status(500).json({ message: "Failed to fetch job notes" });
+    }
+  });
+
+  app.post("/api/jobs/:id/notes", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const validatedData = insertJobNoteSchema.parse({
+        ...req.body,
+        jobId: req.params.id,
+        userId: user.id,
+      });
+
+      const newNote = await storage.createJobNote(validatedData);
+      res.json(newNote);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid note data" });
+      }
+      console.error("Error creating job note:", error);
+      res.status(500).json({ message: "Failed to create job note" });
+    }
+  });
+
+  app.patch("/api/job-notes/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const validatedData = insertJobNoteSchema.partial().parse(req.body);
+      const updatedNote = await storage.updateJobNote(req.params.id, validatedData);
+      res.json(updatedNote);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid note data" });
+      }
+      console.error("Error updating job note:", error);
+      res.status(500).json({ message: "Failed to update job note" });
+    }
+  });
+
+  app.delete("/api/job-notes/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      await storage.deleteJobNote(req.params.id);
+      res.json({ message: "Job note deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting job note:", error);
+      res.status(500).json({ message: "Failed to delete job note" });
     }
   });
 

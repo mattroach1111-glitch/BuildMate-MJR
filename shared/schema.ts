@@ -63,6 +63,15 @@ export const jobs = pgTable("jobs", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const jobNotes = pgTable("job_notes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobId: varchar("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  noteText: text("note_text").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const otherCosts = pgTable("other_costs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   jobId: varchar("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
@@ -215,6 +224,7 @@ export const jobsRelations = relations(jobs, ({ many }) => ({
   tipFees: many(tipFees),
   timesheetEntries: many(timesheetEntries),
   jobFiles: many(jobFiles),
+  jobNotes: many(jobNotes),
 }));
 
 export const laborEntriesRelations = relations(laborEntries, ({ one }) => ({
@@ -281,6 +291,17 @@ export const jobFilesRelations = relations(jobFiles, ({ one }) => ({
 export const notificationsRelations = relations(notifications, ({ one }) => ({
   user: one(users, {
     fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));
+
+export const jobNotesRelations = relations(jobNotes, ({ one }) => ({
+  job: one(jobs, {
+    fields: [jobNotes.jobId],
+    references: [jobs.id],
+  }),
+  user: one(users, {
+    fields: [jobNotes.userId],
     references: [users.id],
   }),
 }));
@@ -381,6 +402,12 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
+export const insertJobNoteSchema = createInsertSchema(jobNotes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Staff Members insert schemas
 export const insertStaffMemberSchema = createInsertSchema(staffMembers).omit({
   createdAt: true,
@@ -465,6 +492,8 @@ export type JobFile = typeof jobFiles.$inferSelect;
 export type InsertJobFile = z.infer<typeof insertJobFileSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type JobNote = typeof jobNotes.$inferSelect;
+export type InsertJobNote = z.infer<typeof insertJobNoteSchema>;
 export type EmailProcessingLog = typeof emailProcessingLogs.$inferSelect;
 export type InsertEmailProcessingLog = z.infer<typeof insertEmailProcessingLogSchema>;
 export type EmailProcessedDocument = typeof emailProcessedDocuments.$inferSelect;

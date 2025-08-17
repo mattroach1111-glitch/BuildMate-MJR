@@ -16,8 +16,8 @@ import { generateJobPDF } from "@/lib/pdfGenerator";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { OrientationToggle } from "@/components/orientation-toggle";
 import { debounce } from "lodash";
-import { Upload, Download, Trash2, FileText, Clock, X, Edit, Mail, Users, RefreshCw } from "lucide-react";
-import type { Job, LaborEntry, Material, SubTrade, OtherCost, TipFee, JobFile } from "@shared/schema";
+import { Upload, Download, Trash2, FileText, Clock, X, Edit, Mail, Users, RefreshCw, MessageSquare, Plus } from "lucide-react";
+import type { Job, LaborEntry, Material, SubTrade, OtherCost, TipFee, JobFile, JobNote } from "@shared/schema";
 
 interface JobSheetModalProps {
   jobId: string;
@@ -74,6 +74,12 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   
   // Labor entry editing states
   
+  // Job notes states
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [newNoteText, setNewNoteText] = useState("");
+  const [editingNote, setEditingNote] = useState<string | null>(null);
+  const [editNoteText, setEditNoteText] = useState("");
+  
   // Password-protected deletion states
   const [deleteJobDialogOpen, setDeleteJobDialogOpen] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
@@ -100,6 +106,13 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   // Get job timesheets
   const { data: jobTimesheets = [] } = useQuery<any[]>({
     queryKey: ["/api/jobs", jobId, "timesheets"],
+    enabled: isOpen && !!jobId,
+    retry: false,
+  });
+
+  // Get job notes
+  const { data: jobNotes = [] } = useQuery<(JobNote & { user: any })[]>({
+    queryKey: ["/api/jobs", jobId, "notes"],
     enabled: isOpen && !!jobId,
     retry: false,
   });
@@ -1299,6 +1312,110 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       toast({
         title: "Error",
         description: "Failed to send PDF email",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Job notes mutations
+  const createNoteMutation = useMutation({
+    mutationFn: async (noteText: string) => {
+      const response = await apiRequest("POST", `/api/jobs/${jobId}/notes`, {
+        noteText: noteText.trim(),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId, "notes"] });
+      setNewNoteText("");
+      setIsAddingNote(false);
+      toast({
+        title: "Success",
+        description: "Note added successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to add note",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateNoteMutation = useMutation({
+    mutationFn: async ({ id, noteText }: { id: string; noteText: string }) => {
+      const response = await apiRequest("PATCH", `/api/job-notes/${id}`, {
+        noteText: noteText.trim(),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId, "notes"] });
+      setEditingNote(null);
+      setEditNoteText("");
+      toast({
+        title: "Success",
+        description: "Note updated successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update note",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteNoteMutation = useMutation({
+    mutationFn: async (noteId: string) => {
+      await apiRequest("DELETE", `/api/job-notes/${noteId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId, "notes"] });
+      toast({
+        title: "Success",
+        description: "Note deleted successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to delete note",
         variant: "destructive",
       });
     },
@@ -2722,6 +2839,164 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     <div className="text-center py-4 text-gray-500 text-sm">
                       No documents uploaded yet
                     </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Job Notes Section */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg font-semibold text-gray-800" data-testid="text-notes-section-title">
+                    Job Notes
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsAddingNote(true)}
+                    data-testid="button-add-note"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Add new note form */}
+                  {isAddingNote && (
+                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                      <div className="space-y-3">
+                        <Textarea
+                          placeholder="Enter your note..."
+                          value={newNoteText}
+                          onChange={(e) => setNewNoteText(e.target.value)}
+                          className="min-h-[100px] resize-none"
+                          data-testid="textarea-new-note"
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              if (newNoteText.trim()) {
+                                createNoteMutation.mutate(newNoteText);
+                              }
+                            }}
+                            disabled={!newNoteText.trim() || createNoteMutation.isPending}
+                            data-testid="button-save-note"
+                          >
+                            {createNoteMutation.isPending ? "Saving..." : "Save Note"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setIsAddingNote(false);
+                              setNewNoteText("");
+                            }}
+                            data-testid="button-cancel-note"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Notes list */}
+                  {jobNotes.length > 0 ? (
+                    <div className="space-y-3">
+                      {jobNotes.map((note) => (
+                        <div key={note.id} className="border border-gray-200 rounded-lg p-4 bg-white">
+                          {editingNote === note.id ? (
+                            <div className="space-y-3">
+                              <Textarea
+                                value={editNoteText}
+                                onChange={(e) => setEditNoteText(e.target.value)}
+                                className="min-h-[100px] resize-none"
+                                data-testid={`textarea-edit-note-${note.id}`}
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    if (editNoteText.trim()) {
+                                      updateNoteMutation.mutate({
+                                        id: note.id,
+                                        noteText: editNoteText,
+                                      });
+                                    }
+                                  }}
+                                  disabled={!editNoteText.trim() || updateNoteMutation.isPending}
+                                  data-testid={`button-save-edit-note-${note.id}`}
+                                >
+                                  {updateNoteMutation.isPending ? "Saving..." : "Save"}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setEditingNote(null);
+                                    setEditNoteText("");
+                                  }}
+                                  data-testid={`button-cancel-edit-note-${note.id}`}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <div className="flex justify-between items-start mb-2">
+                                <div className="text-sm text-gray-600">
+                                  <span className="font-medium">{note.user?.username || 'Unknown User'}</span>
+                                  <span className="mx-2">•</span>
+                                  <span>{new Date(note.createdAt).toLocaleString()}</span>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setEditingNote(note.id);
+                                      setEditNoteText(note.noteText);
+                                    }}
+                                    className="h-6 w-6 p-0"
+                                    data-testid={`button-edit-note-${note.id}`}
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      if (confirm("Are you sure you want to delete this note?")) {
+                                        deleteNoteMutation.mutate(note.id);
+                                      }
+                                    }}
+                                    className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                                    data-testid={`button-delete-note-${note.id}`}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                              <p className="text-gray-800 whitespace-pre-wrap" data-testid={`text-note-content-${note.id}`}>
+                                {note.noteText}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    !isAddingNote && (
+                      <div className="text-center py-8 text-gray-500">
+                        <MessageSquare className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                        <p className="text-sm" data-testid="text-no-notes">No notes added yet</p>
+                        <p className="text-xs text-gray-400 mt-1">Click the + button to add your first note</p>
+                      </div>
+                    )
                   )}
                 </div>
               </CardContent>

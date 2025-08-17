@@ -9,6 +9,7 @@ import {
   tipFees,
   timesheetEntries,
   jobFiles,
+  jobNotes,
   notifications,
   emailProcessingLogs,
   emailProcessedDocuments,
@@ -34,6 +35,8 @@ import {
   type InsertTimesheetEntry,
   type JobFile,
   type InsertJobFile,
+  type JobNote,
+  type InsertJobNote,
   type Notification,
   type InsertNotification,
   type EmailProcessingLog,
@@ -190,6 +193,12 @@ export interface IStorage {
   updateStaffNoteEntry(id: string, entry: Partial<InsertStaffNoteEntry>): Promise<StaffNoteEntry>;
   deleteStaffNoteEntry(id: string): Promise<void>;
   getStaffMembersWithNotes(): Promise<(StaffMember & { notes: StaffNoteEntry[] })[]>;
+
+  // Job Notes operations
+  getJobNotes(jobId: string): Promise<(JobNote & { user: User })[]>;
+  createJobNote(note: InsertJobNote): Promise<JobNote>;
+  updateJobNote(id: string, note: Partial<InsertJobNote>): Promise<JobNote>;
+  deleteJobNote(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1866,6 +1875,60 @@ export class DatabaseStorage implements IStorage {
       })
     );
     return membersWithNotes;
+  }
+
+  // Job Notes operations
+  async getJobNotes(jobId: string): Promise<(JobNote & { user: User })[]> {
+    const result = await db
+      .select({
+        id: jobNotes.id,
+        jobId: jobNotes.jobId,
+        userId: jobNotes.userId,
+        noteText: jobNotes.noteText,
+        createdAt: jobNotes.createdAt,
+        updatedAt: jobNotes.updatedAt,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+          role: users.role,
+          googleDriveTokens: users.googleDriveTokens,
+          employeeId: users.employeeId,
+          isAssigned: users.isAssigned,
+          emailNotificationPreferences: users.emailNotificationPreferences,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt,
+        },
+      })
+      .from(jobNotes)
+      .innerJoin(users, eq(jobNotes.userId, users.id))
+      .where(eq(jobNotes.jobId, jobId))
+      .orderBy(desc(jobNotes.createdAt));
+
+    return result;
+  }
+
+  async createJobNote(note: InsertJobNote): Promise<JobNote> {
+    const [newNote] = await db.insert(jobNotes).values(note).returning();
+    return newNote;
+  }
+
+  async updateJobNote(id: string, noteUpdate: Partial<InsertJobNote>): Promise<JobNote> {
+    const [updatedNote] = await db
+      .update(jobNotes)
+      .set({
+        ...noteUpdate,
+        updatedAt: new Date(),
+      })
+      .where(eq(jobNotes.id, id))
+      .returning();
+    return updatedNote;
+  }
+
+  async deleteJobNote(id: string): Promise<void> {
+    await db.delete(jobNotes).where(eq(jobNotes.id, id));
   }
 }
 
