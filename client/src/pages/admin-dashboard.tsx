@@ -1910,9 +1910,10 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* Search and Group Controls */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-6">
-            <div className="flex-1">
+          {/* Search and Group Controls - Mobile Optimized */}
+          <div className="space-y-3 mb-6">
+            {/* Search Bar - Full Width */}
+            <div className="w-full">
               <Input
                 placeholder="Search jobs by address, client, manager, or status..."
                 value={searchQuery}
@@ -1921,14 +1922,15 @@ export default function AdminDashboard() {
                 data-testid="input-search-jobs"
               />
             </div>
-            <div className="flex gap-2 flex-wrap">
-
+            
+            {/* Filter Controls - Side by Side on Mobile */}
+            <div className="flex gap-2 w-full">
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
                 <SelectTrigger 
-                  className="w-auto min-w-32"
+                  className="flex-1 min-w-0"
                   data-testid="select-sort-by"
                 >
-                  <Filter className="h-4 w-4 mr-2" />
+                  <Filter className="h-4 w-4 mr-2 flex-shrink-0" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1938,12 +1940,13 @@ export default function AdminDashboard() {
                   <SelectItem value="status">Sort by Status</SelectItem>
                 </SelectContent>
               </Select>
+              
               <Select value={groupBy} onValueChange={(value) => setGroupBy(value as any)}>
                 <SelectTrigger 
-                  className="w-auto min-w-36"
+                  className="flex-1 min-w-0"
                   data-testid="select-group-by"
                 >
-                  <Folder className="h-4 w-4 mr-2" />
+                  <Folder className="h-4 w-4 mr-2 flex-shrink-0" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1953,7 +1956,6 @@ export default function AdminDashboard() {
                 </SelectContent>
               </Select>
             </div>
-
           </div>
 
           {/* Jobs Grid */}
