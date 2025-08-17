@@ -161,7 +161,7 @@ const RewardsRules: React.FC = () => {
                         <IconComponent className="h-4 w-4" />
                         <h3 className="font-semibold">{reward.title}</h3>
                       </div>
-                      <Badge variant="secondary" className="bg-white">
+                      <Badge variant="secondary" className="bg-white text-black font-bold">
                         {reward.points} pts
                       </Badge>
                     </div>
