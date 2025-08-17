@@ -2401,68 +2401,8 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* App Grid Layout */}
+            {/* App Grid Layout - Alphabetically Sorted */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {/* Staff Management App */}
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200"
-                onClick={() => setActiveTab("employees")}
-                data-testid="app-employees"
-              >
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 mx-auto mb-3 bg-blue-500 rounded-full flex items-center justify-center">
-                    <Users className="h-6 w-6 text-white" />
-                  </div>
-                  <h3 className="font-medium text-sm">Staff Management</h3>
-                  <p className="text-xs text-muted-foreground mt-1">Manage employees</p>
-                </CardContent>
-              </Card>
-
-              {/* Staff View App */}
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-green-50 to-green-100 border-green-200"
-                onClick={() => setActiveTab("staff-view")}
-                data-testid="app-staff-view"
-              >
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 mx-auto mb-3 bg-green-500 rounded-full flex items-center justify-center">
-                    <Eye className="h-6 w-6 text-white" />
-                  </div>
-                  <h3 className="font-medium text-sm">Staff View</h3>
-                  <p className="text-xs text-muted-foreground mt-1">Preview staff dashboard</p>
-                </CardContent>
-              </Card>
-
-              {/* Staff Notes App */}
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200"
-                onClick={() => window.location.href = '/staff-notes'}
-                data-testid="app-staff-notes"
-              >
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 mx-auto mb-3 bg-purple-500 rounded-full flex items-center justify-center">
-                    <FileText className="h-6 w-6 text-white" />
-                  </div>
-                  <h3 className="font-medium text-sm">Staff Notes</h3>
-                  <p className="text-xs text-muted-foreground mt-1">Manage staff records</p>
-                </CardContent>
-              </Card>
-
-              {/* Rewards Rules App */}
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200"
-                onClick={() => window.location.href = '/rewards/rules'}
-                data-testid="app-rewards-rules"
-              >
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 mx-auto mb-3 bg-orange-500 rounded-full flex items-center justify-center">
-                    <Trophy className="h-6 w-6 text-white" />
-                  </div>
-                  <h3 className="font-medium text-sm">Rewards Rules</h3>
-                  <p className="text-xs text-muted-foreground mt-1">View earning rules</p>
-                </CardContent>
-              </Card>
-
               {/* Document Processing App */}
               <Card 
                 className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200"
@@ -2523,6 +2463,21 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
 
+              {/* Rewards Rules App */}
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200"
+                onClick={() => window.location.href = '/rewards/rules'}
+                data-testid="app-rewards-rules"
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-orange-500 rounded-full flex items-center justify-center">
+                    <Trophy className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-medium text-sm">Rewards Rules</h3>
+                  <p className="text-xs text-muted-foreground mt-1">View earning rules</p>
+                </CardContent>
+              </Card>
+
               {/* Settings App */}
               <Card 
                 className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200"
@@ -2535,6 +2490,51 @@ export default function AdminDashboard() {
                   </div>
                   <h3 className="font-medium text-sm">Settings</h3>
                   <p className="text-xs text-muted-foreground mt-1">App configuration</p>
+                </CardContent>
+              </Card>
+
+              {/* Staff Management App */}
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200"
+                onClick={() => setActiveTab("employees")}
+                data-testid="app-employees"
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-blue-500 rounded-full flex items-center justify-center">
+                    <Users className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-medium text-sm">Staff Management</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Manage employees</p>
+                </CardContent>
+              </Card>
+
+              {/* Staff Notes App */}
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200"
+                onClick={() => window.location.href = '/staff-notes'}
+                data-testid="app-staff-notes"
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-purple-500 rounded-full flex items-center justify-center">
+                    <FileText className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-medium text-sm">Staff Notes</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Manage staff records</p>
+                </CardContent>
+              </Card>
+
+              {/* Staff View App */}
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-green-50 to-green-100 border-green-200"
+                onClick={() => setActiveTab("staff-view")}
+                data-testid="app-staff-view"
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-green-500 rounded-full flex items-center justify-center">
+                    <Eye className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-medium text-sm">Staff View</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Preview staff dashboard</p>
                 </CardContent>
               </Card>
             </div>
