@@ -4,6 +4,7 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 ## Recent Updates (August 2025)
 - ✅ **Staff Notes System Migration**: Successfully migrated from localStorage to persistent PostgreSQL database storage while maintaining identical UI/UX. This enables cross-device synchronization and persistent data storage for staff member management and note tracking.
 - ✅ **Simplified Rewards System**: Implemented streamlined rewards system with 4 clear reward types (Daily, Weekly, Fortnightly, Monthly) and simple streak reset rules. Features functional rewards dashboard, "More Apps" section with Rewards Rules page, admin configuration with fortnightly bonus settings, and dynamic rules that automatically update when admin changes settings. Terminology aligned between timesheet selections and rewards rules.
+- ✅ **Database-Backed Reward Settings**: Migrated reward configuration from memory storage to persistent PostgreSQL database. Settings now survive app deployments and restarts, with real-time synchronization between admin configuration and reward rules display. Includes proper initialization that preserves existing custom values and enhanced debugging for troubleshooting.
 
 # User Preferences
 Preferred communication style: Simple, everyday language.
