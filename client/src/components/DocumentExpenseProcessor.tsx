@@ -512,17 +512,20 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     <div className="space-y-6">
       <Tabs defaultValue="upload" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="upload" className="flex items-center gap-2">
-            <Upload className="h-4 w-4" />
-            Add Expenses
+          <TabsTrigger value="upload" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4">
+            <Upload className="h-4 w-4 flex-shrink-0" />
+            <span className="hidden sm:inline">Add Expenses</span>
+            <span className="text-xs sm:hidden">Add</span>
           </TabsTrigger>
-          <TabsTrigger value="create-job" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Create New Job
+          <TabsTrigger value="create-job" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4">
+            <FileText className="h-4 w-4 flex-shrink-0" />
+            <span className="hidden sm:inline">Create New Job</span>
+            <span className="text-xs sm:hidden">Create</span>
           </TabsTrigger>
-          <TabsTrigger value="email" className="flex items-center gap-2">
-            <Mail className="h-4 w-4" />
-            Email Processing
+          <TabsTrigger value="email" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4">
+            <Mail className="h-4 w-4 flex-shrink-0" />
+            <span className="hidden sm:inline">Email Processing</span>
+            <span className="text-xs sm:hidden">Email</span>
           </TabsTrigger>
         </TabsList>
         
