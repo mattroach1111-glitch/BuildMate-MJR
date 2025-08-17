@@ -1899,6 +1899,9 @@ export default function AdminDashboard() {
                           maximumFractionDigits: 2 
                         })}
                       </div>
+                      <div className="text-sm font-medium text-gray-600 mt-1 tracking-wide">
+                        Excluding GST
+                      </div>
                     </div>
                   </CardContent>
                   <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500 animate-pulse"></div>
