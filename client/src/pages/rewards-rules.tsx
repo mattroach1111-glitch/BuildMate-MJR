@@ -87,10 +87,16 @@ const RewardsRules: React.FC = () => {
     );
   }
 
-  const rewardTypes = React.useMemo(() => [
+  // Create reward types array with current settings
+  const dailyPoints = settings?.dailySubmissionPoints ?? 10;
+  const weeklyPoints = settings?.weeklyBonusPoints ?? 50; 
+  const fortnightlyPoints = settings?.fortnightlyBonusPoints ?? 100;
+  const monthlyPoints = settings?.monthlyBonusPoints ?? 200;
+
+  const rewardTypes = [
     {
       title: "Daily Rewards",
-      points: settings?.dailySubmissionPoints ?? 10,
+      points: dailyPoints,
       description: "Submit your timesheet each working day",
       icon: Calendar,
       color: "bg-blue-50 border-blue-200 text-blue-800",
@@ -98,7 +104,7 @@ const RewardsRules: React.FC = () => {
     },
     {
       title: "Weekly Rewards", 
-      points: settings?.weeklyBonusPoints ?? 50,
+      points: weeklyPoints,
       description: "Complete all 5 working days in a week",
       icon: TrendingUp,
       color: "bg-green-50 border-green-200 text-green-800",
@@ -106,7 +112,7 @@ const RewardsRules: React.FC = () => {
     },
     {
       title: "Fortnightly Rewards",
-      points: settings?.fortnightlyBonusPoints ?? 100,
+      points: fortnightlyPoints,
       description: "Complete all working days in a 2-week period",
       icon: Award,
       color: "bg-purple-50 border-purple-200 text-purple-800",
@@ -114,13 +120,13 @@ const RewardsRules: React.FC = () => {
     },
     {
       title: "Monthly Rewards",
-      points: settings?.monthlyBonusPoints ?? 200,
+      points: monthlyPoints,
       description: "Complete all working days in a month",
       icon: Gift,
       color: "bg-orange-50 border-orange-200 text-orange-800",
       requirement: "Submit all monthly working day timesheets"
     }
-  ], [settings]);
+  ];
 
   const streakBreakers = [
     "Sick Leave",
