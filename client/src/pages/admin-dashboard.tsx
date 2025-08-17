@@ -1004,6 +1004,7 @@ export default function AdminDashboard() {
       jobAddress: "",
       clientName: "",
       projectName: "",
+      projectManager: "",
       status: "new_job",
       builderMargin: "0",
       defaultHourlyRate: "0",
@@ -1415,7 +1416,7 @@ export default function AdminDashboard() {
 
   const handleAddProjectManager = () => {
     if (newProjectManagerName.trim()) {
-      jobForm.setValue('projectName', newProjectManagerName.trim());
+      jobForm.setValue('projectManager', newProjectManagerName.trim());
       setNewProjectManagerName("");
       setIsAddingNewProjectManager(false);
     }
@@ -1463,7 +1464,7 @@ export default function AdminDashboard() {
       setIsAddingNewProjectManager(true);
       setNewProjectManagerName("");
     } else {
-      jobForm.setValue('projectName', value);
+      jobForm.setValue('projectManager', value);
     }
   };
 
@@ -1735,7 +1736,7 @@ export default function AdminDashboard() {
                     />
                     <FormField
                       control={jobForm.control}
-                      name="projectName"
+                      name="projectManager"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Project Manager</FormLabel>
