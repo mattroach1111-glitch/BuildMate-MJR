@@ -18,28 +18,41 @@ import { rewardsService } from "./services/rewardsService";
 
 // Database-backed reward settings helper functions
 async function initializeRewardSettings() {
-  console.log("📊 Initializing reward settings in database...");
+  console.log("📊 Checking reward settings in database...");
   
-  const defaultSettings = [
-    { settingKey: 'dailySubmissionPoints', settingValue: 10, description: 'Points awarded for daily timesheet submission' },
-    { settingKey: 'weeklyBonusPoints', settingValue: 50, description: 'Bonus points for completing a full work week' },
-    { settingKey: 'fortnightlyBonusPoints', settingValue: 100, description: 'Bonus points for completing a fortnight' },
-    { settingKey: 'monthlyBonusPoints', settingValue: 200, description: 'Bonus points for completing a full month' },
-    { settingKey: 'streakBonusMultiplier', settingValue: 15, description: 'Streak bonus multiplier (stored as 15 for 1.5x)' },
-    { settingKey: 'perfectWeekBonus', settingValue: 25, description: 'Bonus for perfect week attendance' },
-    { settingKey: 'perfectMonthBonus', settingValue: 100, description: 'Bonus for perfect month attendance' }
-  ];
+  try {
+    // First check if any settings exist
+    const existingSettings = await db.select().from(rewardSettings).limit(1);
+    
+    if (existingSettings.length > 0) {
+      console.log("📊 Reward settings already exist in database - skipping initialization");
+      const allSettings = await getRewardSettingsFromDB();
+      console.log("📊 Current settings:", allSettings);
+      return;
+    }
+    
+    console.log("📊 No existing settings found - initializing defaults...");
+    
+    const defaultSettings = [
+      { settingKey: 'dailySubmissionPoints', settingValue: 10, description: 'Points awarded for daily timesheet submission' },
+      { settingKey: 'weeklyBonusPoints', settingValue: 50, description: 'Bonus points for completing a full work week' },
+      { settingKey: 'fortnightlyBonusPoints', settingValue: 100, description: 'Bonus points for completing a fortnight' },
+      { settingKey: 'monthlyBonusPoints', settingValue: 200, description: 'Bonus points for completing a full month' },
+      { settingKey: 'streakBonusMultiplier', settingValue: 15, description: 'Streak bonus multiplier (stored as 15 for 1.5x)' },
+      { settingKey: 'perfectWeekBonus', settingValue: 25, description: 'Bonus for perfect week attendance' },
+      { settingKey: 'perfectMonthBonus', settingValue: 100, description: 'Bonus for perfect month attendance' }
+    ];
 
-  for (const setting of defaultSettings) {
-    try {
-      const existing = await db.select().from(rewardSettings).where(eq(rewardSettings.settingKey, setting.settingKey)).limit(1);
-      if (existing.length === 0) {
+    for (const setting of defaultSettings) {
+      try {
         await db.insert(rewardSettings).values(setting);
         console.log(`📊 Initialized setting: ${setting.settingKey} = ${setting.settingValue}`);
+      } catch (error) {
+        console.error(`❌ Failed to initialize setting ${setting.settingKey}:`, error);
       }
-    } catch (error) {
-      console.error(`❌ Failed to initialize setting ${setting.settingKey}:`, error);
     }
+  } catch (error) {
+    console.error("❌ Failed to check/initialize reward settings:", error);
   }
 }
 
