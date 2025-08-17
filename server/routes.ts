@@ -5,7 +5,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { db } from "./db";
 import { 
   timesheetEntries, laborEntries, users, staffNotes, employees, staffMembers, 
-  staffNotesEntries, rewardCatalog, jobs, materials, subTrades, otherCosts, 
+  staffNotesEntries, rewardCatalog, rewardSettings, jobs, materials, subTrades, otherCosts, 
   tipFees, jobFiles
 } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
@@ -16,25 +16,82 @@ import { GoogleDriveAuth } from "./googleAuth";
 import { DocumentProcessor } from "./services/documentProcessor";
 import { rewardsService } from "./services/rewardsService";
 
-// In-memory storage for reward settings (could be moved to database later)
-let rewardSettings = {
-  dailySubmissionPoints: 10,
-  weeklyBonusPoints: 50,
-  fortnightlyBonusPoints: 100,
-  monthlyBonusPoints: 200,
-  streakBonusMultiplier: 1.5,
-  perfectWeekBonus: 25,
-  perfectMonthBonus: 100
-};
+// Database-backed reward settings helper functions
+async function initializeRewardSettings() {
+  console.log("📊 Initializing reward settings in database...");
+  
+  const defaultSettings = [
+    { settingKey: 'dailySubmissionPoints', settingValue: 10, description: 'Points awarded for daily timesheet submission' },
+    { settingKey: 'weeklyBonusPoints', settingValue: 50, description: 'Bonus points for completing a full work week' },
+    { settingKey: 'fortnightlyBonusPoints', settingValue: 100, description: 'Bonus points for completing a fortnight' },
+    { settingKey: 'monthlyBonusPoints', settingValue: 200, description: 'Bonus points for completing a full month' },
+    { settingKey: 'streakBonusMultiplier', settingValue: 15, description: 'Streak bonus multiplier (stored as 15 for 1.5x)' },
+    { settingKey: 'perfectWeekBonus', settingValue: 25, description: 'Bonus for perfect week attendance' },
+    { settingKey: 'perfectMonthBonus', settingValue: 100, description: 'Bonus for perfect month attendance' }
+  ];
 
-// Debug: Log any changes to reward settings
-const originalRewardSettings = { ...rewardSettings };
-setInterval(() => {
-  if (JSON.stringify(rewardSettings) !== JSON.stringify(originalRewardSettings)) {
-    console.log("🔄 Reward settings changed:", rewardSettings);
-    Object.assign(originalRewardSettings, rewardSettings);
+  for (const setting of defaultSettings) {
+    try {
+      const existing = await db.select().from(rewardSettings).where(eq(rewardSettings.settingKey, setting.settingKey)).limit(1);
+      if (existing.length === 0) {
+        await db.insert(rewardSettings).values(setting);
+        console.log(`📊 Initialized setting: ${setting.settingKey} = ${setting.settingValue}`);
+      }
+    } catch (error) {
+      console.error(`❌ Failed to initialize setting ${setting.settingKey}:`, error);
+    }
   }
-}, 1000);
+}
+
+async function getRewardSettingsFromDB() {
+  try {
+    const settings = await db.select().from(rewardSettings);
+    const settingsObj: any = {};
+    
+    settings.forEach(setting => {
+      if (setting.settingKey === 'streakBonusMultiplier') {
+        // Convert back to decimal (15 -> 1.5)
+        settingsObj[setting.settingKey] = setting.settingValue / 10;
+      } else {
+        settingsObj[setting.settingKey] = setting.settingValue;
+      }
+    });
+    
+    console.log("📊 Retrieved settings from database:", settingsObj);
+    return settingsObj;
+  } catch (error) {
+    console.error("❌ Failed to get reward settings from database:", error);
+    // Return default settings as fallback
+    return {
+      dailySubmissionPoints: 10,
+      weeklyBonusPoints: 50,
+      fortnightlyBonusPoints: 100,
+      monthlyBonusPoints: 200,
+      streakBonusMultiplier: 1.5,
+      perfectWeekBonus: 25,
+      perfectMonthBonus: 100
+    };
+  }
+}
+
+async function updateRewardSettingInDB(key: string, value: number) {
+  try {
+    let dbValue = value;
+    if (key === 'streakBonusMultiplier') {
+      // Convert decimal to integer for storage (1.5 -> 15)
+      dbValue = Math.round(value * 10);
+    }
+    
+    await db.update(rewardSettings)
+      .set({ settingValue: dbValue, updatedAt: new Date() })
+      .where(eq(rewardSettings.settingKey, key));
+    
+    console.log(`📊 Updated setting in database: ${key} = ${value} (stored as ${dbValue})`);
+  } catch (error) {
+    console.error(`❌ Failed to update setting ${key}:`, error);
+    throw error;
+  }
+}
 import {
   insertJobSchema,
   insertEmployeeSchema,
@@ -205,6 +262,8 @@ const findBestJobMatch = async (timesheetJobDescription: string, threshold: numb
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize reward settings in database on startup
+  await initializeRewardSettings();
   // Auth middleware
   await setupAuth(app);
 
@@ -3856,8 +3915,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin rewards dashboard endpoint
   app.get("/api/admin/rewards/dashboard", isAuthenticated, async (req: any, res) => {
     try {
-      // Use the persistent reward settings
-      const settings = rewardSettings;
+      // Get current settings from database
+      const settings = await getRewardSettingsFromDB();
 
       // Get analytics data with error handling for missing tables
       let totalPointsAwarded = 0;
@@ -3967,16 +4026,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get reward settings for rules page
   app.get("/api/rewards/settings", isAuthenticated, async (req: any, res) => {
     try {
-      console.log("📊 API Call: Fetching current reward settings from memory:", rewardSettings);
+      console.log("📊 API Call: Fetching current reward settings from DATABASE");
       console.log("📊 Request time:", new Date().toISOString());
       console.log("📊 User:", req.user?.claims?.sub);
       
+      const settings = await getRewardSettingsFromDB();
+      
       // Add timestamp to ensure fresh data
       const settingsWithTimestamp = {
-        ...rewardSettings,
+        ...settings,
         _fetchedAt: new Date().toISOString()
       };
       
+      console.log("📊 Returning settings:", settingsWithTimestamp);
       res.json(settingsWithTimestamp);
     } catch (error) {
       console.error("Error fetching reward settings:", error);
@@ -3984,7 +4046,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update reward settings (currently in-memory, could be moved to database)
+  // Update reward settings (now database-backed)
   app.put("/api/admin/rewards/settings", isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);
@@ -4002,19 +4064,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid settings format" });
       }
 
-      // Update the in-memory settings
-      rewardSettings = {
-        ...rewardSettings,
-        ...settings
-      };
+      console.log("📊 Updating reward settings in database:", settings);
+
+      // Update each setting in the database
+      for (const [key, value] of Object.entries(settings)) {
+        if (typeof value === 'number') {
+          await updateRewardSettingInDB(key, value);
+        }
+      }
       
-      console.log("✅ Reward settings updated successfully:", rewardSettings);
+      // Get the updated settings from database to confirm
+      const updatedSettings = await getRewardSettingsFromDB();
+      
+      console.log("✅ Reward settings updated successfully in database:", updatedSettings);
       console.log("🔄 Broadcasting settings update to all clients");
       
       res.json({ 
         success: true, 
         message: "Settings updated successfully",
-        settings: rewardSettings,
+        settings: updatedSettings,
         timestamp: new Date().toISOString()
       });
     } catch (error) {

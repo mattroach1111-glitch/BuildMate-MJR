@@ -550,6 +550,15 @@ export const rewardCatalog = pgTable("reward_catalog", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Reward system settings (admin configurable)
+export const rewardSettings = pgTable("reward_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  settingKey: varchar("setting_key").notNull().unique(),
+  settingValue: integer("setting_value").notNull(),
+  description: text("description"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // =============================================================================
 // REWARDS SYSTEM RELATIONS
 // =============================================================================
@@ -624,6 +633,11 @@ export const insertRewardCatalogSchema = createInsertSchema(rewardCatalog).omit(
   updatedAt: true,
 });
 
+export const insertRewardSettingsSchema = createInsertSchema(rewardSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
 // =============================================================================
 // REWARDS SYSTEM TYPES
 // =============================================================================
@@ -638,3 +652,5 @@ export type RewardRedemption = typeof rewardRedemptions.$inferSelect;
 export type InsertRewardRedemption = z.infer<typeof insertRewardRedemptionSchema>;
 export type RewardCatalogItem = typeof rewardCatalog.$inferSelect;
 export type InsertRewardCatalogItem = z.infer<typeof insertRewardCatalogSchema>;
+export type RewardSettings = typeof rewardSettings.$inferSelect;
+export type InsertRewardSettings = z.infer<typeof insertRewardSettingsSchema>;
