@@ -1,0 +1,84 @@
+⏳ Rewards Rules - Waiting for settings...
+index-jc6MrgcH.js:40  Error: Minified React error #310; visit https://reactjs.org/docs/error-decoder.html?invariant=310 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at Yl (index-jc6MrgcH.js:38:17648)
+    at Object.qI [as useMemo] (index-jc6MrgcH.js:38:21341)
+    at dr.useMemo (index-jc6MrgcH.js:9:6223)
+    at p6 (index-jc6MrgcH.js:909:11476)
+    at O4 (index-jc6MrgcH.js:38:17051)
+    at vj (index-jc6MrgcH.js:40:3139)
+    at yR (index-jc6MrgcH.js:40:44833)
+    at gR (index-jc6MrgcH.js:40:39790)
+    at VJ (index-jc6MrgcH.js:40:39718)
+    at m2 (index-jc6MrgcH.js:40:39570)
+xj @ index-jc6MrgcH.js:40
+JI.n.callback @ index-jc6MrgcH.js:40
+JA @ index-jc6MrgcH.js:38
+hk @ index-jc6MrgcH.js:40
+fR @ index-jc6MrgcH.js:40
+BJ @ index-jc6MrgcH.js:40
+WJ @ index-jc6MrgcH.js:40
+Fh @ index-jc6MrgcH.js:40
+gk @ index-jc6MrgcH.js:40
+ah @ index-jc6MrgcH.js:38
+(anonymous) @ index-jc6MrgcH.js:40
+setTimeout
+s @ index-jc6MrgcH.js:48
+o @ index-jc6MrgcH.js:48
+batch @ index-jc6MrgcH.js:48
+Xu @ index-jc6MrgcH.js:48
+setData @ index-jc6MrgcH.js:48
+onSuccess @ index-jc6MrgcH.js:48
+p @ index-jc6MrgcH.js:48
+Promise.then
+j @ index-jc6MrgcH.js:48
+start @ index-jc6MrgcH.js:48
+fetch @ index-jc6MrgcH.js:48
+G0 @ index-jc6MrgcH.js:48
+onSubscribe @ index-jc6MrgcH.js:48
+subscribe @ index-jc6MrgcH.js:48
+(anonymous) @ index-jc6MrgcH.js:48
+FI @ index-jc6MrgcH.js:38
+hb @ index-jc6MrgcH.js:40
+Zm @ index-jc6MrgcH.js:40
+WJ @ index-jc6MrgcH.js:40
+Fh @ index-jc6MrgcH.js:40
+gk @ index-jc6MrgcH.js:40
+ah @ index-jc6MrgcH.js:38
+(anonymous) @ index-jc6MrgcH.js:40
+setTimeout
+s @ index-jc6MrgcH.js:48
+o @ index-jc6MrgcH.js:48
+batch @ index-jc6MrgcH.js:48
+Xu @ index-jc6MrgcH.js:48
+setData @ index-jc6MrgcH.js:48
+onSuccess @ index-jc6MrgcH.js:48
+p @ index-jc6MrgcH.js:48
+Promise.then
+j @ index-jc6MrgcH.js:48
+start @ index-jc6MrgcH.js:48
+fetch @ index-jc6MrgcH.js:48
+G0 @ index-jc6MrgcH.js:48
+onSubscribe @ index-jc6MrgcH.js:48
+subscribe @ index-jc6MrgcH.js:48
+(anonymous) @ index-jc6MrgcH.js:48
+FI @ index-jc6MrgcH.js:38
+hb @ index-jc6MrgcH.js:40
+Zm @ index-jc6MrgcH.js:40
+gk @ index-jc6MrgcH.js:40
+ah @ index-jc6MrgcH.js:38
+WJ @ index-jc6MrgcH.js:40
+Fh @ index-jc6MrgcH.js:40
+hR @ index-jc6MrgcH.js:40
+F @ index-jc6MrgcH.js:25
+R @ index-jc6MrgcH.js:25
+index-jc6MrgcH.js:38  Uncaught Error: Minified React error #310; visit https://reactjs.org/docs/error-decoder.html?invariant=310 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at Yl (index-jc6MrgcH.js:38:17648)
+    at Object.qI [as useMemo] (index-jc6MrgcH.js:38:21341)
+    at dr.useMemo (index-jc6MrgcH.js:9:6223)
+    at p6 (index-jc6MrgcH.js:909:11476)
+    at O4 (index-jc6MrgcH.js:38:17051)
+    at vj (index-jc6MrgcH.js:40:3139)
+    at yR (index-jc6MrgcH.js:40:44833)
+    at gR (index-jc6MrgcH.js:40:39790)
+    at VJ (index-jc6MrgcH.js:40:39718)
+    at m2 (index-jc6MrgcH.js:40:39570)
