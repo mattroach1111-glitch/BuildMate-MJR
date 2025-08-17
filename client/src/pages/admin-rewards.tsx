@@ -83,11 +83,18 @@ const AdminRewards: React.FC = () => {
       });
       setIsEditingSettings(false);
       setEditedSettings(null);
-      // Invalidate all related queries
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/rewards/dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/rewards/settings'] });
-      // Also force refetch
-      queryClient.refetchQueries({ queryKey: ['/api/rewards/settings'] });
+      
+      // Clear all reward-related cache immediately
+      queryClient.removeQueries({ queryKey: ['/api/admin/rewards/dashboard'] });
+      queryClient.removeQueries({ queryKey: ['/api/rewards/settings'] });
+      
+      // Force immediate refetch
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ['/api/admin/rewards/dashboard'] });
+        queryClient.refetchQueries({ queryKey: ['/api/rewards/settings'] });
+      }, 100);
+      
+      console.log('🔄 Cache cleared and refetch triggered for rewards settings');
     },
     onError: (error) => {
       console.error("Settings update error:", error);

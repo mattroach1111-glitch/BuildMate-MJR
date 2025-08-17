@@ -3958,6 +3958,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get reward settings for rules page
   app.get("/api/rewards/settings", isAuthenticated, async (req: any, res) => {
     try {
+      console.log("📊 Fetching current reward settings from memory:", rewardSettings);
       // Return the current reward settings
       res.json(rewardSettings);
     } catch (error) {
@@ -3990,12 +3991,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...settings
       };
       
-      console.log("Reward settings updated successfully:", rewardSettings);
+      console.log("✅ Reward settings updated successfully:", rewardSettings);
+      console.log("🔄 Broadcasting settings update to all clients");
       
       res.json({ 
         success: true, 
         message: "Settings updated successfully",
-        settings: rewardSettings
+        settings: rewardSettings,
+        timestamp: new Date().toISOString()
       });
     } catch (error) {
       console.error("Error updating reward settings:", error);
