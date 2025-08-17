@@ -1,0 +1,24 @@
+✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-B8LA9Din.js:909 🔍 Rewards Rules Debug - Current state: {isLoading: true, hasError: false, hasSettings: false, errorDetails: null, settingsData: undefined}
+index-B8LA9Din.js:909 ⏳ Rewards Rules - Waiting for settings...
+index-B8LA9Din.js:909 🔍 Rewards Rules Debug - Current state: {isLoading: false, hasError: false, hasSettings: true, errorDetails: null, settingsData: {…}}
+index-B8LA9Din.js:909 ✅ Rewards Rules - Current settings received: {dailySubmissionPoints: 1, weeklyBonusPoints: 5, fortnightlyBonusPoints: 10, monthlyBonusPoints: 20, streakBonusMultiplier: 1.1, …}
+index-B8LA9Din.js:909 📊 Point values: {daily: 1, weekly: 5, fortnightly: 10, monthly: 20}
+index-B8LA9Din.js:909 🔍 Rewards Rules Debug - Current state: {isLoading: false, hasError: false, hasSettings: true, errorDetails: null, settingsData: {…}}
+index-B8LA9Din.js:909 ✅ Rewards Rules - Current settings received: {dailySubmissionPoints: 1, weeklyBonusPoints: 5, fortnightlyBonusPoints: 10, monthlyBonusPoints: 20, streakBonusMultiplier: 1.1, …}
+index-B8LA9Din.js:909 📊 Point values: {daily: 1, weekly: 5, fortnightly: 10, monthly: 20}
+index-B8LA9Din.js:909 🔍 Rewards Rules Debug - Current state: {isLoading: false, hasError: false, hasSettings: true, errorDetails: null, settingsData: {…}}
+index-B8LA9Din.js:909 ✅ Rewards Rules - Current settings received: {dailySubmissionPoints: 1, weeklyBonusPoints: 5, fortnightlyBonusPoints: 10, monthlyBonusPoints: 20, streakBonusMultiplier: 1.1, …}
+index-B8LA9Din.js:909 📊 Point values: {daily: 1, weekly: 5, fortnightly: 10, monthly: 20}
+index-B8LA9Din.js:909 🔍 Rewards Rules Debug - Current state: {isLoading: false, hasError: false, hasSettings: true, errorDetails: null, settingsData: {…}}
+index-B8LA9Din.js:909 ✅ Rewards Rules - Current settings received: {dailySubmissionPoints: 1, weeklyBonusPoints: 5, fortnightlyBonusPoints: 10, monthlyBonusPoints: 20, streakBonusMultiplier: 1.1, …}
+index-B8LA9Din.js:909 📊 Point values: {daily: 1, weekly: 5, fortnightly: 10, monthly: 20}
+index-B8LA9Din.js:909 🔍 Rewards Rules Debug - Current state: {isLoading: false, hasError: false, hasSettings: true, errorDetails: null, settingsData: {…}}
+index-B8LA9Din.js:909 ✅ Rewards Rules - Current settings received: {dailySubmissionPoints: 1, weeklyBonusPoints: 5, fortnightlyBonusPoints: 10, monthlyBonusPoints: 20, streakBonusMultiplier: 1.1, …}
+index-B8LA9Din.js:909 📊 Point values: {daily: 1, weekly: 5, fortnightly: 10, monthly: 20}
+index-B8LA9Din.js:909 🔍 Rewards Rules Debug - Current state: {isLoading: false, hasError: false, hasSettings: true, errorDetails: null, settingsData: {…}}
+index-B8LA9Din.js:909 ✅ Rewards Rules - Current settings received: {dailySubmissionPoints: 1, weeklyBonusPoints: 5, fortnightlyBonusPoints: 10, monthlyBonusPoints: 20, streakBonusMultiplier: 1.1, …}
+index-B8LA9Din.js:909 📊 Point values: {daily: 1, weekly: 5, fortnightly: 10, monthly: 20}
+index-B8LA9Din.js:909 🔍 Rewards Rules Debug - Current state: {isLoading: false, hasError: false, hasSettings: true, errorDetails: null, settingsData: {…}}
+index-B8LA9Din.js:909 ✅ Rewards Rules - Current settings received: {dailySubmissionPoints: 1, weeklyBonusPoints: 5, fortnightlyBonusPoints: 10, monthlyBonusPoints: 20, streakBonusMultiplier: 1.1, …}
+index-B8LA9Din.js:909 📊 Point values: {daily: 1, weekly: 5, fortnightly: 10, monthly: 20}
