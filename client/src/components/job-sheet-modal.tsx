@@ -2949,7 +2949,12 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                             <div>
                               <div className="flex justify-between items-start mb-2">
                                 <div className="text-sm text-gray-600">
-                                  <span className="font-medium">{note.user?.username || 'Unknown User'}</span>
+                                  <span className="font-medium">
+                                    {note.user?.firstName && note.user?.lastName 
+                                      ? `${note.user.firstName} ${note.user.lastName}`
+                                      : note.user?.email || 'Unknown User'
+                                    }
+                                  </span>
                                   <span className="mx-2">•</span>
                                   <span>{new Date(note.createdAt).toLocaleString()}</span>
                                 </div>
