@@ -15,18 +15,39 @@ interface RewardSettings {
 const RewardsRules: React.FC = () => {
   const { data: settings, isLoading, error } = useQuery<RewardSettings>({
     queryKey: ['/api/rewards/settings'],
-    refetchInterval: 1000, // Refetch every 1 second for immediate updates
+    refetchInterval: 2000, // Refetch every 2 seconds
     staleTime: 0, // Always consider data stale
     gcTime: 0, // Don't cache at all
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    retry: 3,
+    retry: (failureCount, error: any) => {
+      console.log(`Retry attempt ${failureCount} for rewards settings:`, error);
+      // Don't retry auth errors, but retry other errors up to 3 times
+      if (error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
+        console.log('Auth error detected, not retrying');
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 
   // Debug logging
   React.useEffect(() => {
+    console.log('🔍 Rewards Rules Debug - Current state:', {
+      isLoading,
+      hasError: !!error,
+      hasSettings: !!settings,
+      errorDetails: error,
+      settingsData: settings
+    });
+    
     if (error) {
       console.error('❌ Rewards Rules - Error loading settings:', error);
+      // Try to get more error details
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
     } else if (settings) {
       console.log('✅ Rewards Rules - Current settings received:', settings);
       console.log('📊 Point values:', {
@@ -38,13 +59,28 @@ const RewardsRules: React.FC = () => {
     } else {
       console.log('⏳ Rewards Rules - Waiting for settings...');
     }
-  }, [settings, error]);
+  }, [settings, error, isLoading]);
 
   if (isLoading) {
     return (
       <PageLayout title="Rewards Rules" subtitle="How to earn points and maintain streaks">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (error) {
+    console.error('Rewards rules error:', error);
+    return (
+      <PageLayout title="Rewards Rules" subtitle="How to earn points and maintain streaks">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+            <p className="text-red-600">Unable to load reward settings</p>
+            <p className="text-sm text-gray-500 mt-1">Please try refreshing the page</p>
+          </div>
         </div>
       </PageLayout>
     );
