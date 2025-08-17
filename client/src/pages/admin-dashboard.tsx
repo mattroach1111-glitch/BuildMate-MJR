@@ -1935,32 +1935,20 @@ export default function AdminDashboard() {
                   <SelectItem value="status">Sort by Status</SelectItem>
                 </SelectContent>
               </Select>
-              <Button 
-                variant={groupBy === 'client' ? 'default' : 'outline'} 
-                size="sm"
-                onClick={() => setGroupBy('client')}
-                data-testid="button-group-by-client"
-              >
-                <Folder className="h-4 w-4 mr-1" />
-                Group by Client
-              </Button>
-              <Button 
-                variant={groupBy === 'manager' ? 'default' : 'outline'} 
-                size="sm"
-                onClick={() => setGroupBy('manager')}
-                data-testid="button-group-by-manager"
-              >
-                <Folder className="h-4 w-4 mr-1" />
-                Group by Manager
-              </Button>
-              <Button 
-                variant={groupBy === 'none' ? 'default' : 'outline'} 
-                size="sm"
-                onClick={() => setGroupBy('none')}
-                data-testid="button-group-by-none"
-              >
-                No Grouping
-              </Button>
+              <Select value={groupBy} onValueChange={(value) => setGroupBy(value as any)}>
+                <SelectTrigger 
+                  className="w-auto min-w-36"
+                  data-testid="select-group-by"
+                >
+                  <Folder className="h-4 w-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="client">Group by Client</SelectItem>
+                  <SelectItem value="manager">Group by Manager</SelectItem>
+                  <SelectItem value="none">No Grouping</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
           </div>
