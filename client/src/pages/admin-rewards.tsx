@@ -88,13 +88,23 @@ const AdminRewards: React.FC = () => {
       queryClient.removeQueries({ queryKey: ['/api/admin/rewards/dashboard'] });
       queryClient.removeQueries({ queryKey: ['/api/rewards/settings'] });
       
-      // Force immediate refetch
+      // Force immediate refetch with multiple attempts
       setTimeout(() => {
+        console.log('🔄 Step 1: Refetching admin dashboard...');
         queryClient.refetchQueries({ queryKey: ['/api/admin/rewards/dashboard'] });
-        queryClient.refetchQueries({ queryKey: ['/api/rewards/settings'] });
-      }, 100);
+      }, 50);
       
-      console.log('🔄 Cache cleared and refetch triggered for rewards settings');
+      setTimeout(() => {
+        console.log('🔄 Step 2: Refetching reward settings...');
+        queryClient.refetchQueries({ queryKey: ['/api/rewards/settings'] });
+      }, 150);
+      
+      setTimeout(() => {
+        console.log('🔄 Step 3: Final refetch attempt...');
+        queryClient.refetchQueries({ queryKey: ['/api/rewards/settings'] });
+      }, 300);
+      
+      console.log('🔄 Cache cleared and multiple refetch attempts scheduled');
     },
     onError: (error) => {
       console.error("Settings update error:", error);

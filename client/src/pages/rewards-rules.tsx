@@ -13,18 +13,21 @@ interface RewardSettings {
 }
 
 const RewardsRules: React.FC = () => {
-  const { data: settings, isLoading } = useQuery<RewardSettings>({
+  const { data: settings, isLoading, error } = useQuery<RewardSettings>({
     queryKey: ['/api/rewards/settings'],
-    refetchInterval: 2000, // Refetch every 2 seconds 
+    refetchInterval: 1000, // Refetch every 1 second for immediate updates
     staleTime: 0, // Always consider data stale
     gcTime: 0, // Don't cache at all
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+    retry: 3,
   });
 
   // Debug logging
   React.useEffect(() => {
-    if (settings) {
+    if (error) {
+      console.error('❌ Rewards Rules - Error loading settings:', error);
+    } else if (settings) {
       console.log('✅ Rewards Rules - Current settings received:', settings);
       console.log('📊 Point values:', {
         daily: settings.dailySubmissionPoints,
@@ -35,7 +38,7 @@ const RewardsRules: React.FC = () => {
     } else {
       console.log('⏳ Rewards Rules - Waiting for settings...');
     }
-  }, [settings]);
+  }, [settings, error]);
 
   if (isLoading) {
     return (

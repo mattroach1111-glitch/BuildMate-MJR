@@ -26,6 +26,15 @@ let rewardSettings = {
   perfectWeekBonus: 25,
   perfectMonthBonus: 100
 };
+
+// Debug: Log any changes to reward settings
+const originalRewardSettings = { ...rewardSettings };
+setInterval(() => {
+  if (JSON.stringify(rewardSettings) !== JSON.stringify(originalRewardSettings)) {
+    console.log("🔄 Reward settings changed:", rewardSettings);
+    Object.assign(originalRewardSettings, rewardSettings);
+  }
+}, 1000);
 import {
   insertJobSchema,
   insertEmployeeSchema,
@@ -3958,9 +3967,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get reward settings for rules page
   app.get("/api/rewards/settings", isAuthenticated, async (req: any, res) => {
     try {
-      console.log("📊 Fetching current reward settings from memory:", rewardSettings);
-      // Return the current reward settings
-      res.json(rewardSettings);
+      console.log("📊 API Call: Fetching current reward settings from memory:", rewardSettings);
+      console.log("📊 Request time:", new Date().toISOString());
+      console.log("📊 User:", req.user?.claims?.sub);
+      
+      // Add timestamp to ensure fresh data
+      const settingsWithTimestamp = {
+        ...rewardSettings,
+        _fetchedAt: new Date().toISOString()
+      };
+      
+      res.json(settingsWithTimestamp);
     } catch (error) {
       console.error("Error fetching reward settings:", error);
       res.status(500).json({ message: "Failed to fetch settings" });
