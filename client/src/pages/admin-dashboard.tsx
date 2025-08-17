@@ -1548,7 +1548,7 @@ export default function AdminDashboard() {
       subtitle={`Welcome back, ${(user as any)?.firstName || 'Admin'}`}
     >
       <div className="space-y-6">
-        {/* Compact Navigation */}
+        {/* Compact Navigation - Enhanced with Colors */}
         <div className="flex items-center justify-between mb-6">
           {/* Primary Navigation - Most Used */}
           <div className="flex items-center gap-2">
@@ -1556,41 +1556,57 @@ export default function AdminDashboard() {
               variant={activeTab === "jobs" ? "default" : "outline"}
               size="sm"
               onClick={() => setActiveTab("jobs")}
-              className="flex items-center gap-2"
+              className={`flex items-center gap-2 transition-all duration-200 ${
+                activeTab === "jobs" 
+                  ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg" 
+                  : "border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 hover:shadow-md"
+              }`}
               data-testid="tab-jobs"
             >
               <Briefcase className="h-4 w-4" />
-              <span className="hidden sm:inline">Jobs</span>
+              <span className="hidden sm:inline font-medium">Jobs</span>
             </Button>
             <Button
               variant={activeTab === "deleted-jobs" ? "default" : "outline"}
               size="sm"
               onClick={() => setActiveTab("deleted-jobs")}
-              className="flex items-center gap-2"
+              className={`flex items-center gap-2 transition-all duration-200 ${
+                activeTab === "deleted-jobs" 
+                  ? "bg-red-600 hover:bg-red-700 text-white shadow-lg" 
+                  : "border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 hover:shadow-md"
+              }`}
               data-testid="tab-deleted-jobs"
             >
               <Trash2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Archived</span>
+              <span className="hidden sm:inline font-medium">Archived</span>
             </Button>
             <Button
               variant={activeTab === "timesheets" ? "default" : "outline"}
               size="sm"
               onClick={() => setActiveTab("timesheets")}
-              className="flex items-center gap-2"
+              className={`flex items-center gap-2 transition-all duration-200 ${
+                activeTab === "timesheets" 
+                  ? "bg-green-600 hover:bg-green-700 text-white shadow-lg" 
+                  : "border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300 hover:shadow-md"
+              }`}
               data-testid="tab-timesheets"
             >
               <Clock className="h-4 w-4" />
-              <span className="hidden sm:inline">Timesheets</span>
+              <span className="hidden sm:inline font-medium">Timesheets</span>
             </Button>
             <Button
               variant={activeTab === "search" ? "default" : "outline"}
               size="sm"
               onClick={() => setActiveTab("search")}
-              className="flex items-center gap-2"
+              className={`flex items-center gap-2 transition-all duration-200 ${
+                activeTab === "search" 
+                  ? "bg-purple-600 hover:bg-purple-700 text-white shadow-lg" 
+                  : "border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 hover:shadow-md"
+              }`}
               data-testid="tab-search"
             >
               <Search className="h-4 w-4" />
-              <span className="hidden sm:inline">Search</span>
+              <span className="hidden sm:inline font-medium">Search</span>
             </Button>
           </div>
 
