@@ -175,7 +175,7 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+            <div className="flex justify-center max-w-2xl mx-auto">
               {/* Rewards Rules */}
               <Card 
                 className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 border-2 border-blue-200 hover:border-blue-400"
@@ -201,31 +201,7 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
                 </CardContent>
               </Card>
 
-              {/* Future App Placeholder */}
-              <Card 
-                className="cursor-not-allowed opacity-75 border-2 border-gray-200 relative"
-                data-testid="button-future-app"
-              >
-                <CardHeader className="text-center pb-3">
-                  <div className="mx-auto mb-3 p-3 bg-gray-100 rounded-full w-12 h-12 flex items-center justify-center">
-                    <Settings className="h-6 w-6 text-gray-500" />
-                  </div>
-                  <CardTitle className="text-lg font-semibold text-gray-700">
-                    Tools
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <p className="text-gray-500 mb-3 text-sm">
-                    Additional productivity tools and features
-                  </p>
-                  <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-200 text-xs">
-                    Coming Soon
-                  </Badge>
-                </CardContent>
-                
-                {/* Coming Soon Overlay */}
-                <div className="absolute inset-0 bg-white bg-opacity-50 rounded-lg pointer-events-none"></div>
-              </Card>
+
             </div>
           </div>
 
