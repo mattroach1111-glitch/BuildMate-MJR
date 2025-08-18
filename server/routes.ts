@@ -2589,12 +2589,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Handle Google Drive files vs object storage files
       if (file.googleDriveLink) {
-        // For Google Drive files, redirect to the Google Drive link
+        console.log(`📎 Serving Google Drive file: ${file.fileName} -> ${file.googleDriveLink}`);
         return res.redirect(file.googleDriveLink);
       }
 
       if (!file.objectPath) {
-        return res.status(404).json({ message: "File not found - no storage path available" });
+        console.error(`❌ File ${fileId} has no storage path available:`, {
+          fileName: file.fileName,
+          hasGoogleDriveLink: !!file.googleDriveLink,
+          hasObjectPath: !!file.objectPath,
+          googleDriveFileId: file.googleDriveFileId
+        });
+        return res.status(404).json({ 
+          message: "File not found - no storage path available",
+          suggestion: "This file may need to be re-uploaded to restore access"
+        });
       }
 
       const objectStorageService = new ObjectStorageService();
@@ -2769,8 +2778,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const uploadedFile = req.file;
       const { jobId, fileName, mimeType, fileSize } = req.body;
       
-      if (!uploadedFile || !jobId || !fileName) {
-        return res.status(400).json({ error: "File, job ID, and file name are required" });
+      console.log(`📤 Direct Google Drive upload request:`, {
+        hasFile: !!uploadedFile,
+        jobId,
+        fileName,
+        originalName: uploadedFile?.originalname,
+        size: uploadedFile?.size,
+        mimetype: uploadedFile?.mimetype
+      });
+      
+      if (!uploadedFile || !jobId) {
+        return res.status(400).json({ error: "File and job ID are required" });
       }
 
       // Verify job exists
@@ -2788,6 +2806,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const googleDriveService = new GoogleDriveService();
       const tokens = JSON.parse(user.googleDriveTokens);
       googleDriveService.setUserTokens(tokens);
+
+      console.log(`🔗 Google Drive service setup complete, uploading file...`);
 
       // Create main BuildFlow Pro folder first
       const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');

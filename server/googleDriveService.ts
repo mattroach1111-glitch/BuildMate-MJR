@@ -39,10 +39,12 @@ export class GoogleDriveService {
   async uploadFile(fileName: string, fileBuffer: Buffer, mimeType: string, folderId?: string): Promise<{ webViewLink: string; fileId: string } | null> {
     if (!this.isReady()) {
       console.error('Google Drive not authenticated. User needs to connect their Google Drive account.');
-      return null;
+      throw new Error('Google Drive not connected. Please connect your Google Drive account first.');
     }
 
     try {
+      console.log(`📤 Uploading file to Google Drive: ${fileName} (${mimeType})`);
+      
       // Create a readable stream from the buffer
       const stream = new Readable();
       stream.push(fileBuffer);
@@ -65,7 +67,7 @@ export class GoogleDriveService {
       });
 
       const fileId = response.data.id;
-      console.log(`File uploaded to Google Drive: ${response.data.name} (ID: ${fileId})`);
+      console.log(`✅ File uploaded to Google Drive: ${response.data.name} (ID: ${fileId})`);
       
       // Make the file publicly readable so others can view the job sheet PDFs and attachments
       await this.makeFilePublic(fileId);
@@ -74,9 +76,20 @@ export class GoogleDriveService {
         webViewLink: response.data.webViewLink,
         fileId: fileId
       };
-    } catch (error) {
-      console.error('Error uploading to Google Drive:', error);
-      return null;
+    } catch (error: any) {
+      console.error('❌ Error uploading to Google Drive:', error);
+      
+      // Check if it's an authentication error
+      if (error.code === 401 || error.status === 401) {
+        throw new Error('Google Drive authentication expired. Please reconnect your Google Drive account.');
+      }
+      
+      // Check if it's a permission error
+      if (error.code === 403 || error.status === 403) {
+        throw new Error('Google Drive permission denied. Please check your Google Drive connection.');
+      }
+      
+      throw new Error(`Google Drive upload failed: ${error.message}`);
     }
   }
 
@@ -134,10 +147,13 @@ export class GoogleDriveService {
 
   async findOrCreateFolder(folderName: string, parentFolderId?: string): Promise<string | null> {
     if (!this.isReady()) {
-      return null;
+      console.error('Google Drive not authenticated for folder operations');
+      throw new Error('Google Drive not connected. Please connect your Google Drive account first.');
     }
 
     try {
+      console.log(`🗂️ Finding or creating folder: ${folderName} ${parentFolderId ? `in parent ${parentFolderId}` : ''}`);
+      
       // Search for existing folder
       const query = parentFolderId 
         ? `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and '${parentFolderId}' in parents and trashed=false`
