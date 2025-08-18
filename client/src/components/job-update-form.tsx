@@ -95,10 +95,8 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     mutationFn: (data: { jobId: string; note: string }) =>
       apiRequest("POST", "/api/job-update-notes", data),
     onSuccess: () => {
-      // Invalidate queries with a delay to prevent focus loss during typing
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/job-update-notes"] });
-      }, 5000); // 5 second delay to avoid interfering with active typing
+      // Don't invalidate queries to prevent re-renders that cause focus loss
+      // queryClient.invalidateQueries({ queryKey: ["/api/job-update-notes"] });
     },
     onError: (error) => {
       console.log("Note auto-save failed:", error);
@@ -110,7 +108,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
   // Debounced save function
   const debouncedSave = React.useCallback(
     React.useMemo(() => {
-      const timeouts = new Map<string, NodeJS.Timeout>();
+      const timeouts = new Map();
       return (jobId: string, note: string) => {
         // Clear existing timeout for this job
         if (timeouts.has(jobId)) {
@@ -236,7 +234,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
         // Find existing update for this job to preserve user input
         const existingUpdate = currentValues.find(update => update.jobId === job.id);
         // Find saved note from database
-        const savedNote = Array.isArray(savedNotes) ? savedNotes.find((note: any) => note.jobId === job.id) : undefined;
+        const savedNote = savedNotes?.find((note: any) => note.jobId === job.id);
         
         return {
           jobId: job.id,

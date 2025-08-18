@@ -160,7 +160,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       // Save the uploaded file as a job file attachment if we have one
       if (lastUploadedFile && selectedJobId) {
         try {
-          const jobFileResponse = await apiRequest("POST", "/api/job-files", {
+          await apiRequest("POST", "/api/job-files", {
             jobId: selectedJobId,
             fileName: lastUploadedFile.name || "document.pdf",
             originalName: lastUploadedFile.name || "document.pdf",
@@ -168,12 +168,28 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
             mimeType: lastUploadedFile.type || "application/pdf",
             objectPath: lastUploadedFile.uploadURL
           });
-          
-          const jobFileData = await jobFileResponse.json();
-          console.log("✅ Saved document as job file attachment with Google Drive:", jobFileData);
+          console.log("✅ Saved document as job file attachment");
 
-          // The /api/job-files endpoint automatically handles Google Drive upload
-          // No need for separate upload-to-drive call since it's done automatically
+          // Automatically upload to Google Drive after saving to job
+          try {
+            await apiRequest("POST", "/api/documents/upload-to-drive", {
+              documentURL: lastUploadedFile.uploadURL,
+              fileName: lastUploadedFile.name,
+              mimeType: lastUploadedFile.type,
+              fileSize: lastUploadedFile.size,
+              jobId: selectedJobId
+            });
+            console.log("✅ Automatically uploaded to Google Drive");
+          } catch (driveError: any) {
+            console.log("ℹ️ Google Drive upload not available:", driveError.message);
+            // Show helpful message about Google Drive connection
+            if (driveError.message?.includes('Google Drive not connected')) {
+              toast({
+                title: "Document Saved", 
+                description: "Document saved to job. Connect Google Drive in Settings for clickable PDF links.",
+              });
+            }
+          }
 
           setLastUploadedFile(null); // Clear after saving
         } catch (fileError) {
@@ -235,7 +251,36 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     }
   });
 
-  // Note: Google Drive uploads are now handled automatically by the /api/job-files endpoint
+  // Upload file to Google Drive after processing
+  const uploadToGoogleDriveMutation = useMutation({
+    mutationFn: async (data: { jobId: string; fileInfo: any }) => {
+      const response = await apiRequest("POST", "/api/documents/upload-to-drive", {
+        documentURL: data.fileInfo.uploadURL,
+        fileName: data.fileInfo.name,
+        mimeType: data.fileInfo.type,
+        fileSize: data.fileInfo.size,
+        jobId: data.jobId
+      });
+      return await response.json();
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      toast({
+        title: "Google Drive Success", 
+        description: "Document uploaded to Google Drive and linked to job",
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error uploading to Google Drive:', error);
+      toast({
+        title: "Google Drive Upload Failed",
+        description: error.message?.includes('Google Drive not connected') 
+          ? "Please connect your Google Drive account first"
+          : "Failed to upload to Google Drive",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Helper functions for expense review
   const handleCategoryChange = (newCategory: 'materials' | 'subtrades' | 'other_costs' | 'tip_fees') => {
@@ -387,7 +432,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
         // Save the uploaded file as a job file attachment
         if (jobResponse.job?.id && file.uploadURL) {
           try {
-            const jobFileResponse = await apiRequest("POST", "/api/job-files", {
+            await apiRequest("POST", "/api/job-files", {
               jobId: jobResponse.job.id,
               fileName: file.name || "document.pdf",
               originalName: file.name || "document.pdf",
@@ -395,16 +440,19 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
               mimeType: file.type || "application/pdf",
               objectPath: file.uploadURL
             });
+            console.log("✅ Saved document as job file attachment");
             
-            const jobFileData = await jobFileResponse.json();
-            console.log("✅ Saved document as job file attachment:", jobFileData);
-            
-            // Check if Google Drive upload happened automatically
-            if (jobFileData.googleDriveLink) {
-              console.log("✅ Document automatically uploaded to Google Drive");
+            // Upload to Google Drive if connected
+            try {
+              await uploadToGoogleDriveMutation.mutateAsync({
+                jobId: jobResponse.job.id,
+                fileInfo: file
+              });
+              console.log("✅ Uploaded document to Google Drive");
               anyGoogleDriveUploaded = true;
-            } else {
-              console.log("ℹ️ Google Drive upload not available (not connected or failed)");
+            } catch (driveError) {
+              console.log("ℹ️ Google Drive upload skipped (not connected or failed):", driveError);
+              // Don't fail the process if Google Drive upload fails
             }
           } catch (fileError) {
             console.error("Failed to save document as job file:", fileError);
@@ -626,7 +674,39 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
                 </Button>
               </div>
 
-              {/* Note: Google Drive uploads now happen automatically when saving to job files */}
+              {/* Google Drive Upload Option */}
+              {lastUploadedFile && selectedJobId && (
+                <div className="pt-3 border-t border-orange-200">
+                  <div className="flex items-center justify-between text-sm text-orange-800 mb-2">
+                    <span>💡 Optional: Save to Google Drive</span>
+                  </div>
+                  <Button
+                    onClick={() => uploadToGoogleDriveMutation.mutate({ 
+                      jobId: selectedJobId, 
+                      fileInfo: lastUploadedFile 
+                    })}
+                    disabled={uploadToGoogleDriveMutation.isPending}
+                    variant="outline" 
+                    size="sm"
+                    className="w-full border-blue-300 text-blue-700 hover:bg-blue-50"
+                    data-testid="button-upload-to-drive"
+                  >
+                    {uploadToGoogleDriveMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Uploading to Drive...
+                      </>
+                    ) : (
+                      <>
+                        🔗 Upload to Google Drive
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Creates clickable links in job sheet PDFs
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

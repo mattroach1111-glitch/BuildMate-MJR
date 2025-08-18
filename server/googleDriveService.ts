@@ -65,7 +65,7 @@ export class GoogleDriveService {
       });
 
       const fileId = response.data.id;
-      console.log(`✅ File uploaded to Google Drive: ${response.data.name} (ID: ${fileId})`);
+      console.log(`File uploaded to Google Drive: ${response.data.name} (ID: ${fileId})`);
       
       // Make the file publicly readable so others can view the job sheet PDFs and attachments
       await this.makeFilePublic(fileId);
@@ -74,38 +74,8 @@ export class GoogleDriveService {
         webViewLink: response.data.webViewLink,
         fileId: fileId
       };
-    } catch (error: any) {
-      console.error('🔴 Error uploading to Google Drive:', error);
-      
-      // Check if it's a token expiration error and try to refresh
-      if (error.code === 401 || error.message?.includes('invalid_grant') || error.message?.includes('Token has been expired')) {
-        console.log('🔄 Token expired, attempting to refresh...');
-        try {
-          await this.googleAuth.refreshTokens();
-          console.log('✅ Tokens refreshed successfully, retrying upload...');
-          
-          // Retry the upload once after refreshing tokens
-          const retryResponse = await this.drive.files.create({
-            resource: fileMetadata,
-            media: media,
-            fields: 'id,name,webViewLink',
-          });
-          
-          const retryFileId = retryResponse.data.id;
-          console.log(`✅ File uploaded to Google Drive after token refresh: ${retryResponse.data.name} (ID: ${retryFileId})`);
-          
-          await this.makeFilePublic(retryFileId);
-          
-          return {
-            webViewLink: retryResponse.data.webViewLink,
-            fileId: retryFileId
-          };
-        } catch (refreshError) {
-          console.error('🔴 Failed to refresh tokens or retry upload:', refreshError);
-          return null;
-        }
-      }
-      
+    } catch (error) {
+      console.error('Error uploading to Google Drive:', error);
       return null;
     }
   }

@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Upload, X, Eye, Trash2 } from "lucide-react";
 
@@ -272,9 +272,6 @@ export function DocumentUploader({
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Upload Documents</DialogTitle>
-            <DialogDescription>
-              Select and upload documents to add to your job. Supported formats: PDF, JPG, PNG (max 25MB each).
-            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">

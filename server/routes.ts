@@ -478,54 +478,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Google Drive diagnostic endpoint for troubleshooting deployment issues
-  app.get('/api/google-drive/diagnostic', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      let diagnostic = {
-        userId: userId,
-        hasUser: !!user,
-        hasGoogleDriveTokens: !!user?.googleDriveTokens,
-        tokenLength: user?.googleDriveTokens ? user.googleDriveTokens.length : 0,
-        googleDriveServiceReady: false,
-        canCreateFolder: false,
-        lastError: null as string | null,
-        environment: process.env.NODE_ENV || 'unknown',
-        timestamp: new Date().toISOString()
-      };
-
-      if (user?.googleDriveTokens) {
-        try {
-          const { GoogleDriveService } = await import('./googleDriveService');
-          const googleDriveService = new GoogleDriveService();
-          const tokens = JSON.parse(user.googleDriveTokens);
-          googleDriveService.setUserTokens(tokens);
-          
-          diagnostic.googleDriveServiceReady = googleDriveService.isReady();
-          
-          if (diagnostic.googleDriveServiceReady) {
-            // Test folder creation
-            const testFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
-            diagnostic.canCreateFolder = !!testFolderId;
-            
-            console.log(`✅ Google Drive diagnostic test successful - BuildFlow Pro folder ID: ${testFolderId || 'not found'}`);
-          }
-        } catch (testError) {
-          diagnostic.lastError = testError.message;
-          console.error('Google Drive diagnostic error:', testError);
-        }
-      }
-
-      console.log('Google Drive Diagnostic Results:', diagnostic);
-      res.json(diagnostic);
-    } catch (error) {
-      console.error('Google Drive diagnostic endpoint error:', error);
-      res.status(500).json({ message: 'Failed to run Google Drive diagnostics' });
-    }
-  });
-
   // Employee routes
   app.get("/api/employees", isAuthenticated, async (req: any, res) => {
     try {
@@ -679,47 +631,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertJobSchema.parse(req.body);
       const job = await storage.createJob(validatedData);
-      
-      // Try to create Google Drive folder for the new job if user has Google Drive connected
-      let googleDriveFolderCreated = false;
-      if (user && user.googleDriveTokens) {
-        try {
-          console.log(`☁️ Creating Google Drive folder for new job: ${job.jobAddress}`);
-          
-          const { GoogleDriveService } = await import('./googleDriveService');
-          const googleDriveService = new GoogleDriveService();
-          const tokens = JSON.parse(user.googleDriveTokens);
-          googleDriveService.setUserTokens(tokens);
-          
-          if (googleDriveService.isReady()) {
-            // Create main BuildFlow Pro folder first
-            const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
-            if (mainFolderId) {
-              // Create job folder
-              const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId);
-              if (jobFolderId) {
-                googleDriveFolderCreated = true;
-                console.log(`✅ Google Drive folder created for job: Job - ${job.jobAddress}`);
-              } else {
-                console.log(`⚠️ Failed to create job folder for: ${job.jobAddress}`);
-              }
-            } else {
-              console.log(`⚠️ Failed to create main BuildFlow Pro folder`);
-            }
-          } else {
-            console.log(`⚠️ Google Drive not authenticated for user ${user.id}`);
-          }
-        } catch (driveError) {
-          console.error(`⚠️ Google Drive folder creation failed for new job:`, driveError.message);
-        }
-      } else {
-        console.log(`ℹ️ Google Drive not connected for user ${user.id} - job folder not created`);
-      }
-      
-      res.status(201).json({
-        ...job,
-        googleDriveFolderCreated
-      });
+      res.status(201).json(job);
     } catch (error) {
       if (error instanceof z.ZodError) {
         console.error("Validation error:", error.errors);
@@ -2674,27 +2586,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "File not found" });
       }
 
-      // PRIORITY 1: Google Drive links (primary storage)
+      // Handle Google Drive files vs object storage files
       if (file.googleDriveLink) {
-        console.log(`📥 PRIMARY: Downloading from Google Drive: ${file.originalName}`);
+        // For Google Drive files, redirect to the Google Drive link
         return res.redirect(file.googleDriveLink);
       }
 
-      // PRIORITY 2: Object storage (backup storage)
-      if (file.objectPath) {
-        console.log(`📥 BACKUP: Downloading from object storage: ${file.originalName} (${file.objectPath})`);
-      } else {
-        console.log(`❌ File download failed - no storage paths available for file: ${file.originalName}`);
-        console.log(`   File record:`, {
-          id: file.id,
-          fileName: file.fileName,
-          objectPath: file.objectPath,
-          googleDriveLink: file.googleDriveLink ? 'present' : 'missing'
-        });
-        return res.status(404).json({ 
-          message: "File not found - no storage path available",
-          details: "This file may not have been properly saved during upload. Please try uploading the file again."
-        });
+      if (!file.objectPath) {
+        return res.status(404).json({ message: "File not found - no storage path available" });
       }
 
       const objectStorageService = new ObjectStorageService();
@@ -3784,8 +3683,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // The document filename should correspond to an email attachment file
         console.log(`📎 Attempting to save email attachment: ${fileName}`);
         
-        // PRIMARY: Try to upload to Google Drive first (user's preferred storage)
-        let objectPath = null;
+        // First, try to save as job file attachment from object storage
+        try {
+          // Create a job file record for the email attachment
+          fileRecord = await storage.createJobFile({
+            jobId: targetJobId,
+            fileName: fileName,
+            originalName: fileName,
+            fileSize: document.attachmentContent ? Buffer.from(document.attachmentContent, 'base64').length : 0,
+            mimeType: document.mimeType || mimeType,
+            objectPath: null, // Email attachments are not in object storage initially
+            googleDriveLink: null,
+            googleDriveFileId: null,
+            uploadedById: req.user.claims.sub
+          });
+          console.log(`📎 Job file record created: ${fileRecord.id}`);
+        } catch (fileError) {
+          console.log(`⚠️ Could not create job file record: ${fileError.message}`);
+        }
+
+        // Try to upload to Google Drive if user has it connected
         const userId = req.user.claims.sub;
         const user = await storage.getUser(userId);
         
@@ -3812,123 +3729,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const tokens = JSON.parse(user.googleDriveTokens);
             googleDriveService.setUserTokens(tokens);
             
-            // Check if Google Drive is ready
-            if (!googleDriveService.isReady()) {
-              throw new Error('Google Drive authentication failed - tokens may have expired. Please reconnect your Google Drive account.');
-            }
-            
             // Create main BuildFlow Pro folder first
             const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
-            if (!mainFolderId) {
-              throw new Error('Failed to create or find BuildFlow Pro folder in Google Drive');
-            }
             
             // Create/find job folder
-            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job?.jobAddress}`, mainFolderId);
-            if (!jobFolderId) {
-              throw new Error(`Failed to create or find job folder "Job - ${job?.jobAddress}" in Google Drive`);
-            }
+            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId);
             
-            // Upload file to Google Drive 
+            // Upload file to Google Drive
             const uploadResult = await googleDriveService.uploadFile(
               fileName, 
               fileBuffer, 
               document.mimeType || mimeType, 
-              jobFolderId
+              jobFolderId || undefined
             );
             
-            if (!uploadResult) {
-              throw new Error('Failed to upload file to Google Drive - upload returned null');
+            if (uploadResult && fileRecord) {
+              // Update the file record with Google Drive info
+              await storage.updateJobFile(fileRecord.id, {
+                googleDriveLink: uploadResult.webViewLink,
+                googleDriveFileId: uploadResult.fileId
+              });
+              googleDriveResult = uploadResult;
+              console.log(`☁️ File uploaded to Google Drive: ${uploadResult.webViewLink}`);
             }
-            
-            if (uploadResult) {
-              // Create job file record with Google Drive as primary storage
-              try {
-                fileRecord = await storage.createJobFile({
-                  jobId: targetJobId,
-                  fileName: fileName,
-                  originalName: fileName,
-                  fileSize: document.attachmentContent ? Buffer.from(document.attachmentContent, 'base64').length : 0,
-                  mimeType: document.mimeType || mimeType,
-                  googleDriveLink: uploadResult.webViewLink, // PRIMARY: Google Drive link
-                  googleDriveFileId: uploadResult.fileId,
-                  objectPath: null, // Will be set as backup if needed
-                  uploadedById: req.user.claims.sub
-                });
-                googleDriveResult = uploadResult;
-                console.log(`☁️ PRIMARY: File uploaded to Google Drive: ${uploadResult.webViewLink}`);
-                console.log(`📎 Job file record created with Google Drive as primary: ${fileRecord.id}`);
-              } catch (fileError: any) {
-                console.log(`⚠️ Could not create job file record: ${fileError?.message || fileError}`);
-              }
-            }
-          } catch (driveError: any) {
-            console.error(`⚠️ Google Drive upload failed for user ${userId}:`, driveError?.message || driveError);
-            console.error('Google Drive error details:', {
-              hasTokens: !!user.googleDriveTokens,
-              tokenType: user.googleDriveTokens ? 'present' : 'missing',
-              fileName: fileName,
-              targetJobId: targetJobId,
-              hasAttachmentContent: !!document.attachmentContent,
-              errorMessage: driveError?.message || 'Unknown error',
-              errorType: typeof driveError
-            });
+          } catch (driveError) {
+            console.log(`⚠️ Google Drive upload failed: ${driveError.message}`);
           }
         } else {
-          console.log(`ℹ️ Google Drive not connected for user ${userId} - using backup storage`, {
-            hasUser: !!user,
-            hasTokens: !!user?.googleDriveTokens,
-            userId: userId
-          });
-          
-          // BACKUP: Save to object storage only if Google Drive failed or is unavailable
-          try {
-            if (document.attachmentContent) {
-              const fileBuffer = Buffer.from(document.attachmentContent, 'base64');
-              const { ObjectStorageService } = await import('./objectStorage');
-              const objectStorageClient = require('./objectStorage').objectStorageClient;
-              const parseObjectPath = require('./objectStorage').parseObjectPath;
-              const objectStorageService = new ObjectStorageService();
-              
-              // Generate unique object path for the file
-              const objectId = `email-attachments/${Date.now()}-${fileName}`;
-              const privateDir = objectStorageService.getPrivateObjectDir();
-              objectPath = `/objects/${objectId}`;
-              
-              // Save file to object storage as backup
-              const fullObjectPath = `${privateDir}/${objectId}`;
-              const { bucketName, objectName } = parseObjectPath(fullObjectPath);
-              const bucket = objectStorageClient.bucket(bucketName);
-              const file = bucket.file(objectName);
-              
-              await file.save(fileBuffer, {
-                metadata: {
-                  contentType: document.mimeType || mimeType,
-                },
-              });
-              
-              // Create job file record with object storage as backup
-              fileRecord = await storage.createJobFile({
-                jobId: targetJobId,
-                fileName: fileName,
-                originalName: fileName,
-                fileSize: fileBuffer.length,
-                mimeType: document.mimeType || mimeType,
-                objectPath: objectPath, // Backup storage path
-                googleDriveLink: null,
-                googleDriveFileId: null,
-                uploadedById: req.user.claims.sub
-              });
-              
-              console.log(`📦 BACKUP: File saved to object storage: ${objectPath}`);
-              console.log(`📎 Job file record created with object storage as backup: ${fileRecord.id}`);
-            }
-          } catch (storageError: any) {
-            console.log(`⚠️ Backup object storage save also failed: ${storageError?.message || storageError}`);
-          }
+          console.log(`ℹ️ Google Drive not connected for user ${userId}`);
         }
-      } catch (attachmentError: any) {
-        console.log(`⚠️ File attachment processing failed: ${attachmentError?.message || attachmentError}`);
+      } catch (attachmentError) {
+        console.log(`⚠️ File attachment processing failed: ${attachmentError.message}`);
       }
 
       // Now approve the document with the job ID
@@ -3940,10 +3771,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         jobId: targetJobId,
         category: finalCategory,
         fileAttached: !!fileRecord,
-        objectStorageSuccess: !!(fileRecord?.objectPath),
         googleDriveUploaded: !!googleDriveResult,
         googleDriveLink: googleDriveResult?.webViewLink,
-        message: `Expense added to job as ${finalCategory}${fileRecord ? ' with file attachment' : ''}${fileRecord?.objectPath ? ' (saved to storage)' : ''}${googleDriveResult ? ' and uploaded to Google Drive' : ''}`
+        message: `Expense added to job as ${finalCategory}${fileRecord ? ' with file attachment' : ''}${googleDriveResult ? ' and uploaded to Google Drive' : ''}`
       });
     } catch (error) {
       console.error('Error approving document:', error);
