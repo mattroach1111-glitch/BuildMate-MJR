@@ -3789,7 +3789,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           if (document.attachmentContent) {
             const fileBuffer = Buffer.from(document.attachmentContent, 'base64');
-            const { ObjectStorageService, objectStorageClient, parseObjectPath } = await import('./objectStorage');
+            const { ObjectStorageService } = await import('./objectStorage');
+            const objectStorageClient = require('./objectStorage').objectStorageClient;
+            const parseObjectPath = require('./objectStorage').parseObjectPath;
             const objectStorageService = new ObjectStorageService();
             
             // Save to object storage first for reliable access  
@@ -3812,8 +3814,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             console.log(`📦 File saved to object storage: ${objectPath}`);
           }
-        } catch (storageError) {
-          console.log(`⚠️ Object storage save failed: ${storageError.message}`);
+        } catch (storageError: any) {
+          console.log(`⚠️ Object storage save failed: ${storageError?.message || storageError}`);
         }
 
         // Create a job file record with object storage path
@@ -3830,8 +3832,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             uploadedById: req.user.claims.sub
           });
           console.log(`📎 Job file record created: ${fileRecord.id} with object path: ${objectPath || 'none'}`);
-        } catch (fileError) {
-          console.log(`⚠️ Could not create job file record: ${fileError.message}`);
+        } catch (fileError: any) {
+          console.log(`⚠️ Could not create job file record: ${fileError?.message || fileError}`);
         }
 
         // Try to upload to Google Drive if user has it connected
@@ -3878,10 +3880,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               throw new Error(`Failed to create or find job folder "Job - ${job?.jobAddress}" in Google Drive`);
             }
             
-            // Upload file to Google Drive
+            // Upload file to Google Drive 
+            const fileBufferForDrive = Buffer.from(document.attachmentContent, 'base64');
             const uploadResult = await googleDriveService.uploadFile(
               fileName, 
-              fileBuffer, 
+              fileBufferForDrive, 
               document.mimeType || mimeType, 
               jobFolderId
             );
@@ -3899,19 +3902,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
               googleDriveResult = uploadResult;
               console.log(`☁️ File uploaded to Google Drive: ${uploadResult.webViewLink}`);
-              console.log(`📦 File also available in object storage: ${objectPath || 'none'}`);
+              console.log(`📦 File also available in object storage: ${fileRecord?.objectPath || 'none'}`);
             }
-          } catch (driveError) {
-            console.error(`⚠️ Google Drive upload failed for user ${userId}:`, driveError.message);
+          } catch (driveError: any) {
+            console.error(`⚠️ Google Drive upload failed for user ${userId}:`, driveError?.message || driveError);
             console.error('Google Drive error details:', {
               hasTokens: !!user.googleDriveTokens,
               tokenType: user.googleDriveTokens ? 'present' : 'missing',
               fileName: fileName,
-              jobAddress: job?.jobAddress,
-              fileBufferSize: fileBuffer?.length,
+              targetJobId: targetJobId,
               hasAttachmentContent: !!document.attachmentContent,
-              errorMessage: driveError.message,
-              errorStack: driveError.stack?.slice(0, 500)
+              errorMessage: driveError?.message || 'Unknown error',
+              errorType: typeof driveError
             });
           }
         } else {
@@ -3921,8 +3923,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId: userId
           });
         }
-      } catch (attachmentError) {
-        console.log(`⚠️ File attachment processing failed: ${attachmentError.message}`);
+      } catch (attachmentError: any) {
+        console.log(`⚠️ File attachment processing failed: ${attachmentError?.message || attachmentError}`);
       }
 
       // Now approve the document with the job ID
@@ -3934,10 +3936,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         jobId: targetJobId,
         category: finalCategory,
         fileAttached: !!fileRecord,
-        objectStorageSuccess: !!objectPath,
+        objectStorageSuccess: !!(fileRecord?.objectPath),
         googleDriveUploaded: !!googleDriveResult,
         googleDriveLink: googleDriveResult?.webViewLink,
-        message: `Expense added to job as ${finalCategory}${fileRecord ? ' with file attachment' : ''}${objectPath ? ' (saved to storage)' : ''}${googleDriveResult ? ' and uploaded to Google Drive' : ''}`
+        message: `Expense added to job as ${finalCategory}${fileRecord ? ' with file attachment' : ''}${fileRecord?.objectPath ? ' (saved to storage)' : ''}${googleDriveResult ? ' and uploaded to Google Drive' : ''}`
       });
     } catch (error) {
       console.error('Error approving document:', error);
