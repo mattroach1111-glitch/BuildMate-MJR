@@ -61,9 +61,20 @@ const saveEmailSuggestions = (emails: string[]) => {
 
 const addEmailsToSuggestions = (newEmails: string[]) => {
   const existing = getSavedEmailSuggestions();
-  const emailSet = new Set([...existing, ...newEmails]);
-  const updated = Array.from(emailSet).slice(0, 20); // Keep only 20 most recent
-  saveEmailSuggestions(updated);
+  // Filter out invalid emails and duplicates
+  const validNewEmails = newEmails.filter(email => 
+    email && 
+    email.includes('@') && 
+    email.includes('.') && 
+    !existing.includes(email)
+  );
+  
+  if (validNewEmails.length > 0) {
+    // Add new emails to the beginning (most recent first)
+    const updated = [...validNewEmails, ...existing].slice(0, 20);
+    saveEmailSuggestions(updated);
+    console.log("💾 Updated email suggestions:", updated);
+  }
 };
 
 export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
@@ -242,7 +253,22 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     },
     onSuccess: (response: any) => {
       // Save successful email addresses to suggestions
+      const currentFormEmails = form.getValues("recipientEmails");
+      if (currentFormEmails) {
+        // Parse comma-separated emails and clean them
+        const emails = currentFormEmails
+          .split(',')
+          .map(email => email.trim())
+          .filter(email => email && email.includes('@'));
+        
+        console.log("💾 Saving emails to suggestions:", emails);
+        addEmailsToSuggestions(emails);
+        setEmailSuggestions(getSavedEmailSuggestions());
+      }
+      
+      // Also save from response if available
       if (response.sentTo && Array.isArray(response.sentTo)) {
+        console.log("💾 Saving additional emails from response:", response.sentTo);
         addEmailsToSuggestions(response.sentTo);
         setEmailSuggestions(getSavedEmailSuggestions());
       }
@@ -418,6 +444,32 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                                 <Users className="h-4 w-4 mr-2" />
                                 Add All Recent Emails
                               </CommandItem>
+                              <CommandItem
+                                onSelect={() => {
+                                  // Save current emails to suggestions manually
+                                  const currentEmails = field.value || "";
+                                  if (currentEmails.trim()) {
+                                    const emails = currentEmails
+                                      .split(',')
+                                      .map(email => email.trim())
+                                      .filter(email => email && email.includes('@'));
+                                    
+                                    if (emails.length > 0) {
+                                      addEmailsToSuggestions(emails);
+                                      setEmailSuggestions(getSavedEmailSuggestions());
+                                      toast({
+                                        title: "Emails Saved",
+                                        description: `${emails.length} email address${emails.length !== 1 ? 'es' : ''} added to suggestions.`,
+                                      });
+                                    }
+                                  }
+                                  setShowSuggestions(false);
+                                }}
+                                className="cursor-pointer text-green-600"
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Save Current Emails to Suggestions
+                              </CommandItem>
                             </CommandGroup>
                           </Command>
                         </PopoverContent>
@@ -436,9 +488,13 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                     <p className="text-sm text-muted-foreground">
                       Separate multiple email addresses with commas.
                     </p>
-                    {emailSuggestions.length > 0 && (
+                    {emailSuggestions.length > 0 ? (
                       <p className="text-xs text-muted-foreground">
-                        {emailSuggestions.length} saved email{emailSuggestions.length !== 1 ? 's' : ''}
+                        {emailSuggestions.length} saved email{emailSuggestions.length !== 1 ? 's' : ''} • Click "Recent Emails" above to use them
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Email addresses will be saved automatically after sending
                       </p>
                     )}
                   </div>
