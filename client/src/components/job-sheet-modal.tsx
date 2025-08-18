@@ -1586,6 +1586,9 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
         style={{ WebkitOverflowScrolling: 'touch' }}
         aria-describedby="job-sheet-description"
       >
+        <div id="job-sheet-description" className="sr-only">
+          Job sheet details, costs, and management interface
+        </div>
         <DialogHeader className="flex-shrink-0 pb-4 border-b max-sm:px-4 max-sm:pt-4">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div className="flex items-center gap-3 flex-1 min-w-0">
