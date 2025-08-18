@@ -15,7 +15,6 @@ import {
   emailProcessedDocuments,
   staffMembers,
   staffNotesEntries,
-  emailDrafts,
   type User,
   type UpsertUser,
   type Employee,
@@ -48,8 +47,6 @@ import {
   type InsertStaffMember,
   type StaffNoteEntry,
   type InsertStaffNoteEntry,
-  type EmailDraft,
-  type InsertEmailDraft,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sum, ne, gte, lte, lt, sql, isNull, or, ilike, inArray } from "drizzle-orm";
@@ -202,13 +199,6 @@ export interface IStorage {
   createJobNote(note: InsertJobNote): Promise<JobNote>;
   updateJobNote(id: string, note: Partial<InsertJobNote>): Promise<JobNote>;
   deleteJobNote(id: string): Promise<void>;
-  
-  // Email Drafts operations
-  saveEmailDraft(draft: InsertEmailDraft): Promise<EmailDraft>;
-  getEmailDrafts(userId: string, clientName?: string, projectManager?: string): Promise<EmailDraft[]>;
-  getEmailDraft(id: string): Promise<EmailDraft | undefined>;
-  updateEmailDraft(id: string, draft: Partial<InsertEmailDraft>): Promise<EmailDraft>;
-  deleteEmailDraft(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1958,52 +1948,6 @@ export class DatabaseStorage implements IStorage {
 
   async deleteJobNote(id: string): Promise<void> {
     await db.delete(jobNotes).where(eq(jobNotes.id, id));
-  }
-
-  // Email Drafts operations
-  async saveEmailDraft(draft: InsertEmailDraft): Promise<EmailDraft> {
-    const [savedDraft] = await db
-      .insert(emailDrafts)
-      .values(draft)
-      .returning();
-    return savedDraft;
-  }
-
-  async getEmailDrafts(userId: string, clientName?: string, projectManager?: string): Promise<EmailDraft[]> {
-    let query = db.select().from(emailDrafts).where(eq(emailDrafts.userId, userId));
-    
-    if (clientName && projectManager) {
-      query = query.where(
-        and(
-          eq(emailDrafts.clientName, clientName),
-          eq(emailDrafts.projectManager, projectManager)
-        )
-      );
-    } else if (clientName) {
-      query = query.where(eq(emailDrafts.clientName, clientName));
-    } else if (projectManager) {
-      query = query.where(eq(emailDrafts.projectManager, projectManager));
-    }
-    
-    return await query.orderBy(desc(emailDrafts.updatedAt));
-  }
-
-  async getEmailDraft(id: string): Promise<EmailDraft | undefined> {
-    const [draft] = await db.select().from(emailDrafts).where(eq(emailDrafts.id, id));
-    return draft;
-  }
-
-  async updateEmailDraft(id: string, draft: Partial<InsertEmailDraft>): Promise<EmailDraft> {
-    const [updatedDraft] = await db
-      .update(emailDrafts)
-      .set({ ...draft, updatedAt: new Date() })
-      .where(eq(emailDrafts.id, id))
-      .returning();
-    return updatedDraft;
-  }
-
-  async deleteEmailDraft(id: string): Promise<void> {
-    await db.delete(emailDrafts).where(eq(emailDrafts.id, id));
   }
 }
 

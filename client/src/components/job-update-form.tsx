@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,7 +7,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { Mail, FileText, Send, Plus, Building2, ChevronDown, Users, Clock, Save, FolderOpen, Trash2 } from "lucide-react";
+import { Mail, FileText, Send, Plus, Building2, ChevronDown, Users, Clock } from "lucide-react";
 import type { Job } from "@shared/schema";
 
 // Schema for job update form
@@ -72,9 +72,6 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
   const [emailSuggestions, setEmailSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedClient, setSelectedClient] = useState<string>("all");
-  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
-  const [showDrafts, setShowDrafts] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Fetch current user data
   const { data: currentUser } = useQuery<{ id: string; email: string }>({
@@ -131,7 +128,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
   }, [allJobs, projectManager]);
 
   // Generate project manager and client specific email subject
-  const emailSubject = React.useMemo(() => {
+  const getEmailSubject = React.useCallback(() => {
     let pmName = "";
     let clientPart = "";
     
@@ -151,7 +148,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     resolver: zodResolver(jobUpdateSchema),
     defaultValues: {
       updates: jobs?.map(job => ({ jobId: job.id, update: "" })) || [],
-      emailSubject: emailSubject,
+      emailSubject: getEmailSubject(),
       recipientEmails: "",
       additionalNotes: "",
     },
@@ -162,153 +159,13 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     setEmailSuggestions(getSavedEmailSuggestions());
   }, []);
 
-  // Update form when jobs load, project manager, or client changes (avoid overwriting user input)
-  const hasInitialized = useRef(false);
+  // Update form when jobs load, project manager, or client changes
   React.useEffect(() => {
-    if (jobs && !hasInitialized.current) {
-      hasInitialized.current = true;
+    if (jobs) {
       form.setValue("updates", jobs.map(job => ({ jobId: job.id, update: "" })));
-      form.setValue("emailSubject", emailSubject);
     }
-  }, [jobs, form, emailSubject]);
-
-  // Try to load most recent draft when form opens (only once)
-  const hasTriedAutoLoad = useRef(false);
-  React.useEffect(() => {
-    if (currentUser && jobs && jobs.length > 0 && !currentDraftId && !hasTriedAutoLoad.current) {
-      hasTriedAutoLoad.current = true;
-      // Auto-load the most recent draft for this context
-      fetch("/api/email-drafts", {
-        method: "GET",
-        credentials: "include",
-      })
-        .then(res => res.json())
-        .then(drafts => {
-          if (drafts && drafts.length > 0) {
-            // Find most recent draft matching current context
-            const matchingDraft = drafts.find((draft: any) => 
-              (draft.projectManager === projectManager || (!draft.projectManager && !projectManager)) &&
-              (draft.clientName === selectedClient || (!draft.clientName && selectedClient === "all"))
-            );
-            
-            if (matchingDraft) {
-              console.log("Auto-loading matching draft:", matchingDraft.id);
-              loadDraftMutation.mutate(matchingDraft.id);
-            }
-          }
-        })
-        .catch(err => console.log("Could not auto-load draft:", err));
-    }
-  }, [currentUser, jobs, projectManager, selectedClient, currentDraftId, loadDraftMutation]);
-
-  // Fetch existing drafts
-  const draftsQuery = useQuery({
-    queryKey: ["/api/email-drafts"],
-    enabled: showDrafts,
-  });
-
-  // Save draft mutation
-  const saveDraftMutation = useMutation({
-    mutationFn: async (data: JobUpdateForm & { clientName?: string }) => {
-      const draftData = {
-        clientName: selectedClient !== "all" ? selectedClient : null,
-        projectManager: projectManager || null,
-        emailSubject: data.emailSubject,
-        recipientEmails: data.recipientEmails,
-        additionalNotes: data.additionalNotes || "",
-        updates: data.updates,
-      };
-
-      if (currentDraftId) {
-        return apiRequest("PUT", `/api/email-drafts/${currentDraftId}`, draftData);
-      } else {
-        return apiRequest("POST", "/api/email-drafts", draftData);
-      }
-    },
-    onSuccess: (response: any) => {
-      if (!currentDraftId) {
-        setCurrentDraftId(response.id);
-      }
-      setLastSaved(new Date());
-      // Only show toast for manual saves, not auto-saves
-      if (response.isManualSave) {
-        toast({
-          title: "Draft Saved",
-          description: "Your email draft has been saved successfully.",
-        });
-      }
-      queryClient.invalidateQueries({ queryKey: ["/api/email-drafts"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save draft.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Load draft mutation
-  const loadDraftMutation = useMutation({
-    mutationFn: async (draftId: string) => {
-      return apiRequest("GET", `/api/email-drafts/${draftId}`);
-    },
-    onSuccess: (draft: any) => {
-      form.setValue("emailSubject", draft.emailSubject);
-      form.setValue("recipientEmails", draft.recipientEmails);
-      form.setValue("additionalNotes", draft.additionalNotes || "");
-      
-      // Load the saved updates
-      const currentUpdates = form.getValues("updates");
-      const savedUpdates = draft.updates || [];
-      
-      const mergedUpdates = currentUpdates.map(currentUpdate => {
-        const savedUpdate = savedUpdates.find((saved: any) => saved.jobId === currentUpdate.jobId);
-        return {
-          ...currentUpdate,
-          update: savedUpdate?.update || currentUpdate.update || ""
-        };
-      });
-      
-      form.setValue("updates", mergedUpdates);
-      setCurrentDraftId(draft.id);
-      setLastSaved(new Date(draft.updatedAt));
-      setShowDrafts(false);
-      
-      toast({
-        title: "Draft Loaded",
-        description: "Email draft has been loaded successfully.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error", 
-        description: error.message || "Failed to load draft.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Delete draft mutation
-  const deleteDraftMutation = useMutation({
-    mutationFn: async (draftId: string) => {
-      return apiRequest("DELETE", `/api/email-drafts/${draftId}`);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Draft Deleted",
-        description: "Email draft has been deleted successfully.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/email-drafts"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete draft.",
-        variant: "destructive",
-      });
-    },
-  });
+    form.setValue("emailSubject", getEmailSubject());
+  }, [jobs, form, getEmailSubject]);
 
   // Submit job updates via email
   const submitUpdatesMutation = useMutation({
@@ -320,12 +177,6 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
       if (response.sentTo && Array.isArray(response.sentTo)) {
         addEmailsToSuggestions(response.sentTo);
         setEmailSuggestions(getSavedEmailSuggestions());
-      }
-      
-      // Delete the current draft after successful send
-      if (currentDraftId) {
-        deleteDraftMutation.mutate(currentDraftId);
-        setCurrentDraftId(null);
       }
       
       toast({
@@ -343,47 +194,6 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
       });
     },
   });
-
-  // Debounced auto-save function
-  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  const debouncedAutoSave = useCallback((formData: JobUpdateForm) => {
-    if (autoSaveTimeoutRef.current) {
-      clearTimeout(autoSaveTimeoutRef.current);
-    }
-    
-    autoSaveTimeoutRef.current = setTimeout(() => {
-      const hasContent = formData.emailSubject || formData.recipientEmails || 
-                        formData.additionalNotes || 
-                        formData.updates.some(update => update.update && update.update.trim());
-      
-      if (hasContent && !saveDraftMutation.isPending) {
-        console.log("Auto-saving draft...");
-        saveDraftMutation.mutate(formData);
-      }
-    }, 3000); // Auto-save 3 seconds after user stops typing
-  }, [saveDraftMutation]);
-
-  // Watch form values and trigger debounced auto-save
-  useEffect(() => {
-    const subscription = form.watch((value) => {
-      if (value) {
-        debouncedAutoSave(value as JobUpdateForm);
-      }
-    });
-    
-    return () => {
-      subscription.unsubscribe();
-      if (autoSaveTimeoutRef.current) {
-        clearTimeout(autoSaveTimeoutRef.current);
-      }
-    };
-  }, [form, debouncedAutoSave]);
-
-  const handleSaveDraft = () => {
-    const formData = form.getValues();
-    saveDraftMutation.mutate({ ...formData, isManualSave: true });
-  };
 
   const onSubmit = async (data: JobUpdateForm) => {
     // Filter out jobs without updates
@@ -719,147 +529,35 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
           </CardContent>
         </Card>
 
-        {/* Draft Status */}
-        {(lastSaved || currentDraftId) && (
-          <Card className="bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-300">
-                <Save className="h-4 w-4" />
-                {lastSaved && `Draft saved at ${lastSaved.toLocaleTimeString()}`}
-                {saveDraftMutation.isPending && "Saving draft..."}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Submit Actions */}
-        <div className="flex justify-between items-center pt-4">
-          <div className="flex gap-2 items-center">
-            {/* Auto-save status indicator */}
-            <div className="text-xs text-muted-foreground">
-              {saveDraftMutation.isPending ? (
-                <span className="flex items-center gap-1">
-                  <Save className="h-3 w-3 animate-pulse" />
-                  Saving...
-                </span>
-              ) : lastSaved ? (
-                <span>Last saved: {lastSaved.toLocaleTimeString()}</span>
-              ) : (
-                <span>Not saved yet</span>
-              )}
-            </div>
-            
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleSaveDraft}
-              disabled={saveDraftMutation.isPending}
-              data-testid="button-save-draft"
-            >
-              {saveDraftMutation.isPending ? (
-                <>
-                  <Save className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Draft
-                </>
-              )}
-            </Button>
-            
-            <Popover open={showDrafts} onOpenChange={setShowDrafts}>
-              <PopoverTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={draftsQuery.isLoading}
-                  data-testid="button-load-draft"
-                >
-                  <FolderOpen className="h-4 w-4 mr-2" />
-                  Load Draft
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-0" align="start">
-                <div className="p-4">
-                  <h4 className="font-medium text-sm mb-3">Email Drafts</h4>
-                  {draftsQuery.isLoading ? (
-                    <div className="text-sm text-muted-foreground">Loading drafts...</div>
-                  ) : draftsQuery.data && draftsQuery.data.length > 0 ? (
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {draftsQuery.data.map((draft: any) => (
-                        <div key={draft.id} className="flex items-center justify-between p-2 rounded border bg-card hover:bg-accent group">
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium truncate">
-                              {draft.emailSubject || "Untitled Draft"}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {new Date(draft.updatedAt).toLocaleDateString()} • 
-                              {draft.clientName || "All Clients"} • 
-                              {draft.projectManager || "All PMs"}
-                            </div>
-                          </div>
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => loadDraftMutation.mutate(draft.id)}
-                              disabled={loadDraftMutation.isPending}
-                              data-testid={`button-load-draft-${draft.id}`}
-                            >
-                              <FolderOpen className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => deleteDraftMutation.mutate(draft.id)}
-                              disabled={deleteDraftMutation.isPending}
-                              data-testid={`button-delete-draft-${draft.id}`}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-sm text-muted-foreground">No drafts found</div>
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-          
-          <div className="flex gap-3">
-            {onClose && (
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={onClose}
-                data-testid="button-cancel-updates"
-              >
-                Cancel
-              </Button>
-            )}
+        <div className="flex justify-end gap-3 pt-4">
+          {onClose && (
             <Button 
-              type="submit" 
-              disabled={submitUpdatesMutation.isPending}
-              data-testid="button-send-updates"
+              type="button" 
+              variant="outline" 
+              onClick={onClose}
+              data-testid="button-cancel-updates"
             >
-              {submitUpdatesMutation.isPending ? (
-                <>
-                  <Send className="h-4 w-4 mr-2 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4 mr-2" />
-                  Send Updates Email
-                </>
-              )}
+              Cancel
             </Button>
-          </div>
+          )}
+          <Button 
+            type="submit" 
+            disabled={submitUpdatesMutation.isPending}
+            data-testid="button-send-updates"
+          >
+            {submitUpdatesMutation.isPending ? (
+              <>
+                <Send className="h-4 w-4 mr-2 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4 mr-2" />
+                Send Updates Email
+              </>
+            )}
+          </Button>
         </div>
       </form>
     </Form>
@@ -887,9 +585,6 @@ function JobUpdateDialog({ projectManager }: JobUpdateDialogProps) {
             Send Job Updates Email
             {projectManager && ` - ${projectManager}'s Jobs`}
           </DialogTitle>
-          <DialogDescription>
-            Compose and send email updates for job progress. You can save drafts and load previous drafts to continue your work.
-          </DialogDescription>
         </DialogHeader>
         <JobUpdateForm onClose={() => setIsOpen(false)} projectManager={projectManager} />
       </DialogContent>
