@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { Mail, FileText, Send, Plus, Building2, ChevronDown, Users, Clock } from "lucide-react";
+import { Mail, FileText, Send, Plus, Building2, ChevronDown, Users, Clock, Save, FolderOpen, Trash2 } from "lucide-react";
 import type { Job } from "@shared/schema";
 
 // Schema for job update form
@@ -72,6 +72,9 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
   const [emailSuggestions, setEmailSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedClient, setSelectedClient] = useState<string>("all");
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+  const [showDrafts, setShowDrafts] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Fetch current user data
   const { data: currentUser } = useQuery<{ id: string; email: string }>({
@@ -167,6 +170,112 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     form.setValue("emailSubject", getEmailSubject());
   }, [jobs, form, getEmailSubject]);
 
+  // Fetch existing drafts
+  const draftsQuery = useQuery({
+    queryKey: ["/api/email-drafts"],
+    enabled: showDrafts,
+  });
+
+  // Save draft mutation
+  const saveDraftMutation = useMutation({
+    mutationFn: async (data: JobUpdateForm & { clientName?: string }) => {
+      const draftData = {
+        clientName: selectedClient !== "all" ? selectedClient : null,
+        projectManager: projectManager || null,
+        emailSubject: data.emailSubject,
+        recipientEmails: data.recipientEmails,
+        additionalNotes: data.additionalNotes || "",
+        updates: data.updates,
+      };
+
+      if (currentDraftId) {
+        return apiRequest("PUT", `/api/email-drafts/${currentDraftId}`, draftData);
+      } else {
+        return apiRequest("POST", "/api/email-drafts", draftData);
+      }
+    },
+    onSuccess: (response: any) => {
+      if (!currentDraftId) {
+        setCurrentDraftId(response.id);
+      }
+      setLastSaved(new Date());
+      toast({
+        title: "Draft Saved",
+        description: "Your email draft has been saved successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/email-drafts"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save draft.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Load draft mutation
+  const loadDraftMutation = useMutation({
+    mutationFn: async (draftId: string) => {
+      return apiRequest("GET", `/api/email-drafts/${draftId}`);
+    },
+    onSuccess: (draft: any) => {
+      form.setValue("emailSubject", draft.emailSubject);
+      form.setValue("recipientEmails", draft.recipientEmails);
+      form.setValue("additionalNotes", draft.additionalNotes || "");
+      
+      // Load the saved updates
+      const currentUpdates = form.getValues("updates");
+      const savedUpdates = draft.updates || [];
+      
+      const mergedUpdates = currentUpdates.map(currentUpdate => {
+        const savedUpdate = savedUpdates.find((saved: any) => saved.jobId === currentUpdate.jobId);
+        return {
+          ...currentUpdate,
+          update: savedUpdate?.update || currentUpdate.update || ""
+        };
+      });
+      
+      form.setValue("updates", mergedUpdates);
+      setCurrentDraftId(draft.id);
+      setLastSaved(new Date(draft.updatedAt));
+      setShowDrafts(false);
+      
+      toast({
+        title: "Draft Loaded",
+        description: "Email draft has been loaded successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error", 
+        description: error.message || "Failed to load draft.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete draft mutation
+  const deleteDraftMutation = useMutation({
+    mutationFn: async (draftId: string) => {
+      return apiRequest("DELETE", `/api/email-drafts/${draftId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Draft Deleted",
+        description: "Email draft has been deleted successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/email-drafts"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete draft.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Submit job updates via email
   const submitUpdatesMutation = useMutation({
     mutationFn: async (data: JobUpdateForm) => {
@@ -177,6 +286,12 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
       if (response.sentTo && Array.isArray(response.sentTo)) {
         addEmailsToSuggestions(response.sentTo);
         setEmailSuggestions(getSavedEmailSuggestions());
+      }
+      
+      // Delete the current draft after successful send
+      if (currentDraftId) {
+        deleteDraftMutation.mutate(currentDraftId);
+        setCurrentDraftId(null);
       }
       
       toast({
@@ -194,6 +309,27 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
       });
     },
   });
+
+  // Auto-save every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const formData = form.getValues();
+      const hasContent = formData.emailSubject || formData.recipientEmails || 
+                        formData.additionalNotes || 
+                        formData.updates.some(update => update.update && update.update.trim());
+      
+      if (hasContent && !saveDraftMutation.isPending) {
+        saveDraftMutation.mutate(formData);
+      }
+    }, 30000); // Auto-save every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [form, saveDraftMutation]);
+
+  const handleSaveDraft = () => {
+    const formData = form.getValues();
+    saveDraftMutation.mutate(formData);
+  };
 
   const onSubmit = async (data: JobUpdateForm) => {
     // Filter out jobs without updates
@@ -529,35 +665,133 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
           </CardContent>
         </Card>
 
+        {/* Draft Status */}
+        {(lastSaved || currentDraftId) && (
+          <Card className="bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-300">
+                <Save className="h-4 w-4" />
+                {lastSaved && `Draft saved at ${lastSaved.toLocaleTimeString()}`}
+                {saveDraftMutation.isPending && "Saving draft..."}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Submit Actions */}
-        <div className="flex justify-end gap-3 pt-4">
-          {onClose && (
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose}
-              data-testid="button-cancel-updates"
+        <div className="flex justify-between items-center pt-4">
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSaveDraft}
+              disabled={saveDraftMutation.isPending}
+              data-testid="button-save-draft"
             >
-              Cancel
+              {saveDraftMutation.isPending ? (
+                <>
+                  <Save className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Draft
+                </>
+              )}
             </Button>
-          )}
-          <Button 
-            type="submit" 
-            disabled={submitUpdatesMutation.isPending}
-            data-testid="button-send-updates"
-          >
-            {submitUpdatesMutation.isPending ? (
-              <>
-                <Send className="h-4 w-4 mr-2 animate-spin" />
-                Sending...
-              </>
-            ) : (
-              <>
-                <Send className="h-4 w-4 mr-2" />
-                Send Updates Email
-              </>
+            
+            <Popover open={showDrafts} onOpenChange={setShowDrafts}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={draftsQuery.isLoading}
+                  data-testid="button-load-draft"
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Load Draft
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0" align="start">
+                <div className="p-4">
+                  <h4 className="font-medium text-sm mb-3">Email Drafts</h4>
+                  {draftsQuery.isLoading ? (
+                    <div className="text-sm text-muted-foreground">Loading drafts...</div>
+                  ) : draftsQuery.data && draftsQuery.data.length > 0 ? (
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {draftsQuery.data.map((draft: any) => (
+                        <div key={draft.id} className="flex items-center justify-between p-2 rounded border bg-card hover:bg-accent group">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">
+                              {draft.emailSubject || "Untitled Draft"}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(draft.updatedAt).toLocaleDateString()} • 
+                              {draft.clientName || "All Clients"} • 
+                              {draft.projectManager || "All PMs"}
+                            </div>
+                          </div>
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => loadDraftMutation.mutate(draft.id)}
+                              disabled={loadDraftMutation.isPending}
+                              data-testid={`button-load-draft-${draft.id}`}
+                            >
+                              <FolderOpen className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => deleteDraftMutation.mutate(draft.id)}
+                              disabled={deleteDraftMutation.isPending}
+                              data-testid={`button-delete-draft-${draft.id}`}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">No drafts found</div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+          
+          <div className="flex gap-3">
+            {onClose && (
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onClose}
+                data-testid="button-cancel-updates"
+              >
+                Cancel
+              </Button>
             )}
-          </Button>
+            <Button 
+              type="submit" 
+              disabled={submitUpdatesMutation.isPending}
+              data-testid="button-send-updates"
+            >
+              {submitUpdatesMutation.isPending ? (
+                <>
+                  <Send className="h-4 w-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Send Updates Email
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </form>
     </Form>

@@ -122,6 +122,7 @@ import {
   insertRewardTransactionSchema,
   insertRewardRedemptionSchema,
   insertRewardCatalogSchema,
+  insertEmailDraftSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -1987,6 +1988,145 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending job updates email:", error);
       res.status(500).json({ message: "Failed to send job updates email" });
+    }
+  });
+
+  // Email drafts endpoints
+  app.post("/api/email-drafts", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const validatedData = insertEmailDraftSchema.parse({
+        ...req.body,
+        userId,
+        updates: JSON.stringify(req.body.updates || [])
+      });
+
+      const draft = await storage.saveEmailDraft(validatedData);
+      res.json(draft);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      console.error("Error saving email draft:", error);
+      res.status(500).json({ message: "Failed to save email draft" });
+    }
+  });
+
+  app.get("/api/email-drafts", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { clientName, projectManager } = req.query;
+      const drafts = await storage.getEmailDrafts(userId, clientName as string, projectManager as string);
+      
+      // Parse the updates JSON back to objects
+      const parsedDrafts = drafts.map(draft => ({
+        ...draft,
+        updates: JSON.parse(draft.updates)
+      }));
+      
+      res.json(parsedDrafts);
+    } catch (error) {
+      console.error("Error getting email drafts:", error);
+      res.status(500).json({ message: "Failed to get email drafts" });
+    }
+  });
+
+  app.get("/api/email-drafts/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const draft = await storage.getEmailDraft(req.params.id);
+      if (!draft) {
+        return res.status(404).json({ message: "Draft not found" });
+      }
+
+      // Verify user owns this draft
+      if (draft.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Parse the updates JSON back to objects
+      const parsedDraft = {
+        ...draft,
+        updates: JSON.parse(draft.updates)
+      };
+
+      res.json(parsedDraft);
+    } catch (error) {
+      console.error("Error getting email draft:", error);
+      res.status(500).json({ message: "Failed to get email draft" });
+    }
+  });
+
+  app.put("/api/email-drafts/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Check if draft exists and user owns it
+      const existingDraft = await storage.getEmailDraft(req.params.id);
+      if (!existingDraft) {
+        return res.status(404).json({ message: "Draft not found" });
+      }
+      if (existingDraft.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const updateData = {
+        ...req.body,
+        updates: JSON.stringify(req.body.updates || [])
+      };
+
+      const updatedDraft = await storage.updateEmailDraft(req.params.id, updateData);
+      
+      // Parse the updates JSON back to objects
+      const parsedDraft = {
+        ...updatedDraft,
+        updates: JSON.parse(updatedDraft.updates)
+      };
+
+      res.json(parsedDraft);
+    } catch (error) {
+      console.error("Error updating email draft:", error);
+      res.status(500).json({ message: "Failed to update email draft" });
+    }
+  });
+
+  app.delete("/api/email-drafts/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Check if draft exists and user owns it
+      const existingDraft = await storage.getEmailDraft(req.params.id);
+      if (!existingDraft) {
+        return res.status(404).json({ message: "Draft not found" });
+      }
+      if (existingDraft.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      await storage.deleteEmailDraft(req.params.id);
+      res.json({ message: "Draft deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting email draft:", error);
+      res.status(500).json({ message: "Failed to delete email draft" });
     }
   });
 

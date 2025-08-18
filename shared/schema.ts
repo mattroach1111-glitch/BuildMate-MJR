@@ -188,6 +188,19 @@ export const staffNotesEntries = pgTable("staff_notes_entries", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const emailDrafts = pgTable("email_drafts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  clientName: varchar("client_name"),
+  projectManager: varchar("project_manager"),
+  emailSubject: varchar("email_subject").notNull(),
+  recipientEmails: varchar("recipient_emails").notNull(),
+  additionalNotes: text("additional_notes"),
+  updates: text("updates").notNull(), // JSON string of job updates
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Legacy staff notes table (keeping for existing data)
 export const staffNotes = pgTable("staff_notes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -318,6 +331,13 @@ export const staffNotesEntriesRelations = relations(staffNotesEntries, ({ one })
   }),
 }));
 
+export const emailDraftsRelations = relations(emailDrafts, ({ one }) => ({
+  user: one(users, {
+    fields: [emailDrafts.userId],
+    references: [users.id],
+  }),
+}));
+
 // Legacy relations
 export const staffNotesRelations = relations(staffNotes, ({ one }) => ({
   employee: one(employees, {
@@ -424,6 +444,16 @@ export const insertStaffNoteSchema = createInsertSchema(staffNotes).omit({
   createdAt: true,
   updatedAt: true,
 });
+
+// Email drafts insert schema
+export const insertEmailDraftSchema = createInsertSchema(emailDrafts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type EmailDraft = typeof emailDrafts.$inferSelect;
+export type InsertEmailDraft = z.infer<typeof insertEmailDraftSchema>;
 
 // Email processing tracking table
 export const emailProcessingLogs = pgTable("email_processing_logs", {
