@@ -4626,11 +4626,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/export-data-to-drive", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       console.log("🔄 Starting Google Drive data backup...");
+      console.log("👤 User:", req.user?.claims?.sub);
 
       // Get all business data (same as regular export)
+      console.log("📊 Fetching data from database...");
       const jobsData = await db.select().from(jobs);
+      console.log(`✅ Jobs: ${jobsData.length}`);
+      
       const employeesData = await db.select().from(employees); 
+      console.log(`✅ Employees: ${employeesData.length}`);
+      
       const usersData = await db.select().from(users);
+      console.log(`✅ Users: ${usersData.length}`);
+      
       const timesheetEntriesData = await db.select().from(timesheetEntries);
       const laborEntriesData = await db.select().from(laborEntries);
       const materialsData = await db.select().from(materials);
@@ -4734,7 +4742,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
         
         // Create backups subfolder
-        const backupsFolderId = await googleDriveService.findOrCreateFolder('Backups', mainFolderId);
+        const backupsFolderId = await googleDriveService.findOrCreateFolder('Backups', mainFolderId || undefined);
 
         console.log("☁️ Uploading backup file to Google Drive...");
 
