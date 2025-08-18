@@ -251,15 +251,19 @@ table tr.weekend-row button {
 
 /* Mobile optimizations - Prevent iOS keyboard zoom and flickering */
 .mobile-textarea,
-.mobile-input,
+.mobile-input {
+  font-size: 16px !important;
+  -webkit-appearance: none;
+  border-radius: 4px;
+  /* Removed transform to prevent keyboard glitching */
+}
+
+/* Global input styling for mobile without transforms */
 input[type="text"],
 input[type="email"],
 input[type="search"],
 textarea {
   font-size: 16px !important;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  perspective: 1000px;
   -webkit-appearance: none;
   border-radius: 4px;
 }
@@ -273,17 +277,12 @@ textarea[placeholder*="Add an update for"] {
   -webkit-appearance: none !important;
   -webkit-border-radius: 4px !important;
   border-radius: 4px !important;
-  -webkit-transform: translateZ(0) !important;
-  transform: translateZ(0) !important;
+  /* Removed transforms - they cause keyboard flickering on mobile */
+  position: relative !important;
+  z-index: 1 !important;
 }
 
-/* Hardware acceleration for smooth scrolling */
-* {
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
+/* Hardware acceleration for smooth scrolling - removed global to fix mobile keyboard issues */
 
 /* Landscape mode disabled - users can physically rotate phones */
 
@@ -348,6 +347,17 @@ html.landscape-mode textarea {
 
 /* Enhanced mobile experience improvements */
 @media (max-width: 768px) {
+  /* Viewport stability for mobile keyboards */
+  html {
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
+  }
+  
+  body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+  }
+  
   /* Better input styling for mobile */
   input[type="number"], 
   input[type="text"], 
@@ -359,10 +369,11 @@ html.landscape-mode textarea {
     padding: 14px 16px !important;
     border-radius: 8px !important;
     border: 2px solid #e2e8f0 !important;
-    transition: all 0.2s ease !important;
     background: white !important;
     -webkit-appearance: none !important;
     appearance: none !important;
+    /* Remove all transitions that can cause flickering */
+    transition: none !important;
   }
   
   input[type="number"]:focus, 
@@ -373,27 +384,28 @@ html.landscape-mode textarea {
   textarea:focus {
     border-color: hsl(var(--primary)) !important;
     outline: none !important;
-    box-shadow: 0 0 0 3px hsla(var(--primary), 0.1) !important;
-    transform: translateY(-1px) !important;
+    /* Simplified focus state - no transforms or complex animations */
+    box-shadow: none !important;
+    background: white !important;
   }
   
   button {
     min-height: 48px !important;
     font-size: 16px !important;
     border-radius: 8px !important;
-    transition: all 0.2s ease !important;
     font-weight: 600 !important;
     letter-spacing: 0.025em !important;
+    /* Remove all transitions and transforms for mobile stability */
+    transition: none !important;
+    transform: none !important;
   }
   
-  button:hover {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12) !important;
-  }
-  
-  button:active {
-    transform: scale(0.98) translateY(0) !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  button:hover,
+  button:active,
+  button:focus {
+    /* Minimal styling changes to prevent keyboard interference */
+    transform: none !important;
+    box-shadow: none !important;
   }
   
   /* Smooth scrolling for mobile */
@@ -414,6 +426,24 @@ html.landscape-mode textarea {
   /* Remove tap highlight on mobile */
   * {
     -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Disable problematic animations specifically for inputs and textareas */
+  input, textarea, select {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+  
+  /* Special handling for job update form */
+  .mobile-form-container input,
+  .mobile-form-container textarea {
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+    position: static !important;
+    will-change: auto !important;
   }
 
   /* Job sheet modal improvements */
