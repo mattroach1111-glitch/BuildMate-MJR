@@ -38,9 +38,10 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false, // Allow cookies to work in both development and production
+      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
       maxAge: sessionTtl,
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site cookies in production
+      domain: process.env.NODE_ENV === 'production' ? '.replit.app' : undefined, // Set domain for replit.app
     },
   });
 }
@@ -69,6 +70,18 @@ async function upsertUser(
 
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
+  
+  // Add CORS headers for authentication in production
+  if (process.env.NODE_ENV === 'production') {
+    app.use((req, res, next) => {
+      res.header('Access-Control-Allow-Credentials', 'true');
+      res.header('Access-Control-Allow-Origin', req.headers.origin);
+      res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+      next();
+    });
+  }
+  
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
