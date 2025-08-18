@@ -131,7 +131,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
   }, [allJobs, projectManager]);
 
   // Generate project manager and client specific email subject
-  const getEmailSubject = React.useCallback(() => {
+  const emailSubject = React.useMemo(() => {
     let pmName = "";
     let clientPart = "";
     
@@ -151,7 +151,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     resolver: zodResolver(jobUpdateSchema),
     defaultValues: {
       updates: jobs?.map(job => ({ jobId: job.id, update: "" })) || [],
-      emailSubject: getEmailSubject(),
+      emailSubject: emailSubject,
       recipientEmails: "",
       additionalNotes: "",
     },
@@ -162,17 +162,21 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     setEmailSuggestions(getSavedEmailSuggestions());
   }, []);
 
-  // Update form when jobs load, project manager, or client changes
+  // Update form when jobs load, project manager, or client changes (avoid overwriting user input)
+  const hasInitialized = useRef(false);
   React.useEffect(() => {
-    if (jobs) {
+    if (jobs && !hasInitialized.current) {
+      hasInitialized.current = true;
       form.setValue("updates", jobs.map(job => ({ jobId: job.id, update: "" })));
+      form.setValue("emailSubject", emailSubject);
     }
-    form.setValue("emailSubject", getEmailSubject());
-  }, [jobs, form, getEmailSubject]);
+  }, [jobs, form, emailSubject]);
 
-  // Try to load most recent draft when form opens
+  // Try to load most recent draft when form opens (only once)
+  const hasTriedAutoLoad = useRef(false);
   React.useEffect(() => {
-    if (currentUser && jobs && jobs.length > 0 && !currentDraftId) {
+    if (currentUser && jobs && jobs.length > 0 && !currentDraftId && !hasTriedAutoLoad.current) {
+      hasTriedAutoLoad.current = true;
       // Auto-load the most recent draft for this context
       fetch("/api/email-drafts", {
         method: "GET",
@@ -343,13 +347,12 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
   // Debounced auto-save function
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  const debouncedAutoSave = useCallback(() => {
+  const debouncedAutoSave = useCallback((formData: JobUpdateForm) => {
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
     }
     
     autoSaveTimeoutRef.current = setTimeout(() => {
-      const formData = form.getValues();
       const hasContent = formData.emailSubject || formData.recipientEmails || 
                         formData.additionalNotes || 
                         formData.updates.some(update => update.update && update.update.trim());
@@ -359,18 +362,23 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
         saveDraftMutation.mutate(formData);
       }
     }, 3000); // Auto-save 3 seconds after user stops typing
-  }, [form, saveDraftMutation]);
+  }, [saveDraftMutation]);
 
   // Watch form values and trigger debounced auto-save
-  const watchedValues = form.watch();
   useEffect(() => {
-    debouncedAutoSave();
+    const subscription = form.watch((value) => {
+      if (value) {
+        debouncedAutoSave(value as JobUpdateForm);
+      }
+    });
+    
     return () => {
+      subscription.unsubscribe();
       if (autoSaveTimeoutRef.current) {
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [watchedValues, debouncedAutoSave]);
+  }, [form, debouncedAutoSave]);
 
   const handleSaveDraft = () => {
     const formData = form.getValues();
