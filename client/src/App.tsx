@@ -68,7 +68,6 @@ function AppContent() {
       <Router />
       <NotificationPopup userEmail={(user as any)?.email} />
       {isAuthenticated && <PWAInstallPrompt />}
-      <Toaster />
     </>
   );
 }
