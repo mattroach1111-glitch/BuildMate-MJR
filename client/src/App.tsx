@@ -2,7 +2,6 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-// import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationPopup } from "@/components/notification-popup";
 import { PWAInstallPrompt } from "./components/pwa-install-prompt";
@@ -31,50 +30,33 @@ function Router() {
   }
 
   return (
-    <Switch>
-      {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (user as any)?.role === "admin" ? (
-        <>
-          <Route path="/" component={AdminDashboard} />
-          <Route path="/admin" component={AdminDashboard} />
-          <Route path="/jobs" component={JobsList} />
-          <Route path="/timesheet" component={FortnightTimesheetView} />
-          <Route path="/staff" component={AdminDashboard} />
-          <Route path="/staff-notes" component={StaffNotes} />
-          <Route path="/rewards" component={RewardsDashboard} />
-          <Route path="/rewards/rules" component={RewardsRules} />
-          <Route path="/admin/rewards" component={AdminRewards} />
-        </>
-      ) : (
-        <>
-          <Route path="/" component={() => <StaffDashboard isAdminView={false} />} />
-          <Route path="/staff" component={() => <StaffDashboard isAdminView={false} />} />
-          <Route path="/timesheet" component={FortnightTimesheetView} />
-          <Route path="/rewards" component={RewardsDashboard} />
-          <Route path="/rewards/rules" component={RewardsRules} />
-        </>
-      )}
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
-
-function AppContent() {
-  return (
-    <div id="app-container">
-      <AuthenticatedContent />
-      <Toaster />
-    </div>
-  );
-}
-
-function AuthenticatedContent() {
-  const { user, isAuthenticated } = useAuth();
-  
-  return (
     <>
-      <Router />
+      <Switch>
+        {!isAuthenticated ? (
+          <Route path="/" component={Landing} />
+        ) : (user as any)?.role === "admin" ? (
+          <>
+            <Route path="/" component={AdminDashboard} />
+            <Route path="/admin" component={AdminDashboard} />
+            <Route path="/jobs" component={JobsList} />
+            <Route path="/timesheet" component={FortnightTimesheetView} />
+            <Route path="/staff" component={AdminDashboard} />
+            <Route path="/staff-notes" component={StaffNotes} />
+            <Route path="/rewards" component={RewardsDashboard} />
+            <Route path="/rewards/rules" component={RewardsRules} />
+            <Route path="/admin/rewards" component={AdminRewards} />
+          </>
+        ) : (
+          <>
+            <Route path="/" component={() => <StaffDashboard isAdminView={false} />} />
+            <Route path="/staff" component={() => <StaffDashboard isAdminView={false} />} />
+            <Route path="/timesheet" component={FortnightTimesheetView} />
+            <Route path="/rewards" component={RewardsDashboard} />
+            <Route path="/rewards/rules" component={RewardsRules} />
+          </>
+        )}
+        <Route component={NotFound} />
+      </Switch>
       <NotificationPopup userEmail={(user as any)?.email} />
       {isAuthenticated && <PWAInstallPrompt />}
       <OrientationToggle />
@@ -82,12 +64,13 @@ function AuthenticatedContent() {
   );
 }
 
-function App() {
+export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppContent />
+      <div id="app-container">
+        <Router />
+        <Toaster />
+      </div>
     </QueryClientProvider>
   );
 }
-
-export default App;
