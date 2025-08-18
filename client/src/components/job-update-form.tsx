@@ -82,15 +82,12 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
   // Mutation for saving job update notes
   const saveNoteMutation = useMutation({
     mutationFn: (data: { jobId: string; note: string }) =>
-      apiRequest("/api/job-update-notes", {
-        method: "POST",
-        body: JSON.stringify(data),
-      }),
+      apiRequest("POST", "/api/job-update-notes", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/job-update-notes"] });
     },
     onError: (error) => {
-      console.log("Note auto-save failed (user may not be logged in):", error);
+      console.log("Note auto-save failed:", error);
     },
   });
 
