@@ -35,7 +35,7 @@ export function getSession() {
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true, // Changed to true for OAuth flow
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
@@ -125,8 +125,11 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
+    console.log("🔐🔐🔐 CALLBACK ROUTE HIT! 🔐🔐🔐");
     console.log("🔐 Callback received - query params:", req.query);
     console.log("🔐 Callback received - hostname:", req.hostname);
+    console.log("🔐 Callback received - full URL:", req.url);
+    console.log("🔐 Session ID:", req.sessionID);
     
     // Use the first configured domain for authentication
     const domain = process.env.REPLIT_DOMAINS!.split(",")[0];
