@@ -778,12 +778,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("📝 Fetching job notes for job ID:", req.params.id);
       console.log("📝 User from auth:", req.user?.claims?.sub);
+      console.log("📝 Full request user object:", JSON.stringify(req.user, null, 2));
       
       const jobNotes = await storage.getJobNotes(req.params.id);
       console.log("📝 Found job notes:", jobNotes.length);
       res.json(jobNotes);
     } catch (error) {
-      console.error("Error fetching job notes:", error);
+      console.error("📝 Error fetching job notes:", error);
+      console.error("📝 Error stack:", error instanceof Error ? error.stack : 'No stack trace');
       res.status(500).json({ message: "Failed to fetch job notes" });
     }
   });
