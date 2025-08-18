@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -2958,7 +2958,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                                     }
                                   </span>
                                   <span className="mx-2">•</span>
-                                  <span>{new Date(note.createdAt).toLocaleString()}</span>
+                                  <span>{note.createdAt ? new Date(note.createdAt).toLocaleString() : 'Unknown date'}</span>
                                 </div>
                                 <div className="flex gap-2">
                                   <Button
