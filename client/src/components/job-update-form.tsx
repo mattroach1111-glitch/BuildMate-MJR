@@ -44,32 +44,23 @@ const EMAIL_SUGGESTIONS_KEY = 'buildflow-email-suggestions';
 // Helper functions for email suggestions
 const getSavedEmailSuggestions = (): string[] => {
   try {
-    console.log("📱 Getting saved email suggestions...");
     const saved = localStorage.getItem(EMAIL_SUGGESTIONS_KEY);
-    const result = saved ? JSON.parse(saved) : [];
-    console.log("📱 Retrieved email suggestions:", result);
-    return result;
-  } catch (error) {
-    console.log("📱 Error getting email suggestions:", error);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
     return [];
   }
 };
 
 const saveEmailSuggestions = (emails: string[]) => {
   try {
-    console.log("📱 Saving email suggestions:", emails);
     localStorage.setItem(EMAIL_SUGGESTIONS_KEY, JSON.stringify(emails));
-    console.log("📱 Email suggestions saved successfully");
-  } catch (error) {
-    console.log("📱 Error saving email suggestions:", error);
+  } catch {
+    // Ignore localStorage errors
   }
 };
 
 const addEmailsToSuggestions = (newEmails: string[]) => {
-  console.log("📱 Adding emails to suggestions:", newEmails);
   const existing = getSavedEmailSuggestions();
-  console.log("📱 Existing suggestions:", existing);
-  
   // Filter out invalid emails and duplicates
   const validNewEmails = newEmails.filter(email => 
     email && 
@@ -78,12 +69,9 @@ const addEmailsToSuggestions = (newEmails: string[]) => {
     !existing.includes(email)
   );
   
-  console.log("📱 Valid new emails:", validNewEmails);
-  
   if (validNewEmails.length > 0) {
     // Add new emails to the beginning (most recent first)
     const updated = [...validNewEmails, ...existing].slice(0, 20);
-    console.log("📱 Updated email list:", updated);
     saveEmailSuggestions(updated);
     console.log("💾 Updated email suggestions:", updated);
   }
@@ -117,28 +105,30 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
 
 
   // Debounced save function
-  const debouncedSave = React.useMemo(() => {
-    const timeouts = new Map();
-    return (jobId: string, note: string) => {
-      // Clear existing timeout for this job
-      if (timeouts.has(jobId)) {
-        clearTimeout(timeouts.get(jobId));
-      }
-      
-      // Set new timeout
-      const timeoutId = setTimeout(() => {
-        if (note.trim() && currentUser?.role === "admin") {
-          console.log("Auto-saving note to database for job:", jobId, "Note:", note.trim(), "User role:", currentUser.role);
-          saveNoteMutation.mutate({ jobId, note: note.trim() });
-        } else {
-          console.log("Skipping auto-save - not admin or empty note. User role:", currentUser?.role, "Note length:", note.trim().length);
+  const debouncedSave = React.useCallback(
+    React.useMemo(() => {
+      const timeouts = new Map();
+      return (jobId: string, note: string) => {
+        // Clear existing timeout for this job
+        if (timeouts.has(jobId)) {
+          clearTimeout(timeouts.get(jobId));
         }
-        timeouts.delete(jobId);
-      }, 1500);
-      
-      timeouts.set(jobId, timeoutId);
-    };
-  }, [saveNoteMutation, currentUser]);
+        
+        // Set new timeout
+        const timeoutId = setTimeout(() => {
+          if (note.trim() && currentUser?.role === "admin") {
+            console.log("Auto-saving note to database for job:", jobId, "Note:", note.trim(), "User role:", currentUser.role);
+            saveNoteMutation.mutate({ jobId, note: note.trim() });
+          } else {
+            console.log("Skipping auto-save - not admin or empty note. User role:", currentUser?.role, "Note length:", note.trim().length);
+          }
+          timeouts.delete(jobId);
+        }, 1500);
+        
+        timeouts.set(jobId, timeoutId);
+      };
+    }, [saveNoteMutation, currentUser])
+  );
 
   // Fetch jobs data
   const { data: allJobs, isLoading: jobsLoading } = useQuery<Job[]>({
@@ -243,7 +233,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
         // Find existing update for this job to preserve user input
         const existingUpdate = currentValues.find(update => update.jobId === job.id);
         // Find saved note from database
-        const savedNote = Array.isArray(savedNotes) ? savedNotes.find((note: any) => note.jobId === job.id) : undefined;
+        const savedNote = savedNotes?.find((note: any) => note.jobId === job.id);
         
         return {
           jobId: job.id,
@@ -367,9 +357,8 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
   }
 
   return (
-    <div className="mobile-form-container">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Email Configuration */}
         <Card>
           <CardHeader>
@@ -392,7 +381,6 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                     <Input 
                       placeholder="Enter email subject" 
                       {...field} 
-                      className="mobile-input"
                       data-testid="input-email-subject"
                     />
                   </FormControl>
@@ -491,7 +479,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                   <FormControl>
                     <Textarea 
                       placeholder="Enter email addresses separated by commas (e.g., manager@company.com, client@client.com, owner@business.com)"
-                      className="min-h-[80px] mobile-textarea"
+                      className="min-h-[80px]"
                       {...field} 
                       data-testid="input-recipient-emails"
                     />
@@ -643,7 +631,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                             <FormControl>
                               <Textarea
                                 placeholder="Enter update notes for this job (optional)"
-                                className="min-h-[80px] text-sm mobile-textarea"
+                                className="min-h-[80px] text-sm"
                                 {...formField}
                                 onChange={(e) => {
                                   formField.onChange(e);
@@ -682,7 +670,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                   <FormControl>
                     <Textarea
                       placeholder="Add any additional notes or comments..."
-                      className="min-h-[100px] mobile-textarea"
+                      className="min-h-[100px]"
                       {...field}
                       data-testid="textarea-additional-notes"
                     />
@@ -724,9 +712,8 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
             )}
           </Button>
         </div>
-        </form>
-      </Form>
-    </div>
+      </form>
+    </Form>
   );
 }
 
@@ -736,7 +723,7 @@ export interface JobUpdateDialogProps {
 }
 
 function JobUpdateDialog({ projectManager }: JobUpdateDialogProps) {
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

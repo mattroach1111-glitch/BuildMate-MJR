@@ -6,13 +6,10 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 - ✅ **Simplified Rewards System**: Implemented streamlined rewards system with 4 clear reward types (Daily, Weekly, Fortnightly, Monthly) and simple streak reset rules. Features functional rewards dashboard, "More Apps" section with Rewards Rules page, admin configuration with fortnightly bonus settings, and dynamic rules that automatically update when admin changes settings. Terminology aligned between timesheet selections and rewards rules.
 - ✅ **Database-Backed Reward Settings**: Migrated reward configuration from memory storage to persistent PostgreSQL database. Settings now survive app deployments and restarts, with real-time synchronization between admin configuration and reward rules display. Includes proper initialization that preserves existing custom values and enhanced debugging for troubleshooting.
 - ✅ **Accessibility Compliance**: Fixed all DialogDescription console warnings by adding proper descriptions to all dialog components, including email job updates dialog, job sheet modal, and employee management dialogs. Enhanced authentication cookie settings for better deployment compatibility.
-- ✅ **Mobile Keyboard Fix**: Resolved iOS keyboard flickering issue in job updates form with comprehensive CSS optimizations including 16px font sizing and hardware acceleration to prevent zoom behavior.
-- ✅ **Comprehensive Backup System**: Implemented complete data protection against Replit platform failures with automated backup system covering database, source code, configuration, and object storage. Includes Google Drive cloud integration, automated scheduling, emergency migration procedures, and detailed restoration guides for alternative hosting platforms (Railway, Vercel, DigitalOcean). Provides 15-30 minute recovery time with zero data loss guarantee.
 
 # User Preferences
 Preferred communication style: Simple, everyday language.
 Data backup strategy: Comprehensive multi-location backup approach with automated scripts for database exports, source code versioning, and file storage redundancy to protect against platform failures.
-Platform resilience: Critical requirement for protection against Replit platform dependency with ability to migrate to alternative hosting platforms (Railway, Vercel, DigitalOcean) with minimal downtime.
 
 # System Architecture
 
@@ -38,7 +35,6 @@ Platform resilience: Critical requirement for protection against Replit platform
 - **Authentication**: Replit Authentication with OpenID Connect
 - **Session Management**: Express sessions with PostgreSQL storage
 - **Design Philosophy**: RESTful API structure with role-based access control.
-- **Backup & Recovery**: Comprehensive automated backup system with platform-independent restoration capabilities, Google Drive cloud integration, and emergency migration procedures.
 
 ## Database Design
 - **ORM**: Drizzle with PostgreSQL dialect

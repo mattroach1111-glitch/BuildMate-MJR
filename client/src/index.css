@@ -70,58 +70,6 @@
     scroll-behavior: smooth;
   }
 
-  /* Mobile keyboard stability fixes */
-  @media (max-width: 768px) {
-    /* Prevent viewport jumping when keyboard appears */
-    .mobile-textarea, .mobile-input {
-      transform: translateZ(0);
-      -webkit-transform: translateZ(0);
-      font-size: 16px !important;
-      min-height: 80px;
-      resize: none;
-    }
-    
-    /* Prevent zoom on iOS when focusing inputs */
-    input, textarea, select {
-      font-size: 16px !important;
-      transform: translateZ(0);
-      -webkit-transform: translateZ(0);
-      -webkit-appearance: none;
-      appearance: none;
-    }
-    
-    /* Enhanced mobile viewport stability */
-    .mobile-form-container {
-      position: relative;
-      min-height: 100vh;
-      transform: translateZ(0);
-      -webkit-transform: translateZ(0);
-    }
-    
-    /* Smooth keyboard transitions */
-    .dialog-content, .popover-content {
-      position: fixed !important;
-      transform: translateZ(0);
-      -webkit-transform: translateZ(0);
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-    }
-    
-    /* Additional mobile fixes */
-    body {
-      position: fixed;
-      overflow-x: hidden;
-      width: 100%;
-    }
-    
-    /* Prevent elastic scrolling on iOS */
-    #root {
-      touch-action: pan-x pan-y;
-      height: 100vh;
-      overflow: auto;
-    }
-  }
-
   /* Enhanced animations */
   * {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -247,42 +195,13 @@ table tr.weekend-row button {
     .hidden-text-xs span {
       display: none;
     }
+    
+    /* Larger tap targets */
+    .tap-target {
+      min-height: 48px;
+      min-width: 48px;
+    }
   }
-
-/* Mobile optimizations - Prevent iOS keyboard zoom and flickering */
-.mobile-textarea,
-.mobile-input {
-  font-size: 16px !important;
-  -webkit-appearance: none;
-  border-radius: 4px;
-  /* Removed transform to prevent keyboard glitching */
-}
-
-/* Global input styling for mobile without transforms */
-input[type="text"],
-input[type="email"],
-input[type="search"],
-textarea {
-  font-size: 16px !important;
-  -webkit-appearance: none;
-  border-radius: 4px;
-}
-
-/* Specific styling for job update textareas to prevent keyboard issues */
-textarea[data-testid*="textarea-job-update"],
-textarea[placeholder*="Enter update notes"],
-textarea[placeholder*="Add any additional notes"],
-textarea[placeholder*="Add an update for"] {
-  font-size: 16px !important;
-  -webkit-appearance: none !important;
-  -webkit-border-radius: 4px !important;
-  border-radius: 4px !important;
-  /* Removed transforms - they cause keyboard flickering on mobile */
-  position: relative !important;
-  z-index: 1 !important;
-}
-
-/* Hardware acceleration for smooth scrolling - removed global to fix mobile keyboard issues */
 
 /* Landscape mode disabled - users can physically rotate phones */
 
@@ -347,17 +266,6 @@ html.landscape-mode textarea {
 
 /* Enhanced mobile experience improvements */
 @media (max-width: 768px) {
-  /* Viewport stability for mobile keyboards */
-  html {
-    -webkit-text-size-adjust: 100%;
-    touch-action: manipulation;
-  }
-  
-  body {
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: none;
-  }
-  
   /* Better input styling for mobile */
   input[type="number"], 
   input[type="text"], 
@@ -369,11 +277,10 @@ html.landscape-mode textarea {
     padding: 14px 16px !important;
     border-radius: 8px !important;
     border: 2px solid #e2e8f0 !important;
+    transition: all 0.2s ease !important;
     background: white !important;
     -webkit-appearance: none !important;
     appearance: none !important;
-    /* Remove all transitions that can cause flickering */
-    transition: none !important;
   }
   
   input[type="number"]:focus, 
@@ -384,28 +291,27 @@ html.landscape-mode textarea {
   textarea:focus {
     border-color: hsl(var(--primary)) !important;
     outline: none !important;
-    /* Simplified focus state - no transforms or complex animations */
-    box-shadow: none !important;
-    background: white !important;
+    box-shadow: 0 0 0 3px hsla(var(--primary), 0.1) !important;
+    transform: translateY(-1px) !important;
   }
   
   button {
     min-height: 48px !important;
     font-size: 16px !important;
     border-radius: 8px !important;
+    transition: all 0.2s ease !important;
     font-weight: 600 !important;
     letter-spacing: 0.025em !important;
-    /* Remove all transitions and transforms for mobile stability */
-    transition: none !important;
-    transform: none !important;
   }
   
-  button:hover,
-  button:active,
-  button:focus {
-    /* Minimal styling changes to prevent keyboard interference */
-    transform: none !important;
-    box-shadow: none !important;
+  button:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12) !important;
+  }
+  
+  button:active {
+    transform: scale(0.98) translateY(0) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
   }
   
   /* Smooth scrolling for mobile */
@@ -426,24 +332,6 @@ html.landscape-mode textarea {
   /* Remove tap highlight on mobile */
   * {
     -webkit-tap-highlight-color: transparent;
-  }
-  
-  /* Disable problematic animations specifically for inputs and textareas */
-  input, textarea, select {
-    animation: none !important;
-    transition: none !important;
-    transform: none !important;
-    will-change: auto !important;
-  }
-  
-  /* Special handling for job update form */
-  .mobile-form-container input,
-  .mobile-form-container textarea {
-    transform: none !important;
-    animation: none !important;
-    transition: none !important;
-    position: static !important;
-    will-change: auto !important;
   }
 
   /* Job sheet modal improvements */
