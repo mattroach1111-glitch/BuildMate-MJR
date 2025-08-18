@@ -162,7 +162,17 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
   // Update form when jobs load, project manager, or client changes
   React.useEffect(() => {
     if (jobs) {
-      form.setValue("updates", jobs.map(job => ({ jobId: job.id, update: "" })));
+      // Preserve existing updates when jobs change
+      const currentUpdates = form.getValues("updates") || [];
+      const updatedUpdates = jobs.map(job => {
+        // Find existing update for this job
+        const existingUpdate = currentUpdates.find(update => update.jobId === job.id);
+        return {
+          jobId: job.id,
+          update: existingUpdate?.update || ""
+        };
+      });
+      form.setValue("updates", updatedUpdates);
     }
     form.setValue("emailSubject", getEmailSubject());
   }, [jobs, form, getEmailSubject]);
@@ -486,6 +496,8 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                             placeholder="Enter update notes for this job (optional)"
                             className="min-h-[80px] text-sm"
                             {...field}
+                            value={field.value || ""}
+                            onChange={field.onChange}
                             data-testid={`textarea-job-update-${job.id}`}
                           />
                         </FormControl>
