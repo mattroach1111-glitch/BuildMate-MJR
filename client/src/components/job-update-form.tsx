@@ -159,32 +159,21 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     setEmailSuggestions(getSavedEmailSuggestions());
   }, []);
 
+  // Track updates in local state to preserve across filtering
+  const [jobUpdates, setJobUpdates] = useState<Record<string, string>>({});
+
   // Update form when jobs load, project manager, or client changes
   React.useEffect(() => {
     if (jobs) {
-      // Preserve existing updates when jobs change
-      const currentUpdates = form.getValues("updates") || [];
-      const updatedUpdates = jobs.map((job, index) => {
-        // Find existing update for this job
-        const existingUpdate = currentUpdates.find(update => update.jobId === job.id);
-        return {
-          jobId: job.id,
-          update: existingUpdate?.update || ""
-        };
-      });
+      const updatedUpdates = jobs.map(job => ({
+        jobId: job.id,
+        update: jobUpdates[job.id] || ""
+      }));
       
-      // Force re-registration of form fields by resetting and setting
-      form.reset({
-        updates: updatedUpdates,
-        emailSubject: getEmailSubject(),
-        recipientEmails: form.getValues("recipientEmails") || "",
-        additionalNotes: form.getValues("additionalNotes") || "",
-      }, {
-        keepValues: false, // Force complete re-registration
-        keepDefaultValues: false
-      });
+      form.setValue("updates", updatedUpdates);
+      form.setValue("emailSubject", getEmailSubject());
     }
-  }, [jobs, form, getEmailSubject]);
+  }, [jobs, form, getEmailSubject, jobUpdates]);
 
   // Submit job updates via email
   const submitUpdatesMutation = useMutation({
@@ -504,9 +493,15 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                           <Textarea
                             placeholder="Enter update notes for this job (optional)"
                             className="min-h-[80px] text-sm"
-                            {...field}
-                            value={field.value || ""}
-                            onChange={field.onChange}
+                            value={jobUpdates[job.id] || ""}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              setJobUpdates(prev => ({
+                                ...prev,
+                                [job.id]: newValue
+                              }));
+                              field.onChange(newValue);
+                            }}
                             data-testid={`textarea-job-update-${job.id}`}
                           />
                         </FormControl>
