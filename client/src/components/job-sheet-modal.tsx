@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -125,13 +125,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
   // Get unique project managers and clients from existing jobs
   const projectManagers = allJobs ? Array.from(new Set(allJobs.map(job => job.projectManager || job.projectName).filter(Boolean))) : [];
-  const existingClientNames = allJobs ? Array.from(new Set(allJobs.map(job => job.clientName).filter(Boolean))) : [];
-  
-  // Include current edit form value in client names if it's not already in the list
-  const currentEditClientName = editForm.clientName;
-  const clientNames = currentEditClientName && currentEditClientName.trim() && !existingClientNames.includes(currentEditClientName) 
-    ? [...existingClientNames, currentEditClientName] 
-    : existingClientNames;
+  const clientNames = allJobs ? Array.from(new Set(allJobs.map(job => job.clientName).filter(Boolean))) : [];
 
   // Get all employees for management
   const { data: allEmployees = [] } = useQuery<any[]>({
@@ -1590,6 +1584,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                    max-sm:!left-0 max-sm:!top-0 max-sm:!z-[60]
                    overflow-hidden flex flex-col !bg-white" 
         style={{ WebkitOverflowScrolling: 'touch' }}
+        aria-describedby="job-sheet-description"
       >
         <DialogHeader className="flex-shrink-0 pb-4 border-b max-sm:px-4 max-sm:pt-4">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -1609,9 +1604,12 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     <DialogTitle data-testid="text-job-sheet-title" className="text-lg sm:text-xl font-semibold truncate">
                       {jobDetails ? `${jobDetails.projectName} - ${jobDetails.clientName}` : "Loading..."}
                     </DialogTitle>
-                    <DialogDescription className="text-gray-600 text-sm truncate" data-testid="text-job-address">
+                    <p className="text-gray-600 text-sm truncate" data-testid="text-job-address">
                       {jobDetails?.jobAddress}
-                    </DialogDescription>
+                    </p>
+                    <p id="job-sheet-description" className="text-xs text-muted-foreground mt-1">
+                      Manage job details, costs, and generate PDF reports
+                    </p>
                   </>
                 ) : (
                 <div className="space-y-3">
@@ -1631,7 +1629,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       <Label className="text-sm font-medium">Client Name</Label>
                       <div className="mt-1 space-y-2">
                         {!isAddingNewClient ? (
-                          <Select onValueChange={handleClientChange} value={editForm.clientName || ""}>
+                          <Select onValueChange={handleClientChange} value={editForm.clientName}>
                             <SelectTrigger data-testid="select-edit-client">
                               <SelectValue placeholder="Select or add client" />
                             </SelectTrigger>
@@ -1694,7 +1692,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       <Label className="text-sm font-medium">Project Manager</Label>
                       <div className="mt-1 space-y-2">
                         {!isAddingNewProjectManager ? (
-                          <Select onValueChange={handleProjectManagerChange} value={editForm.projectManager || ""}>
+                          <Select onValueChange={handleProjectManagerChange} value={editForm.projectManager}>
                             <SelectTrigger data-testid="select-edit-manager">
                               <SelectValue placeholder="Select or add project manager" />
                             </SelectTrigger>

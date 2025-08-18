@@ -56,9 +56,6 @@ const formatJobDate = (dateStr: string | Date) => {
 };
 
 const jobFormSchema = insertJobSchema.extend({
-  jobAddress: z.string().min(1, "Job address is required"),
-  clientName: z.string().min(1, "Client name is required"),
-  projectName: z.string().min(1, "Project name is required"),
   builderMargin: z.string()
     .min(1, "Builder margin is required")
     .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Builder margin must be a valid number"),
@@ -1415,13 +1412,7 @@ export default function AdminDashboard() {
 
   // Get unique project managers and clients from existing jobs
   const projectManagers = jobs ? Array.from(new Set(jobs.map(job => job.projectManager || job.projectName).filter(Boolean))) : [];
-  const existingClientNames = jobs ? Array.from(new Set(jobs.map(job => job.clientName).filter(Boolean))) : [];
-  
-  // Include current form value in client names if it's not already in the list
-  const currentClientName = jobForm.watch('clientName');
-  const clientNames = currentClientName && currentClientName.trim() && !existingClientNames.includes(currentClientName) 
-    ? [...existingClientNames, currentClientName] 
-    : existingClientNames;
+  const clientNames = jobs ? Array.from(new Set(jobs.map(job => job.clientName).filter(Boolean))) : [];
 
   const handleAddProjectManager = () => {
     if (newProjectManagerName.trim()) {
@@ -1679,7 +1670,7 @@ export default function AdminDashboard() {
                             {!isAddingNewClient ? (
                               <div className="flex gap-2">
                                 <FormControl className="flex-1">
-                                  <Select onValueChange={handleClientChange} value={field.value || ""}>
+                                  <Select onValueChange={handleClientChange} value={field.value}>
                                     <SelectTrigger data-testid="select-client-name">
                                       <SelectValue placeholder="Select or add client" />
                                     </SelectTrigger>
@@ -1753,7 +1744,7 @@ export default function AdminDashboard() {
                             {!isAddingNewProjectManager ? (
                               <div className="flex gap-2">
                                 <FormControl className="flex-1">
-                                  <Select onValueChange={handleProjectManagerChange} value={field.value || ""}>
+                                  <Select onValueChange={handleProjectManagerChange} value={field.value}>
                                     <SelectTrigger data-testid="select-project-manager">
                                       <SelectValue placeholder="Select or add project manager" />
                                     </SelectTrigger>
