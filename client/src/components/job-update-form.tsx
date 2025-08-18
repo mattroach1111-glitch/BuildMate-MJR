@@ -105,29 +105,27 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
 
 
   // Debounced save function
-  const debouncedSave = React.useCallback(() => {
-    return React.useMemo(() => {
-      const timeouts = new Map();
-      return (jobId: string, note: string) => {
-        // Clear existing timeout for this job
-        if (timeouts.has(jobId)) {
-          clearTimeout(timeouts.get(jobId));
+  const debouncedSave = React.useMemo(() => {
+    const timeouts = new Map();
+    return (jobId: string, note: string) => {
+      // Clear existing timeout for this job
+      if (timeouts.has(jobId)) {
+        clearTimeout(timeouts.get(jobId));
+      }
+      
+      // Set new timeout
+      const timeoutId = setTimeout(() => {
+        if (note.trim() && currentUser?.role === "admin") {
+          console.log("Auto-saving note to database for job:", jobId, "Note:", note.trim(), "User role:", currentUser.role);
+          saveNoteMutation.mutate({ jobId, note: note.trim() });
+        } else {
+          console.log("Skipping auto-save - not admin or empty note. User role:", currentUser?.role, "Note length:", note.trim().length);
         }
-        
-        // Set new timeout
-        const timeoutId = setTimeout(() => {
-          if (note.trim() && currentUser?.role === "admin") {
-            console.log("Auto-saving note to database for job:", jobId, "Note:", note.trim(), "User role:", currentUser.role);
-            saveNoteMutation.mutate({ jobId, note: note.trim() });
-          } else {
-            console.log("Skipping auto-save - not admin or empty note. User role:", currentUser?.role, "Note length:", note.trim().length);
-          }
-          timeouts.delete(jobId);
-        }, 1500);
-        
-        timeouts.set(jobId, timeoutId);
-      };
-    }, [saveNoteMutation, currentUser]);
+        timeouts.delete(jobId);
+      }, 1500);
+      
+      timeouts.set(jobId, timeoutId);
+    };
   }, [saveNoteMutation, currentUser]);
 
   // Fetch jobs data
@@ -636,7 +634,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                                 onChange={(e) => {
                                   formField.onChange(e);
                                   // Auto-save note with proper debouncing
-                                  debouncedSave()(job.id, e.target.value);
+                                  debouncedSave(job.id, e.target.value);
                                 }}
                                 data-testid={`textarea-job-update-${job.id}`}
                               />
