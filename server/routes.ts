@@ -478,6 +478,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Google Drive diagnostic endpoint for troubleshooting deployment issues
+  app.get('/api/google-drive/diagnostic', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      let diagnostic = {
+        userId: userId,
+        hasUser: !!user,
+        hasGoogleDriveTokens: !!user?.googleDriveTokens,
+        tokenLength: user?.googleDriveTokens ? user.googleDriveTokens.length : 0,
+        googleDriveServiceReady: false,
+        canCreateFolder: false,
+        lastError: null as string | null,
+        environment: process.env.NODE_ENV || 'unknown',
+        timestamp: new Date().toISOString()
+      };
+
+      if (user?.googleDriveTokens) {
+        try {
+          const { GoogleDriveService } = await import('./googleDriveService');
+          const googleDriveService = new GoogleDriveService();
+          const tokens = JSON.parse(user.googleDriveTokens);
+          googleDriveService.setUserTokens(tokens);
+          
+          diagnostic.googleDriveServiceReady = googleDriveService.isReady();
+          
+          if (diagnostic.googleDriveServiceReady) {
+            // Test folder creation
+            const testFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
+            diagnostic.canCreateFolder = !!testFolderId;
+            
+            console.log(`✅ Google Drive diagnostic test successful - BuildFlow Pro folder ID: ${testFolderId || 'not found'}`);
+          }
+        } catch (testError) {
+          diagnostic.lastError = testError.message;
+          console.error('Google Drive diagnostic error:', testError);
+        }
+      }
+
+      console.log('Google Drive Diagnostic Results:', diagnostic);
+      res.json(diagnostic);
+    } catch (error) {
+      console.error('Google Drive diagnostic endpoint error:', error);
+      res.status(500).json({ message: 'Failed to run Google Drive diagnostics' });
+    }
+  });
+
   // Employee routes
   app.get("/api/employees", isAuthenticated, async (req: any, res) => {
     try {
@@ -631,7 +679,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertJobSchema.parse(req.body);
       const job = await storage.createJob(validatedData);
-      res.status(201).json(job);
+      
+      // Try to create Google Drive folder for the new job if user has Google Drive connected
+      let googleDriveFolderCreated = false;
+      if (user && user.googleDriveTokens) {
+        try {
+          console.log(`☁️ Creating Google Drive folder for new job: ${job.jobAddress}`);
+          
+          const { GoogleDriveService } = await import('./googleDriveService');
+          const googleDriveService = new GoogleDriveService();
+          const tokens = JSON.parse(user.googleDriveTokens);
+          googleDriveService.setUserTokens(tokens);
+          
+          if (googleDriveService.isReady()) {
+            // Create main BuildFlow Pro folder first
+            const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
+            if (mainFolderId) {
+              // Create job folder
+              const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId);
+              if (jobFolderId) {
+                googleDriveFolderCreated = true;
+                console.log(`✅ Google Drive folder created for job: Job - ${job.jobAddress}`);
+              } else {
+                console.log(`⚠️ Failed to create job folder for: ${job.jobAddress}`);
+              }
+            } else {
+              console.log(`⚠️ Failed to create main BuildFlow Pro folder`);
+            }
+          } else {
+            console.log(`⚠️ Google Drive not authenticated for user ${user.id}`);
+          }
+        } catch (driveError) {
+          console.error(`⚠️ Google Drive folder creation failed for new job:`, driveError.message);
+        }
+      } else {
+        console.log(`ℹ️ Google Drive not connected for user ${user.id} - job folder not created`);
+      }
+      
+      res.status(201).json({
+        ...job,
+        googleDriveFolderCreated
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         console.error("Validation error:", error.errors);
@@ -3771,13 +3859,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.error(`⚠️ Google Drive upload failed for user ${userId}:`, driveError.message);
             console.error('Google Drive error details:', {
               hasTokens: !!user.googleDriveTokens,
+              tokenType: user.googleDriveTokens ? 'present' : 'missing',
               fileName: fileName,
               jobAddress: job?.jobAddress,
-              errorMessage: driveError.message
+              fileBufferSize: fileBuffer?.length,
+              hasAttachmentContent: !!document.attachmentContent,
+              errorMessage: driveError.message,
+              errorStack: driveError.stack?.slice(0, 500)
             });
           }
         } else {
-          console.log(`ℹ️ Google Drive not connected for user ${userId}`);
+          console.log(`ℹ️ Google Drive not connected for user ${userId}`, {
+            hasUser: !!user,
+            hasTokens: !!user?.googleDriveTokens,
+            userId: userId
+          });
         }
       } catch (attachmentError) {
         console.log(`⚠️ File attachment processing failed: ${attachmentError.message}`);
