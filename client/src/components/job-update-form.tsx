@@ -7,7 +7,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -585,6 +585,9 @@ function JobUpdateDialog({ projectManager }: JobUpdateDialogProps) {
             Send Job Updates Email
             {projectManager && ` - ${projectManager}'s Jobs`}
           </DialogTitle>
+          <DialogDescription>
+            Select jobs and configure email settings to send project updates to clients and stakeholders
+          </DialogDescription>
         </DialogHeader>
         <JobUpdateForm onClose={() => setIsOpen(false)} projectManager={projectManager} />
       </DialogContent>
