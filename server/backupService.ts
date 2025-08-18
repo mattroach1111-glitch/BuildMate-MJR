@@ -71,34 +71,35 @@ export class BackupService {
       db.select().from(emailDrafts)
     ]);
 
+    const tablesData = {
+      jobs: jobsData,
+      users: usersData,
+      employees: employeesData,
+      timesheetEntries: timesheetData,
+      laborEntries: laborData,
+      materials: materialsData,
+      subTrades: subTradesData,
+      otherCosts: otherCostsData,
+      tipFees: tipFeesData,
+      staffMembers: staffMembersData,
+      staffNotesEntries: staffNotesData,
+      jobNotes: jobNotesData,
+      emailDrafts: emailDraftsData
+    };
+
+    // Calculate total records
+    const totalRecords = Object.values(tablesData).reduce((sum, table) => sum + table.length, 0);
+
     const backupData: BackupData = {
       timestamp: new Date().toISOString(),
       version: "1.0.0",
-      tables: {
-        jobs: jobsData,
-        users: usersData,
-        employees: employeesData,
-        timesheetEntries: timesheetData,
-        laborEntries: laborData,
-        materials: materialsData,
-        subTrades: subTradesData,
-        otherCosts: otherCostsData,
-        tipFees: tipFeesData,
-        staffMembers: staffMembersData,
-        staffNotesEntries: staffNotesData,
-        jobNotes: jobNotesData,
-        emailDrafts: emailDraftsData
-      },
+      tables: tablesData,
       metadata: {
-        totalRecords: Object.values(backupData.tables).reduce((sum, table) => sum + table.length, 0),
+        totalRecords,
         backupSize: "Calculating...",
         databaseUrl: process.env.DATABASE_URL?.replace(/\/\/[^@]+@/, "//***:***@") || "Not available"
       }
     };
-
-    // Calculate total records
-    const totalRecords = Object.values(backupData.tables).reduce((sum, table) => sum + table.length, 0);
-    backupData.metadata.totalRecords = totalRecords;
 
     // Save backup to file
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
