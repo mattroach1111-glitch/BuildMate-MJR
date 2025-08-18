@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -159,21 +159,31 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     setEmailSuggestions(getSavedEmailSuggestions());
   }, []);
 
-  // Track updates in local state to preserve across filtering
-  const [jobUpdates, setJobUpdates] = useState<Record<string, string>>({});
+  // Use useFieldArray for proper dynamic field management
+  const { fields, replace } = useFieldArray({
+    control: form.control,
+    name: "updates"
+  });
 
   // Update form when jobs load, project manager, or client changes
   React.useEffect(() => {
     if (jobs) {
-      const updatedUpdates = jobs.map(job => ({
-        jobId: job.id,
-        update: jobUpdates[job.id] || ""
-      }));
+      // Get current form values to preserve user input
+      const currentValues = form.getValues("updates") || [];
       
-      form.setValue("updates", updatedUpdates);
+      const updatedUpdates = jobs.map(job => {
+        // Find existing update for this job to preserve user input
+        const existingUpdate = currentValues.find(update => update.jobId === job.id);
+        return {
+          jobId: job.id,
+          update: existingUpdate?.update || ""
+        };
+      });
+      
+      replace(updatedUpdates);
       form.setValue("emailSubject", getEmailSubject());
     }
-  }, [jobs, form, getEmailSubject, jobUpdates]);
+  }, [jobs, replace, form, getEmailSubject]);
 
   // Submit job updates via email
   const submitUpdatesMutation = useMutation({
@@ -464,53 +474,50 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
               </div>
             ) : (
               <div className="space-y-4">
-                {jobs.map((job, index) => (
-                <div key={job.id} className="border rounded-lg p-4 space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm">{job.jobAddress}</h4>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-muted-foreground">{job.clientName}</span>
-                        <span className="text-xs text-muted-foreground">•</span>
-                        <span className="text-xs text-muted-foreground">PM: {job.projectManager || job.projectName}</span>
-                      </div>
-                      <Badge 
-                        variant={job.status === 'ready_for_billing' ? 'default' : 'secondary'}
-                        className="mt-2 text-xs"
-                      >
-                        {job.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </Badge>
-                    </div>
-                  </div>
+                {fields.map((field, index) => {
+                  const job = jobs.find(j => j.id === field.jobId);
+                  if (!job) return null;
                   
-                  <FormField
-                    control={form.control}
-                    name={`updates.${index}.update`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm">Update for this job</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Enter update notes for this job (optional)"
-                            className="min-h-[80px] text-sm"
-                            value={jobUpdates[job.id] || ""}
-                            onChange={(e) => {
-                              const newValue = e.target.value;
-                              setJobUpdates(prev => ({
-                                ...prev,
-                                [job.id]: newValue
-                              }));
-                              field.onChange(newValue);
-                            }}
-                            data-testid={`textarea-job-update-${job.id}`}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  </div>
-                ))}
+                  return (
+                    <div key={field.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm">{job.jobAddress}</h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-muted-foreground">{job.clientName}</span>
+                            <span className="text-xs text-muted-foreground">•</span>
+                            <span className="text-xs text-muted-foreground">PM: {job.projectManager || job.projectName}</span>
+                          </div>
+                          <Badge 
+                            variant={job.status === 'ready_for_billing' ? 'default' : 'secondary'}
+                            className="mt-2 text-xs"
+                          >
+                            {job.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      <FormField
+                        control={form.control}
+                        name={`updates.${index}.update`}
+                        render={({ field: formField }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm">Update for this job</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Enter update notes for this job (optional)"
+                                className="min-h-[80px] text-sm"
+                                {...formField}
+                                data-testid={`textarea-job-update-${job.id}`}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             )}
           </CardContent>
