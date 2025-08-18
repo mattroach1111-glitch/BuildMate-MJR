@@ -95,8 +95,10 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     mutationFn: (data: { jobId: string; note: string }) =>
       apiRequest("POST", "/api/job-update-notes", data),
     onSuccess: () => {
-      // Don't invalidate queries to prevent re-renders that cause focus loss
-      // queryClient.invalidateQueries({ queryKey: ["/api/job-update-notes"] });
+      // Invalidate queries with a delay to prevent focus loss during typing
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/job-update-notes"] });
+      }, 5000); // 5 second delay to avoid interfering with active typing
     },
     onError: (error) => {
       console.log("Note auto-save failed:", error);
