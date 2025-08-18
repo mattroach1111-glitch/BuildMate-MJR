@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1584,7 +1584,6 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                    max-sm:!left-0 max-sm:!top-0 max-sm:!z-[60]
                    overflow-hidden flex flex-col !bg-white" 
         style={{ WebkitOverflowScrolling: 'touch' }}
-        aria-describedby="job-sheet-description"
       >
         <DialogHeader className="flex-shrink-0 pb-4 border-b max-sm:px-4 max-sm:pt-4">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -1604,12 +1603,9 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     <DialogTitle data-testid="text-job-sheet-title" className="text-lg sm:text-xl font-semibold truncate">
                       {jobDetails ? `${jobDetails.projectName} - ${jobDetails.clientName}` : "Loading..."}
                     </DialogTitle>
-                    <p className="text-gray-600 text-sm truncate" data-testid="text-job-address">
+                    <DialogDescription className="text-gray-600 text-sm truncate" data-testid="text-job-address">
                       {jobDetails?.jobAddress}
-                    </p>
-                    <p id="job-sheet-description" className="text-xs text-muted-foreground mt-1">
-                      Manage job details, costs, and generate PDF reports
-                    </p>
+                    </DialogDescription>
                   </>
                 ) : (
                 <div className="space-y-3">
