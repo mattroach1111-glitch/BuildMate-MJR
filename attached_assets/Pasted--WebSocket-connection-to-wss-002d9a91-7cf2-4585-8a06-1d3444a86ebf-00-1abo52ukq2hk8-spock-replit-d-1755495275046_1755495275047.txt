@@ -1,0 +1,128 @@
+ WebSocket connection to 'wss://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/?token=xZiKmqnEXykC' failed: 
+setupWebSocket @ client:536Understand this error
+client:536 WebSocket connection to 'wss://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/?token=xZiKmqnEXykC' failed: 
+setupWebSocket @ client:536Understand this error
+client:536 Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=xZiKmqnEXykC' is invalid.
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)Understand this error
+main.tsx:6 BuildFlow Pro v1.0.9 - LANDSCAPE MODE DISABLED, FOCUS ON CORE FEATURES: 1755495220237
+2 Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=51968d97:136Understand this error
+chunk-QCHXOAYK.js?v=51968d97:1062 Uncaught TypeError: Cannot read properties of null (reading 'useContext')
+    at Object.useContext (chunk-QCHXOAYK.js?v=51968d97:1062:29)
+    at useQueryClient (@tanstack_react-query.js?v=51968d97:2795:24)
+    at useBaseQuery (@tanstack_react-query.js?v=51968d97:2999:18)
+    at useQuery (@tanstack_react-query.js?v=51968d97:3068:10)
+    at useAuth (useAuth.ts:3:46)
+    at AppContent (App.tsx:64:37)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=59036f8d:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=59036f8d:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=59036f8d:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=59036f8d:3674:22)Understand this error
+2 Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=51968d97:136Understand this error
+chunk-QCHXOAYK.js?v=51968d97:1062 Uncaught TypeError: Cannot read properties of null (reading 'useContext')
+    at Object.useContext (chunk-QCHXOAYK.js?v=51968d97:1062:29)
+    at useQueryClient (@tanstack_react-query.js?v=51968d97:2795:24)
+    at useBaseQuery (@tanstack_react-query.js?v=51968d97:2999:18)
+    at useQuery (@tanstack_react-query.js?v=51968d97:3068:10)
+    at useAuth (useAuth.ts:3:46)
+    at AppContent (App.tsx:64:37)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=59036f8d:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=59036f8d:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=59036f8d:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=59036f8d:3674:22)Understand this error
+ The above error occurred in the <AppContent> component:
+
+    at AppContent (https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/src/App.tsx?v=1HLfRUBeW2bGLQKsFRPK9:161:37)
+    at QueryClientProvider (https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=59036f8d:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-RPCDYKBN.js?v=59036f8d:14032Understand this error
+chunk-RPCDYKBN.js?v=59036f8d:19413 Uncaught TypeError: Cannot read properties of null (reading 'useContext')
+    at Object.useContext (chunk-QCHXOAYK.js?v=51968d97:1062:29)
+    at useQueryClient (@tanstack_react-query.js?v=51968d97:2795:24)
+    at useBaseQuery (@tanstack_react-query.js?v=51968d97:2999:18)
+    at useQuery (@tanstack_react-query.js?v=51968d97:3068:10)
+    at useAuth (useAuth.ts:3:46)
+    at AppContent (App.tsx:64:37)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=59036f8d:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=59036f8d:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=59036f8d:15914:22)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=59036f8d:19753:22)Understand this error
+(index):188 ✅ BuildFlow Pro Service Worker registered: https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/
+main.tsx:6 BuildFlow Pro v1.0.9 - LANDSCAPE MODE DISABLED, FOCUS ON CORE FEATURES: 1755495220310
+2chunk-QCHXOAYK.js?v=51968d97:136 Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=51968d97:136Understand this error
+chunk-QCHXOAYK.js?v=51968d97:1062 Uncaught TypeError: Cannot read properties of null (reading 'useContext')
+    at Object.useContext (chunk-QCHXOAYK.js?v=51968d97:1062:29)
+    at useQueryClient (@tanstack_react-query.js?v=51968d97:2795:24)
+    at useBaseQuery (@tanstack_react-query.js?v=51968d97:2999:18)
+    at useQuery (@tanstack_react-query.js?v=51968d97:3068:10)
+    at useAuth (useAuth.ts:4:46)
+    at AppContent (App.tsx:64:37)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=59036f8d:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=59036f8d:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=59036f8d:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=59036f8d:3674:22)Understand this error
+2chunk-QCHXOAYK.js?v=51968d97:136 Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=51968d97:136Understand this error
+chunk-QCHXOAYK.js?v=51968d97:1062 Uncaught TypeError: Cannot read properties of null (reading 'useContext')
+    at Object.useContext (chunk-QCHXOAYK.js?v=51968d97:1062:29)
+    at useQueryClient (@tanstack_react-query.js?v=51968d97:2795:24)
+    at useBaseQuery (@tanstack_react-query.js?v=51968d97:2999:18)
+    at useQuery (@tanstack_react-query.js?v=51968d97:3068:10)
+    at useAuth (useAuth.ts:4:46)
+    at AppContent (App.tsx:64:37)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=59036f8d:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=59036f8d:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=59036f8d:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=59036f8d:3674:22)Understand this error
+chunk-RPCDYKBN.js?v=59036f8d:14032 The above error occurred in the <AppContent> component:
+
+    at AppContent (https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/src/App.tsx?v=XyULth9JLQ_bme65HckXD:161:37)
+    at QueryClientProvider (https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=59036f8d:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-RPCDYKBN.js?v=59036f8d:14032Understand this error
+chunk-RPCDYKBN.js?v=59036f8d:19413 Uncaught TypeError: Cannot read properties of null (reading 'useContext')
+    at Object.useContext (chunk-QCHXOAYK.js?v=51968d97:1062:29)
+    at useQueryClient (@tanstack_react-query.js?v=51968d97:2795:24)
+    at useBaseQuery (@tanstack_react-query.js?v=51968d97:2999:18)
+    at useQuery (@tanstack_react-query.js?v=51968d97:3068:10)
+    at useAuth (useAuth.ts:4:46)
+    at AppContent (App.tsx:64:37)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=59036f8d:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=59036f8d:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=59036f8d:15914:22)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=59036f8d:19753:22)Understand this error
+ ✅ BuildFlow Pro Service Worker registered: https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/
+ WebSocket connection to 'wss://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/?token=xZiKmqnEXykC' failed: 
+setupWebSocket @ client:536Understand this error
+client:536 WebSocket connection to 'wss://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/?token=xZiKmqnEXykC' failed: 
+setupWebSocket @ client:536Understand this error
+client:536 Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=xZiKmqnEXykC' is invalid.
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)

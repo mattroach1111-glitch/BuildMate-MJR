@@ -60,26 +60,28 @@ function Router() {
   );
 }
 
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <div id="app-container">
+        <TooltipProvider>
+          <Toaster />
+          <AppContent />
+        </TooltipProvider>
+      </div>
+    </QueryClientProvider>
+  );
+}
+
 function AppContent() {
   const { user, isAuthenticated } = useAuth();
   
   return (
-    <div id="app-container">
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-        <NotificationPopup userEmail={(user as any)?.email} />
-        {isAuthenticated && <PWAInstallPrompt />}
-      </TooltipProvider>
-    </div>
-  );
-}
-
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AppContent />
-    </QueryClientProvider>
+    <>
+      <Router />
+      <NotificationPopup userEmail={(user as any)?.email} />
+      {isAuthenticated && <PWAInstallPrompt />}
+    </>
   );
 }
 
