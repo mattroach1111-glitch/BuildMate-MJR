@@ -473,3 +473,46 @@ button:active {
     background-position: 200% 0;
   }
 }
+
+/* Mobile keyboard handling optimizations */
+.mobile-input {
+  font-size: 16px !important;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.mobile-textarea {
+  font-size: 16px !important;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+}
+
+/* Document processing mobile optimizations */
+@media (max-width: 768px) {
+  .mobile-input input,
+  .mobile-input button {
+    font-size: 16px !important;
+  }
+  
+  /* Ensure dropdowns are properly positioned on mobile */
+  [data-radix-popper-content-wrapper] {
+    z-index: 9999 !important;
+  }
+  
+  /* Better mobile dropdown positioning */
+  [data-radix-select-content] {
+    max-height: 200px !important;
+    overflow-y: auto !important;
+    z-index: 9999 !important;
+  }
+  
+  /* Mobile viewport adjustments for document processing */
+  .document-processing-container {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+}
