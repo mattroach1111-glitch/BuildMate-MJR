@@ -68,6 +68,7 @@ function AppContent() {
       <Router />
       <NotificationPopup userEmail={(user as any)?.email} />
       {isAuthenticated && <PWAInstallPrompt />}
+      <Toaster />
     </>
   );
 }
@@ -76,7 +77,6 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <div id="app-container">
-        <Toaster />
         <AppContent />
       </div>
     </QueryClientProvider>
