@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -170,6 +170,33 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     form.setValue("emailSubject", getEmailSubject());
   }, [jobs, form, getEmailSubject]);
 
+  // Try to load most recent draft when form opens
+  React.useEffect(() => {
+    if (currentUser && jobs && jobs.length > 0 && !currentDraftId) {
+      // Auto-load the most recent draft for this context
+      fetch("/api/email-drafts", {
+        method: "GET",
+        credentials: "include",
+      })
+        .then(res => res.json())
+        .then(drafts => {
+          if (drafts && drafts.length > 0) {
+            // Find most recent draft matching current context
+            const matchingDraft = drafts.find((draft: any) => 
+              (draft.projectManager === projectManager || (!draft.projectManager && !projectManager)) &&
+              (draft.clientName === selectedClient || (!draft.clientName && selectedClient === "all"))
+            );
+            
+            if (matchingDraft) {
+              console.log("Auto-loading matching draft:", matchingDraft.id);
+              loadDraftMutation.mutate(matchingDraft.id);
+            }
+          }
+        })
+        .catch(err => console.log("Could not auto-load draft:", err));
+    }
+  }, [currentUser, jobs, projectManager, selectedClient, currentDraftId, loadDraftMutation]);
+
   // Fetch existing drafts
   const draftsQuery = useQuery({
     queryKey: ["/api/email-drafts"],
@@ -199,10 +226,13 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
         setCurrentDraftId(response.id);
       }
       setLastSaved(new Date());
-      toast({
-        title: "Draft Saved",
-        description: "Your email draft has been saved successfully.",
-      });
+      // Only show toast for manual saves, not auto-saves
+      if (response.isManualSave) {
+        toast({
+          title: "Draft Saved",
+          description: "Your email draft has been saved successfully.",
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/email-drafts"] });
     },
     onError: (error: any) => {
@@ -310,25 +340,41 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     },
   });
 
-  // Auto-save every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
+  // Debounced auto-save function
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const debouncedAutoSave = useCallback(() => {
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    
+    autoSaveTimeoutRef.current = setTimeout(() => {
       const formData = form.getValues();
       const hasContent = formData.emailSubject || formData.recipientEmails || 
                         formData.additionalNotes || 
                         formData.updates.some(update => update.update && update.update.trim());
       
       if (hasContent && !saveDraftMutation.isPending) {
+        console.log("Auto-saving draft...");
         saveDraftMutation.mutate(formData);
       }
-    }, 30000); // Auto-save every 30 seconds
-
-    return () => clearInterval(interval);
+    }, 3000); // Auto-save 3 seconds after user stops typing
   }, [form, saveDraftMutation]);
+
+  // Watch form values and trigger debounced auto-save
+  const watchedValues = form.watch();
+  useEffect(() => {
+    debouncedAutoSave();
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [watchedValues, debouncedAutoSave]);
 
   const handleSaveDraft = () => {
     const formData = form.getValues();
-    saveDraftMutation.mutate(formData);
+    saveDraftMutation.mutate({ ...formData, isManualSave: true });
   };
 
   const onSubmit = async (data: JobUpdateForm) => {
@@ -680,7 +726,21 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
 
         {/* Submit Actions */}
         <div className="flex justify-between items-center pt-4">
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            {/* Auto-save status indicator */}
+            <div className="text-xs text-muted-foreground">
+              {saveDraftMutation.isPending ? (
+                <span className="flex items-center gap-1">
+                  <Save className="h-3 w-3 animate-pulse" />
+                  Saving...
+                </span>
+              ) : lastSaved ? (
+                <span>Last saved: {lastSaved.toLocaleTimeString()}</span>
+              ) : (
+                <span>Not saved yet</span>
+              )}
+            </div>
+            
             <Button
               type="button"
               variant="outline"
