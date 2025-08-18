@@ -60,19 +60,6 @@ function Router() {
   );
 }
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <div id="app-container">
-        <TooltipProvider>
-          <Toaster />
-          <AppContent />
-        </TooltipProvider>
-      </div>
-    </QueryClientProvider>
-  );
-}
-
 function AppContent() {
   const { user, isAuthenticated } = useAuth();
   
@@ -82,6 +69,19 @@ function AppContent() {
       <NotificationPopup userEmail={(user as any)?.email} />
       {isAuthenticated && <PWAInstallPrompt />}
     </>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <div id="app-container">
+          <Toaster />
+          <AppContent />
+        </div>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 
