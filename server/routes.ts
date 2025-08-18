@@ -2674,14 +2674,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "File not found" });
       }
 
-      // Handle Google Drive files vs object storage files
+      // PRIORITY 1: Google Drive links (primary storage)
       if (file.googleDriveLink) {
-        // For Google Drive files, redirect to the Google Drive link
-        console.log(`📥 Downloading from Google Drive: ${file.originalName}`);
+        console.log(`📥 PRIMARY: Downloading from Google Drive: ${file.originalName}`);
         return res.redirect(file.googleDriveLink);
       }
 
-      if (!file.objectPath) {
+      // PRIORITY 2: Object storage (backup storage)
+      if (file.objectPath) {
+        console.log(`📥 BACKUP: Downloading from object storage: ${file.originalName} (${file.objectPath})`);
+      } else {
         console.log(`❌ File download failed - no storage paths available for file: ${file.originalName}`);
         console.log(`   File record:`, {
           id: file.id,
@@ -2694,8 +2696,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           details: "This file may not have been properly saved during upload. Please try uploading the file again."
         });
       }
-
-      console.log(`📥 Downloading from object storage: ${file.originalName} (${file.objectPath})`);
 
       const objectStorageService = new ObjectStorageService();
       const objectFile = await objectStorageService.getObjectEntityFile(file.objectPath);
@@ -3784,59 +3784,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // The document filename should correspond to an email attachment file
         console.log(`📎 Attempting to save email attachment: ${fileName}`);
         
-        // Save file to object storage as primary storage, with Google Drive as backup
+        // PRIMARY: Try to upload to Google Drive first (user's preferred storage)
         let objectPath = null;
-        try {
-          if (document.attachmentContent) {
-            const fileBuffer = Buffer.from(document.attachmentContent, 'base64');
-            const { ObjectStorageService } = await import('./objectStorage');
-            const objectStorageClient = require('./objectStorage').objectStorageClient;
-            const parseObjectPath = require('./objectStorage').parseObjectPath;
-            const objectStorageService = new ObjectStorageService();
-            
-            // Save to object storage first for reliable access  
-            // Generate unique object path for the file
-            const objectId = `email-attachments/${Date.now()}-${fileName}`;
-            const privateDir = objectStorageService.getPrivateObjectDir();
-            objectPath = `/objects/${objectId}`;
-            
-            // Save file to object storage using uploadJobAttachment-like functionality
-            const fullObjectPath = `${privateDir}/${objectId}`;
-            const { bucketName, objectName } = parseObjectPath(fullObjectPath);
-            const bucket = objectStorageClient.bucket(bucketName);
-            const file = bucket.file(objectName);
-            
-            await file.save(fileBuffer, {
-              metadata: {
-                contentType: document.mimeType || mimeType,
-              },
-            });
-            
-            console.log(`📦 File saved to object storage: ${objectPath}`);
-          }
-        } catch (storageError: any) {
-          console.log(`⚠️ Object storage save failed: ${storageError?.message || storageError}`);
-        }
-
-        // Create a job file record with object storage path
-        try {
-          fileRecord = await storage.createJobFile({
-            jobId: targetJobId,
-            fileName: fileName,
-            originalName: fileName,
-            fileSize: document.attachmentContent ? Buffer.from(document.attachmentContent, 'base64').length : 0,
-            mimeType: document.mimeType || mimeType,
-            objectPath: objectPath, // Set object storage path for reliable downloads
-            googleDriveLink: null,
-            googleDriveFileId: null,
-            uploadedById: req.user.claims.sub
-          });
-          console.log(`📎 Job file record created: ${fileRecord.id} with object path: ${objectPath || 'none'}`);
-        } catch (fileError: any) {
-          console.log(`⚠️ Could not create job file record: ${fileError?.message || fileError}`);
-        }
-
-        // Try to upload to Google Drive if user has it connected
         const userId = req.user.claims.sub;
         const user = await storage.getUser(userId);
         
@@ -3892,16 +3841,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
               throw new Error('Failed to upload file to Google Drive - upload returned null');
             }
             
-            if (uploadResult && fileRecord) {
-              // Update the file record with Google Drive info (keep object storage as fallback)
-              await storage.updateJobFile(fileRecord.id, {
-                googleDriveLink: uploadResult.webViewLink,
-                googleDriveFileId: uploadResult.fileId
-                // Keep objectPath as fallback for reliable downloads
-              });
-              googleDriveResult = uploadResult;
-              console.log(`☁️ File uploaded to Google Drive: ${uploadResult.webViewLink}`);
-              console.log(`📦 File also available in object storage: ${fileRecord?.objectPath || 'none'}`);
+            if (uploadResult) {
+              // Create job file record with Google Drive as primary storage
+              try {
+                fileRecord = await storage.createJobFile({
+                  jobId: targetJobId,
+                  fileName: fileName,
+                  originalName: fileName,
+                  fileSize: document.attachmentContent ? Buffer.from(document.attachmentContent, 'base64').length : 0,
+                  mimeType: document.mimeType || mimeType,
+                  googleDriveLink: uploadResult.webViewLink, // PRIMARY: Google Drive link
+                  googleDriveFileId: uploadResult.fileId,
+                  objectPath: null, // Will be set as backup if needed
+                  uploadedById: req.user.claims.sub
+                });
+                googleDriveResult = uploadResult;
+                console.log(`☁️ PRIMARY: File uploaded to Google Drive: ${uploadResult.webViewLink}`);
+                console.log(`📎 Job file record created with Google Drive as primary: ${fileRecord.id}`);
+              } catch (fileError: any) {
+                console.log(`⚠️ Could not create job file record: ${fileError?.message || fileError}`);
+              }
             }
           } catch (driveError: any) {
             console.error(`⚠️ Google Drive upload failed for user ${userId}:`, driveError?.message || driveError);
@@ -3916,11 +3875,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
         } else {
-          console.log(`ℹ️ Google Drive not connected for user ${userId}`, {
+          console.log(`ℹ️ Google Drive not connected for user ${userId} - using backup storage`, {
             hasUser: !!user,
             hasTokens: !!user?.googleDriveTokens,
             userId: userId
           });
+          
+          // BACKUP: Save to object storage only if Google Drive failed or is unavailable
+          try {
+            if (document.attachmentContent) {
+              const fileBuffer = Buffer.from(document.attachmentContent, 'base64');
+              const { ObjectStorageService } = await import('./objectStorage');
+              const objectStorageClient = require('./objectStorage').objectStorageClient;
+              const parseObjectPath = require('./objectStorage').parseObjectPath;
+              const objectStorageService = new ObjectStorageService();
+              
+              // Generate unique object path for the file
+              const objectId = `email-attachments/${Date.now()}-${fileName}`;
+              const privateDir = objectStorageService.getPrivateObjectDir();
+              objectPath = `/objects/${objectId}`;
+              
+              // Save file to object storage as backup
+              const fullObjectPath = `${privateDir}/${objectId}`;
+              const { bucketName, objectName } = parseObjectPath(fullObjectPath);
+              const bucket = objectStorageClient.bucket(bucketName);
+              const file = bucket.file(objectName);
+              
+              await file.save(fileBuffer, {
+                metadata: {
+                  contentType: document.mimeType || mimeType,
+                },
+              });
+              
+              // Create job file record with object storage as backup
+              fileRecord = await storage.createJobFile({
+                jobId: targetJobId,
+                fileName: fileName,
+                originalName: fileName,
+                fileSize: fileBuffer.length,
+                mimeType: document.mimeType || mimeType,
+                objectPath: objectPath, // Backup storage path
+                googleDriveLink: null,
+                googleDriveFileId: null,
+                uploadedById: req.user.claims.sub
+              });
+              
+              console.log(`📦 BACKUP: File saved to object storage: ${objectPath}`);
+              console.log(`📎 Job file record created with object storage as backup: ${fileRecord.id}`);
+            }
+          } catch (storageError: any) {
+            console.log(`⚠️ Backup object storage save also failed: ${storageError?.message || storageError}`);
+          }
         }
       } catch (attachmentError: any) {
         console.log(`⚠️ File attachment processing failed: ${attachmentError?.message || attachmentError}`);
