@@ -6,7 +6,7 @@ import { db } from "./db";
 import { 
   timesheetEntries, laborEntries, users, staffNotes, employees, staffMembers, 
   staffNotesEntries, rewardCatalog, rewardSettings, jobs, materials, subTrades, otherCosts, 
-  tipFees, jobFiles, jobNotes
+  tipFees, jobFiles, jobNotes, jobUpdateNotes
 } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
@@ -845,6 +845,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting job note:", error);
       res.status(500).json({ message: "Failed to delete job note" });
+    }
+  });
+
+  // Job update notes endpoints (for email job updates feature)
+  app.get("/api/job-update-notes", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // Get all job update notes from database 
+      const notes = await db.select().from(jobUpdateNotes);
+      res.json(notes);
+    } catch (error) {
+      console.error("Error fetching job update notes:", error);
+      res.status(500).json({ message: "Failed to fetch job update notes" });
+    }
+  });
+
+  app.post("/api/job-update-notes", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { jobId, note } = req.body;
+      if (!jobId || !note) {
+        return res.status(400).json({ message: "Job ID and note are required" });
+      }
+
+      console.log("💾 Saving job update note:", { jobId, note: note.substring(0, 50) + "..." });
+
+      // Insert or update job update note
+      const result = await db.insert(jobUpdateNotes)
+        .values({
+          jobId,
+          note,
+          updatedAt: new Date()
+        })
+        .onConflictDoUpdate({
+          target: jobUpdateNotes.jobId,
+          set: {
+            note,
+            updatedAt: new Date()
+          }
+        })
+        .returning();
+
+      console.log("✅ Job update note saved successfully");
+      res.json(result[0]);
+    } catch (error) {
+      console.error("❌ Error saving job update note:", error);
+      res.status(500).json({ message: "Failed to save job update note" });
     }
   });
 
