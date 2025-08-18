@@ -89,7 +89,33 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/job-update-notes"] });
     },
+    onError: (error) => {
+      console.log("Note auto-save failed (user may not be logged in):", error);
+    },
   });
+
+  // Debounced save function
+  const debouncedSave = React.useCallback(
+    React.useMemo(() => {
+      const timeouts = new Map();
+      return (jobId: string, note: string) => {
+        // Clear existing timeout for this job
+        if (timeouts.has(jobId)) {
+          clearTimeout(timeouts.get(jobId));
+        }
+        
+        // Set new timeout
+        const timeoutId = setTimeout(() => {
+          if (note.trim()) {
+            saveNoteMutation.mutate({ jobId, note: note.trim() });
+          }
+          timeouts.delete(jobId);
+        }, 1500);
+        
+        timeouts.set(jobId, timeoutId);
+      };
+    }, [saveNoteMutation])
+  );
 
   // Fetch jobs data
   const { data: allJobs, isLoading: jobsLoading } = useQuery<Job[]>({
@@ -246,6 +272,21 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
       });
       return;
     }
+
+    // Save all job update notes before sending email
+    const savePromises = data.updates
+      .filter(update => update.update && update.update.trim())
+      .map(update => 
+        saveNoteMutation.mutateAsync({
+          jobId: update.jobId,
+          note: update.update!.trim()
+        }).catch(error => {
+          console.log(`Failed to save note for job ${update.jobId}:`, error);
+        })
+      );
+
+    // Wait for all notes to save (or fail silently)
+    await Promise.allSettled(savePromises);
 
     const submitData = {
       ...data,
@@ -531,15 +572,8 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                                 {...formField}
                                 onChange={(e) => {
                                   formField.onChange(e);
-                                  // Auto-save note with debouncing
-                                  if (e.target.value.trim()) {
-                                    setTimeout(() => {
-                                      saveNoteMutation.mutate({
-                                        jobId: job.id,
-                                        note: e.target.value.trim()
-                                      });
-                                    }, 1000);
-                                  }
+                                  // Auto-save note with proper debouncing
+                                  debouncedSave(job.id, e.target.value);
                                 }}
                                 data-testid={`textarea-job-update-${job.id}`}
                               />
