@@ -164,7 +164,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     if (jobs) {
       // Preserve existing updates when jobs change
       const currentUpdates = form.getValues("updates") || [];
-      const updatedUpdates = jobs.map(job => {
+      const updatedUpdates = jobs.map((job, index) => {
         // Find existing update for this job
         const existingUpdate = currentUpdates.find(update => update.jobId === job.id);
         return {
@@ -172,9 +172,18 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
           update: existingUpdate?.update || ""
         };
       });
-      form.setValue("updates", updatedUpdates);
+      
+      // Force re-registration of form fields by resetting and setting
+      form.reset({
+        updates: updatedUpdates,
+        emailSubject: getEmailSubject(),
+        recipientEmails: form.getValues("recipientEmails") || "",
+        additionalNotes: form.getValues("additionalNotes") || "",
+      }, {
+        keepValues: false, // Force complete re-registration
+        keepDefaultValues: false
+      });
     }
-    form.setValue("emailSubject", getEmailSubject());
   }, [jobs, form, getEmailSubject]);
 
   // Submit job updates via email
