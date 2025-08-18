@@ -92,10 +92,10 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   // Get unique project managers from existing jobs and sort alphabetically
   const projectManagers = jobs ? Array.from(new Set((jobs as any[]).map(job => job.projectManager || job.projectName).filter(Boolean))).sort() : [];
 
-  // Upload directly to Google Drive mutation
-  const uploadToGoogleDriveMutation = useMutation({
+  // Reliable upload mutation (Object Storage + Google Drive backup)
+  const reliableUploadMutation = useMutation({
     mutationFn: async ({ file, jobId }: { file: File; jobId: string }) => {
-      console.log("📤 Uploading directly to Google Drive:", file.name);
+      console.log("📤 Starting reliable upload:", file.name);
       
       // Create FormData with the file
       const formData = new FormData();
@@ -105,7 +105,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       formData.append('mimeType', file.type);
       formData.append('fileSize', file.size.toString());
       
-      const response = await fetch('/api/documents/upload-direct-to-drive', {
+      const response = await fetch('/api/documents/upload-reliable', {
         method: 'POST',
         body: formData,
       });
@@ -118,10 +118,10 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       return await response.json();
     },
     onError: (error: any) => {
-      console.error("🔴 Google Drive upload error:", error);
+      console.error("❌ Reliable upload error:", error);
       toast({
         title: "Upload Error",
-        description: error.message || "Failed to upload to Google Drive",
+        description: error.message || "Failed to upload document",
         variant: "destructive",
       });
     },
@@ -350,20 +350,22 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       const currentJobId = selectedJobIdRef.current;
       if (currentJobId) {
         try {
-          const driveResult = await uploadToGoogleDriveMutation.mutateAsync({
+          const uploadResult = await reliableUploadMutation.mutateAsync({
             file: file,
             jobId: currentJobId
           });
           
-          console.log("✅ SUCCESS: Google Drive upload completed:", driveResult);
+          console.log("✅ SUCCESS: Reliable upload completed:", uploadResult);
           
-          // Return Google Drive link as the "uploadURL" for processing
+          // Return the best available link for processing (Google Drive preferred, fallback to download URL)
+          const documentUrl = uploadResult.googleDriveLink || `/api/job-files/${uploadResult.fileId}/download`;
+          
           return {
             method: "COMPLETED" as const, // Special flag to indicate direct upload was successful
-            url: driveResult.googleDriveLink,
+            url: documentUrl,
             fields: {},
             headers: {},
-            googleDriveInfo: driveResult
+            uploadInfo: uploadResult
           };
         } catch (driveError: any) {
           console.log("⚠️ Google Drive upload failed, falling back to object storage:", driveError.message);
@@ -403,7 +405,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       });
       throw error;
     }
-  }, [selectedJobIdRef, uploadToGoogleDriveMutation, getUploadUrlMutation, toast]);
+  }, [selectedJobIdRef, reliableUploadMutation, getUploadUrlMutation, toast]);
 
   const handleUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
     console.log("🟢 UPLOAD COMPLETE:", result);

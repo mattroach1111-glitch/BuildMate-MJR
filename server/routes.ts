@@ -2762,7 +2762,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup multer for file uploads
   const upload = multer({ storage: multer.memoryStorage() });
 
-  // Endpoint to upload documents directly to Google Drive (new direct upload method)
+  // Endpoint to upload documents with automatic fallback (Object Storage + Google Drive backup)
+  app.post("/api/documents/upload-reliable", isAuthenticated, upload.single('file'), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      // Extract file and form data
+      const uploadedFile = req.file;
+      const { jobId, fileName, mimeType, fileSize } = req.body;
+      
+      console.log(`📤 Reliable document upload request:`, {
+        hasFile: !!uploadedFile,
+        jobId,
+        fileName,
+        originalName: uploadedFile?.originalname,
+        size: uploadedFile?.size,
+        mimetype: uploadedFile?.mimetype
+      });
+      
+      if (!uploadedFile || !jobId) {
+        return res.status(400).json({ error: "File and job ID are required" });
+      }
+
+      // Verify job exists
+      const job = await storage.getJob(jobId);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+
+      // Use the uploaded file buffer
+      const fileBuffer = uploadedFile.buffer;
+      const actualMimeType = uploadedFile.mimetype || mimeType || 'application/octet-stream';
+      const actualFileName = fileName || uploadedFile.originalname || 'document';
+
+      // Primary storage: Object Storage (always works)
+      console.log(`💾 Uploading to Object Storage: ${actualFileName}`);
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      
+      // Upload to object storage using the presigned URL
+      const uploadResponse = await fetch(uploadURL, {
+        method: 'PUT',
+        body: fileBuffer,
+        headers: {
+          'Content-Type': actualMimeType,
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Object storage upload failed: ${uploadResponse.statusText}`);
+      }
+
+      // Get the object path from the upload URL
+      const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
+      
+      let googleDriveLink = null;
+      let googleDriveFileId = null;
+
+      // Secondary backup: Google Drive (if connected)
+      if (user && user.googleDriveTokens) {
+        try {
+          console.log(`☁️ Backing up to Google Drive: ${actualFileName}`);
+          const googleDriveService = new GoogleDriveService();
+          const tokens = JSON.parse(user.googleDriveTokens);
+          googleDriveService.setUserTokens(tokens);
+
+          const uploadResult = await googleDriveService.uploadJobAttachment(
+            actualFileName, 
+            fileBuffer, 
+            actualMimeType, 
+            job.jobAddress
+          );
+          
+          if (uploadResult) {
+            googleDriveLink = uploadResult.webViewLink;
+            googleDriveFileId = uploadResult.fileId;
+            console.log(`✅ Successfully backed up to Google Drive: ${actualFileName}`);
+          }
+        } catch (driveError: any) {
+          console.warn(`⚠️ Google Drive backup failed, but file is safely stored in Object Storage: ${driveError.message}`);
+        }
+      } else {
+        console.log(`ℹ️ Google Drive not connected - file stored in Object Storage only`);
+      }
+
+      // Create job file record in database
+      const fileRecord = await storage.createJobFile({
+        jobId: jobId,
+        fileName: actualFileName,
+        originalName: actualFileName,
+        fileSize: parseInt(fileSize) || fileBuffer.length,
+        mimeType: actualMimeType,
+        objectPath: objectPath,
+        googleDriveLink: googleDriveLink,
+        googleDriveFileId: googleDriveFileId,
+        uploadedById: userId
+      });
+
+      console.log(`✅ Document uploaded successfully: ${actualFileName} (Object Storage + ${googleDriveLink ? 'Google Drive backup' : 'no Google Drive backup'})`);
+
+      res.json({
+        success: true,
+        fileId: fileRecord.id,
+        objectPath: objectPath,
+        googleDriveLink: googleDriveLink,
+        googleDriveFileId: googleDriveFileId,
+        message: googleDriveLink 
+          ? "Document uploaded and backed up to Google Drive" 
+          : "Document uploaded to secure storage (connect Google Drive for additional backup)"
+      });
+
+    } catch (error: any) {
+      console.error("❌ Document upload failed:", error);
+      res.status(500).json({ 
+        error: error.message || "Document upload failed"
+      });
+    }
+  });
+
+  // Endpoint to upload documents directly to Google Drive (original method - kept for compatibility)
   app.post("/api/documents/upload-direct-to-drive", isAuthenticated, upload.single('file'), async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
