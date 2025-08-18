@@ -3881,10 +3881,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             
             // Upload file to Google Drive 
-            const fileBufferForDrive = Buffer.from(document.attachmentContent, 'base64');
             const uploadResult = await googleDriveService.uploadFile(
               fileName, 
-              fileBufferForDrive, 
+              fileBuffer, 
               document.mimeType || mimeType, 
               jobFolderId
             );
