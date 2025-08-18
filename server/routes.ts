@@ -4805,6 +4805,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get Google OAuth configuration info
+  app.get("/api/google-oauth-info", isAuthenticated, isAdmin, async (req: any, res) => {
+    const domain = process.env.REPLIT_DOMAINS?.split(',')[0];
+    const redirectUri = `https://${domain}/api/google-drive/callback`;
+    
+    return res.json({
+      redirectUri: redirectUri,
+      instructions: "Add this redirect URI to your Google Cloud Console OAuth 2.0 client configuration",
+      step1: "Go to https://console.cloud.google.com/apis/credentials",
+      step2: "Select your OAuth 2.0 client",
+      step3: `Add ${redirectUri} to Authorized redirect URIs`,
+      step4: "Save and try connecting Google Drive again"
+    });
+  });
+
   // Test Google Drive connection
   app.get("/api/test-google-drive", isAuthenticated, isAdmin, async (req: any, res) => {
     try {

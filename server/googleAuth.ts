@@ -11,6 +11,10 @@ export class GoogleDriveAuth {
     
     if (process.env.GOOGLE_REDIRECT_URI) {
       redirectUri = process.env.GOOGLE_REDIRECT_URI;
+    } else if (process.env.REPLIT_DOMAINS) {
+      // Use the first domain from REPLIT_DOMAINS
+      const domain = process.env.REPLIT_DOMAINS.split(',')[0];
+      redirectUri = `${domain}/api/google-drive/callback`;
     } else if (process.env.REPLIT_DEPLOYMENT) {
       // Production deployment on Replit
       redirectUri = `https://${process.env.REPLIT_DEPLOYMENT}/api/google-drive/callback`;
