@@ -1,0 +1,87 @@
+Auto-saving note to database for job: 3d7c3a7e-5116-422e-9319-28c3281636fc Note: t User role: admin
+index-CiyuTama.js:48   POST https://build-mate-mattroach1111.replit.app/api/job-update-notes 500 (Internal Server Error)
+Jt @ index-CiyuTama.js:48
+mutationFn @ index-CiyuTama.js:767
+fn @ index-CiyuTama.js:48
+j @ index-CiyuTama.js:48
+start @ index-CiyuTama.js:48
+execute @ index-CiyuTama.js:48
+await in execute
+mutate @ index-CiyuTama.js:48
+(anonymous) @ index-CiyuTama.js:48
+(anonymous) @ index-CiyuTama.js:767
+setTimeout
+(anonymous) @ index-CiyuTama.js:767
+onChange @ index-CiyuTama.js:767
+bQ @ index-CiyuTama.js:37
+NQ @ index-CiyuTama.js:37
+jQ @ index-CiyuTama.js:37
+X3 @ index-CiyuTama.js:37
+TI @ index-CiyuTama.js:37
+(anonymous) @ index-CiyuTama.js:37
+i_ @ index-CiyuTama.js:40
+tI @ index-CiyuTama.js:37
+j5 @ index-CiyuTama.js:37
+M4 @ index-CiyuTama.js:37
+$Q @ index-CiyuTama.js:37
+index-CiyuTama.js:767 Note auto-save failed: Error: 500: {"message":"Failed to save job update note"}
+    at l8 (index-CiyuTama.js:48:43006)
+    at async Jt (index-CiyuTama.js:48:43214)
+index-CiyuTama.js:767 Auto-saving note to database for job: 3d7c3a7e-5116-422e-9319-28c3281636fc Note: testi User role: admin
+index-CiyuTama.js:48   POST https://build-mate-mattroach1111.replit.app/api/job-update-notes 500 (Internal Server Error)
+Jt @ index-CiyuTama.js:48
+mutationFn @ index-CiyuTama.js:767
+fn @ index-CiyuTama.js:48
+j @ index-CiyuTama.js:48
+start @ index-CiyuTama.js:48
+execute @ index-CiyuTama.js:48
+await in execute
+mutate @ index-CiyuTama.js:48
+(anonymous) @ index-CiyuTama.js:48
+(anonymous) @ index-CiyuTama.js:767
+setTimeout
+(anonymous) @ index-CiyuTama.js:767
+onChange @ index-CiyuTama.js:767
+bQ @ index-CiyuTama.js:37
+NQ @ index-CiyuTama.js:37
+jQ @ index-CiyuTama.js:37
+X3 @ index-CiyuTama.js:37
+TI @ index-CiyuTama.js:37
+(anonymous) @ index-CiyuTama.js:37
+i_ @ index-CiyuTama.js:40
+tI @ index-CiyuTama.js:37
+j5 @ index-CiyuTama.js:37
+M4 @ index-CiyuTama.js:37
+$Q @ index-CiyuTama.js:37
+index-CiyuTama.js:767 Note auto-save failed: Error: 500: {"message":"Failed to save job update note"}
+    at l8 (index-CiyuTama.js:48:43006)
+    at async Jt (index-CiyuTama.js:48:43214)
+index-CiyuTama.js:767 Auto-saving note to database for job: 3d7c3a7e-5116-422e-9319-28c3281636fc Note: testig User role: admin
+index-CiyuTama.js:48   POST https://build-mate-mattroach1111.replit.app/api/job-update-notes 500 (Internal Server Error)
+Jt @ index-CiyuTama.js:48
+mutationFn @ index-CiyuTama.js:767
+fn @ index-CiyuTama.js:48
+j @ index-CiyuTama.js:48
+start @ index-CiyuTama.js:48
+execute @ index-CiyuTama.js:48
+await in execute
+mutate @ index-CiyuTama.js:48
+(anonymous) @ index-CiyuTama.js:48
+(anonymous) @ index-CiyuTama.js:767
+setTimeout
+(anonymous) @ index-CiyuTama.js:767
+onChange @ index-CiyuTama.js:767
+bQ @ index-CiyuTama.js:37
+NQ @ index-CiyuTama.js:37
+jQ @ index-CiyuTama.js:37
+X3 @ index-CiyuTama.js:37
+TI @ index-CiyuTama.js:37
+(anonymous) @ index-CiyuTama.js:37
+i_ @ index-CiyuTama.js:40
+tI @ index-CiyuTama.js:37
+j5 @ index-CiyuTama.js:37
+M4 @ index-CiyuTama.js:37
+$Q @ index-CiyuTama.js:37
+index-CiyuTama.js:767 Note auto-save failed: Error: 500: {"message":"Failed to save job update note"}
+    at l8 (index-CiyuTama.js:48:43006)
+    at async Jt (index-CiyuTama.js:48:43214)
