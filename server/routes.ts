@@ -2677,12 +2677,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Handle Google Drive files vs object storage files
       if (file.googleDriveLink) {
         // For Google Drive files, redirect to the Google Drive link
+        console.log(`📥 Downloading from Google Drive: ${file.originalName}`);
         return res.redirect(file.googleDriveLink);
       }
 
       if (!file.objectPath) {
-        return res.status(404).json({ message: "File not found - no storage path available" });
+        console.log(`❌ File download failed - no storage paths available for file: ${file.originalName}`);
+        console.log(`   File record:`, {
+          id: file.id,
+          fileName: file.fileName,
+          objectPath: file.objectPath,
+          googleDriveLink: file.googleDriveLink ? 'present' : 'missing'
+        });
+        return res.status(404).json({ 
+          message: "File not found - no storage path available",
+          details: "This file may not have been properly saved during upload. Please try uploading the file again."
+        });
       }
+
+      console.log(`📥 Downloading from object storage: ${file.originalName} (${file.objectPath})`);
 
       const objectStorageService = new ObjectStorageService();
       const objectFile = await objectStorageService.getObjectEntityFile(file.objectPath);
@@ -3771,21 +3784,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // The document filename should correspond to an email attachment file
         console.log(`📎 Attempting to save email attachment: ${fileName}`);
         
-        // First, try to save as job file attachment from object storage
+        // Save file to object storage as primary storage, with Google Drive as backup
+        let objectPath = null;
         try {
-          // Create a job file record for the email attachment
+          if (document.attachmentContent) {
+            const fileBuffer = Buffer.from(document.attachmentContent, 'base64');
+            const { ObjectStorageService, objectStorageClient, parseObjectPath } = await import('./objectStorage');
+            const objectStorageService = new ObjectStorageService();
+            
+            // Save to object storage first for reliable access  
+            // Generate unique object path for the file
+            const objectId = `email-attachments/${Date.now()}-${fileName}`;
+            const privateDir = objectStorageService.getPrivateObjectDir();
+            objectPath = `/objects/${objectId}`;
+            
+            // Save file to object storage using uploadJobAttachment-like functionality
+            const fullObjectPath = `${privateDir}/${objectId}`;
+            const { bucketName, objectName } = parseObjectPath(fullObjectPath);
+            const bucket = objectStorageClient.bucket(bucketName);
+            const file = bucket.file(objectName);
+            
+            await file.save(fileBuffer, {
+              metadata: {
+                contentType: document.mimeType || mimeType,
+              },
+            });
+            
+            console.log(`📦 File saved to object storage: ${objectPath}`);
+          }
+        } catch (storageError) {
+          console.log(`⚠️ Object storage save failed: ${storageError.message}`);
+        }
+
+        // Create a job file record with object storage path
+        try {
           fileRecord = await storage.createJobFile({
             jobId: targetJobId,
             fileName: fileName,
             originalName: fileName,
             fileSize: document.attachmentContent ? Buffer.from(document.attachmentContent, 'base64').length : 0,
             mimeType: document.mimeType || mimeType,
-            objectPath: null, // Email attachments are not in object storage initially
+            objectPath: objectPath, // Set object storage path for reliable downloads
             googleDriveLink: null,
             googleDriveFileId: null,
             uploadedById: req.user.claims.sub
           });
-          console.log(`📎 Job file record created: ${fileRecord.id}`);
+          console.log(`📎 Job file record created: ${fileRecord.id} with object path: ${objectPath || 'none'}`);
         } catch (fileError) {
           console.log(`⚠️ Could not create job file record: ${fileError.message}`);
         }
@@ -3847,13 +3891,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             
             if (uploadResult && fileRecord) {
-              // Update the file record with Google Drive info
+              // Update the file record with Google Drive info (keep object storage as fallback)
               await storage.updateJobFile(fileRecord.id, {
                 googleDriveLink: uploadResult.webViewLink,
                 googleDriveFileId: uploadResult.fileId
+                // Keep objectPath as fallback for reliable downloads
               });
               googleDriveResult = uploadResult;
               console.log(`☁️ File uploaded to Google Drive: ${uploadResult.webViewLink}`);
+              console.log(`📦 File also available in object storage: ${objectPath || 'none'}`);
             }
           } catch (driveError) {
             console.error(`⚠️ Google Drive upload failed for user ${userId}:`, driveError.message);
@@ -3888,9 +3934,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         jobId: targetJobId,
         category: finalCategory,
         fileAttached: !!fileRecord,
+        objectStorageSuccess: !!objectPath,
         googleDriveUploaded: !!googleDriveResult,
         googleDriveLink: googleDriveResult?.webViewLink,
-        message: `Expense added to job as ${finalCategory}${fileRecord ? ' with file attachment' : ''}${googleDriveResult ? ' and uploaded to Google Drive' : ''}`
+        message: `Expense added to job as ${finalCategory}${fileRecord ? ' with file attachment' : ''}${objectPath ? ' (saved to storage)' : ''}${googleDriveResult ? ' and uploaded to Google Drive' : ''}`
       });
     } catch (error) {
       console.error('Error approving document:', error);
