@@ -247,13 +247,43 @@ table tr.weekend-row button {
     .hidden-text-xs span {
       display: none;
     }
-    
-    /* Larger tap targets */
-    .tap-target {
-      min-height: 48px;
-      min-width: 48px;
-    }
   }
+
+/* Mobile optimizations - Prevent iOS keyboard zoom and flickering */
+.mobile-textarea,
+.mobile-input,
+input[type="text"],
+input[type="email"],
+input[type="search"],
+textarea {
+  font-size: 16px !important;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  -webkit-appearance: none;
+  border-radius: 4px;
+}
+
+/* Specific styling for job update textareas to prevent keyboard issues */
+textarea[data-testid*="textarea-job-update"],
+textarea[placeholder*="Enter update notes"],
+textarea[placeholder*="Add any additional notes"],
+textarea[placeholder*="Add an update for"] {
+  font-size: 16px !important;
+  -webkit-appearance: none !important;
+  -webkit-border-radius: 4px !important;
+  border-radius: 4px !important;
+  -webkit-transform: translateZ(0) !important;
+  transform: translateZ(0) !important;
+}
+
+/* Hardware acceleration for smooth scrolling */
+* {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
 
 /* Landscape mode disabled - users can physically rotate phones */
 

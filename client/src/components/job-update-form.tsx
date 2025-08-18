@@ -392,6 +392,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                     <Input 
                       placeholder="Enter email subject" 
                       {...field} 
+                      className="mobile-input"
                       data-testid="input-email-subject"
                     />
                   </FormControl>
