@@ -3089,6 +3089,9 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
         <DialogContent className="max-w-md max-sm:max-w-[95vw] max-sm:max-h-[90vh] max-sm:m-2">
           <DialogHeader>
             <DialogTitle className="text-lg max-sm:text-base">Email Job Sheet PDF</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Send the job sheet PDF via email to specified recipients
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 max-sm:space-y-3">
             <div>
@@ -3154,6 +3157,9 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Manage Employees</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Remove employees that were auto-created from document uploads
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-gray-600">

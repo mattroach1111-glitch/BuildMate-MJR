@@ -776,7 +776,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Job notes endpoints
   app.get("/api/jobs/:id/notes", isAuthenticated, async (req: any, res) => {
     try {
+      console.log("📝 Fetching job notes for job ID:", req.params.id);
+      console.log("📝 User from auth:", req.user?.claims?.sub);
+      
       const jobNotes = await storage.getJobNotes(req.params.id);
+      console.log("📝 Found job notes:", jobNotes.length);
       res.json(jobNotes);
     } catch (error) {
       console.error("Error fetching job notes:", error);
