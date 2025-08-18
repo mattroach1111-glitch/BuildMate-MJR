@@ -451,12 +451,23 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
         doc.text('(Click to open in Google Drive)', 25, yPos + 8);
         doc.setTextColor(0, 0, 0);
         yPos += 18;
+      } else if (file.objectPath || file.id) {
+        // Object Storage file - create download link
+        const downloadUrl = `${window.location.origin}/api/job-files/${file.id}/download`;
+        doc.setTextColor(0, 100, 200); // Blue for clickable link
+        const linkText = `• ${file.originalName}`;
+        doc.text(linkText, 25, yPos);
+        doc.link(25, yPos - 4, doc.getTextWidth(linkText), 10, { url: downloadUrl });
+        doc.setTextColor(100, 100, 100);
+        doc.text('(Click to download)', 25, yPos + 8);
+        doc.setTextColor(0, 0, 0);
+        yPos += 18;
       } else {
-        // Internal storage file - show as available internally
+        // Fallback for files without links
         doc.setTextColor(80, 80, 80);
         doc.text(`• ${file.originalName}`, 25, yPos);
         doc.setTextColor(100, 100, 100);
-        doc.text('(Available in system)', 25, yPos + 8);
+        doc.text('(Contact for access)', 25, yPos + 8);
         doc.setTextColor(0, 0, 0);
         yPos += 18;
       }
@@ -787,12 +798,23 @@ export async function generateJobPDFBase64(job: JobWithRelations, attachedFiles?
         doc.text('(Click to open in Google Drive)', 25, yPos + 8);
         doc.setTextColor(0, 0, 0);
         yPos += 18;
+      } else if (file.objectPath || file.id) {
+        // Object Storage file - create download link
+        const downloadUrl = `${window.location.origin}/api/job-files/${file.id}/download`;
+        doc.setTextColor(0, 100, 200); // Blue for clickable link
+        const linkText = `• ${file.originalName}`;
+        doc.text(linkText, 25, yPos);
+        doc.link(25, yPos - 4, doc.getTextWidth(linkText), 10, { url: downloadUrl });
+        doc.setTextColor(100, 100, 100);
+        doc.text('(Click to download)', 25, yPos + 8);
+        doc.setTextColor(0, 0, 0);
+        yPos += 18;
       } else {
-        // Internal storage file - show as available internally
+        // Fallback for files without links
         doc.setTextColor(80, 80, 80);
         doc.text(`• ${file.originalName}`, 25, yPos);
         doc.setTextColor(100, 100, 100);
-        doc.text('(Available in system)', 25, yPos + 8);
+        doc.text('(Contact for access)', 25, yPos + 8);
         doc.setTextColor(0, 0, 0);
         yPos += 18;
       }
