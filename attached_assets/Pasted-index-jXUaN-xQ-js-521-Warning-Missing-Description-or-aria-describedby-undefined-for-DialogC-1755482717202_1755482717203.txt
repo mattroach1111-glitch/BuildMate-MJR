@@ -1,0 +1,55 @@
+index-jXUaN-xQ.js:521  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-jXUaN-xQ.js:521
+fb @ index-jXUaN-xQ.js:40
+Zp @ index-jXUaN-xQ.js:40
+VJ @ index-jXUaN-xQ.js:40
+Ih @ index-jXUaN-xQ.js:40
+gk @ index-jXUaN-xQ.js:40
+ch @ index-jXUaN-xQ.js:38
+(anonymous) @ index-jXUaN-xQ.js:40
+index-jXUaN-xQ.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/d01b3296-48cc-420d-b993-aff10cb811ab/notes 500 (Internal Server Error)
+(anonymous) @ index-jXUaN-xQ.js:48
+a @ index-jXUaN-xQ.js:48
+j @ index-jXUaN-xQ.js:48
+start @ index-jXUaN-xQ.js:48
+fetch @ index-jXUaN-xQ.js:48
+G0 @ index-jXUaN-xQ.js:48
+onSubscribe @ index-jXUaN-xQ.js:48
+subscribe @ index-jXUaN-xQ.js:48
+(anonymous) @ index-jXUaN-xQ.js:48
+II @ index-jXUaN-xQ.js:38
+fb @ index-jXUaN-xQ.js:40
+Zp @ index-jXUaN-xQ.js:40
+VJ @ index-jXUaN-xQ.js:40
+Ih @ index-jXUaN-xQ.js:40
+gk @ index-jXUaN-xQ.js:40
+ch @ index-jXUaN-xQ.js:38
+(anonymous) @ index-jXUaN-xQ.js:40
+index-jXUaN-xQ.js:521  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-jXUaN-xQ.js:521
+fb @ index-jXUaN-xQ.js:40
+Zp @ index-jXUaN-xQ.js:40
+VJ @ index-jXUaN-xQ.js:40
+Ih @ index-jXUaN-xQ.js:40
+gk @ index-jXUaN-xQ.js:40
+ch @ index-jXUaN-xQ.js:38
+(anonymous) @ index-jXUaN-xQ.js:40
+index-jXUaN-xQ.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/303c649d-caa9-4a0d-a8fe-c5e8369662e9/notes 500 (Internal Server Error)
+(anonymous) @ index-jXUaN-xQ.js:48
+a @ index-jXUaN-xQ.js:48
+j @ index-jXUaN-xQ.js:48
+start @ index-jXUaN-xQ.js:48
+fetch @ index-jXUaN-xQ.js:48
+G0 @ index-jXUaN-xQ.js:48
+onSubscribe @ index-jXUaN-xQ.js:48
+subscribe @ index-jXUaN-xQ.js:48
+(anonymous) @ index-jXUaN-xQ.js:48
+II @ index-jXUaN-xQ.js:38
+fb @ index-jXUaN-xQ.js:40
+Zp @ index-jXUaN-xQ.js:40
+VJ @ index-jXUaN-xQ.js:40
+Ih @ index-jXUaN-xQ.js:40
+gk @ index-jXUaN-xQ.js:40
+ch @ index-jXUaN-xQ.js:38
+(anonymous) @ index-jXUaN-xQ.js:40
+index-jXUaN-xQ.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/303c649d-caa9-4a0d-a8fe-c5e8369662e9/notes 500 (Internal Server Error)
