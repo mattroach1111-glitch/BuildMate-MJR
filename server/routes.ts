@@ -1837,7 +1837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
               
               // Create or find Timesheets folder inside BuildFlow Pro
-              const buildFlowFolderId = await googleDriveService.findOrCreateFolder('Timesheets', mainFolderId);
+              const buildFlowFolderId = await googleDriveService.findOrCreateFolder('Timesheets', mainFolderId || undefined);
               
               // Upload PDF to Google Drive
               driveLink = await googleDriveService.uploadPDF(fileName, pdfBuffer, buildFlowFolderId || undefined);
@@ -4724,7 +4724,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Set user tokens
         const tokens = JSON.parse(user.googleDriveTokens);
+        console.log("🔑 Setting user tokens...");
         await googleDriveService.setUserTokens(tokens);
+        console.log("🔑 Tokens set successfully");
 
         // Check if service is ready
         if (!googleDriveService.isReady()) {
@@ -4735,14 +4737,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             suggestion: "Go to Settings and reconnect your Google Drive account"
           });
         }
+        
+        console.log("✅ Google Drive service is ready");
 
         console.log("🗂️ Creating backup folder structure...");
 
         // Create main BuildFlow Pro folder
         const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
+        console.log(`📁 Main folder ID: ${mainFolderId}`);
         
         // Create backups subfolder
         const backupsFolderId = await googleDriveService.findOrCreateFolder('Backups', mainFolderId || undefined);
+        console.log(`📁 Backups folder ID: ${backupsFolderId}`);
 
         console.log("☁️ Uploading backup file to Google Drive...");
 
@@ -4779,20 +4785,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       } catch (driveError: any) {
         console.error("Google Drive upload error:", driveError);
+        const errorMessage = driveError?.message || "Unknown Google Drive error";
         res.status(500).json({ 
           success: false,
           message: "Failed to upload to Google Drive", 
-          error: driveError.message,
+          error: errorMessage,
           suggestion: "Check your Google Drive connection in Settings. You may need to reconnect your account."
         });
       }
 
     } catch (error: any) {
       console.error("Error creating Google Drive backup:", error);
+      const errorMessage = error?.message || "Unknown backup error";
       res.status(500).json({ 
         success: false,
         message: "Failed to create backup", 
-        error: error.message 
+        error: errorMessage 
+      });
+    }
+  });
+
+  // Test Google Drive connection
+  app.get("/api/test-google-drive", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      console.log("🧪 Testing Google Drive connection...");
+      
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || !user.googleDriveTokens) {
+        return res.json({
+          success: false,
+          message: "Google Drive not connected",
+          connected: false
+        });
+      }
+
+      const googleDriveService = new GoogleDriveService();
+      const tokens = JSON.parse(user.googleDriveTokens);
+      await googleDriveService.setUserTokens(tokens);
+
+      if (!googleDriveService.isReady()) {
+        return res.json({
+          success: false,
+          message: "Google Drive authentication expired",
+          connected: false
+        });
+      }
+
+      // Try to create a test folder
+      const testFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro Test');
+      
+      return res.json({
+        success: true,
+        message: "Google Drive connection working",
+        connected: true,
+        testFolderId: testFolderId
+      });
+
+    } catch (error: any) {
+      console.error("Google Drive test error:", error);
+      return res.json({
+        success: false,
+        message: error?.message || "Google Drive test failed",
+        connected: false
       });
     }
   });
