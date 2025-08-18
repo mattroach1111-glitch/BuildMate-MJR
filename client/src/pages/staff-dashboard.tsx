@@ -5,8 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, Calendar, Settings, ArrowRight, Trophy, BookOpen } from "lucide-react";
 import { useLocation } from "wouter";
 import PageLayout from "@/components/page-layout";
-import { OnboardingTour, WelcomeAnimation } from "@/components/onboarding-tour";
-import { useOnboarding } from "@/hooks/useOnboarding";
+
 
 interface StaffDashboardProps {
   isAdminView?: boolean;
@@ -15,14 +14,6 @@ interface StaffDashboardProps {
 export default function StaffDashboard({ isAdminView = false }: StaffDashboardProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [location, navigate] = useLocation();
-  const { 
-    showWelcome, 
-    showTour, 
-    isOnboardingComplete,
-    startTour, 
-    completeTour, 
-    skipTour 
-  } = useOnboarding();
 
   const handleTimesheetClick = () => {
     window.location.href = '/timesheet';
@@ -62,15 +53,6 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
 
   return (
     <PageLayout>
-      {showWelcome && <WelcomeAnimation onComplete={() => {}} />}
-      {showTour && (
-        <OnboardingTour
-          isAdmin={false}
-          onComplete={completeTour}
-          onSkip={skipTour}
-        />
-      )}
-
       <div className="min-h-screen bg-gray-50 p-4">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
