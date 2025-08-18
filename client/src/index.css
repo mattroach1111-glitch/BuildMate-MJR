@@ -264,6 +264,19 @@ html.landscape-mode textarea {
   background-color: hsl(154.3, 59.3%, 30%);
 }
 
+/* Mobile-specific textarea and input improvements */
+.mobile-textarea,
+.mobile-input {
+  font-size: 16px !important; /* Prevents zoom on iOS */
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  transform: translateZ(0); /* Hardware acceleration */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
 /* Enhanced mobile experience improvements */
 @media (max-width: 768px) {
   /* Better input styling for mobile */
@@ -272,7 +285,9 @@ html.landscape-mode textarea {
   input[type="email"],
   input[type="tel"],
   select,
-  textarea {
+  textarea,
+  .mobile-textarea,
+  .mobile-input {
     font-size: 16px !important; /* Prevents zoom on iOS */
     padding: 14px 16px !important;
     border-radius: 8px !important;
@@ -281,6 +296,10 @@ html.landscape-mode textarea {
     background: white !important;
     -webkit-appearance: none !important;
     appearance: none !important;
+    transform: translateZ(0); /* Hardware acceleration */
+    -webkit-overflow-scrolling: touch;
+    -webkit-user-select: text;
+    user-select: text;
   }
   
   input[type="number"]:focus, 
@@ -288,11 +307,16 @@ html.landscape-mode textarea {
   input[type="email"]:focus,
   input[type="tel"]:focus,
   select:focus,
-  textarea:focus {
+  textarea:focus,
+  .mobile-textarea:focus,
+  .mobile-input:focus {
     border-color: hsl(var(--primary)) !important;
     outline: none !important;
     box-shadow: 0 0 0 3px hsla(var(--primary), 0.1) !important;
-    transform: translateY(-1px) !important;
+    transform: translateZ(0) !important; /* Keep hardware acceleration on focus */
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    scroll-behavior: smooth !important;
   }
   
   button {
@@ -308,6 +332,27 @@ html.landscape-mode textarea {
     transform: translateY(-1px) !important;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12) !important;
   }
+  
+  /* Prevent page scroll when virtual keyboard appears */
+  .job-update-form {
+    position: relative !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  
+  /* Ensure smooth scrolling and prevent viewport jumping */
+  html {
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  body {
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: smooth !important;
+    position: relative !important;
+  }
+}
   
   button:active {
     transform: scale(0.98) translateY(0) !important;
@@ -351,7 +396,6 @@ html.landscape-mode textarea {
     padding-right: 8px;
     -webkit-overflow-scrolling: touch;
   }
-}
 
 /* Enhanced mobile table styling */
 .mobile-table-card {

@@ -90,12 +90,13 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     retry: false,
   });
 
-  // Mutation for saving job update notes
+  // Mutation for saving job update notes with focus preservation
   const saveNoteMutation = useMutation({
     mutationFn: (data: { jobId: string; note: string }) =>
       apiRequest("POST", "/api/job-update-notes", data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/job-update-notes"] });
+      // Don't invalidate queries to prevent re-renders that cause focus loss
+      // queryClient.invalidateQueries({ queryKey: ["/api/job-update-notes"] });
     },
     onError: (error) => {
       console.log("Note auto-save failed:", error);
@@ -631,12 +632,33 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                             <FormControl>
                               <Textarea
                                 placeholder="Enter update notes for this job (optional)"
-                                className="min-h-[80px] text-sm"
+                                className="min-h-[80px] text-sm mobile-textarea focus:outline-none focus:ring-2 focus:ring-primary"
                                 {...formField}
                                 onChange={(e) => {
+                                  // Preserve cursor position and prevent scrolling
+                                  const target = e.target;
+                                  const selectionStart = target.selectionStart;
+                                  const selectionEnd = target.selectionEnd;
+                                  
                                   formField.onChange(e);
+                                  
                                   // Auto-save note with proper debouncing
                                   debouncedSave(job.id, e.target.value);
+                                  
+                                  // Restore cursor position after state update
+                                  requestAnimationFrame(() => {
+                                    if (document.activeElement === target) {
+                                      target.setSelectionRange(selectionStart, selectionEnd);
+                                    }
+                                  });
+                                }}
+                                onFocus={(e) => {
+                                  // Prevent page scroll when focusing
+                                  e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }}
+                                style={{
+                                  fontSize: '16px', // Prevents zoom on iOS
+                                  transform: 'translateZ(0)', // Hardware acceleration
                                 }}
                                 data-testid={`textarea-job-update-${job.id}`}
                               />
@@ -670,8 +692,16 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                   <FormControl>
                     <Textarea
                       placeholder="Add any additional notes or comments..."
-                      className="min-h-[100px]"
+                      className="min-h-[100px] mobile-textarea focus:outline-none focus:ring-2 focus:ring-primary"
                       {...field}
+                      onFocus={(e) => {
+                        // Prevent page scroll when focusing
+                        e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                      }}
+                      style={{
+                        fontSize: '16px', // Prevents zoom on iOS
+                        transform: 'translateZ(0)', // Hardware acceleration
+                      }}
                       data-testid="textarea-additional-notes"
                     />
                   </FormControl>
