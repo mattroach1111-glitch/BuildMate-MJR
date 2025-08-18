@@ -94,6 +94,29 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     },
   });
 
+  // localStorage fallback for non-admin users
+  const saveToLocalStorage = (jobId: string, note: string) => {
+    try {
+      const key = `job-update-note-${jobId}`;
+      if (note.trim()) {
+        localStorage.setItem(key, note.trim());
+      } else {
+        localStorage.removeItem(key);
+      }
+    } catch (error) {
+      console.log("Failed to save to localStorage:", error);
+    }
+  };
+
+  const getFromLocalStorage = (jobId: string): string => {
+    try {
+      return localStorage.getItem(`job-update-note-${jobId}`) || "";
+    } catch (error) {
+      console.log("Failed to get from localStorage:", error);
+      return "";
+    }
+  };
+
   // Debounced save function
   const debouncedSave = React.useCallback(
     React.useMemo(() => {
@@ -107,14 +130,20 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
         // Set new timeout
         const timeoutId = setTimeout(() => {
           if (note.trim()) {
-            saveNoteMutation.mutate({ jobId, note: note.trim() });
+            if (currentUser?.role === "admin") {
+              console.log("Auto-saving note to database for job:", jobId, "Note:", note.trim());
+              saveNoteMutation.mutate({ jobId, note: note.trim() });
+            } else {
+              console.log("Auto-saving note to localStorage for job:", jobId, "Note:", note.trim());
+              saveToLocalStorage(jobId, note);
+            }
           }
           timeouts.delete(jobId);
         }, 1500);
         
         timeouts.set(jobId, timeoutId);
       };
-    }, [saveNoteMutation])
+    }, [saveNoteMutation, currentUser?.role])
   );
 
   // Fetch jobs data
@@ -200,7 +229,8 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
   // Load saved job update notes
   const { data: savedNotes } = useQuery({
     queryKey: ["/api/job-update-notes"],
-    enabled: !!currentUser?.role && currentUser.role === "admin"
+    enabled: !!currentUser?.role && currentUser.role === "admin",
+    retry: false
   });
 
   // Use useFieldArray for proper dynamic field management
@@ -218,12 +248,13 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
       const updatedUpdates = jobs.map(job => {
         // Find existing update for this job to preserve user input
         const existingUpdate = currentValues.find(update => update.jobId === job.id);
-        // Or find saved note from database
+        // Or find saved note from database (admin) or localStorage (staff)
         const savedNote = savedNotes?.find((note: any) => note.jobId === job.id);
+        const localStorageNote = getFromLocalStorage(job.id);
         
         return {
           jobId: job.id,
-          update: existingUpdate?.update || savedNote?.note || ""
+          update: existingUpdate?.update || savedNote?.note || localStorageNote || ""
         };
       });
       
@@ -276,14 +307,26 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     // Save all job update notes before sending email
     const savePromises = data.updates
       .filter(update => update.update && update.update.trim())
-      .map(update => 
-        saveNoteMutation.mutateAsync({
-          jobId: update.jobId,
-          note: update.update!.trim()
-        }).catch(error => {
-          console.log(`Failed to save note for job ${update.jobId}:`, error);
-        })
-      );
+      .map(async (update) => {
+        const note = update.update!.trim();
+        console.log("Saving note before email for job:", update.jobId, "Note:", note);
+        
+        if (currentUser?.role === "admin") {
+          // Try to save to database for admin users
+          try {
+            await saveNoteMutation.mutateAsync({
+              jobId: update.jobId,
+              note: note
+            });
+          } catch (error) {
+            console.log(`Failed to save note to database for job ${update.jobId}, falling back to localStorage:`, error);
+            saveToLocalStorage(update.jobId, note);
+          }
+        } else {
+          // Save to localStorage for staff users
+          saveToLocalStorage(update.jobId, note);
+        }
+      });
 
     // Wait for all notes to save (or fail silently)
     await Promise.allSettled(savePromises);
