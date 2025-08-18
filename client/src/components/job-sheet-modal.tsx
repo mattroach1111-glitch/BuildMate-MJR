@@ -16,7 +16,7 @@ import { generateJobPDF } from "@/lib/pdfGenerator";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { OrientationToggle } from "@/components/orientation-toggle";
 import { debounce } from "lodash";
-import { Upload, Download, Trash2, FileText, Clock, X, Edit, Mail, Users, RefreshCw, MessageSquare, Plus } from "lucide-react";
+import { Upload, Download, Trash2, FileText, Clock, X, Edit, Mail, Users, RefreshCw, MessageSquare, Plus, Eye } from "lucide-react";
 import type { Job, LaborEntry, Material, SubTrade, OtherCost, TipFee, JobFile, JobNote } from "@shared/schema";
 
 interface JobSheetModalProps {
@@ -2813,16 +2813,27 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                               </div>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0">
+                              {/* Download/View button */}
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleDownloadFile(file)}
-                                data-testid={`button-download-file-${file.id}`}
+                                onClick={() => {
+                                  if (file.googleDriveLink) {
+                                    // Open Google Drive link
+                                    window.open(file.googleDriveLink, '_blank');
+                                  } else if (file.objectPath) {
+                                    // Download from Object Storage
+                                    window.open(`/api/job-files/${file.id}/download`, '_blank');
+                                  }
+                                }}
+                                className="text-xs"
+                                data-testid={`button-view-file-${file.id}`}
                               >
-                                <Download className="h-4 w-4" />
+                                <Eye className="h-3 w-3 mr-1" />
+                                {file.googleDriveLink ? 'Open' : 'Download'}
                               </Button>
                               <Button
-                                variant="outline"
+                                variant="outline" 
                                 size="sm"
                                 onClick={() => handleDeleteFile(file.id)}
                                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
@@ -2831,6 +2842,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
+
                             </div>
                           </div>
                         ))}
