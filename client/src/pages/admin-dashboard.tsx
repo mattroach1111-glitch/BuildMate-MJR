@@ -1415,7 +1415,13 @@ export default function AdminDashboard() {
 
   // Get unique project managers and clients from existing jobs
   const projectManagers = jobs ? Array.from(new Set(jobs.map(job => job.projectManager || job.projectName).filter(Boolean))) : [];
-  const clientNames = jobs ? Array.from(new Set(jobs.map(job => job.clientName).filter(Boolean))) : [];
+  const existingClientNames = jobs ? Array.from(new Set(jobs.map(job => job.clientName).filter(Boolean))) : [];
+  
+  // Include current form value in client names if it's not already in the list
+  const currentClientName = jobForm.watch('clientName');
+  const clientNames = currentClientName && currentClientName.trim() && !existingClientNames.includes(currentClientName) 
+    ? [...existingClientNames, currentClientName] 
+    : existingClientNames;
 
   const handleAddProjectManager = () => {
     if (newProjectManagerName.trim()) {
@@ -1673,7 +1679,7 @@ export default function AdminDashboard() {
                             {!isAddingNewClient ? (
                               <div className="flex gap-2">
                                 <FormControl className="flex-1">
-                                  <Select onValueChange={handleClientChange} value={field.value}>
+                                  <Select onValueChange={handleClientChange} value={field.value || ""}>
                                     <SelectTrigger data-testid="select-client-name">
                                       <SelectValue placeholder="Select or add client" />
                                     </SelectTrigger>
