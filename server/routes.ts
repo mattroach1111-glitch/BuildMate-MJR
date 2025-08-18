@@ -3729,19 +3729,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const tokens = JSON.parse(user.googleDriveTokens);
             googleDriveService.setUserTokens(tokens);
             
+            // Check if Google Drive is ready
+            if (!googleDriveService.isReady()) {
+              throw new Error('Google Drive authentication failed - tokens may have expired. Please reconnect your Google Drive account.');
+            }
+            
             // Create main BuildFlow Pro folder first
             const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
+            if (!mainFolderId) {
+              throw new Error('Failed to create or find BuildFlow Pro folder in Google Drive');
+            }
             
             // Create/find job folder
-            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId);
+            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job?.jobAddress}`, mainFolderId);
+            if (!jobFolderId) {
+              throw new Error(`Failed to create or find job folder "Job - ${job?.jobAddress}" in Google Drive`);
+            }
             
             // Upload file to Google Drive
             const uploadResult = await googleDriveService.uploadFile(
               fileName, 
               fileBuffer, 
               document.mimeType || mimeType, 
-              jobFolderId || undefined
+              jobFolderId
             );
+            
+            if (!uploadResult) {
+              throw new Error('Failed to upload file to Google Drive - upload returned null');
+            }
             
             if (uploadResult && fileRecord) {
               // Update the file record with Google Drive info
@@ -3753,7 +3768,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.log(`☁️ File uploaded to Google Drive: ${uploadResult.webViewLink}`);
             }
           } catch (driveError) {
-            console.log(`⚠️ Google Drive upload failed: ${driveError.message}`);
+            console.error(`⚠️ Google Drive upload failed for user ${userId}:`, driveError.message);
+            console.error('Google Drive error details:', {
+              hasTokens: !!user.googleDriveTokens,
+              fileName: fileName,
+              jobAddress: job?.jobAddress,
+              errorMessage: driveError.message
+            });
           }
         } else {
           console.log(`ℹ️ Google Drive not connected for user ${userId}`);
