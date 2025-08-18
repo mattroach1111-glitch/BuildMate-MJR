@@ -110,7 +110,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
   // Debounced save function
   const debouncedSave = React.useCallback(
     React.useMemo(() => {
-      const timeouts = new Map();
+      const timeouts = new Map<string, NodeJS.Timeout>();
       return (jobId: string, note: string) => {
         // Clear existing timeout for this job
         if (timeouts.has(jobId)) {
@@ -236,7 +236,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
         // Find existing update for this job to preserve user input
         const existingUpdate = currentValues.find(update => update.jobId === job.id);
         // Find saved note from database
-        const savedNote = savedNotes?.find((note: any) => note.jobId === job.id);
+        const savedNote = Array.isArray(savedNotes) ? savedNotes.find((note: any) => note.jobId === job.id) : undefined;
         
         return {
           jobId: job.id,
