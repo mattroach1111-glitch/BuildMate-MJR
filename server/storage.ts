@@ -195,7 +195,7 @@ export interface IStorage {
   getStaffMembersWithNotes(): Promise<(StaffMember & { notes: StaffNoteEntry[] })[]>;
 
   // Job Notes operations
-  getJobNotes(jobId: string): Promise<(JobNote & { user: User })[]>;
+  getJobNotes(jobId: string): Promise<(JobNote & { user: User & { employee?: Employee } })[]>;
   createJobNote(note: InsertJobNote): Promise<JobNote>;
   updateJobNote(id: string, note: Partial<InsertJobNote>): Promise<JobNote>;
   deleteJobNote(id: string): Promise<void>;
@@ -1878,7 +1878,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Job Notes operations
-  async getJobNotes(jobId: string): Promise<(JobNote & { user: User })[]> {
+  async getJobNotes(jobId: string): Promise<(JobNote & { user: User & { employee?: Employee } })[]> {
     const result = await db
       .select({
         id: jobNotes.id,
@@ -1901,13 +1901,34 @@ export class DatabaseStorage implements IStorage {
           createdAt: users.createdAt,
           updatedAt: users.updatedAt,
         },
+        employee: {
+          id: employees.id,
+          name: employees.name,
+          position: employees.position,
+          hourlyRate: employees.hourlyRate,
+          createdAt: employees.createdAt,
+          updatedAt: employees.updatedAt,
+        },
       })
       .from(jobNotes)
       .innerJoin(users, eq(jobNotes.userId, users.id))
+      .leftJoin(employees, eq(users.employeeId, employees.id))
       .where(eq(jobNotes.jobId, jobId))
       .orderBy(desc(jobNotes.createdAt));
 
-    return result;
+    // Transform the result to include employee data in user object
+    return result.map(row => ({
+      id: row.id,
+      jobId: row.jobId,
+      userId: row.userId,
+      noteText: row.noteText,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      user: {
+        ...row.user,
+        employee: row.employee,
+      },
+    }));
   }
 
   async createJobNote(note: InsertJobNote): Promise<JobNote> {

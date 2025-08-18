@@ -2950,9 +2950,11 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                               <div className="flex justify-between items-start mb-2">
                                 <div className="text-sm text-gray-600">
                                   <span className="font-medium">
-                                    {note.user?.firstName && note.user?.lastName 
-                                      ? `${note.user.firstName} ${note.user.lastName}`
-                                      : note.user?.email || 'Unknown User'
+                                    {note.user?.employee?.name ||
+                                     (note.user?.firstName && note.user?.lastName 
+                                       ? `${note.user.firstName} ${note.user.lastName}`
+                                       : note.user?.email?.split('@')[0] || 'Unknown User'
+                                     )
                                     }
                                   </span>
                                   <span className="mx-2">•</span>
