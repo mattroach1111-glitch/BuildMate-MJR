@@ -44,23 +44,32 @@ const EMAIL_SUGGESTIONS_KEY = 'buildflow-email-suggestions';
 // Helper functions for email suggestions
 const getSavedEmailSuggestions = (): string[] => {
   try {
+    console.log("📱 Getting saved email suggestions...");
     const saved = localStorage.getItem(EMAIL_SUGGESTIONS_KEY);
-    return saved ? JSON.parse(saved) : [];
-  } catch {
+    const result = saved ? JSON.parse(saved) : [];
+    console.log("📱 Retrieved email suggestions:", result);
+    return result;
+  } catch (error) {
+    console.log("📱 Error getting email suggestions:", error);
     return [];
   }
 };
 
 const saveEmailSuggestions = (emails: string[]) => {
   try {
+    console.log("📱 Saving email suggestions:", emails);
     localStorage.setItem(EMAIL_SUGGESTIONS_KEY, JSON.stringify(emails));
-  } catch {
-    // Ignore localStorage errors
+    console.log("📱 Email suggestions saved successfully");
+  } catch (error) {
+    console.log("📱 Error saving email suggestions:", error);
   }
 };
 
 const addEmailsToSuggestions = (newEmails: string[]) => {
+  console.log("📱 Adding emails to suggestions:", newEmails);
   const existing = getSavedEmailSuggestions();
+  console.log("📱 Existing suggestions:", existing);
+  
   // Filter out invalid emails and duplicates
   const validNewEmails = newEmails.filter(email => 
     email && 
@@ -69,9 +78,12 @@ const addEmailsToSuggestions = (newEmails: string[]) => {
     !existing.includes(email)
   );
   
+  console.log("📱 Valid new emails:", validNewEmails);
+  
   if (validNewEmails.length > 0) {
     // Add new emails to the beginning (most recent first)
     const updated = [...validNewEmails, ...existing].slice(0, 20);
+    console.log("📱 Updated email list:", updated);
     saveEmailSuggestions(updated);
     console.log("💾 Updated email suggestions:", updated);
   }
@@ -355,8 +367,9 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <div className="mobile-form-container">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Email Configuration */}
         <Card>
           <CardHeader>
@@ -710,8 +723,9 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
             )}
           </Button>
         </div>
-      </form>
-    </Form>
+        </form>
+      </Form>
+    </div>
   );
 }
 

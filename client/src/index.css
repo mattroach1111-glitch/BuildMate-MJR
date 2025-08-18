@@ -76,11 +76,24 @@
     .mobile-textarea, .mobile-input {
       transform: translateZ(0);
       -webkit-transform: translateZ(0);
+      font-size: 16px !important;
+      min-height: 80px;
+      resize: none;
     }
     
     /* Prevent zoom on iOS when focusing inputs */
     input, textarea, select {
       font-size: 16px !important;
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    
+    /* Enhanced mobile viewport stability */
+    .mobile-form-container {
+      position: relative;
+      min-height: 100vh;
       transform: translateZ(0);
       -webkit-transform: translateZ(0);
     }
@@ -92,6 +105,20 @@
       -webkit-transform: translateZ(0);
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
+    }
+    
+    /* Additional mobile fixes */
+    body {
+      position: fixed;
+      overflow-x: hidden;
+      width: 100%;
+    }
+    
+    /* Prevent elastic scrolling on iOS */
+    #root {
+      touch-action: pan-x pan-y;
+      height: 100vh;
+      overflow: auto;
     }
   }
 
