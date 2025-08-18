@@ -735,7 +735,7 @@ export interface JobUpdateDialogProps {
 }
 
 function JobUpdateDialog({ projectManager }: JobUpdateDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = React.useState(false);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
