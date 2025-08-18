@@ -879,21 +879,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("💾 Saving job update note:", { jobId, note: note.substring(0, 50) + "..." });
 
-      // Insert or update job update note
-      const result = await db.insert(jobUpdateNotes)
-        .values({
-          jobId,
-          note,
-          updatedAt: new Date()
-        })
-        .onConflictDoUpdate({
-          target: jobUpdateNotes.jobId,
-          set: {
+      // Check if note already exists for this job
+      const existingNote = await db.select().from(jobUpdateNotes).where(eq(jobUpdateNotes.jobId, jobId)).limit(1);
+      
+      let result;
+      if (existingNote.length > 0) {
+        // Update existing note
+        result = await db.update(jobUpdateNotes)
+          .set({
             note,
             updatedAt: new Date()
-          }
-        })
-        .returning();
+          })
+          .where(eq(jobUpdateNotes.jobId, jobId))
+          .returning();
+      } else {
+        // Insert new note
+        result = await db.insert(jobUpdateNotes)
+          .values({
+            jobId,
+            note,
+            updatedAt: new Date()
+          })
+          .returning();
+      }
 
       console.log("✅ Job update note saved successfully");
       res.json(result[0]);

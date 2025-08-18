@@ -1,0 +1,59 @@
+✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-BJ1Y1hBA.js:767 Auto-saving note to database for job: 3d7c3a7e-5116-422e-9319-28c3281636fc Note: t User role: admin
+index-BJ1Y1hBA.js:48   POST https://build-mate-mattroach1111.replit.app/api/job-update-notes 500 (Internal Server Error)
+Jt @ index-BJ1Y1hBA.js:48
+mutationFn @ index-BJ1Y1hBA.js:767
+fn @ index-BJ1Y1hBA.js:48
+j @ index-BJ1Y1hBA.js:48
+start @ index-BJ1Y1hBA.js:48
+execute @ index-BJ1Y1hBA.js:48
+await in execute
+mutate @ index-BJ1Y1hBA.js:48
+(anonymous) @ index-BJ1Y1hBA.js:48
+(anonymous) @ index-BJ1Y1hBA.js:767
+setTimeout
+(anonymous) @ index-BJ1Y1hBA.js:767
+onChange @ index-BJ1Y1hBA.js:767
+bQ @ index-BJ1Y1hBA.js:37
+NQ @ index-BJ1Y1hBA.js:37
+jQ @ index-BJ1Y1hBA.js:37
+X3 @ index-BJ1Y1hBA.js:37
+TI @ index-BJ1Y1hBA.js:37
+(anonymous) @ index-BJ1Y1hBA.js:37
+i_ @ index-BJ1Y1hBA.js:40
+tI @ index-BJ1Y1hBA.js:37
+j5 @ index-BJ1Y1hBA.js:37
+M4 @ index-BJ1Y1hBA.js:37
+$Q @ index-BJ1Y1hBA.js:37
+index-BJ1Y1hBA.js:767 Note auto-save failed: Error: 500: {"message":"Failed to save job update note"}
+    at l8 (index-BJ1Y1hBA.js:48:43006)
+    at async Jt (index-BJ1Y1hBA.js:48:43214)
+index-BJ1Y1hBA.js:767 Auto-saving note to database for job: 3d7c3a7e-5116-422e-9319-28c3281636fc Note: testing User role: admin
+index-BJ1Y1hBA.js:48   POST https://build-mate-mattroach1111.replit.app/api/job-update-notes 500 (Internal Server Error)
+Jt @ index-BJ1Y1hBA.js:48
+mutationFn @ index-BJ1Y1hBA.js:767
+fn @ index-BJ1Y1hBA.js:48
+j @ index-BJ1Y1hBA.js:48
+start @ index-BJ1Y1hBA.js:48
+execute @ index-BJ1Y1hBA.js:48
+await in execute
+mutate @ index-BJ1Y1hBA.js:48
+(anonymous) @ index-BJ1Y1hBA.js:48
+(anonymous) @ index-BJ1Y1hBA.js:767
+setTimeout
+(anonymous) @ index-BJ1Y1hBA.js:767
+onChange @ index-BJ1Y1hBA.js:767
+bQ @ index-BJ1Y1hBA.js:37
+NQ @ index-BJ1Y1hBA.js:37
+jQ @ index-BJ1Y1hBA.js:37
+X3 @ index-BJ1Y1hBA.js:37
+TI @ index-BJ1Y1hBA.js:37
+(anonymous) @ index-BJ1Y1hBA.js:37
+i_ @ index-BJ1Y1hBA.js:40
+tI @ index-BJ1Y1hBA.js:37
+j5 @ index-BJ1Y1hBA.js:37
+M4 @ index-BJ1Y1hBA.js:37
+$Q @ index-BJ1Y1hBA.js:37
+index-BJ1Y1hBA.js:767 Note auto-save failed: Error: 500: {"message":"Failed to save job update note"}
+    at l8 (index-BJ1Y1hBA.js:48:43006)
+    at async Jt (index-BJ1Y1hBA.js:48:43214)
