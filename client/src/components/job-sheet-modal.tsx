@@ -3215,15 +3215,15 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
       {/* Password Protected Job Deletion Dialog */}
       <Dialog open={deleteJobDialogOpen} onOpenChange={setDeleteJobDialogOpen}>
-        <DialogContent className="max-w-md mx-4 sm:max-w-lg" aria-describedby="delete-job-description">
+        <DialogContent className="max-w-md mx-4 sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-red-600 flex items-center gap-2">
               <Trash2 className="h-5 w-5" />
               ⚠️ Delete Job Sheet
             </DialogTitle>
-            <p id="delete-job-description" className="text-sm text-muted-foreground">
+            <DialogDescription className="text-sm text-muted-foreground">
               This will move the job to the deleted folder. Please save the PDF before deletion.
-            </p>
+            </DialogDescription>
           </DialogHeader>
           
           {jobDetails && (
