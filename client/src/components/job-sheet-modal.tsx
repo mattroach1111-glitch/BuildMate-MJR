@@ -125,7 +125,13 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
   // Get unique project managers and clients from existing jobs
   const projectManagers = allJobs ? Array.from(new Set(allJobs.map(job => job.projectManager || job.projectName).filter(Boolean))) : [];
-  const clientNames = allJobs ? Array.from(new Set(allJobs.map(job => job.clientName).filter(Boolean))) : [];
+  const existingClientNames = allJobs ? Array.from(new Set(allJobs.map(job => job.clientName).filter(Boolean))) : [];
+  
+  // Include current edit form value in client names if it's not already in the list
+  const currentEditClientName = editForm.clientName;
+  const clientNames = currentEditClientName && currentEditClientName.trim() && !existingClientNames.includes(currentEditClientName) 
+    ? [...existingClientNames, currentEditClientName] 
+    : existingClientNames;
 
   // Get all employees for management
   const { data: allEmployees = [] } = useQuery<any[]>({
@@ -1625,7 +1631,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       <Label className="text-sm font-medium">Client Name</Label>
                       <div className="mt-1 space-y-2">
                         {!isAddingNewClient ? (
-                          <Select onValueChange={handleClientChange} value={editForm.clientName}>
+                          <Select onValueChange={handleClientChange} value={editForm.clientName || ""}>
                             <SelectTrigger data-testid="select-edit-client">
                               <SelectValue placeholder="Select or add client" />
                             </SelectTrigger>
@@ -1688,7 +1694,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       <Label className="text-sm font-medium">Project Manager</Label>
                       <div className="mt-1 space-y-2">
                         {!isAddingNewProjectManager ? (
-                          <Select onValueChange={handleProjectManagerChange} value={editForm.projectManager}>
+                          <Select onValueChange={handleProjectManagerChange} value={editForm.projectManager || ""}>
                             <SelectTrigger data-testid="select-edit-manager">
                               <SelectValue placeholder="Select or add project manager" />
                             </SelectTrigger>
