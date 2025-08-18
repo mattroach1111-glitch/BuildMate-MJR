@@ -626,39 +626,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
                 </Button>
               </div>
 
-              {/* Google Drive Upload Option */}
-              {lastUploadedFile && selectedJobId && (
-                <div className="pt-3 border-t border-orange-200">
-                  <div className="flex items-center justify-between text-sm text-orange-800 mb-2">
-                    <span>💡 Optional: Save to Google Drive</span>
-                  </div>
-                  <Button
-                    onClick={() => uploadToGoogleDriveMutation.mutate({ 
-                      jobId: selectedJobId, 
-                      fileInfo: lastUploadedFile 
-                    })}
-                    disabled={uploadToGoogleDriveMutation.isPending}
-                    variant="outline" 
-                    size="sm"
-                    className="w-full border-blue-300 text-blue-700 hover:bg-blue-50"
-                    data-testid="button-upload-to-drive"
-                  >
-                    {uploadToGoogleDriveMutation.isPending ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Uploading to Drive...
-                      </>
-                    ) : (
-                      <>
-                        🔗 Upload to Google Drive
-                      </>
-                    )}
-                  </Button>
-                  <p className="text-xs text-gray-600 mt-1">
-                    Creates clickable links in job sheet PDFs
-                  </p>
-                </div>
-              )}
+              {/* Note: Google Drive uploads now happen automatically when saving to job files */}
             </CardContent>
           </Card>
         )}
