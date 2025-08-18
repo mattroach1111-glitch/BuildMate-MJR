@@ -1829,7 +1829,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             try {
               const googleDriveService = new GoogleDriveService();
               const tokens = JSON.parse(user.googleDriveTokens);
-              googleDriveService.setUserTokens(tokens);
+              await googleDriveService.setUserTokens(tokens);
               
               const fileName = `timesheet-${userEmployee.name}-${fortnightStart}-${fortnightEnd}.pdf`;
               
@@ -2516,7 +2516,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const user = await storage.getUser(userId);
           if (user?.googleDriveTokens) {
             const googleDriveService = new GoogleDriveService();
-            googleDriveService.setUserTokens(JSON.parse(user.googleDriveTokens));
+            await googleDriveService.setUserTokens(JSON.parse(user.googleDriveTokens));
 
             // Download file from object storage
             const objectFile = await objectStorageService.getObjectEntityFile(normalizedPath);
@@ -2826,7 +2826,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`☁️ Backing up to Google Drive: ${actualFileName}`);
           const googleDriveService = new GoogleDriveService();
           const tokens = JSON.parse(user.googleDriveTokens);
-          googleDriveService.setUserTokens(tokens);
+          await googleDriveService.setUserTokens(tokens);
 
           const uploadResult = await googleDriveService.uploadJobAttachment(
             actualFileName, 
@@ -2924,7 +2924,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Upload to Google Drive
       const googleDriveService = new GoogleDriveService();
       const tokens = JSON.parse(user.googleDriveTokens);
-      googleDriveService.setUserTokens(tokens);
+      await googleDriveService.setUserTokens(tokens);
 
       console.log(`🔗 Google Drive service setup complete, uploading file...`);
 
@@ -3015,7 +3015,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Upload to Google Drive
       const googleDriveService = new GoogleDriveService();
       const tokens = JSON.parse(user.googleDriveTokens);
-      googleDriveService.setUserTokens(tokens);
+      await googleDriveService.setUserTokens(tokens);
 
       // Create main BuildFlow Pro folder first
       const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
@@ -3345,7 +3345,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             const googleDriveService = new GoogleDriveService();
             const tokens = JSON.parse(currentUser.googleDriveTokens);
-            googleDriveService.setUserTokens(tokens);
+            await googleDriveService.setUserTokens(tokens);
 
             // Create main BuildFlow Pro folder first
             const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
@@ -3399,7 +3399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             const googleDriveService = new GoogleDriveService();
             const tokens = JSON.parse(currentUser.googleDriveTokens);
-            googleDriveService.setUserTokens(tokens);
+            await googleDriveService.setUserTokens(tokens);
 
             // Create main BuildFlow Pro folder first
             const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
@@ -3623,7 +3623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(req.user.claims.sub);
         if (user?.googleDriveTokens) {
           const googleDriveService = new GoogleDriveService();
-          googleDriveService.setUserTokens(JSON.parse(user.googleDriveTokens));
+          await googleDriveService.setUserTokens(JSON.parse(user.googleDriveTokens));
 
           // Upload PDF to Google Drive job folder
           const pdfFileName = `JobSheet_${jobDetails.jobAddress.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
@@ -3953,7 +3953,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             const googleDriveService = new GoogleDriveService();
             const tokens = JSON.parse(user.googleDriveTokens);
-            googleDriveService.setUserTokens(tokens);
+            await googleDriveService.setUserTokens(tokens);
             
             // Create main BuildFlow Pro folder first
             const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
@@ -4712,12 +4712,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("✅ User has Google Drive tokens, setting up service...");
 
         // Use the GoogleDriveService
-        const GoogleDriveService = (await import('./googleDriveService')).GoogleDriveService;
         const googleDriveService = new GoogleDriveService();
         
         // Set user tokens
         const tokens = JSON.parse(user.googleDriveTokens);
-        googleDriveService.setUserTokens(tokens);
+        await googleDriveService.setUserTokens(tokens);
 
         // Check if service is ready
         if (!googleDriveService.isReady()) {

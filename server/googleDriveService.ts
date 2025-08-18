@@ -11,9 +11,29 @@ export class GoogleDriveService {
   }
 
   // Set user tokens for authenticated requests
-  setUserTokens(tokens: any) {
-    this.googleAuth.setTokens(tokens);
-    this.drive = this.googleAuth.getDriveClient();
+  async setUserTokens(tokens: any) {
+    try {
+      this.googleAuth.setTokens(tokens);
+      this.drive = this.googleAuth.getDriveClient();
+      
+      // Check if tokens are expired and refresh if needed
+      const credentials = this.googleAuth.isAuthenticated();
+      if (!credentials && tokens.refresh_token) {
+        console.log('🔄 Access token expired, attempting refresh...');
+        try {
+          const refreshedTokens = await this.googleAuth.refreshTokens();
+          console.log('✅ Tokens refreshed successfully');
+          return refreshedTokens;
+        } catch (refreshError) {
+          console.error('❌ Failed to refresh tokens:', refreshError);
+          throw new Error('Google Drive authentication expired. Please reconnect your Google Drive account.');
+        }
+      }
+      return tokens;
+    } catch (error) {
+      console.error('❌ Error setting Google Drive tokens:', error);
+      throw error;
+    }
   }
 
   // Check if service is ready to use
@@ -45,6 +65,11 @@ export class GoogleDriveService {
     try {
       console.log(`📤 Uploading file to Google Drive: ${fileName} (${mimeType})`);
       
+      // Verify authentication before upload
+      if (!this.isReady()) {
+        throw new Error('Google Drive not authenticated. Please reconnect your Google Drive account.');
+      }
+      
       // Create a readable stream from the buffer
       const stream = new Readable();
       stream.push(fileBuffer);
@@ -60,6 +85,7 @@ export class GoogleDriveService {
         body: stream,
       };
 
+      console.log(`📁 Uploading to folder: ${folderId || 'root'}`);
       const response = await this.drive.files.create({
         resource: fileMetadata,
         media: media,
@@ -70,7 +96,13 @@ export class GoogleDriveService {
       console.log(`✅ File uploaded to Google Drive: ${response.data.name} (ID: ${fileId})`);
       
       // Make the file publicly readable so others can view the job sheet PDFs and attachments
-      await this.makeFilePublic(fileId);
+      try {
+        await this.makeFilePublic(fileId);
+        console.log(`✅ File ${fileName} made publicly accessible`);
+      } catch (permError) {
+        console.warn(`⚠️ Could not make file ${fileName} public (but upload successful):`, permError);
+        // Don't fail the whole operation if we can't make it public
+      }
       
       return {
         webViewLink: response.data.webViewLink,
@@ -87,6 +119,11 @@ export class GoogleDriveService {
       // Check if it's a permission error
       if (error.code === 403 || error.status === 403) {
         throw new Error('Google Drive permission denied. Please check your Google Drive connection.');
+      }
+      
+      // Check for quota errors
+      if (error.code === 429 || error.status === 429) {
+        throw new Error('Google Drive upload quota exceeded. Please try again later.');
       }
       
       throw new Error(`Google Drive upload failed: ${error.message}`);
@@ -136,11 +173,28 @@ export class GoogleDriveService {
       console.log(`Folder created: ${response.data.name} (ID: ${folderId})`);
       
       // Make the folder publicly readable so others can access job documents
-      await this.makeFilePublic(folderId);
+      try {
+        await this.makeFilePublic(folderId);
+        console.log(`✅ Folder ${folderName} made publicly accessible`);
+      } catch (permError) {
+        console.warn(`⚠️ Could not make folder ${folderName} public (but folder created successfully):`, permError);
+        // Don't fail the whole operation if we can't make it public
+      }
       
       return folderId;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating folder in Google Drive:', error);
+      
+      // Check if it's an authentication error
+      if (error.code === 401 || error.status === 401) {
+        throw new Error('Google Drive authentication expired. Please reconnect your Google Drive account.');
+      }
+      
+      // Check if it's a permission error
+      if (error.code === 403 || error.status === 403) {
+        throw new Error('Google Drive permission denied. Please check your Google Drive connection.');
+      }
+      
       return null;
     }
   }
@@ -154,10 +208,11 @@ export class GoogleDriveService {
     try {
       console.log(`🗂️ Finding or creating folder: ${folderName} ${parentFolderId ? `in parent ${parentFolderId}` : ''}`);
       
-      // Search for existing folder
+      // Search for existing folder - escape single quotes in folder names
+      const escapedFolderName = folderName.replace(/'/g, "\\'");
       const query = parentFolderId 
-        ? `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and '${parentFolderId}' in parents and trashed=false`
-        : `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+        ? `name='${escapedFolderName}' and mimeType='application/vnd.google-apps.folder' and '${parentFolderId}' in parents and trashed=false`
+        : `name='${escapedFolderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
 
       const response = await this.drive.files.list({
         q: query,
@@ -165,13 +220,33 @@ export class GoogleDriveService {
       });
 
       if (response.data.files && response.data.files.length > 0) {
-        return response.data.files[0].id;
+        const foundFolder = response.data.files[0];
+        console.log(`✅ Found existing folder: ${foundFolder.name} (ID: ${foundFolder.id})`);
+        return foundFolder.id;
       }
 
       // Folder doesn't exist, create it
-      return await this.createFolder(folderName, parentFolderId);
-    } catch (error) {
+      console.log(`📁 Creating new folder: ${folderName}`);
+      const newFolderId = await this.createFolder(folderName, parentFolderId);
+      if (newFolderId) {
+        console.log(`✅ Created folder: ${folderName} (ID: ${newFolderId})`);
+      } else {
+        console.error(`❌ Failed to create folder: ${folderName}`);
+      }
+      return newFolderId;
+    } catch (error: any) {
       console.error('Error finding/creating folder:', error);
+      
+      // Check if it's an authentication error
+      if (error.code === 401 || error.status === 401) {
+        throw new Error('Google Drive authentication expired. Please reconnect your Google Drive account.');
+      }
+      
+      // Check if it's a permission error
+      if (error.code === 403 || error.status === 403) {
+        throw new Error('Google Drive permission denied. Please check your Google Drive connection.');
+      }
+      
       return null;
     }
   }
