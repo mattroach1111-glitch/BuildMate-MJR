@@ -1904,10 +1904,8 @@ export class DatabaseStorage implements IStorage {
         employee: {
           id: employees.id,
           name: employees.name,
-          position: employees.position,
-          hourlyRate: employees.hourlyRate,
+          defaultHourlyRate: employees.defaultHourlyRate,
           createdAt: employees.createdAt,
-          updatedAt: employees.updatedAt,
         },
       })
       .from(jobNotes)
