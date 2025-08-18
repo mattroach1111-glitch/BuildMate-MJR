@@ -10,6 +10,26 @@ app.use(express.urlencoded({ extended: false }));
 import { setupEmailWebhook } from "./emailWebhook";
 setupEmailWebhook(app);
 
+// Initialize backup service
+(async () => {
+  try {
+    const { backupService } = await import("./backupService");
+    await backupService.scheduleAutomaticBackups();
+    
+    // Create initial backup on startup
+    setTimeout(async () => {
+      try {
+        await backupService.createFullBackup();
+        console.log("✅ Initial startup backup completed");
+      } catch (error) {
+        console.error("❌ Initial startup backup failed:", error);
+      }
+    }, 10000); // Wait 10 seconds after startup
+  } catch (error) {
+    console.error("❌ Failed to initialize backup service:", error);
+  }
+})();
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;

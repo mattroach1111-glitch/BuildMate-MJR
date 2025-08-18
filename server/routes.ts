@@ -1992,6 +1992,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Email drafts endpoints
+  // Backup routes
+  app.post("/api/backup/create", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || user.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { backupService } = await import("./backupService");
+      const backupData = await backupService.createFullBackup();
+      
+      res.json({
+        message: "Backup created successfully",
+        backup: {
+          timestamp: backupData.timestamp,
+          totalRecords: backupData.metadata.totalRecords,
+          size: backupData.metadata.backupSize
+        }
+      });
+    } catch (error) {
+      console.error("Error creating backup:", error);
+      res.status(500).json({ message: "Failed to create backup" });
+    }
+  });
+
+  app.post("/api/backup/google-drive", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || user.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      if (!user.googleDriveTokens) {
+        return res.status(400).json({ message: "Google Drive not connected. Please connect your Google Drive first." });
+      }
+
+      const { createGoogleDriveBackupService } = await import("./googleDriveBackup");
+      const driveBackupService = await createGoogleDriveBackupService(user.googleDriveTokens);
+      
+      if (!driveBackupService) {
+        return res.status(500).json({ message: "Failed to initialize Google Drive backup service" });
+      }
+
+      const { fileId, backupData } = await driveBackupService.createAndUploadBackup();
+      
+      res.json({
+        message: "Backup uploaded to Google Drive successfully",
+        fileId,
+        backup: {
+          timestamp: backupData.timestamp,
+          totalRecords: backupData.metadata.totalRecords,
+          size: backupData.metadata.backupSize
+        }
+      });
+    } catch (error) {
+      console.error("Error uploading backup to Google Drive:", error);
+      res.status(500).json({ message: "Failed to upload backup to Google Drive" });
+    }
+  });
+
+  app.get("/api/backup/status", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || user.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { backupService } = await import("./backupService");
+      const status = await backupService.getBackupStatus();
+      
+      res.json(status);
+    } catch (error) {
+      console.error("Error getting backup status:", error);
+      res.status(500).json({ message: "Failed to get backup status" });
+    }
+  });
+
+  app.get("/api/backup/google-drive/list", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || user.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      if (!user.googleDriveTokens) {
+        return res.status(400).json({ message: "Google Drive not connected" });
+      }
+
+      const { createGoogleDriveBackupService } = await import("./googleDriveBackup");
+      const driveBackupService = await createGoogleDriveBackupService(user.googleDriveTokens);
+      
+      if (!driveBackupService) {
+        return res.status(500).json({ message: "Failed to initialize Google Drive backup service" });
+      }
+
+      const backups = await driveBackupService.listBackups();
+      
+      res.json(backups);
+    } catch (error) {
+      console.error("Error listing Google Drive backups:", error);
+      res.status(500).json({ message: "Failed to list Google Drive backups" });
+    }
+  });
+
+  app.post("/api/backup/export-sql", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || user.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { backupService } = await import("./backupService");
+      const sqlFilePath = await backupService.exportToSQL();
+      
+      res.download(sqlFilePath, "buildflow_export.sql");
+    } catch (error) {
+      console.error("Error exporting to SQL:", error);
+      res.status(500).json({ message: "Failed to export database to SQL" });
+    }
+  });
+
+  // Email drafts routes
   app.post("/api/email-drafts", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
