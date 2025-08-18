@@ -1990,6 +1990,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Job Update Notes endpoints
+  app.get("/api/job-update-notes", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const notes = await storage.getJobUpdateNotes();
+      res.json(notes);
+    } catch (error) {
+      console.error("Error fetching job update notes:", error);
+      res.status(500).json({ message: "Failed to fetch job update notes" });
+    }
+  });
+
+  app.post("/api/job-update-notes", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { jobId, note } = req.body;
+      const savedNote = await storage.saveJobUpdateNote({ jobId, note });
+      res.json(savedNote);
+    } catch (error) {
+      console.error("Error saving job update note:", error);
+      res.status(500).json({ message: "Failed to save job update note" });
+    }
+  });
+
+  app.delete("/api/job-update-notes/:jobId", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { jobId } = req.params;
+      await storage.deleteJobUpdateNote(jobId);
+      res.json({ message: "Job update note deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting job update note:", error);
+      res.status(500).json({ message: "Failed to delete job update note" });
+    }
+  });
+
   // Admin endpoint to delete pending staff user
   // Timesheet search endpoint for admins
   app.get("/api/timesheet-search", isAuthenticated, isAdmin, async (req: any, res) => {

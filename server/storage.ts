@@ -47,6 +47,9 @@ import {
   type InsertStaffMember,
   type StaffNoteEntry,
   type InsertStaffNoteEntry,
+  jobUpdateNotes,
+  type JobUpdateNote,
+  type InsertJobUpdateNote,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sum, ne, gte, lte, lt, sql, isNull, or, ilike, inArray } from "drizzle-orm";
@@ -199,6 +202,11 @@ export interface IStorage {
   createJobNote(note: InsertJobNote): Promise<JobNote>;
   updateJobNote(id: string, note: Partial<InsertJobNote>): Promise<JobNote>;
   deleteJobNote(id: string): Promise<void>;
+
+  // Job Update Notes operations
+  getJobUpdateNotes(): Promise<JobUpdateNote[]>;
+  saveJobUpdateNote(note: InsertJobUpdateNote): Promise<JobUpdateNote>;
+  deleteJobUpdateNote(jobId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1948,6 +1956,38 @@ export class DatabaseStorage implements IStorage {
 
   async deleteJobNote(id: string): Promise<void> {
     await db.delete(jobNotes).where(eq(jobNotes.id, id));
+  }
+
+  // Job Update Notes operations
+  async getJobUpdateNotes(): Promise<JobUpdateNote[]> {
+    return await db.select().from(jobUpdateNotes).orderBy(desc(jobUpdateNotes.updatedAt));
+  }
+
+  async saveJobUpdateNote(note: InsertJobUpdateNote): Promise<JobUpdateNote> {
+    // First try to update existing note
+    const existing = await db.select().from(jobUpdateNotes).where(eq(jobUpdateNotes.jobId, note.jobId));
+    
+    if (existing.length > 0) {
+      const [updated] = await db
+        .update(jobUpdateNotes)
+        .set({ 
+          note: note.note,
+          updatedAt: new Date()
+        })
+        .where(eq(jobUpdateNotes.jobId, note.jobId))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(jobUpdateNotes)
+        .values(note)
+        .returning();
+      return created;
+    }
+  }
+
+  async deleteJobUpdateNote(jobId: string): Promise<void> {
+    await db.delete(jobUpdateNotes).where(eq(jobUpdateNotes.jobId, jobId));
   }
 }
 

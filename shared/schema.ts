@@ -588,6 +588,15 @@ export const rewardSettings = pgTable("reward_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Job update notes for persistent storage
+export const jobUpdateNotes = pgTable("job_update_notes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobId: varchar("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
+  note: text("note").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // =============================================================================
 // REWARDS SYSTEM RELATIONS
 // =============================================================================
@@ -667,6 +676,12 @@ export const insertRewardSettingsSchema = createInsertSchema(rewardSettings).omi
   updatedAt: true,
 });
 
+export const insertJobUpdateNoteSchema = createInsertSchema(jobUpdateNotes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // =============================================================================
 // REWARDS SYSTEM TYPES
 // =============================================================================
@@ -683,3 +698,5 @@ export type RewardCatalogItem = typeof rewardCatalog.$inferSelect;
 export type InsertRewardCatalogItem = z.infer<typeof insertRewardCatalogSchema>;
 export type RewardSettings = typeof rewardSettings.$inferSelect;
 export type InsertRewardSettings = z.infer<typeof insertRewardSettingsSchema>;
+export type JobUpdateNote = typeof jobUpdateNotes.$inferSelect;
+export type InsertJobUpdateNote = z.infer<typeof insertJobUpdateNoteSchema>;

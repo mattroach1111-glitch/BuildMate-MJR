@@ -74,9 +74,21 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
   const [selectedClient, setSelectedClient] = useState<string>("all");
 
   // Fetch current user data
-  const { data: currentUser } = useQuery<{ id: string; email: string }>({
+  const { data: currentUser } = useQuery<{ id: string; email: string; role: string }>({
     queryKey: ["/api/auth/user"],
     retry: false,
+  });
+
+  // Mutation for saving job update notes
+  const saveNoteMutation = useMutation({
+    mutationFn: (data: { jobId: string; note: string }) =>
+      apiRequest("/api/job-update-notes", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/job-update-notes"] });
+    },
   });
 
   // Fetch jobs data
@@ -159,6 +171,12 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     setEmailSuggestions(getSavedEmailSuggestions());
   }, []);
 
+  // Load saved job update notes
+  const { data: savedNotes } = useQuery({
+    queryKey: ["/api/job-update-notes"],
+    enabled: !!currentUser?.role && currentUser.role === "admin"
+  });
+
   // Use useFieldArray for proper dynamic field management
   const { fields, replace } = useFieldArray({
     control: form.control,
@@ -174,16 +192,19 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
       const updatedUpdates = jobs.map(job => {
         // Find existing update for this job to preserve user input
         const existingUpdate = currentValues.find(update => update.jobId === job.id);
+        // Or find saved note from database
+        const savedNote = savedNotes?.find((note: any) => note.jobId === job.id);
+        
         return {
           jobId: job.id,
-          update: existingUpdate?.update || ""
+          update: existingUpdate?.update || savedNote?.note || ""
         };
       });
       
       replace(updatedUpdates);
       form.setValue("emailSubject", getEmailSubject());
     }
-  }, [jobs, replace, form, getEmailSubject]);
+  }, [jobs, replace, form, getEmailSubject, savedNotes]);
 
   // Submit job updates via email
   const submitUpdatesMutation = useMutation({
@@ -508,6 +529,18 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                                 placeholder="Enter update notes for this job (optional)"
                                 className="min-h-[80px] text-sm"
                                 {...formField}
+                                onChange={(e) => {
+                                  formField.onChange(e);
+                                  // Auto-save note with debouncing
+                                  if (e.target.value.trim()) {
+                                    setTimeout(() => {
+                                      saveNoteMutation.mutate({
+                                        jobId: job.id,
+                                        note: e.target.value.trim()
+                                      });
+                                    }, 1000);
+                                  }
+                                }}
                                 data-testid={`textarea-job-update-${job.id}`}
                               />
                             </FormControl>
