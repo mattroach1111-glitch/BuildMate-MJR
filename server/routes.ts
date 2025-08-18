@@ -15,6 +15,7 @@ import { GoogleDriveService } from "./googleDriveService";
 import { GoogleDriveAuth } from "./googleAuth";
 import { DocumentProcessor } from "./services/documentProcessor";
 import { rewardsService } from "./services/rewardsService";
+import multer from "multer";
 
 // Database-backed reward settings helper functions
 async function initializeRewardSettings() {
@@ -2749,7 +2750,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Endpoint to upload documents directly to Google Drive
+  // Setup multer for file uploads
+  const upload = multer({ storage: multer.memoryStorage() });
+
+  // Endpoint to upload documents directly to Google Drive (new direct upload method)
+  app.post("/api/documents/upload-direct-to-drive", isAuthenticated, upload.single('file'), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || !user.googleDriveTokens) {
+        return res.status(400).json({ 
+          error: "Google Drive not connected. Please connect your Google Drive account first." 
+        });
+      }
+
+      // Extract file and form data
+      const uploadedFile = req.file;
+      const { jobId, fileName, mimeType, fileSize } = req.body;
+      
+      if (!uploadedFile || !jobId || !fileName) {
+        return res.status(400).json({ error: "File, job ID, and file name are required" });
+      }
+
+      // Verify job exists
+      const job = await storage.getJob(jobId);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+
+      // Use the uploaded file buffer
+      const fileBuffer = uploadedFile.buffer;
+      const actualMimeType = uploadedFile.mimetype || mimeType || 'application/octet-stream';
+      const actualFileName = fileName || uploadedFile.originalname || 'document';
+
+      // Upload to Google Drive
+      const googleDriveService = new GoogleDriveService();
+      const tokens = JSON.parse(user.googleDriveTokens);
+      googleDriveService.setUserTokens(tokens);
+
+      // Create main BuildFlow Pro folder first
+      const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
+      
+      // Create/find job folder inside BuildFlow Pro folder
+      const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId);
+      
+      // Upload file to Google Drive
+      const uploadResult = await googleDriveService.uploadFile(
+        actualFileName, 
+        fileBuffer, 
+        actualMimeType, 
+        jobFolderId || undefined
+      );
+      
+      if (!uploadResult) {
+        return res.status(500).json({ error: "Failed to upload to Google Drive" });
+      }
+
+      // Create job file record in database with Google Drive info
+      const fileRecord = await storage.createJobFile({
+        jobId: jobId,
+        fileName: actualFileName,
+        originalName: actualFileName,
+        fileSize: parseInt(fileSize) || fileBuffer.length,
+        mimeType: actualMimeType,
+        objectPath: null, // No object storage path for direct Google Drive uploads
+        googleDriveLink: uploadResult.webViewLink,
+        googleDriveFileId: uploadResult.fileId,
+        uploadedById: userId
+      });
+
+      console.log(`✅ Successfully uploaded ${actualFileName} directly to Google Drive for job ${job.jobAddress}`);
+
+      res.json({
+        success: true,
+        fileId: fileRecord.id,
+        googleDriveLink: uploadResult.webViewLink,
+        googleDriveFileId: uploadResult.fileId,
+        message: "Document uploaded directly to Google Drive successfully"
+      });
+
+    } catch (error) {
+      console.error("Error uploading directly to Google Drive:", error);
+      res.status(500).json({ error: "Failed to upload document to Google Drive" });
+    }
+  });
+
+  // Endpoint to upload documents directly to Google Drive (legacy method with object storage first)
   app.post("/api/documents/upload-to-drive", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
