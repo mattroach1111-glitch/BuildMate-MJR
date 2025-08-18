@@ -66,7 +66,6 @@ function AppContent() {
   return (
     <>
       <Router />
-      <NotificationPopup userEmail={(user as any)?.email} />
       {isAuthenticated && <PWAInstallPrompt />}
     </>
   );
