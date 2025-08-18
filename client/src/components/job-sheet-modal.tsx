@@ -1626,6 +1626,17 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       data-testid="input-edit-address"
                     />
                   </div>
+                  <div>
+                    <Label htmlFor="edit-project-name" className="text-sm font-medium">Project Name</Label>
+                    <Input
+                      id="edit-project-name"
+                      value={editForm.projectName}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, projectName: e.target.value }))}
+                      placeholder="Enter project name"
+                      className="mt-1"
+                      data-testid="input-edit-project-name"
+                    />
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-sm font-medium">Client Name</Label>
