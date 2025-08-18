@@ -70,6 +70,31 @@
     scroll-behavior: smooth;
   }
 
+  /* Mobile keyboard stability fixes */
+  @media (max-width: 768px) {
+    /* Prevent viewport jumping when keyboard appears */
+    .mobile-textarea, .mobile-input {
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+    }
+    
+    /* Prevent zoom on iOS when focusing inputs */
+    input, textarea, select {
+      font-size: 16px !important;
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+    }
+    
+    /* Smooth keyboard transitions */
+    .dialog-content, .popover-content {
+      position: fixed !important;
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+  }
+
   /* Enhanced animations */
   * {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);

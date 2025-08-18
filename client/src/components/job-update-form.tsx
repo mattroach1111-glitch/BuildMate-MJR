@@ -105,8 +105,8 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
 
 
   // Debounced save function
-  const debouncedSave = React.useCallback(
-    React.useMemo(() => {
+  const debouncedSave = React.useCallback(() => {
+    return React.useMemo(() => {
       const timeouts = new Map();
       return (jobId: string, note: string) => {
         // Clear existing timeout for this job
@@ -127,8 +127,8 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
         
         timeouts.set(jobId, timeoutId);
       };
-    }, [saveNoteMutation, currentUser])
-  );
+    }, [saveNoteMutation, currentUser]);
+  }, [saveNoteMutation, currentUser]);
 
   // Fetch jobs data
   const { data: allJobs, isLoading: jobsLoading } = useQuery<Job[]>({
@@ -233,7 +233,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
         // Find existing update for this job to preserve user input
         const existingUpdate = currentValues.find(update => update.jobId === job.id);
         // Find saved note from database
-        const savedNote = savedNotes?.find((note: any) => note.jobId === job.id);
+        const savedNote = Array.isArray(savedNotes) ? savedNotes.find((note: any) => note.jobId === job.id) : undefined;
         
         return {
           jobId: job.id,
@@ -479,7 +479,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                   <FormControl>
                     <Textarea 
                       placeholder="Enter email addresses separated by commas (e.g., manager@company.com, client@client.com, owner@business.com)"
-                      className="min-h-[80px]"
+                      className="min-h-[80px] mobile-textarea"
                       {...field} 
                       data-testid="input-recipient-emails"
                     />
@@ -631,12 +631,12 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                             <FormControl>
                               <Textarea
                                 placeholder="Enter update notes for this job (optional)"
-                                className="min-h-[80px] text-sm"
+                                className="min-h-[80px] text-sm mobile-textarea"
                                 {...formField}
                                 onChange={(e) => {
                                   formField.onChange(e);
                                   // Auto-save note with proper debouncing
-                                  debouncedSave(job.id, e.target.value);
+                                  debouncedSave()(job.id, e.target.value);
                                 }}
                                 data-testid={`textarea-job-update-${job.id}`}
                               />
@@ -670,7 +670,7 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                   <FormControl>
                     <Textarea
                       placeholder="Add any additional notes or comments..."
-                      className="min-h-[100px]"
+                      className="min-h-[100px] mobile-textarea"
                       {...field}
                       data-testid="textarea-additional-notes"
                     />
