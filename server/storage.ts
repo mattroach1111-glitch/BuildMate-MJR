@@ -1150,7 +1150,7 @@ export class DatabaseStorage implements IStorage {
         submitted: timesheetEntries.submitted,
         createdAt: timesheetEntries.createdAt,
         updatedAt: timesheetEntries.updatedAt,
-        staffName: sql`COALESCE(${users.firstName}, ${employees.name}, CASE WHEN ${users.email} IS NOT NULL THEN SPLIT_PART(${users.email}, '@', 1) ELSE 'Unknown Staff' END, 'Unknown Staff')`.as('staffName'),
+        staffName: sql`COALESCE(${employees.name}, ${users.firstName}, CASE WHEN ${users.email} IS NOT NULL THEN SPLIT_PART(${users.email}, '@', 1) ELSE 'Unknown Staff' END, 'Unknown Staff')`.as('staffName'),
         staffEmail: users.email,
       })
       .from(timesheetEntries)
@@ -1175,7 +1175,7 @@ export class DatabaseStorage implements IStorage {
         submitted: timesheetEntries.submitted,
         createdAt: timesheetEntries.createdAt,
         updatedAt: timesheetEntries.updatedAt,
-        staffName: sql`COALESCE(${users.firstName}, ${employees.name}, CASE WHEN ${users.email} IS NOT NULL THEN SPLIT_PART(${users.email}, '@', 1) ELSE 'Unknown Staff' END, 'Unknown Staff')`.as('staffName'),
+        staffName: sql`COALESCE(${employees.name}, ${users.firstName}, CASE WHEN ${users.email} IS NOT NULL THEN SPLIT_PART(${users.email}, '@', 1) ELSE 'Unknown Staff' END, 'Unknown Staff')`.as('staffName'),
         staffEmail: users.email,
         // Enhanced job address to handle custom addresses and leave types
         jobAddress: sql`
@@ -1347,35 +1347,52 @@ export class DatabaseStorage implements IStorage {
 
   // Get combined list of users and employees for timesheet assignment
   async getStaffForTimesheets(): Promise<Array<{ id: string; name: string; type: 'user' | 'employee' }>> {
-    const [usersResult, employeesResult] = await Promise.all([
-      db.select().from(users).where(eq(users.isAssigned, true)), // Include assigned users regardless of admin/staff role
-      db.select().from(employees)
-    ]);
+    // CRITICAL FIX: Get users with their linked employee data using a proper join
+    // This ensures we show employee names (from staff management) but use user IDs for timesheet queries
+    const usersWithEmployees = await db
+      .select({
+        userId: users.id,
+        userFirstName: users.firstName,
+        userEmail: users.email,
+        isAssigned: users.isAssigned,
+        employeeId: users.employeeId,
+        employeeName: employees.name,
+      })
+      .from(users)
+      .leftJoin(employees, eq(users.employeeId, employees.id))
+      .where(eq(users.isAssigned, true));
 
-    // Create a map to track unique IDs and prioritize users over employees
-    const staffMap = new Map<string, { id: string; name: string; type: 'user' | 'employee' }>();
+    // Also get unlinked employees (employees without user accounts)
+    const unlinkedEmployees = await db
+      .select({
+        employeeId: employees.id,
+        employeeName: employees.name,
+      })
+      .from(employees)
+      .leftJoin(users, eq(users.employeeId, employees.id))
+      .where(isNull(users.id)); // Only employees without linked users
 
-    // Add employees first
-    employeesResult.forEach(employee => {
-      staffMap.set(employee.id, {
-        id: employee.id,
-        name: employee.name,
+    const staffList: Array<{ id: string; name: string; type: 'user' | 'employee' }> = [];
+
+    // Add linked users (using employee names when available, but user IDs for queries)
+    usersWithEmployees.forEach(userWithEmployee => {
+      staffList.push({
+        id: userWithEmployee.userId, // CRITICAL: Always use user ID for timesheet queries
+        name: userWithEmployee.employeeName || userWithEmployee.userFirstName || userWithEmployee.userEmail || 'Unknown',
+        type: userWithEmployee.employeeId ? 'employee' : 'user' // Show as 'employee' if linked
+      });
+    });
+
+    // Add unlinked employees (these can't submit timesheets but may be used for admin entry creation)
+    unlinkedEmployees.forEach(unlinked => {
+      staffList.push({
+        id: unlinked.employeeId,
+        name: unlinked.employeeName,
         type: 'employee' as const
       });
     });
 
-    // Add users - use employeeId if assigned, otherwise use user.id
-    usersResult.forEach(user => {
-      const idToUse = user.employeeId || user.id;
-      staffMap.set(idToUse, {
-        id: idToUse,
-        name: user.firstName || user.email || 'Unknown',
-        type: 'user' as const
-      });
-    });
-
-    const result = Array.from(staffMap.values());
-    return result.sort((a, b) => a.name.localeCompare(b.name));
+    return staffList.sort((a, b) => a.name.localeCompare(b.name));
   }
 
   async getJobsForStaff(): Promise<Job[]> {
