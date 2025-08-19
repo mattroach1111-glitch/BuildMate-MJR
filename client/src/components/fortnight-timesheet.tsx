@@ -1138,26 +1138,45 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     let failureCount = 0;
     const failureDetails: string[] = [];
     
+    console.log('💾 SAVE ALL: Starting save process...', { entriesToSave: entriesToSave.length, entriesToUpdate: entriesToUpdate.length });
+    
     try {
-      const savePromises = entriesToSave.map(entry => 
-        new Promise((resolve, reject) => {
-          updateTimesheetMutation.mutate(entry, {
-            onSuccess: () => {
-              successCount++;
-              resolve(true);
-            },
-            onError: (error: any) => {
-              failureCount++;
-              const errorMsg = error?.message || 'Unknown error';
-              failureDetails.push(`Failed to save entry for ${entry.date}: ${errorMsg}`);
-              console.error('Individual entry save error:', error);
-              resolve(false); // Don't reject, just mark as failed
-            }
-          });
-        })
-      );
+      // Process saves sequentially to avoid race conditions
+      for (const entry of entriesToSave) {
+        try {
+          console.log('💾 Saving entry:', entry);
+          const endpoint = isAdminView ? "/api/admin/timesheet" : "/api/timesheet";
+          
+          // For admin view, ensure the staffId is set to the selected employee
+          if (isAdminView && selectedEmployee) {
+            entry.staffId = selectedEmployee;
+          }
+          
+          const result = await apiRequest("POST", endpoint, entry);
+          console.log('✅ Entry saved successfully:', result);
+          successCount++;
+        } catch (error: any) {
+          console.error('❌ Entry save failed:', error);
+          failureCount++;
+          const errorMsg = error?.message || 'Unknown error';
+          failureDetails.push(`Failed to save entry for ${entry.date}: ${errorMsg}`);
+        }
+      }
 
-      await Promise.all(savePromises);
+      // Process updates sequentially too
+      for (const updateData of entriesToUpdate) {
+        try {
+          console.log('🔄 Updating entry:', updateData);
+          const result = await apiRequest("PATCH", `/api/timesheet-entries/${updateData.id}`, updateData);
+          console.log('✅ Entry updated successfully:', result);
+          successCount++;
+        } catch (error: any) {
+          console.error('❌ Entry update failed:', error);
+          failureCount++;
+          const errorMsg = error?.message || 'Unknown error';
+          failureDetails.push(`Failed to update entry ${updateData.id}: ${errorMsg}`);
+        }
+      }
       
       // Show results based on success/failure counts
       if (failureCount > 0 && successCount === 0) {
@@ -1187,24 +1206,31 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       return;
     }
 
-    // Refresh to ensure all data is up to date, but don't clear local data yet
-    await refetchTimesheetEntries();
-    // Only clear local data after successful refresh
-    setTimesheetData({});
-    
+    console.log('📊 SAVE RESULTS:', { successCount, failureCount });
+
     // Show success animation and toast for any successful saves
     if (successCount > 0) {
+      console.log('🎉 SHOWING SUCCESS ANIMATION');
       setShowSuccessAnimation(true);
-      setTimeout(() => setShowSuccessAnimation(false), 3000);
+      setTimeout(() => {
+        setShowSuccessAnimation(false);
+        console.log('⏰ SUCCESS ANIMATION ENDED');
+      }, 3000);
+
+      // Refresh data and clear local state after successful saves
+      await refetchTimesheetEntries();
+      setTimesheetData({});
 
       // Only show success toast if there were no failures (to avoid duplicate messages)
       if (failureCount === 0) {
         toast({
           title: "Timesheet Saved Successfully",
-          description: `Successfully saved ${successCount} entries! (${entriesToSave.length} new, ${entriesToUpdate.length} updated)`,
+          description: `Successfully saved ${successCount} entries! Your changes have been saved to the database.`,
           variant: "default",
         });
       }
+    } else {
+      console.log('❌ NO SUCCESS - Not showing animation');
     }
   };
 
