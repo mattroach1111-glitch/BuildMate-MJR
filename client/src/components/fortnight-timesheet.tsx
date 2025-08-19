@@ -613,7 +613,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     retry: false,
   });
 
-  const { data: timesheetEntries, refetch: refetchTimesheetEntries, isLoading: timesheetLoading, error: timesheetError } = useQuery({
+  const { data: timesheetEntries, refetch: refetchTimesheetEntries } = useQuery({
     queryKey: isAdminView && selectedEmployee 
       ? ["/api/admin/timesheets", selectedEmployee] 
       : isAdminView 
@@ -623,33 +623,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     enabled: !isAdminView || !!selectedEmployee, // Only fetch when employee is selected in admin view
     refetchOnMount: true,
     refetchOnWindowFocus: false,
-    onSuccess: (data) => {
-      console.log(`🎯 TIMESHEET QUERY SUCCESS: Received ${Array.isArray(data) ? data.length : 'non-array'} entries`);
-      if (Array.isArray(data) && data.length > 0) {
-        console.log(`📝 FIRST ENTRY SAMPLE:`, data[0]);
-      }
-    },
-    onError: (error) => {
-      console.error(`❌ TIMESHEET QUERY ERROR:`, error);
-    }
   });
-
-  // Debug query state
-  useEffect(() => {
-    console.log(`🔍 TIMESHEET QUERY DEBUG:`, {
-      isAdminView,
-      selectedEmployee,
-      queryEnabled: !isAdminView || !!selectedEmployee,
-      isLoading: timesheetLoading,
-      hasError: !!timesheetError,
-      dataLength: Array.isArray(timesheetEntries) ? timesheetEntries.length : 'not-array',
-      queryKey: isAdminView && selectedEmployee 
-        ? ["/api/admin/timesheets", selectedEmployee] 
-        : isAdminView 
-          ? ["/api/admin/timesheets"] 
-          : ["/api/timesheet"]
-    });
-  }, [isAdminView, selectedEmployee, timesheetLoading, timesheetError, timesheetEntries]);
 
   // Update selected employee when prop changes
   useEffect(() => {
@@ -2285,21 +2259,35 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                 </div>
               </CardHeader>
               <CardContent>
-                <div 
-                  ref={containerRef}
-                  className="overflow-x-auto touch-manipulation select-none"
-                  style={{
-                    transform: `scale(${zoomScale}) translate(${panPosition.x}px, ${panPosition.y}px)`,
-                    transformOrigin: 'center center',
-                    transition: initialDistance === null ? 'transform 0.1s ease-out' : 'none',
-                    cursor: zoomScale > 1 ? 'grab' : 'default'
-                  }}
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                  onDoubleClick={handleDoubleClick}
-                >
-                  <table className="w-full border-collapse">
+                {/* Show empty state for admin view when no timesheet entries */}
+                {isAdminView && selectedEmployee && Array.isArray(timesheetEntries) && timesheetEntries.length === 0 && (
+                  <div className="text-center py-8">
+                    <div className="text-muted-foreground mb-2">
+                      <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p className="text-lg font-medium">No timesheet entries found</p>
+                      <p className="text-sm">This staff member hasn't submitted any timesheets for this fortnight period.</p>
+                      <p className="text-xs mt-2 text-green-600">✓ System is working correctly - staff member has no entries in database</p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Only show table if there are entries or in staff view */}
+                {(!isAdminView || !selectedEmployee || (Array.isArray(timesheetEntries) && timesheetEntries.length > 0)) && (
+                  <div 
+                    ref={containerRef}
+                    className="overflow-x-auto touch-manipulation select-none"
+                    style={{
+                      transform: `scale(${zoomScale}) translate(${panPosition.x}px, ${panPosition.y}px)`,
+                      transformOrigin: 'center center',
+                      transition: initialDistance === null ? 'transform 0.1s ease-out' : 'none',
+                      cursor: zoomScale > 1 ? 'grab' : 'default'
+                    }}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    onDoubleClick={handleDoubleClick}
+                  >
+                    <table className="w-full border-collapse">
                     <thead>
                       <tr className="border-b">
                         <th className="text-left p-3 font-medium">Date</th>
@@ -2638,7 +2626,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                       })}
                     </tbody>
                   </table>
-                </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

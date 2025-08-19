@@ -1,0 +1,280 @@
+timesheet?employee=b3686353-3154-47fc-9cdb-45569ac8ce50&admin=true:58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+index-BmRlxdTD.js:914 BuildFlow Pro v1.0.9 - LANDSCAPE MODE DISABLED, FOCUS ON CORE FEATURES: 1755576642614
+index-BmRlxdTD.js:48 🌐 FETCH REQUEST: /api/auth/user
+timesheet?employee=b3686353-3154-47fc-9cdb-45569ac8ce50&admin=true:64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-BmRlxdTD.js:48 🌐 FETCH RESPONSE: /api/auth/user - Status: 200 
+index-BmRlxdTD.js:48 ✅ FETCH SUCCESS: /api/auth/user - Data: {id: '46214248', email: 'mattroach1111@gmail.com', firstName: null, lastName: null, profileImageUrl: null, …}
+index-BmRlxdTD.js:909 Current fortnight entries: []
+index-BmRlxdTD.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-11 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-12 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-13 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-14 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-15 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-16 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-17 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-18 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-19 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-20 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-21 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-22 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-23 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-24 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:835 🏠 DIALOG STATE CHANGED: false Data: {dayIndex: -1, entryIndex: -1}
+index-BmRlxdTD.js:48 🌐 FETCH REQUEST: /api/jobs-for-staff
+index-BmRlxdTD.js:48 🌐 FETCH REQUEST: /api/timesheet
+index-BmRlxdTD.js:909 🔍 TIMESHEET QUERY DEBUG: {isAdminView: false, selectedEmployee: '', queryEnabled: true, isLoading: true, hasError: false, …}
+index-BmRlxdTD.js:909 Current fortnight entries: []
+index-BmRlxdTD.js:909 🏗️ TABLE RENDER: isAdminView=true, selectedEmployee=, shouldShow=
+index-BmRlxdTD.js:909 📊 FORTNIGHT DAYS: 14 days, Current fortnight: {start: Mon Aug 11 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time), end: Sun Aug 24 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time)}
+index-BmRlxdTD.js:909 ❌ TABLE BLOCKED - Admin view requires employee selection
+index-BmRlxdTD.js:909 🚨 DIALOG RENDER CHECK - showLowHoursDialog: false lowHoursTotal: 0
+index-BmRlxdTD.js:909 🚨 CONDITIONAL RENDER CHECK - will render dialog? false
+index-BmRlxdTD.js:48 🌐 FETCH REQUEST: /api/staff-users
+index-BmRlxdTD.js:909 🔍 TIMESHEET QUERY DEBUG: {isAdminView: true, selectedEmployee: '', queryEnabled: false, isLoading: false, hasError: false, …}
+index-BmRlxdTD.js:909 Current fortnight entries: []
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🏗️ TABLE RENDER: isAdminView=true, selectedEmployee=b3686353-3154-47fc-9cdb-45569ac8ce50, shouldShow=b3686353-3154-47fc-9cdb-45569ac8ce50
+index-BmRlxdTD.js:909 📊 FORTNIGHT DAYS: 14 days, Current fortnight: {start: Mon Aug 11 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time), end: Sun Aug 24 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time)}
+index-BmRlxdTD.js:909 ✅ TABLE WILL RENDER - Weekend detection should start now
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Mon, Aug 11 - Day: 1, Date: 2025-08-11
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-11 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Tue, Aug 12 - Day: 2, Date: 2025-08-12
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-12 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Wed, Aug 13 - Day: 3, Date: 2025-08-13
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-13 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Thu, Aug 14 - Day: 4, Date: 2025-08-14
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-14 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Fri, Aug 15 - Day: 5, Date: 2025-08-15
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-15 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Sat, Aug 16 - Day: 6, Date: 2025-08-16
+index-BmRlxdTD.js:909 🔵 SATURDAY DETECTED: Sat, Aug 16 - Day 6
+index-BmRlxdTD.js:909 🔴 WEEKEND CONFIRMED: Sat, Aug 16 - Day: 6 (Saturday)
+index-BmRlxdTD.js:909 🔐 LOCK CHECK: Unlocked=false, Locked=true
+index-BmRlxdTD.js:909 🗂️ UNLOCKED SET: []
+index-BmRlxdTD.js:909 🎨 APPLYING WEEKEND STYLING: Sat, Aug 16 - Classes: border-b weekend-row
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-16 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Sun, Aug 17 - Day: 0, Date: 2025-08-17
+index-BmRlxdTD.js:909 🔵 SUNDAY DETECTED: Sun, Aug 17 - Day 0
+index-BmRlxdTD.js:909 🔴 WEEKEND CONFIRMED: Sun, Aug 17 - Day: 0 (Sunday)
+index-BmRlxdTD.js:909 🔐 LOCK CHECK: Unlocked=false, Locked=true
+index-BmRlxdTD.js:909 🗂️ UNLOCKED SET: []
+index-BmRlxdTD.js:909 🎨 APPLYING WEEKEND STYLING: Sun, Aug 17 - Classes: border-b weekend-row
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-17 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Mon, Aug 18 - Day: 1, Date: 2025-08-18
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-18 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Tue, Aug 19 - Day: 2, Date: 2025-08-19
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-19 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Wed, Aug 20 - Day: 3, Date: 2025-08-20
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-20 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Thu, Aug 21 - Day: 4, Date: 2025-08-21
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-21 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Fri, Aug 22 - Day: 5, Date: 2025-08-22
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-22 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Sat, Aug 23 - Day: 6, Date: 2025-08-23
+index-BmRlxdTD.js:909 🔵 SATURDAY DETECTED: Sat, Aug 23 - Day 6
+index-BmRlxdTD.js:909 🔴 WEEKEND CONFIRMED: Sat, Aug 23 - Day: 6 (Saturday)
+index-BmRlxdTD.js:909 🔐 LOCK CHECK: Unlocked=false, Locked=true
+index-BmRlxdTD.js:909 🗂️ UNLOCKED SET: []
+index-BmRlxdTD.js:909 🎨 APPLYING WEEKEND STYLING: Sat, Aug 23 - Classes: border-b weekend-row
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-23 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Sun, Aug 24 - Day: 0, Date: 2025-08-24
+index-BmRlxdTD.js:909 🔵 SUNDAY DETECTED: Sun, Aug 24 - Day 0
+index-BmRlxdTD.js:909 🔴 WEEKEND CONFIRMED: Sun, Aug 24 - Day: 0 (Sunday)
+index-BmRlxdTD.js:909 🔐 LOCK CHECK: Unlocked=false, Locked=true
+index-BmRlxdTD.js:909 🗂️ UNLOCKED SET: []
+index-BmRlxdTD.js:909 🎨 APPLYING WEEKEND STYLING: Sun, Aug 24 - Classes: border-b weekend-row
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-24 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🚨 DIALOG RENDER CHECK - showLowHoursDialog: false lowHoursTotal: 0
+index-BmRlxdTD.js:909 🚨 CONDITIONAL RENDER CHECK - will render dialog? false
+index-BmRlxdTD.js:48 🌐 FETCH REQUEST: /api/admin/timesheets/b3686353-3154-47fc-9cdb-45569ac8ce50
+index-BmRlxdTD.js:909 🔍 TIMESHEET QUERY DEBUG: {isAdminView: true, selectedEmployee: 'b3686353-3154-47fc-9cdb-45569ac8ce50', queryEnabled: true, isLoading: true, hasError: false, …}
+index-BmRlxdTD.js:48 🌐 FETCH RESPONSE: /api/jobs-for-staff - Status: 200 
+index-BmRlxdTD.js:48 ✅ FETCH SUCCESS: /api/jobs-for-staff - Data: (55) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BmRlxdTD.js:909 Current fortnight entries: []
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🏗️ TABLE RENDER: isAdminView=true, selectedEmployee=b3686353-3154-47fc-9cdb-45569ac8ce50, shouldShow=b3686353-3154-47fc-9cdb-45569ac8ce50
+index-BmRlxdTD.js:909 📊 FORTNIGHT DAYS: 14 days, Current fortnight: {start: Mon Aug 11 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time), end: Sun Aug 24 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time)}
+index-BmRlxdTD.js:909 ✅ TABLE WILL RENDER - Weekend detection should start now
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Mon, Aug 11 - Day: 1, Date: 2025-08-11
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-11 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Tue, Aug 12 - Day: 2, Date: 2025-08-12
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-12 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Wed, Aug 13 - Day: 3, Date: 2025-08-13
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-13 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Thu, Aug 14 - Day: 4, Date: 2025-08-14
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-14 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Fri, Aug 15 - Day: 5, Date: 2025-08-15
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-15 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Sat, Aug 16 - Day: 6, Date: 2025-08-16
+index-BmRlxdTD.js:909 🔵 SATURDAY DETECTED: Sat, Aug 16 - Day 6
+index-BmRlxdTD.js:909 🔴 WEEKEND CONFIRMED: Sat, Aug 16 - Day: 6 (Saturday)
+index-BmRlxdTD.js:909 🔐 LOCK CHECK: Unlocked=false, Locked=true
+index-BmRlxdTD.js:909 🗂️ UNLOCKED SET: []
+index-BmRlxdTD.js:909 🎨 APPLYING WEEKEND STYLING: Sat, Aug 16 - Classes: border-b weekend-row
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-16 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Sun, Aug 17 - Day: 0, Date: 2025-08-17
+index-BmRlxdTD.js:909 🔵 SUNDAY DETECTED: Sun, Aug 17 - Day 0
+index-BmRlxdTD.js:909 🔴 WEEKEND CONFIRMED: Sun, Aug 17 - Day: 0 (Sunday)
+index-BmRlxdTD.js:909 🔐 LOCK CHECK: Unlocked=false, Locked=true
+index-BmRlxdTD.js:909 🗂️ UNLOCKED SET: []
+index-BmRlxdTD.js:909 🎨 APPLYING WEEKEND STYLING: Sun, Aug 17 - Classes: border-b weekend-row
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-17 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Mon, Aug 18 - Day: 1, Date: 2025-08-18
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-18 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Tue, Aug 19 - Day: 2, Date: 2025-08-19
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-19 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Wed, Aug 20 - Day: 3, Date: 2025-08-20
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-20 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Thu, Aug 21 - Day: 4, Date: 2025-08-21
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-21 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Fri, Aug 22 - Day: 5, Date: 2025-08-22
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-22 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Sat, Aug 23 - Day: 6, Date: 2025-08-23
+index-BmRlxdTD.js:909 🔵 SATURDAY DETECTED: Sat, Aug 23 - Day 6
+index-BmRlxdTD.js:909 🔴 WEEKEND CONFIRMED: Sat, Aug 23 - Day: 6 (Saturday)
+index-BmRlxdTD.js:909 🔐 LOCK CHECK: Unlocked=false, Locked=true
+index-BmRlxdTD.js:909 🗂️ UNLOCKED SET: []
+index-BmRlxdTD.js:909 🎨 APPLYING WEEKEND STYLING: Sat, Aug 23 - Classes: border-b weekend-row
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-23 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Sun, Aug 24 - Day: 0, Date: 2025-08-24
+index-BmRlxdTD.js:909 🔵 SUNDAY DETECTED: Sun, Aug 24 - Day 0
+index-BmRlxdTD.js:909 🔴 WEEKEND CONFIRMED: Sun, Aug 24 - Day: 0 (Sunday)
+index-BmRlxdTD.js:909 🔐 LOCK CHECK: Unlocked=false, Locked=true
+index-BmRlxdTD.js:909 🗂️ UNLOCKED SET: []
+index-BmRlxdTD.js:909 🎨 APPLYING WEEKEND STYLING: Sun, Aug 24 - Classes: border-b weekend-row
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-24 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🚨 DIALOG RENDER CHECK - showLowHoursDialog: false lowHoursTotal: 0
+index-BmRlxdTD.js:909 🚨 CONDITIONAL RENDER CHECK - will render dialog? false
+index-BmRlxdTD.js:48 🌐 FETCH RESPONSE: /api/timesheet - Status: 200 
+index-BmRlxdTD.js:48 🌐 FETCH RESPONSE: /api/staff-users - Status: 200 
+index-BmRlxdTD.js:48 ✅ FETCH SUCCESS: /api/timesheet - Data: []
+index-BmRlxdTD.js:48 ✅ FETCH SUCCESS: /api/staff-users - Data: (10) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BmRlxdTD.js:909 Current fortnight entries: []
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🏗️ TABLE RENDER: isAdminView=true, selectedEmployee=b3686353-3154-47fc-9cdb-45569ac8ce50, shouldShow=b3686353-3154-47fc-9cdb-45569ac8ce50
+index-BmRlxdTD.js:909 📊 FORTNIGHT DAYS: 14 days, Current fortnight: {start: Mon Aug 11 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time), end: Sun Aug 24 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time)}
+index-BmRlxdTD.js:909 ✅ TABLE WILL RENDER - Weekend detection should start now
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Mon, Aug 11 - Day: 1, Date: 2025-08-11
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-11 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Tue, Aug 12 - Day: 2, Date: 2025-08-12
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-12 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Wed, Aug 13 - Day: 3, Date: 2025-08-13
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-13 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Thu, Aug 14 - Day: 4, Date: 2025-08-14
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-14 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Fri, Aug 15 - Day: 5, Date: 2025-08-15
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-15 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Sat, Aug 16 - Day: 6, Date: 2025-08-16
+index-BmRlxdTD.js:909 🔵 SATURDAY DETECTED: Sat, Aug 16 - Day 6
+index-BmRlxdTD.js:909 🔴 WEEKEND CONFIRMED: Sat, Aug 16 - Day: 6 (Saturday)
+index-BmRlxdTD.js:909 🔐 LOCK CHECK: Unlocked=false, Locked=true
+index-BmRlxdTD.js:909 🗂️ UNLOCKED SET: []
+index-BmRlxdTD.js:909 🎨 APPLYING WEEKEND STYLING: Sat, Aug 16 - Classes: border-b weekend-row
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-16 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Sun, Aug 17 - Day: 0, Date: 2025-08-17
+index-BmRlxdTD.js:909 🔵 SUNDAY DETECTED: Sun, Aug 17 - Day 0
+index-BmRlxdTD.js:909 🔴 WEEKEND CONFIRMED: Sun, Aug 17 - Day: 0 (Sunday)
+index-BmRlxdTD.js:909 🔐 LOCK CHECK: Unlocked=false, Locked=true
+index-BmRlxdTD.js:909 🗂️ UNLOCKED SET: []
+index-BmRlxdTD.js:909 🎨 APPLYING WEEKEND STYLING: Sun, Aug 17 - Classes: border-b weekend-row
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-17 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Mon, Aug 18 - Day: 1, Date: 2025-08-18
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-18 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Tue, Aug 19 - Day: 2, Date: 2025-08-19
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-19 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Wed, Aug 20 - Day: 3, Date: 2025-08-20
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-20 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Thu, Aug 21 - Day: 4, Date: 2025-08-21
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-21 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Fri, Aug 22 - Day: 5, Date: 2025-08-22
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-22 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Sat, Aug 23 - Day: 6, Date: 2025-08-23
+index-BmRlxdTD.js:909 🔵 SATURDAY DETECTED: Sat, Aug 23 - Day 6
+index-BmRlxdTD.js:909 🔴 WEEKEND CONFIRMED: Sat, Aug 23 - Day: 6 (Saturday)
+index-BmRlxdTD.js:909 🔐 LOCK CHECK: Unlocked=false, Locked=true
+index-BmRlxdTD.js:909 🗂️ UNLOCKED SET: []
+index-BmRlxdTD.js:909 🎨 APPLYING WEEKEND STYLING: Sat, Aug 23 - Classes: border-b weekend-row
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-23 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Sun, Aug 24 - Day: 0, Date: 2025-08-24
+index-BmRlxdTD.js:909 🔵 SUNDAY DETECTED: Sun, Aug 24 - Day 0
+index-BmRlxdTD.js:909 🔴 WEEKEND CONFIRMED: Sun, Aug 24 - Day: 0 (Sunday)
+index-BmRlxdTD.js:909 🔐 LOCK CHECK: Unlocked=false, Locked=true
+index-BmRlxdTD.js:909 🗂️ UNLOCKED SET: []
+index-BmRlxdTD.js:909 🎨 APPLYING WEEKEND STYLING: Sun, Aug 24 - Classes: border-b weekend-row
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-24 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🚨 DIALOG RENDER CHECK - showLowHoursDialog: false lowHoursTotal: 0
+index-BmRlxdTD.js:909 🚨 CONDITIONAL RENDER CHECK - will render dialog? false
+index-BmRlxdTD.js:48 🌐 FETCH RESPONSE: /api/admin/timesheets/b3686353-3154-47fc-9cdb-45569ac8ce50 - Status: 200 
+index-BmRlxdTD.js:48 ✅ FETCH SUCCESS: /api/admin/timesheets/b3686353-3154-47fc-9cdb-45569ac8ce50 - Data: []
+index-BmRlxdTD.js:909 Current fortnight entries: []
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🏗️ TABLE RENDER: isAdminView=true, selectedEmployee=b3686353-3154-47fc-9cdb-45569ac8ce50, shouldShow=b3686353-3154-47fc-9cdb-45569ac8ce50
+index-BmRlxdTD.js:909 📊 FORTNIGHT DAYS: 14 days, Current fortnight: {start: Mon Aug 11 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time), end: Sun Aug 24 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time)}
+index-BmRlxdTD.js:909 ✅ TABLE WILL RENDER - Weekend detection should start now
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Mon, Aug 11 - Day: 1, Date: 2025-08-11
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-11 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Tue, Aug 12 - Day: 2, Date: 2025-08-12
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-12 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Wed, Aug 13 - Day: 3, Date: 2025-08-13
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-13 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Thu, Aug 14 - Day: 4, Date: 2025-08-14
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-14 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Fri, Aug 15 - Day: 5, Date: 2025-08-15
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-15 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Sat, Aug 16 - Day: 6, Date: 2025-08-16
+index-BmRlxdTD.js:909 🔵 SATURDAY DETECTED: Sat, Aug 16 - Day 6
+index-BmRlxdTD.js:909 🔴 WEEKEND CONFIRMED: Sat, Aug 16 - Day: 6 (Saturday)
+index-BmRlxdTD.js:909 🔐 LOCK CHECK: Unlocked=false, Locked=true
+index-BmRlxdTD.js:909 🗂️ UNLOCKED SET: []
+index-BmRlxdTD.js:909 🎨 APPLYING WEEKEND STYLING: Sat, Aug 16 - Classes: border-b weekend-row
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-16 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Sun, Aug 17 - Day: 0, Date: 2025-08-17
+index-BmRlxdTD.js:909 🔵 SUNDAY DETECTED: Sun, Aug 17 - Day 0
+index-BmRlxdTD.js:909 🔴 WEEKEND CONFIRMED: Sun, Aug 17 - Day: 0 (Sunday)
+index-BmRlxdTD.js:909 🔐 LOCK CHECK: Unlocked=false, Locked=true
+index-BmRlxdTD.js:909 🗂️ UNLOCKED SET: []
+index-BmRlxdTD.js:909 🎨 APPLYING WEEKEND STYLING: Sun, Aug 17 - Classes: border-b weekend-row
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-17 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Mon, Aug 18 - Day: 1, Date: 2025-08-18
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-18 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Tue, Aug 19 - Day: 2, Date: 2025-08-19
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-19 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Wed, Aug 20 - Day: 3, Date: 2025-08-20
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-20 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Thu, Aug 21 - Day: 4, Date: 2025-08-21
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-21 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Fri, Aug 22 - Day: 5, Date: 2025-08-22
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-22 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Sat, Aug 23 - Day: 6, Date: 2025-08-23
+index-BmRlxdTD.js:909 🔵 SATURDAY DETECTED: Sat, Aug 23 - Day 6
+index-BmRlxdTD.js:909 🔴 WEEKEND CONFIRMED: Sat, Aug 23 - Day: 6 (Saturday)
+index-BmRlxdTD.js:909 🔐 LOCK CHECK: Unlocked=false, Locked=true
+index-BmRlxdTD.js:909 🗂️ UNLOCKED SET: []
+index-BmRlxdTD.js:909 🎨 APPLYING WEEKEND STYLING: Sat, Aug 23 - Classes: border-b weekend-row
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-23 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 📅 PROCESSING DAY: Sun, Aug 24 - Day: 0, Date: 2025-08-24
+index-BmRlxdTD.js:909 🔵 SUNDAY DETECTED: Sun, Aug 24 - Day 0
+index-BmRlxdTD.js:909 🔴 WEEKEND CONFIRMED: Sun, Aug 24 - Day: 0 (Sunday)
+index-BmRlxdTD.js:909 🔐 LOCK CHECK: Unlocked=false, Locked=true
+index-BmRlxdTD.js:909 🗂️ UNLOCKED SET: []
+index-BmRlxdTD.js:909 🎨 APPLYING WEEKEND STYLING: Sun, Aug 24 - Classes: border-b weekend-row
+index-BmRlxdTD.js:909 🔧 UNLOCK BUTTON DEBUG: 2025-08-24 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-BmRlxdTD.js:909 🚨 DIALOG RENDER CHECK - showLowHoursDialog: false lowHoursTotal: 0
+index-BmRlxdTD.js:909 🚨 CONDITIONAL RENDER CHECK - will render dialog? false
+index-BmRlxdTD.js:909 🔍 TIMESHEET QUERY DEBUG: {isAdminView: true, selectedEmployee: 'b3686353-3154-47fc-9cdb-45569ac8ce50', queryEnabled: true, isLoading: false, hasError: false, …}
