@@ -298,11 +298,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/google-drive/auth-url', isAuthenticated, async (req: any, res) => {
     console.log(`🚀🚀🚀 ROUTE HIT: /api/google-drive/auth-url at ${new Date().toISOString()}`);
     try {
+      console.log(`🔵 Environment check - GOOGLE_CLIENT_ID exists: ${!!process.env.GOOGLE_CLIENT_ID}`);
+      console.log(`🔵 Environment check - GOOGLE_CLIENT_SECRET exists: ${!!process.env.GOOGLE_CLIENT_SECRET}`);
+      console.log(`🔵 GOOGLE_CLIENT_ID length: ${process.env.GOOGLE_CLIENT_ID?.length || 0}`);
+      console.log(`🔵 GOOGLE_CLIENT_SECRET length: ${process.env.GOOGLE_CLIENT_SECRET?.length || 0}`);
+      
+      if (!process.env.GOOGLE_CLIENT_ID) {
+        throw new Error('GOOGLE_CLIENT_ID environment variable is not set');
+      }
+      
+      if (!process.env.GOOGLE_CLIENT_SECRET) {
+        throw new Error('GOOGLE_CLIENT_SECRET environment variable is not set');
+      }
+
       // Directly create OAuth client here to bypass any caching
       const { google } = require('googleapis');
       const correctRedirectUri = 'https://build-mate-mattroach1111.replit.app/api/google-drive/callback';
       
       console.log(`🚀 Creating OAuth client directly with URI: ${correctRedirectUri}`);
+      console.log(`🚀 Client ID preview: ${process.env.GOOGLE_CLIENT_ID.substring(0, 20)}...`);
       
       const oauth2Client = new google.auth.OAuth2(
         process.env.GOOGLE_CLIENT_ID,
@@ -310,7 +324,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         correctRedirectUri
       );
       
+      console.log(`🚀 OAuth2 client created successfully`);
+      
       const scopes = ['https://www.googleapis.com/auth/drive.file'];
+      console.log(`🚀 Generating auth URL with scopes:`, scopes);
+      
       const authUrl = oauth2Client.generateAuthUrl({
         access_type: 'offline',
         scope: scopes,
@@ -318,12 +336,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       console.log("🔵 DIRECT Generated Google Drive auth URL:", authUrl);
+      console.log("🚀 DIRECT Auth URL length:", authUrl.length);
       console.log("🚀 DIRECT Checking if URL contains 'https://1/':", authUrl.includes('https://1/'));
+      
+      if (authUrl.includes('undefined') || authUrl.length < 50) {
+        throw new Error(`Invalid auth URL generated: ${authUrl}`);
+      }
       
       res.json({ authUrl });
     } catch (error) {
       console.error("🔴 Error generating Google Drive auth URL:", error);
-      res.status(500).json({ message: "Failed to generate auth URL" });
+      console.error("🔴 Error stack:", (error as Error).stack);
+      res.status(500).json({ 
+        message: "Failed to generate auth URL",
+        error: (error as Error).message 
+      });
     }
   });
 
@@ -4954,7 +4981,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     // notes: entry.notes, // Removed - not a valid column
                     // status: entry.status, // Removed - not a valid column
                     // customAddress: entry.customAddress, // Removed - not a valid column
-                    leaveType: entry.leaveType
+                    // leaveType: entry.leaveType // Removed - not a valid column
                   }
                 });
               } else {
