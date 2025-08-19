@@ -623,7 +623,34 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     enabled: !isAdminView || !!selectedEmployee, // Only fetch when employee is selected in admin view
     refetchOnMount: true,
     refetchOnWindowFocus: false,
+    onSuccess: (data) => {
+      const url = isAdminView && selectedEmployee 
+        ? `/api/admin/timesheets/${selectedEmployee}` 
+        : isAdminView 
+          ? "/api/admin/timesheets" 
+          : "/api/timesheet";
+      console.log(`✅ API SUCCESS: ${url}`, data);
+    },
+    onError: (error) => {
+      const url = isAdminView && selectedEmployee 
+        ? `/api/admin/timesheets/${selectedEmployee}` 
+        : isAdminView 
+          ? "/api/admin/timesheets" 
+          : "/api/timesheet";
+      console.log(`❌ API ERROR: ${url}`, error);
+    }
   });
+
+  // Add debugging for API calls
+  useEffect(() => {
+    if (isAdminView && selectedEmployee) {
+      const url = `/api/admin/timesheets/${selectedEmployee}`;
+      console.log(`🔍 QUERY DEBUG: Fetching from ${url}`);
+      console.log(`🔍 QUERY ENABLED: ${!isAdminView || !!selectedEmployee}`);
+      console.log(`🔍 LOADING STATE: ${isLoading}`);
+      console.log(`🔍 ERROR STATE:`, error);
+    }
+  }, [isAdminView, selectedEmployee, isLoading, error]);
 
 
 
