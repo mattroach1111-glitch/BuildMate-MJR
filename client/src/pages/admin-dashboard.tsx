@@ -1744,7 +1744,7 @@ export default function AdminDashboard() {
                             {!isAddingNewProjectManager ? (
                               <div className="flex gap-2">
                                 <FormControl className="flex-1">
-                                  <Select onValueChange={handleProjectManagerChange} value={field.value}>
+                                  <Select onValueChange={handleProjectManagerChange} value={field.value || undefined}>
                                     <SelectTrigger data-testid="select-project-manager">
                                       <SelectValue placeholder="Select or add project manager" />
                                     </SelectTrigger>

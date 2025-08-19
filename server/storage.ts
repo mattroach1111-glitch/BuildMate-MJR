@@ -1980,7 +1980,7 @@ export class DatabaseStorage implements IStorage {
       updatedAt: row.updatedAt,
       user: {
         ...row.user,
-        employee: row.employee,
+        employee: row.employee || undefined,
       },
     }));
   }
