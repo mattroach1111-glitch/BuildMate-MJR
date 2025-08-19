@@ -230,7 +230,7 @@ export class EmailInboxService {
         subject += ` - ${jobAddress}`;
       }
       
-      let emailContent = `Your documents have been received and processed!\n\n`;
+      let emailContent = `Your documents have been processed successfully!\n\n`;
       emailContent += `Processed Documents:\n`;
       
       for (const doc of processedDocuments) {
@@ -240,9 +240,13 @@ export class EmailInboxService {
         emailContent += `  Category: ${doc.category.replace('_', ' ')}\n`;
       }
       
-      emailContent += `\nNEXT STEP REQUIRED: Please login to BuildFlow Pro and select which job these documents should be added to from the dropdown menu.\n`;
-      emailContent += `\nDocuments will not be added to any job sheet until you make this selection.\n`;
-      emailContent += `\nLogin to BuildFlow Pro to assign these documents to the correct job.`;
+      if (jobAddress) {
+        emailContent += `\nAdded to job: ${jobAddress}\n`;
+      } else {
+        emailContent += `\nPlease manually assign these expenses to the appropriate job sheet.\n`;
+      }
+      
+      emailContent += `\nLogin to BuildFlow Pro to review and edit if needed.`;
       
       await sendEmail({
         to: userEmail,
@@ -334,23 +338,22 @@ export class EmailInboxService {
           console.log(`🏢 Vendor: ${processed.vendor}`);
           console.log(`📁 Category: ${processed.category}`);
           
-          // Save to database for job selection workflow - REQUIRES MANUAL JOB SELECTION
+          // Save to database for review workflow
           await storage.createEmailProcessedDocument({
             filename: processed.filename,
             vendor: processed.vendor,
             amount: Number(processed.amount),
             category: processed.category,
-            status: 'awaiting_job_selection', // Changed status to require job selection
+            status: 'pending',
             emailSubject: emailMessage.subject,
             emailFrom: emailMessage.from,
             extractedData: JSON.stringify(processed),
             attachmentContent: attachment.content.toString('base64'), // Store original attachment for Google Drive upload
             mimeType: attachment.contentType, // Store MIME type for proper file handling
-            userId: targetUser.id,
-            jobId: null // No automatic job assignment - requires manual selection
+            userId: targetUser.id
           });
           
-          console.log(`📋 Document saved awaiting job selection`);
+          console.log(`📋 Document saved for review approval`);
         }
       }
       

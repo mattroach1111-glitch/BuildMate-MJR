@@ -408,10 +408,9 @@ export function EmailProcessingReview() {
                   )}
                   <Button
                     size="sm"
-                    onClick={() => approveMutation.mutate({ 
-                      docId: doc.id, 
-                      category: categoryOverrides[doc.id] || doc.category,
-                      jobId: jobOverrides[doc.id] || (() => {
+                    onClick={() => {
+                      // Get the selected job ID
+                      const selectedJobId = jobOverrides[doc.id] || (() => {
                         if (doc.email_subject && jobs && jobs.length > 0) {
                           const match = getJobFromSubject(doc.email_subject, jobs);
                           if (match) {
@@ -420,9 +419,25 @@ export function EmailProcessingReview() {
                             return matchedJob?.id;
                           }
                         }
-                        return jobs?.[0]?.id; // Fallback to first job
-                      })()
-                    })}
+                        return ''; // No fallback - must explicitly select
+                      })();
+
+                      // Require job selection before approval
+                      if (!selectedJobId) {
+                        toast({
+                          title: "Job Selection Required",
+                          description: "Please select a job from the dropdown before approving this document.",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+
+                      approveMutation.mutate({ 
+                        docId: doc.id, 
+                        category: categoryOverrides[doc.id] || doc.category,
+                        jobId: selectedJobId
+                      });
+                    }}
                     disabled={approveMutation.isPending}
                     className="bg-green-600 hover:bg-green-700"
                   >
