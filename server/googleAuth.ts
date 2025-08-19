@@ -11,41 +11,24 @@ export class GoogleDriveAuth {
     
     if (process.env.GOOGLE_REDIRECT_URI) {
       redirectUri = process.env.GOOGLE_REDIRECT_URI;
+    } else if (process.env.REPLIT_DEPLOYMENT) {
+      // Production deployment on Replit
+      redirectUri = `https://${process.env.REPLIT_DEPLOYMENT}/api/google-drive/callback`;
+    } else if (process.env.REPLIT_DEV_DOMAIN) {
+      // Development environment on Replit
+      redirectUri = `https://${process.env.REPLIT_DEV_DOMAIN}/api/google-drive/callback`;
     } else {
-      // Detect deployment environment and construct proper URL
-      if (process.env.REPLIT_DEPLOYMENT) {
-        // Production deployment
-        redirectUri = `https://${process.env.REPLIT_DEPLOYMENT}.replit.app/api/google-drive/callback`;
-      } else if (process.env.REPLIT_DEV_DOMAIN) {
-        // Development environment
-        redirectUri = `https://${process.env.REPLIT_DEV_DOMAIN}/api/google-drive/callback`;
-      } else {
-        // Fallback - you're using the deployed app build-mate-mattroach1111.replit.app
-        redirectUri = 'https://build-mate-mattroach1111.replit.app/api/google-drive/callback';
-      }
+      // Local development fallback
+      redirectUri = 'http://localhost:5000/api/google-drive/callback';
     }
     
     console.log(`🔵 Google Drive redirect URI: ${redirectUri}`);
-    console.log(`🔵 Environment debug - REPLIT_DEPLOYMENT: '${process.env.REPLIT_DEPLOYMENT}'`);
-    console.log(`🔵 Environment debug - REPLIT_DEV_DOMAIN: '${process.env.REPLIT_DEV_DOMAIN}'`);
-    console.log(`🔵 Environment debug - deploymentUrl: '${process.env.REPLIT_DEPLOYMENT ? `https://${process.env.REPLIT_DEPLOYMENT}.replit.app` : process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'http://localhost:5000'}'`);
-    
-    console.log(`🔵 Final OAuth2 config - ClientID: ${process.env.GOOGLE_CLIENT_ID?.substring(0, 10)}..., RedirectURI: ${redirectUri}`);
-    
-    // Force override - explicitly set the correct redirect URI
-    const correctRedirectUri = 'https://build-mate-mattroach1111.replit.app/api/google-drive/callback';
-    console.log(`🔵 GoogleDriveAuth constructor called at ${new Date().toISOString()}`);
-    console.log(`🔵 FORCED redirect URI: ${correctRedirectUri}`);
-    console.log(`🔵 Environment GOOGLE_REDIRECT_URI: ${process.env.GOOGLE_REDIRECT_URI}`);
     
     this.oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      correctRedirectUri
+      redirectUri
     );
-    
-    console.log(`🔵 OAuth2 client created, checking configured redirect URI...`);
-    console.log(`🔵 OAuth2 client internal redirect URI: ${(this.oauth2Client as any)._redirectUri || 'unknown'}`);
   }
 
   // Generate the URL for users to authorize the app
@@ -54,17 +37,11 @@ export class GoogleDriveAuth {
       'https://www.googleapis.com/auth/drive.file'
     ];
 
-    const authUrl = this.oauth2Client.generateAuthUrl({
+    return this.oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
       prompt: 'consent'
     });
-
-    console.log('🔵 Generated OAuth URL:', authUrl);
-    console.log('🔵 OAuth scopes requested:', scopes);
-    console.log('🔵 Client ID being used:', process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...');
-    
-    return authUrl;
   }
 
   // Exchange authorization code for tokens

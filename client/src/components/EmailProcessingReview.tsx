@@ -284,19 +284,19 @@ export function EmailProcessingReview() {
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="h-full flex flex-col">
+      <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
           <Clock className="h-5 w-5 text-orange-600" />
           Email Processing Review
           <Badge variant="secondary">{pendingDocs.length} pending</Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="flex-1 overflow-y-auto space-y-4 max-h-[70vh] sm:max-h-none">
         {pendingDocs.map((doc: any) => {
           try {
             return (
-              <div key={doc.id} className="border rounded-lg p-4 space-y-3">
+              <div key={doc.id} className="border rounded-lg p-3 sm:p-4 space-y-3 bg-white shadow-sm">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -326,13 +326,24 @@ export function EmailProcessingReview() {
                         })()} 
                         onValueChange={(value) => setJobOverrides(prev => ({...prev, [doc.id]: value}))}
                       >
-                        <SelectTrigger className="w-full h-7 text-xs mt-1">
+                        <SelectTrigger className="w-full h-8 text-xs mt-1 mobile-input">
                           <SelectValue placeholder="Select job..." />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent 
+                          position="popper" 
+                          className="max-h-[200px] overflow-y-auto z-[9999]"
+                          sideOffset={4}
+                        >
                           {jobs?.map((job: any) => (
-                            <SelectItem key={job.id} value={job.id}>
-                              {job.jobAddress} ({job.clientName})
+                            <SelectItem 
+                              key={job.id} 
+                              value={job.id}
+                              className="text-xs py-2"
+                            >
+                              <div className="flex flex-col">
+                                <span className="font-medium">{job.jobAddress}</span>
+                                <span className="text-xs text-muted-foreground">({job.clientName})</span>
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -344,27 +355,31 @@ export function EmailProcessingReview() {
                   </Badge>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Building className="h-3 w-3 text-gray-500" />
+                <div className="flex flex-col sm:grid sm:grid-cols-3 gap-3 sm:gap-4 text-sm">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Building className="h-3 w-3 text-gray-500 flex-shrink-0" />
                     <span className="text-gray-600">Vendor:</span>
-                    <span className="font-medium">{doc.vendor || 'Unknown'}</span>
+                    <span className="font-medium break-all">{doc.vendor || 'Unknown'}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <DollarSign className="h-3 w-3 text-gray-500" />
+                    <DollarSign className="h-3 w-3 text-gray-500 flex-shrink-0" />
                     <span className="text-gray-600">Amount:</span>
                     <span className="font-medium">${(parseFloat(doc.amount) || 0).toFixed(2)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-600">Category:</span>
+                    <span className="text-gray-600 flex-shrink-0">Category:</span>
                     <Select 
                       value={categoryOverrides[doc.id] || doc.category || 'other_costs'} 
                       onValueChange={(value) => setCategoryOverrides(prev => ({...prev, [doc.id]: value}))}
                     >
-                      <SelectTrigger className="w-32 h-7 text-xs">
+                      <SelectTrigger className="w-full sm:w-32 h-8 text-xs mobile-input">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent 
+                        position="popper" 
+                        className="z-[9999]"
+                        sideOffset={4}
+                      >
                         <SelectItem value="materials">Materials</SelectItem>
                         <SelectItem value="subtrades">Sub-trades</SelectItem>
                         <SelectItem value="tip_fees">Tip Fees</SelectItem>
@@ -374,7 +389,7 @@ export function EmailProcessingReview() {
                   </div>
                 </div>
 
-                <div className="flex gap-2 pt-2">
+                <div className="flex flex-wrap gap-2 pt-2">
                   {doc.attachmentURL && (
                     <Button
                       size="sm"

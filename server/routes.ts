@@ -15,7 +15,6 @@ import { GoogleDriveService } from "./googleDriveService";
 import { GoogleDriveAuth } from "./googleAuth";
 import { DocumentProcessor } from "./services/documentProcessor";
 import { rewardsService } from "./services/rewardsService";
-import multer from "multer";
 
 // Database-backed reward settings helper functions
 async function initializeRewardSettings() {
@@ -294,63 +293,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Google Drive authentication routes  
+  // Google Drive authentication routes
   app.get('/api/google-drive/auth-url', isAuthenticated, async (req: any, res) => {
-    console.log(`🚀🚀🚀 ROUTE HIT: /api/google-drive/auth-url at ${new Date().toISOString()}`);
     try {
-      console.log(`🔵 Environment check - GOOGLE_CLIENT_ID exists: ${!!process.env.GOOGLE_CLIENT_ID}`);
-      console.log(`🔵 Environment check - GOOGLE_CLIENT_SECRET exists: ${!!process.env.GOOGLE_CLIENT_SECRET}`);
-      console.log(`🔵 GOOGLE_CLIENT_ID length: ${process.env.GOOGLE_CLIENT_ID?.length || 0}`);
-      console.log(`🔵 GOOGLE_CLIENT_SECRET length: ${process.env.GOOGLE_CLIENT_SECRET?.length || 0}`);
-      
-      if (!process.env.GOOGLE_CLIENT_ID) {
-        throw new Error('GOOGLE_CLIENT_ID environment variable is not set');
-      }
-      
-      if (!process.env.GOOGLE_CLIENT_SECRET) {
-        throw new Error('GOOGLE_CLIENT_SECRET environment variable is not set');
-      }
-
-      // Directly create OAuth client here to bypass any caching
-      const { google } = require('googleapis');
-      const correctRedirectUri = 'https://build-mate-mattroach1111.replit.app/api/google-drive/callback';
-      
-      console.log(`🚀 Creating OAuth client directly with URI: ${correctRedirectUri}`);
-      console.log(`🚀 Client ID preview: ${process.env.GOOGLE_CLIENT_ID.substring(0, 20)}...`);
-      
-      const oauth2Client = new google.auth.OAuth2(
-        process.env.GOOGLE_CLIENT_ID,
-        process.env.GOOGLE_CLIENT_SECRET,
-        correctRedirectUri
-      );
-      
-      console.log(`🚀 OAuth2 client created successfully`);
-      
-      const scopes = ['https://www.googleapis.com/auth/drive.file'];
-      console.log(`🚀 Generating auth URL with scopes:`, scopes);
-      
-      const authUrl = oauth2Client.generateAuthUrl({
-        access_type: 'offline',
-        scope: scopes,
-        prompt: 'consent'
-      });
-      
-      console.log("🔵 DIRECT Generated Google Drive auth URL:", authUrl);
-      console.log("🚀 DIRECT Auth URL length:", authUrl.length);
-      console.log("🚀 DIRECT Checking if URL contains 'https://1/':", authUrl.includes('https://1/'));
-      
-      if (authUrl.includes('undefined') || authUrl.length < 50) {
-        throw new Error(`Invalid auth URL generated: ${authUrl}`);
-      }
-      
+      const googleAuth = new GoogleDriveAuth();
+      const authUrl = googleAuth.getAuthUrl();
+      console.log("🔵 Generated Google Drive auth URL:", authUrl);
       res.json({ authUrl });
     } catch (error) {
       console.error("🔴 Error generating Google Drive auth URL:", error);
-      console.error("🔴 Error stack:", (error as Error).stack);
-      res.status(500).json({ 
-        message: "Failed to generate auth URL",
-        error: (error as Error).message 
-      });
+      res.status(500).json({ message: "Failed to generate auth URL" });
     }
   });
 
@@ -1876,7 +1828,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             try {
               const googleDriveService = new GoogleDriveService();
               const tokens = JSON.parse(user.googleDriveTokens);
-              await googleDriveService.setUserTokens(tokens);
+              googleDriveService.setUserTokens(tokens);
               
               const fileName = `timesheet-${userEmployee.name}-${fortnightStart}-${fortnightEnd}.pdf`;
               
@@ -1884,7 +1836,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
               
               // Create or find Timesheets folder inside BuildFlow Pro
-              const buildFlowFolderId = await googleDriveService.findOrCreateFolder('Timesheets', mainFolderId || undefined);
+              const buildFlowFolderId = await googleDriveService.findOrCreateFolder('Timesheets', mainFolderId);
               
               // Upload PDF to Google Drive
               driveLink = await googleDriveService.uploadPDF(fileName, pdfBuffer, buildFlowFolderId || undefined);
@@ -1918,7 +1870,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const submittedDates = entries.map(entry => entry.date).filter(Boolean);
           
           // Award points for each unique submission date
-          const uniqueDates = Array.from(new Set(submittedDates));
+          const uniqueDates = [...new Set(submittedDates)];
           let totalPointsEarned = 0;
           let newAchievements: any[] = [];
           let currentStreak = 0;
@@ -2508,7 +2460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(timesheetEntries.staffId, employeeId));
       
       // Also update labor hours for all jobs this employee worked on
-      const jobIds = Array.from(new Set(entries.map(entry => entry.jobId).filter(Boolean)));
+      const jobIds = [...new Set(entries.map(entry => entry.jobId).filter(Boolean))];
       for (const jobId of jobIds) {
         if (jobId) {
           await storage.updateLaborHoursFromTimesheet(employeeId, jobId);
@@ -2563,7 +2515,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const user = await storage.getUser(userId);
           if (user?.googleDriveTokens) {
             const googleDriveService = new GoogleDriveService();
-            await googleDriveService.setUserTokens(JSON.parse(user.googleDriveTokens));
+            googleDriveService.setUserTokens(JSON.parse(user.googleDriveTokens));
 
             // Download file from object storage
             const objectFile = await objectStorageService.getObjectEntityFile(normalizedPath);
@@ -2636,21 +2588,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Handle Google Drive files vs object storage files
       if (file.googleDriveLink) {
-        console.log(`📎 Serving Google Drive file: ${file.fileName} -> ${file.googleDriveLink}`);
+        // For Google Drive files, redirect to the Google Drive link
         return res.redirect(file.googleDriveLink);
       }
 
       if (!file.objectPath) {
-        console.error(`❌ File ${fileId} has no storage path available:`, {
-          fileName: file.fileName,
-          hasGoogleDriveLink: !!file.googleDriveLink,
-          hasObjectPath: !!file.objectPath,
-          googleDriveFileId: file.googleDriveFileId
-        });
-        return res.status(404).json({ 
-          message: "File not found - no storage path available",
-          suggestion: "This file may need to be re-uploaded to restore access"
-        });
+        return res.status(404).json({ message: "File not found - no storage path available" });
       }
 
       const objectStorageService = new ObjectStorageService();
@@ -2806,223 +2749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Setup multer for file uploads
-  const upload = multer({ storage: multer.memoryStorage() });
-
-  // Endpoint to upload documents with automatic fallback (Object Storage + Google Drive backup)
-  app.post("/api/documents/upload-reliable", isAuthenticated, upload.single('file'), async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      // Extract file and form data
-      const uploadedFile = req.file;
-      const { jobId, fileName, mimeType, fileSize } = req.body;
-      
-      console.log(`📤 Reliable document upload request:`, {
-        hasFile: !!uploadedFile,
-        jobId,
-        fileName,
-        originalName: uploadedFile?.originalname,
-        size: uploadedFile?.size,
-        mimetype: uploadedFile?.mimetype
-      });
-      
-      if (!uploadedFile || !jobId) {
-        return res.status(400).json({ error: "File and job ID are required" });
-      }
-
-      // Verify job exists
-      const job = await storage.getJob(jobId);
-      if (!job) {
-        return res.status(404).json({ error: "Job not found" });
-      }
-
-      // Use the uploaded file buffer
-      const fileBuffer = uploadedFile.buffer;
-      const actualMimeType = uploadedFile.mimetype || mimeType || 'application/octet-stream';
-      const actualFileName = fileName || uploadedFile.originalname || 'document';
-
-      // Primary storage: Object Storage (always works)
-      console.log(`💾 Uploading to Object Storage: ${actualFileName}`);
-      const objectStorageService = new ObjectStorageService();
-      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-      
-      // Upload to object storage using the presigned URL
-      const uploadResponse = await fetch(uploadURL, {
-        method: 'PUT',
-        body: fileBuffer,
-        headers: {
-          'Content-Type': actualMimeType,
-        },
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error(`Object storage upload failed: ${uploadResponse.statusText}`);
-      }
-
-      // Get the object path from the upload URL
-      const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
-      
-      let googleDriveLink = null;
-      let googleDriveFileId = null;
-
-      // Secondary backup: Google Drive (if connected)
-      if (user && user.googleDriveTokens) {
-        try {
-          console.log(`☁️ Backing up to Google Drive: ${actualFileName}`);
-          const googleDriveService = new GoogleDriveService();
-          const tokens = JSON.parse(user.googleDriveTokens);
-          await googleDriveService.setUserTokens(tokens);
-
-          const uploadResult = await googleDriveService.uploadJobAttachment(
-            actualFileName, 
-            fileBuffer, 
-            actualMimeType, 
-            job.jobAddress
-          );
-          
-          if (uploadResult) {
-            googleDriveLink = uploadResult.webViewLink;
-            googleDriveFileId = uploadResult.fileId;
-            console.log(`✅ Successfully backed up to Google Drive: ${actualFileName}`);
-          }
-        } catch (driveError: any) {
-          console.warn(`⚠️ Google Drive backup failed, but file is safely stored in Object Storage: ${driveError.message}`);
-        }
-      } else {
-        console.log(`ℹ️ Google Drive not connected - file stored in Object Storage only`);
-      }
-
-      // Create job file record in database
-      const fileRecord = await storage.createJobFile({
-        jobId: jobId,
-        fileName: actualFileName,
-        originalName: actualFileName,
-        fileSize: parseInt(fileSize) || fileBuffer.length,
-        mimeType: actualMimeType,
-        objectPath: objectPath,
-        googleDriveLink: googleDriveLink,
-        googleDriveFileId: googleDriveFileId,
-        uploadedById: userId
-      });
-
-      console.log(`✅ Document uploaded successfully: ${actualFileName} (Object Storage + ${googleDriveLink ? 'Google Drive backup' : 'no Google Drive backup'})`);
-
-      res.json({
-        success: true,
-        fileId: fileRecord.id,
-        objectPath: objectPath,
-        googleDriveLink: googleDriveLink,
-        googleDriveFileId: googleDriveFileId,
-        message: googleDriveLink 
-          ? "Document uploaded and backed up to Google Drive" 
-          : "Document uploaded to secure storage (connect Google Drive for additional backup)"
-      });
-
-    } catch (error: any) {
-      console.error("❌ Document upload failed:", error);
-      res.status(500).json({ 
-        error: error.message || "Document upload failed"
-      });
-    }
-  });
-
-  // Endpoint to upload documents directly to Google Drive (original method - kept for compatibility)
-  app.post("/api/documents/upload-direct-to-drive", isAuthenticated, upload.single('file'), async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      if (!user || !user.googleDriveTokens) {
-        return res.status(400).json({ 
-          error: "Google Drive not connected. Please connect your Google Drive account first." 
-        });
-      }
-
-      // Extract file and form data
-      const uploadedFile = req.file;
-      const { jobId, fileName, mimeType, fileSize } = req.body;
-      
-      console.log(`📤 Direct Google Drive upload request:`, {
-        hasFile: !!uploadedFile,
-        jobId,
-        fileName,
-        originalName: uploadedFile?.originalname,
-        size: uploadedFile?.size,
-        mimetype: uploadedFile?.mimetype
-      });
-      
-      if (!uploadedFile || !jobId) {
-        return res.status(400).json({ error: "File and job ID are required" });
-      }
-
-      // Verify job exists
-      const job = await storage.getJob(jobId);
-      if (!job) {
-        return res.status(404).json({ error: "Job not found" });
-      }
-
-      // Use the uploaded file buffer
-      const fileBuffer = uploadedFile.buffer;
-      const actualMimeType = uploadedFile.mimetype || mimeType || 'application/octet-stream';
-      const actualFileName = fileName || uploadedFile.originalname || 'document';
-
-      // Upload to Google Drive
-      const googleDriveService = new GoogleDriveService();
-      const tokens = JSON.parse(user.googleDriveTokens);
-      await googleDriveService.setUserTokens(tokens);
-
-      console.log(`🔗 Google Drive service setup complete, uploading file...`);
-
-      // Create main BuildFlow Pro folder first
-      const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
-      
-      // Create/find job folder inside BuildFlow Pro folder
-      const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId || undefined);
-      
-      // Upload file to Google Drive
-      const uploadResult = await googleDriveService.uploadFile(
-        actualFileName, 
-        fileBuffer, 
-        actualMimeType, 
-        jobFolderId || undefined
-      );
-      
-      if (!uploadResult) {
-        return res.status(500).json({ error: "Failed to upload to Google Drive" });
-      }
-
-      // Create job file record in database with Google Drive info
-      const fileRecord = await storage.createJobFile({
-        jobId: jobId,
-        fileName: actualFileName,
-        originalName: actualFileName,
-        fileSize: parseInt(fileSize) || fileBuffer.length,
-        mimeType: actualMimeType,
-        objectPath: null, // No object storage path for direct Google Drive uploads
-        googleDriveLink: uploadResult.webViewLink,
-        googleDriveFileId: uploadResult.fileId,
-        uploadedById: userId
-      });
-
-      console.log(`✅ Successfully uploaded ${actualFileName} directly to Google Drive for job ${job.jobAddress}`);
-
-      res.json({
-        success: true,
-        fileId: fileRecord.id,
-        googleDriveLink: uploadResult.webViewLink,
-        googleDriveFileId: uploadResult.fileId,
-        message: "Document uploaded directly to Google Drive successfully"
-      });
-
-    } catch (error) {
-      console.error("Error uploading directly to Google Drive:", error);
-      res.status(500).json({ error: "Failed to upload document to Google Drive" });
-    }
-  });
-
-  // Endpoint to upload documents directly to Google Drive (legacy method with object storage first)
+  // Endpoint to upload documents directly to Google Drive
   app.post("/api/documents/upload-to-drive", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -3062,13 +2789,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Upload to Google Drive
       const googleDriveService = new GoogleDriveService();
       const tokens = JSON.parse(user.googleDriveTokens);
-      await googleDriveService.setUserTokens(tokens);
+      googleDriveService.setUserTokens(tokens);
 
       // Create main BuildFlow Pro folder first
       const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
       
       // Create/find job folder inside BuildFlow Pro folder
-      const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId || undefined);
+      const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId);
       
       // Upload file to Google Drive
       const uploadResult = await googleDriveService.uploadFile(fileName, fileBuffer, mimeType || 'application/octet-stream', jobFolderId || undefined);
@@ -3278,7 +3005,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`🔵 Creating new employee for this job only: ${laborEntry.employeeName}`);
             const newEmployee = await storage.createEmployeeForJob({
               name: laborEntry.employeeName
-            }, newJob.id, parseFloat(laborEntry.rate) || 64.0);
+            }, newJob.id, parseFloat(laborEntry.rate) || parseFloat(defaultHourlyRate));
             employeeId = newEmployee.id;
           }
           
@@ -3392,12 +3119,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             const googleDriveService = new GoogleDriveService();
             const tokens = JSON.parse(currentUser.googleDriveTokens);
-            await googleDriveService.setUserTokens(tokens);
+            googleDriveService.setUserTokens(tokens);
 
             // Create main BuildFlow Pro folder first
             const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
             
-            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${jobAddress}`, mainFolderId || undefined);
+            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${jobAddress}`, mainFolderId);
             
             const uploadResult = await googleDriveService.uploadFile(
               fileName, 
@@ -3446,12 +3173,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             const googleDriveService = new GoogleDriveService();
             const tokens = JSON.parse(currentUser.googleDriveTokens);
-            await googleDriveService.setUserTokens(tokens);
+            googleDriveService.setUserTokens(tokens);
 
             // Create main BuildFlow Pro folder first
             const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
             
-            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${jobAddress}`, mainFolderId || undefined);
+            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${jobAddress}`, mainFolderId);
             
             const uploadResult = await googleDriveService.uploadFile(
               fileName, 
@@ -3487,7 +3214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 jobId: newJob.id,
                 fileName: fileName,
                 originalName: fileName,
-                fileSize: parseInt(String(fileMetadata.size || '0')),
+                fileSize: parseInt(fileMetadata.size || '0'),
                 mimeType: metadata.contentType || 'application/pdf',
                 objectPath: normalizedPath,
                 googleDriveLink: null,
@@ -3503,7 +3230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               jobId: newJob.id,
               fileName: fileName,
               originalName: fileName,
-              fileSize: parseInt(String(fileMetadata.size || '0')),
+              fileSize: parseInt(fileMetadata.size || '0'),
               mimeType: metadata.contentType || 'application/pdf',
               objectPath: normalizedPath,
               googleDriveLink: null,
@@ -3670,7 +3397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(req.user.claims.sub);
         if (user?.googleDriveTokens) {
           const googleDriveService = new GoogleDriveService();
-          await googleDriveService.setUserTokens(JSON.parse(user.googleDriveTokens));
+          googleDriveService.setUserTokens(JSON.parse(user.googleDriveTokens));
 
           // Upload PDF to Google Drive job folder
           const pdfFileName = `JobSheet_${jobDetails.jobAddress.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
@@ -3745,7 +3472,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         status: "active",
         emailAddress,
-        lastChecked: lastChecked instanceof Date ? lastChecked.toISOString() : new Date(lastChecked || Date.now()).toISOString(),
+        lastChecked: new Date(lastChecked).toISOString(),
         recentProcessed: recentActivity,
         totalProcessed
       });
@@ -3866,7 +3593,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Parse the extracted data
-      const extractedData = JSON.parse(document.extractedData || '{}');
+      const extractedData = JSON.parse(document.extractedData);
       
       // Use category override if provided
       const finalCategory = categoryOverride || extractedData.category;
@@ -3875,7 +3602,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let targetJobId = jobId;
       if (!targetJobId) {
         // Try to extract job information from email subject
-        targetJobId = await extractJobFromEmailSubject(document.emailSubject || undefined, storage);
+        targetJobId = await extractJobFromEmailSubject(document.emailSubject, storage);
         
         // If still no job, use the first active job as default
         if (!targetJobId) {
@@ -3972,7 +3699,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           console.log(`📎 Job file record created: ${fileRecord.id}`);
         } catch (fileError) {
-          console.log(`⚠️ Could not create job file record: ${(fileError as Error).message}`);
+          console.log(`⚠️ Could not create job file record: ${fileError.message}`);
         }
 
         // Try to upload to Google Drive if user has it connected
@@ -3985,9 +3712,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Get job for folder naming
             const job = await storage.getJob(targetJobId);
-            if (!job) {
-              throw new Error('Job not found');
-            }
             
             // Get the actual attachment content from the stored base64 data
             let fileBuffer;
@@ -4003,13 +3727,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             const googleDriveService = new GoogleDriveService();
             const tokens = JSON.parse(user.googleDriveTokens);
-            await googleDriveService.setUserTokens(tokens);
+            googleDriveService.setUserTokens(tokens);
             
             // Create main BuildFlow Pro folder first
             const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
             
             // Create/find job folder
-            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId || undefined);
+            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId);
             
             // Upload file to Google Drive
             const uploadResult = await googleDriveService.uploadFile(
@@ -4029,13 +3753,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.log(`☁️ File uploaded to Google Drive: ${uploadResult.webViewLink}`);
             }
           } catch (driveError) {
-            console.log(`⚠️ Google Drive upload failed: ${(driveError as Error).message}`);
+            console.log(`⚠️ Google Drive upload failed: ${driveError.message}`);
           }
         } else {
           console.log(`ℹ️ Google Drive not connected for user ${userId}`);
         }
       } catch (attachmentError) {
-        console.log(`⚠️ File attachment processing failed: ${(attachmentError as Error).message}`);
+        console.log(`⚠️ File attachment processing failed: ${attachmentError.message}`);
       }
 
       // Now approve the document with the job ID
@@ -4391,7 +4115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           FROM reward_transactions 
           WHERE type IN ('earned', 'bonus')
         `);
-        totalPointsAwarded = Number((pointsResult.rows || pointsResult)[0]?.total || 0);
+        totalPointsAwarded = Number(pointsResult[0]?.total || 0);
       } catch (e) {
         console.log("reward_transactions table not found, using default value");
       }
@@ -4401,7 +4125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           SELECT COUNT(DISTINCT user_id) as total 
           FROM reward_transactions
         `);
-        activeUsers = Number((activeUsersResult.rows || activeUsersResult)[0]?.total || 0);
+        activeUsers = Number(activeUsersResult[0]?.total || 0);
       } catch (e) {
         console.log("reward_transactions table not found for active users, using default value");
       }
@@ -4420,7 +4144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ORDER BY rp.total_points DESC
           LIMIT 10
         `);
-        topPerformers = (topPerformersResult.rows || topPerformersResult).map((p: any) => ({
+        topPerformers = topPerformersResult.map((p: any) => ({
           userId: p.user_id,
           firstName: p.first_name || 'Unknown',
           lastName: p.last_name || '',
@@ -4440,7 +4164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             WHERE role = 'staff'
             LIMIT 10
           `);
-          topPerformers = (staffResult.rows || staffResult).map((p: any) => ({
+          topPerformers = staffResult.map((p: any) => ({
             userId: p.user_id,
             firstName: p.first_name || 'Unknown',
             lastName: p.last_name || '',
@@ -4668,7 +4392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error("Error exporting data:", error);
-      res.status(500).json({ message: "Failed to export data", error: (error as Error).message });
+      res.status(500).json({ message: "Failed to export data", error: error.message });
     }
   });
 
@@ -4676,19 +4400,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/export-data-to-drive", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       console.log("🔄 Starting Google Drive data backup...");
-      console.log("👤 User:", req.user?.claims?.sub);
 
       // Get all business data (same as regular export)
-      console.log("📊 Fetching data from database...");
       const jobsData = await db.select().from(jobs);
-      console.log(`✅ Jobs: ${jobsData.length}`);
-      
       const employeesData = await db.select().from(employees); 
-      console.log(`✅ Employees: ${employeesData.length}`);
-      
       const usersData = await db.select().from(users);
-      console.log(`✅ Users: ${usersData.length}`);
-      
       const timesheetEntriesData = await db.select().from(timesheetEntries);
       const laborEntriesData = await db.select().from(laborEntries);
       const materialsData = await db.select().from(materials);
@@ -4770,11 +4486,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("✅ User has Google Drive tokens, setting up service...");
 
         // Use the GoogleDriveService
+        const GoogleDriveService = (await import('./googleDriveService')).GoogleDriveService;
         const googleDriveService = new GoogleDriveService();
         
         // Set user tokens
         const tokens = JSON.parse(user.googleDriveTokens);
-        await googleDriveService.setUserTokens(tokens);
+        googleDriveService.setUserTokens(tokens);
 
         // Check if service is ready
         if (!googleDriveService.isReady()) {
@@ -4792,7 +4509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
         
         // Create backups subfolder
-        const backupsFolderId = await googleDriveService.findOrCreateFolder('Backups', mainFolderId || undefined);
+        const backupsFolderId = await googleDriveService.findOrCreateFolder('Backups', mainFolderId);
 
         console.log("☁️ Uploading backup file to Google Drive...");
 
@@ -4978,10 +4695,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     jobId: entry.jobId,
                     date: entry.date,
                     hours: entry.hours,
-                    // notes: entry.notes, // Removed - not a valid column
-                    // status: entry.status, // Removed - not a valid column
-                    // customAddress: entry.customAddress, // Removed - not a valid column
-                    // leaveType: entry.leaveType // Removed - not a valid column
+                    notes: entry.notes,
+                    status: entry.status,
+                    customAddress: entry.customAddress,
+                    leaveType: entry.leaveType
                   }
                 });
               } else {
