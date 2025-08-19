@@ -613,7 +613,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     retry: false,
   });
 
-  const { data: timesheetEntries, refetch: refetchTimesheetEntries } = useQuery({
+  const { data: timesheetEntries, refetch: refetchTimesheetEntries, isLoading: timesheetLoading, error: timesheetError } = useQuery({
     queryKey: isAdminView && selectedEmployee 
       ? ["/api/admin/timesheets", selectedEmployee] 
       : isAdminView 
@@ -623,7 +623,33 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     enabled: !isAdminView || !!selectedEmployee, // Only fetch when employee is selected in admin view
     refetchOnMount: true,
     refetchOnWindowFocus: false,
+    onSuccess: (data) => {
+      console.log(`🎯 TIMESHEET QUERY SUCCESS: Received ${Array.isArray(data) ? data.length : 'non-array'} entries`);
+      if (Array.isArray(data) && data.length > 0) {
+        console.log(`📝 FIRST ENTRY SAMPLE:`, data[0]);
+      }
+    },
+    onError: (error) => {
+      console.error(`❌ TIMESHEET QUERY ERROR:`, error);
+    }
   });
+
+  // Debug query state
+  useEffect(() => {
+    console.log(`🔍 TIMESHEET QUERY DEBUG:`, {
+      isAdminView,
+      selectedEmployee,
+      queryEnabled: !isAdminView || !!selectedEmployee,
+      isLoading: timesheetLoading,
+      hasError: !!timesheetError,
+      dataLength: Array.isArray(timesheetEntries) ? timesheetEntries.length : 'not-array',
+      queryKey: isAdminView && selectedEmployee 
+        ? ["/api/admin/timesheets", selectedEmployee] 
+        : isAdminView 
+          ? ["/api/admin/timesheets"] 
+          : ["/api/timesheet"]
+    });
+  }, [isAdminView, selectedEmployee, timesheetLoading, timesheetError, timesheetEntries]);
 
   // Update selected employee when prop changes
   useEffect(() => {
