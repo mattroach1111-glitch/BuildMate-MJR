@@ -1325,6 +1325,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug endpoint to troubleshoot timesheet queries
+  app.get("/api/debug/timesheets/:employeeId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const employeeId = req.params.employeeId;
+      
+      // Get direct database info
+      const directQuery = await db
+        .select()
+        .from(timesheetEntries)
+        .where(eq(timesheetEntries.staffId, employeeId))
+        .orderBy(desc(timesheetEntries.date));
+      
+      // Get all staff IDs for comparison
+      const allStaffIds = await db
+        .selectDistinct({ staffId: timesheetEntries.staffId })
+        .from(timesheetEntries)
+        .limit(20);
+      
+      // Check if this employee exists in employees table
+      const employeeRecord = await db
+        .select()
+        .from(employees)
+        .where(eq(employees.id, employeeId))
+        .limit(1);
+      
+      // Check if this employee exists in users table
+      const userRecord = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, employeeId))
+        .limit(1);
+
+      res.json({
+        searchedEmployeeId: employeeId,
+        directQueryResults: directQuery.length,
+        sampleEntry: directQuery[0] || null,
+        availableStaffIds: allStaffIds.map(r => r.staffId),
+        employeeInEmployeesTable: employeeRecord.length > 0,
+        employeeInUsersTable: userRecord.length > 0,
+        employeeRecord: employeeRecord[0] || null,
+        userRecord: userRecord[0] || null
+      });
+    } catch (error) {
+      console.error("Debug endpoint error:", error);
+      res.status(500).json({ message: "Debug query failed", error: error.message });
+    }
+  });
+
   // Get specific employee's timesheet entries for admin
   app.get("/api/admin/timesheets/:employeeId", isAuthenticated, async (req: any, res) => {
     try {
