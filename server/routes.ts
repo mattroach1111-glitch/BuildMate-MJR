@@ -297,11 +297,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Google Drive authentication routes
   app.get('/api/google-drive/auth-url', isAuthenticated, async (req: any, res) => {
     try {
-      console.log("🚀 Google Drive auth-url endpoint hit");
+      console.log("🚀 Google Drive auth-url endpoint hit - FORCING NEW INSTANCE");
       console.log("🚀 Environment check - GOOGLE_REDIRECT_URI:", process.env.GOOGLE_REDIRECT_URI);
       console.log("🚀 Environment check - REPLIT_DEPLOYMENT:", process.env.REPLIT_DEPLOYMENT);
       
-      const googleAuth = new GoogleDriveAuth();
+      // Force bypass any caching - create completely new instance
+      delete require.cache[require.resolve('./googleAuth')];
+      const { GoogleDriveAuth: FreshGoogleDriveAuth } = require('./googleAuth');
+      const googleAuth = new FreshGoogleDriveAuth();
+      
       const authUrl = googleAuth.getAuthUrl();
       console.log("🔵 Generated Google Drive auth URL:", authUrl);
       console.log("🚀 Checking if URL contains 'https://1/':", authUrl.includes('https://1/'));
