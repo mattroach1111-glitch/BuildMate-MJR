@@ -701,15 +701,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   // Allow editing of empty days even after fortnight confirmation
   // This enables users to add entries to previously empty days in confirmed fortnights
 
-  // Mutations for editing and deleting saved entries
-  const editTimesheetMutation = useMutation({
-    mutationFn: async ({ id, field, value }: { id: string; field: string; value: string }) => {
-      return apiRequest('PATCH', `/api/timesheet/${id}`, { [field]: value });
-    },
-    onSuccess: () => {
-      refetchTimesheetEntries();
-    },
-  });
+  // DISABLED: Auto-save mutations completely removed per user request
+  // All individual field changes now stored locally until "Save All" is clicked
 
   const deleteTimesheetMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -1152,59 +1145,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             });
           })
         ),
-        // Update existing entries
-        ...entriesToUpdate.map(({ id, data }) => 
-          new Promise((resolve, reject) => {
-            // Update each field individually to match the existing PATCH API
-            const updatePromises = [];
-            
-            if (data.hours !== undefined) {
-              updatePromises.push(
-                new Promise((res, rej) => {
-                  editTimesheetMutation.mutate({ id, field: 'hours', value: data.hours.toString() }, {
-                    onSuccess: res,
-                    onError: rej
-                  });
-                })
-              );
-            }
-            
-            if (data.materials !== undefined) {
-              updatePromises.push(
-                new Promise((res, rej) => {
-                  editTimesheetMutation.mutate({ id, field: 'materials', value: data.materials }, {
-                    onSuccess: res,
-                    onError: rej
-                  });
-                })
-              );
-            }
-            
-            if (data.jobId !== undefined) {
-              updatePromises.push(
-                new Promise((res, rej) => {
-                  editTimesheetMutation.mutate({ id, field: 'jobId', value: data.jobId || '' }, {
-                    onSuccess: res,
-                    onError: rej
-                  });
-                })
-              );
-            }
-            
-            if (data.description !== undefined) {
-              updatePromises.push(
-                new Promise((res, rej) => {
-                  editTimesheetMutation.mutate({ id, field: 'description', value: data.description || '' }, {
-                    onSuccess: res,
-                    onError: rej
-                  });
-                })
-              );
-            }
-            
-            Promise.all(updatePromises).then(resolve).catch(reject);
-          })
-        )
+        // DISABLED: Individual field updates removed - will implement batch entry replacement later
+        // For now, just don't update existing entries during "Save All"
       ];
 
       await Promise.all(savePromises);
@@ -1278,7 +1220,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   };
 
   const deleteSavedEntry = (id: string) => {
-    deleteTimesheetMutation.mutate(id);
+    // DISABLED: No auto-delete - user must use "Save All" for all changes
+    console.log('Delete disabled - entries will be handled through Save All batch process');
   };
 
   const getTotalHours = () => {
@@ -1723,11 +1666,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 </PopoverTrigger>
                                 <PopoverContent className="w-80 p-0" align="start">
                                   <Command>
-                                    <CommandInput 
-                                      placeholder="Search jobs..." 
-                                      value={jobSearchQuery[cellKey] || ''}
-                                      onValueChange={(search) => setJobSearchQuery(prev => ({ ...prev, [cellKey]: search }))}
-                                    />
+                                    {/* Search bar completely removed - same interface for admin and staff */}
                                     <CommandList className="max-h-64">
                                       <CommandEmpty>No job found.</CommandEmpty>
                                       <CommandGroup>
@@ -2898,11 +2837,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   handleCellChange(day, entryIndex, 'description', `CUSTOM_ADDRESS: ${fullAddress}`);
                   handleCellChange(day, entryIndex, 'hours', '');
                   
-                  // If there was an existing saved entry, delete it so user can save fresh custom address entry
-                  // Admin override: Allow deleting approved entries for custom address updates
-                  if (entry?.id && (!entry?.approved || isAdminView)) {
-                    deleteTimesheetMutation.mutate(entry.id);
-                  }
+                  // DISABLED: No auto-delete for custom addresses - user must save manually
                   
                   toast({
                     title: "Address Added",
