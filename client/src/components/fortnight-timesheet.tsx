@@ -629,7 +629,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   useEffect(() => {
     if (isAdminView && selectedEmployee) {
       const url = `/api/admin/timesheets/${selectedEmployee}`;
-      console.log(`🔍 API DEBUG: URL=${url}, Loading=${isLoading}, HasData=${!!timesheetEntries}, Error=`, error);
+      // API status check for timesheet data
       if (timesheetEntries) {
         console.log(`✅ API SUCCESS: ${url}`, timesheetEntries);
       }
@@ -1253,15 +1253,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         return total + (isNaN(hours) ? 0 : hours);
       }, 0) : 0;
     
-    // Remove debug logging in production for cleaner user experience
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 TOTAL HOURS DEBUG:', {
-        entriesCount: currentFortnightEntries?.length || 0,
-        totalHours: savedHours,
-        lessThan76: savedHours < 76,
-        entries: currentFortnightEntries?.map(e => ({ hours: e.hours, date: e.date })) || []
-      });
-    }
+    // Calculate total hours without debug logging
 
     return isNaN(savedHours) ? 0 : savedHours;
   };
@@ -1425,15 +1417,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     }
   };
 
-  // Cleanup timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (autoSaveTimeout.current) {
-        clearTimeout(autoSaveTimeout.current);
-      }
-    };
-    // No auto-save cleanup needed
-  }, []);
+  // No auto-save cleanup needed since auto-save was removed
 
   // Calculate progress stats for staff view
   const savedHours = Array.isArray(currentFortnightEntries) ? 
@@ -1546,7 +1530,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     ) : [];
                     
                     // IMPROVED: Combine all entries (saved + draft) for smoother multiple entries per day
-                    let entriesToShow = [];
+                    let entriesToShow: any[] = [];
                     
                     // Always show existing saved entries first (approved and unapproved)
                     if (existingEntries.length > 0) {
@@ -2545,7 +2529,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                         'no-job': 'No job'
                                       };
                                       
-                                      console.log('🔍 CHECKING ENTRY:', {jobId: entry.jobId, description: entry.description, isCustom: entry.jobId && entry.jobId.startsWith('custom-address')});
+                                      // Check entry type for display logic
                                       
                                       if (leaveTypes[entry.jobId]) {
                                         return leaveTypes[entry.jobId];
@@ -2899,7 +2883,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   const unapprovedEntries = existingEntries.filter((entry: any) => !entry.approved);
                   
                   // IMPROVED: Combine all entries (saved + draft) for smoother multiple entries per day
-                  let entriesToShow = [];
+                  let entriesToShow: any[] = [];
                   
                   // Always show existing saved entries first
                   if (existingEntries.length > 0) {
@@ -2918,7 +2902,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   
                   const entry = entriesToShow[entryIndex];
                   // Setting custom address on entry
-                  console.log('🏠 SETTING CUSTOM ADDRESS:', fullAddress);
                   
                   // Set the custom address as the job - but don't auto-save, let user save manually
                   handleCellChange(day, entryIndex, 'jobId', 'custom-address');
@@ -2954,11 +2937,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         
         {/* Low Hours Warning Dialog - ADMIN AND STAFF */}
         {(() => {
-          // Remove debug logging in production for cleaner user experience
-          if (process.env.NODE_ENV === 'development') {
-            console.log('🚨 DIALOG RENDER CHECK - showLowHoursDialog:', showLowHoursDialog, 'lowHoursTotal:', lowHoursTotal);
-            console.log('🚨 CONDITIONAL RENDER CHECK - will render dialog?', !!showLowHoursDialog);
-          }
+          // Dialog render check without debug logging
           return null;
         })()}
         {showLowHoursDialog && (
