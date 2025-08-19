@@ -192,7 +192,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   
   // Function to show low hours dialog using DOM manipulation (avoids React re-render issues)
   const showLowHoursDialogDOM = (totalHours: number, onConfirm: () => void) => {
-    console.log('🚨 SHOWING LOW HOURS DIALOG DOM');
+
     
     // Remove any existing dialog
     const existingDialog = document.getElementById('low-hours-dialog');
@@ -281,12 +281,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     const submitBtn = document.getElementById('low-hours-submit-btn');
     
     cancelBtn?.addEventListener('click', () => {
-      console.log('🚨 USER CANCELLED SUBMISSION');
+
       dialog.remove();
     });
     
     submitBtn?.addEventListener('click', () => {
-      console.log('🚨 USER CONFIRMED SUBMISSION DESPITE LOW HOURS');
+
       dialog.remove();
       onConfirm();
     });
@@ -294,22 +294,22 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     // Close on backdrop click
     dialog.addEventListener('click', (e) => {
       if (e.target === dialog) {
-        console.log('🚨 USER CANCELLED SUBMISSION (BACKDROP)');
+
         dialog.remove();
       }
     });
     
-    console.log('🚨 LOW HOURS DIALOG CREATED AND ADDED TO DOM');
+
   };
 
   // Debug effect to track dialog state changes
   useEffect(() => {
-    console.log('🏠 DIALOG STATE CHANGED:', showAddressDialog, 'Data:', addressDialogData);
+
     if (showAddressDialog) {
-      console.log('🏠 DIALOG SHOULD BE VISIBLE NOW!');
+
       
       // Use direct DOM manipulation since React rendering is failing
-      console.log('🏠 CREATING ADDRESS INPUT DIALOG...');
+
       
       // Remove any existing dialog
       const existingDialog = document.getElementById('address-input-dialog');
@@ -407,7 +407,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         }
         
         const fullAddress = houseNumber.trim() + ' ' + streetAddress.trim();
-        console.log('Setting custom address:', fullAddress);
+
         
         // Update the address in the timesheet entry
         const { dayIndex, entryIndex } = addressDialogData;
@@ -448,7 +448,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           description: `Custom address set to: ${fullAddress}. Remember to click "Save All" to save to database.`,
         });
         
-        console.log('Custom address set in local state - no auto-save');
+
         
         dialog.remove();
         setShowAddressDialog(false);
@@ -667,19 +667,19 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       if (isAdminView && selectedEmployee) {
         // In admin view, filter by the selected employee's ID
         const result = isInFortnight && entry.staffId === selectedEmployee;
-        console.log('Admin filter:', { entryStaffId: entry.staffId, selectedEmployee, isInFortnight, result });
+
         return result;
       }
       
-      console.log('Staff filter:', { entryDate: entry.date, isInFortnight, fortnightStart: format(fortnightStart, 'yyyy-MM-dd'), fortnightEnd: format(fortnightEnd, 'yyyy-MM-dd') });
+
       return isInFortnight;
     } catch (error) {
-      console.error('Error filtering timesheet entry:', error, entry);
+
       return false;
     }
   }) : [];
 
-  console.log('Current fortnight entries:', currentFortnightEntries);
+
 
   // Allow editing of empty days even after fortnight confirmation
   // This enables users to add entries to previously empty days in confirmed fortnights
@@ -783,17 +783,17 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         }
         
         // Show success animation for timesheet completion
-        console.log('✨ Showing success animation...');
+
         setShowSuccessAnimation(true);
         setTimeout(() => setShowSuccessAnimation(false), 3000);
         
         // Advance to next fortnight
-        console.log('⏭️ Advancing to next fortnight...');
+
         const nextFortnightIndex = currentFortnightIndex + 1;
         setCurrentFortnightIndex(nextFortnightIndex);
         
         // Clear any local edits since we're moving to new fortnight
-        console.log('🧹 Clearing local timesheet data...');
+
         setTimesheetData({});
         
         toast({
@@ -801,9 +801,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           description: data?.message || "Timesheet confirmed and advanced to next fortnight",
         });
         
-        console.log('✅ Confirmation process completed successfully');
+
       } catch (error) {
-        console.error('❌ Error in success handler:', error);
+  
         toast({
           title: "Warning",
           description: "Timesheet was confirmed but there was an issue refreshing the data. Please refresh the page.",
@@ -812,7 +812,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       }
     },
     onError: (error: any) => {
-      console.error("❌ Confirmation error:", error);
+
       
       let errorMessage = "Failed to confirm timesheet";
       
@@ -844,7 +844,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     if (entryIndex < existingEntries.length) {
       const savedEntry = existingEntries[entryIndex];
       if (savedEntry.id && (!savedEntry.approved || isAdminView)) {
-        console.log(`✏️ Editing saved entry ${savedEntry.id}: ${field} = ${value}`);
+
         editSavedEntry(savedEntry.id, field, value);
         return;
       }
@@ -1214,7 +1214,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     // Only clear local data after successful refresh
     setTimesheetData({});
     
-    console.log('Successfully saved and cleared local data');
+
 
     // Show success animation
     setShowSuccessAnimation(true);
@@ -1230,7 +1230,37 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   // Functions for editing and deleting saved entries
   const editSavedEntry = (id: string, field: string, value: string) => {
-    editTimesheetMutation.mutate({ id, field, value });
+    // DISABLED: No auto-save for individual field changes
+    // Only "Save All" button should save data to prevent auto-save issues
+    
+    // Instead, update the local state to show changes
+    // Find the entry and update it locally
+    const entryDate = currentFortnightEntries?.find((entry: any) => entry.id === id)?.date;
+    if (entryDate) {
+      const dateKey = format(parseISO(entryDate), 'yyyy-MM-dd');
+      
+      // Update timesheetData to reflect the change locally without saving
+      setTimesheetData((prev: any) => {
+        const existingLocalEntry = Array.isArray(prev[dateKey]) ? prev[dateKey].find((e: any) => e.id === id) : null;
+        
+        if (existingLocalEntry) {
+          // Update existing local entry
+          const updatedEntries = prev[dateKey].map((e: any) => 
+            e.id === id ? { ...e, [field]: value } : e
+          );
+          return { ...prev, [dateKey]: updatedEntries };
+        } else {
+          // Create local entry for this saved entry to track changes
+          const savedEntry = currentFortnightEntries?.find((e: any) => e.id === id);
+          if (savedEntry) {
+            const localEntry = { ...savedEntry, [field]: value, isModified: true };
+            const dayEntries = Array.isArray(prev[dateKey]) ? prev[dateKey] : [];
+            return { ...prev, [dateKey]: [...dayEntries, localEntry] };
+          }
+        }
+        return prev;
+      });
+    }
   };
 
   // Function to edit custom address
@@ -2274,12 +2304,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         {/* Timesheet Table - Always show for staff, show for admin when employee selected */}
         {(() => {
           const shouldShow = (!isAdminView || selectedEmployee);
-          console.log(`🏗️ TABLE RENDER: isAdminView=${isAdminView}, selectedEmployee=${selectedEmployee}, shouldShow=${shouldShow}`);
-          console.log(`📊 FORTNIGHT DAYS: ${fortnightDays.length} days, Current fortnight:`, currentFortnight);
+
           if (shouldShow) {
-            console.log(`✅ TABLE WILL RENDER - Weekend detection should start now`);
+
           } else {
-            console.log(`❌ TABLE BLOCKED - Admin view requires employee selection`);
+
           }
           return shouldShow;
         })() && (
