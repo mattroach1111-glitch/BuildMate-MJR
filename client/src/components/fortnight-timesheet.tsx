@@ -2426,9 +2426,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         }
                         
                         return entriesToShow.map((entry: any, entryIndex: number) => {
-                          if (isWeekend) {
-                            console.log(`🎨 APPLYING WEEKEND STYLING: ${format(day, 'EEE, MMM dd')} - Classes: border-b weekend-row`);
-                          }
                           return (
                           <tr key={`${dayIndex}-${entryIndex}`} className={`border-b ${isWeekend ? 'weekend-row bg-blue-600 text-white' : ''}`} style={isWeekend ? { backgroundColor: '#1e40af !important', color: 'white !important' } : {}}>
                             <td className="p-3">
