@@ -736,11 +736,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   const confirmTimesheetMutation = useMutation({
     mutationFn: async () => {
-      console.log('🚀 Starting timesheet confirmation...');
+
       // Mark timesheet as confirmed and advance to next fortnight
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
-        console.log('⏰ Confirmation timeout - aborting request');
+
         controller.abort();
       }, 30000); // 30 second timeout
       

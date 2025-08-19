@@ -1601,9 +1601,14 @@ export class DatabaseStorage implements IStorage {
       result = entry;
     }
 
-    // Update labor hours for this staff/job combination
-    if (data.jobId) {
-      await this.updateLaborHoursFromTimesheet(data.staffId, data.jobId);
+    // Update labor hours for this staff/job combination (only for actual job entries, not RDO/leave)
+    if (data.jobId && data.jobId !== null && data.jobId !== '') {
+      try {
+        await this.updateLaborHoursFromTimesheet(data.staffId, data.jobId);
+      } catch (error) {
+        console.warn(`Failed to update labor hours for staffId: ${data.staffId}, jobId: ${data.jobId}:`, error);
+        // Don't fail the entire entry creation for labor hour update issues
+      }
     }
 
     return result;

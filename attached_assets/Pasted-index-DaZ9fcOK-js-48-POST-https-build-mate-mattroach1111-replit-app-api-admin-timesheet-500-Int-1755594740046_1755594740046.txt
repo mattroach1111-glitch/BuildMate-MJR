@@ -1,0 +1,52 @@
+index-DaZ9fcOK.js:48   POST https://build-mate-mattroach1111.replit.app/api/admin/timesheet 500 (Internal Server Error)
+en @ index-DaZ9fcOK.js:48
+mutationFn @ index-DaZ9fcOK.js:909
+fn @ index-DaZ9fcOK.js:48
+N @ index-DaZ9fcOK.js:48
+start @ index-DaZ9fcOK.js:48
+execute @ index-DaZ9fcOK.js:48
+await in execute
+mutate @ index-DaZ9fcOK.js:48
+(anonymous) @ index-DaZ9fcOK.js:48
+(anonymous) @ index-DaZ9fcOK.js:909
+(anonymous) @ index-DaZ9fcOK.js:909
+Sr @ index-DaZ9fcOK.js:909
+bQ @ index-DaZ9fcOK.js:37
+jQ @ index-DaZ9fcOK.js:37
+NQ @ index-DaZ9fcOK.js:37
+X3 @ index-DaZ9fcOK.js:37
+TI @ index-DaZ9fcOK.js:37
+(anonymous) @ index-DaZ9fcOK.js:37
+i_ @ index-DaZ9fcOK.js:40
+tI @ index-DaZ9fcOK.js:37
+N5 @ index-DaZ9fcOK.js:37
+M4 @ index-DaZ9fcOK.js:37
+$Q @ index-DaZ9fcOK.js:37
+index-DaZ9fcOK.js:909  Error saving entries: Error: 500: {"message":"Failed to create timesheet entry"}
+    at l8 (index-DaZ9fcOK.js:48:43006)
+    at async en (index-DaZ9fcOK.js:48:43214)
+    at async Object.mutationFn (index-DaZ9fcOK.js:909:3044)
+Sr @ index-DaZ9fcOK.js:909
+await in Sr
+bQ @ index-DaZ9fcOK.js:37
+jQ @ index-DaZ9fcOK.js:37
+NQ @ index-DaZ9fcOK.js:37
+X3 @ index-DaZ9fcOK.js:37
+TI @ index-DaZ9fcOK.js:37
+(anonymous) @ index-DaZ9fcOK.js:37
+i_ @ index-DaZ9fcOK.js:40
+tI @ index-DaZ9fcOK.js:37
+N5 @ index-DaZ9fcOK.js:37
+M4 @ index-DaZ9fcOK.js:37
+$Q @ index-DaZ9fcOK.js:37
+index-DaZ9fcOK.js:909 Admin filter: {entryStaffId: '46402233', selectedEmployee: '46402233', isInFortnight: true, result: true}
+index-DaZ9fcOK.js:909 Admin filter: {entryStaffId: '46402233', selectedEmployee: '46402233', isInFortnight: true, result: true}
+index-DaZ9fcOK.js:909 Admin filter: {entryStaffId: '46402233', selectedEmployee: '46402233', isInFortnight: true, result: true}
+index-DaZ9fcOK.js:909 Admin filter: {entryStaffId: '46402233', selectedEmployee: '46402233', isInFortnight: true, result: true}
+index-DaZ9fcOK.js:909 Admin filter: {entryStaffId: '46402233', selectedEmployee: '46402233', isInFortnight: true, result: true}
+index-DaZ9fcOK.js:909 Admin filter: {entryStaffId: '46402233', selectedEmployee: '46402233', isInFortnight: true, result: true}
+index-DaZ9fcOK.js:909 Admin filter: {entryStaffId: '46402233', selectedEmployee: '46402233', isInFortnight: true, result: true}
+index-DaZ9fcOK.js:909 Current fortnight entries: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-DaZ9fcOK.js:909 🏗️ TABLE RENDER: isAdminView=true, selectedEmployee=46402233, shouldShow=46402233
+index-DaZ9fcOK.js:909 📊 FORTNIGHT DAYS: 14 days, Current fortnight: {start: Mon Aug 11 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time), end: Sun Aug 24 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time)}
+index-DaZ9fcOK.js:909 ✅ TABLE WILL RENDER - Weekend detection should start now
