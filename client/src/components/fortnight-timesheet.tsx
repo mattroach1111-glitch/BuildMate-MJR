@@ -2500,12 +2500,28 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                       
                                       // Check entry type for display logic
                                       
-                                      if (leaveTypes[entry.jobId]) {
+                                      // First check for leave types stored in description when jobId is null
+                                      if (entry.jobId === null && entry.description) {
+                                        const desc = entry.description.toUpperCase();
+                                        if (desc === 'RDO' || desc === 'ROSTERED DAY OFF') {
+                                          return 'RDO (Rest Day Off)';
+                                        } else if (desc === 'SICK LEAVE' || desc === 'SICK-LEAVE') {
+                                          return 'Sick Leave';
+                                        } else if (desc === 'PERSONAL LEAVE' || desc === 'PERSONAL-LEAVE') {
+                                          return 'Personal Leave';
+                                        } else if (desc === 'ANNUAL LEAVE' || desc === 'ANNUAL-LEAVE') {
+                                          return 'Annual Leave';
+                                        } else if (desc === 'LEAVE WITHOUT PAY' || desc === 'LEAVE-WITHOUT-PAY') {
+                                          return 'Leave without pay';
+                                        } else if (desc === 'TAFE') {
+                                          return 'Tafe';
+                                        } else if (entry.description.startsWith('CUSTOM_ADDRESS:')) {
+                                          return entry.description.replace('CUSTOM_ADDRESS: ', '');
+                                        } else {
+                                          return entry.description; // Show description for other null jobId cases
+                                        }
+                                      } else if (leaveTypes[entry.jobId]) {
                                         return leaveTypes[entry.jobId];
-                                      } else if (entry.jobId === null && entry.description && entry.description.startsWith('CUSTOM_ADDRESS:')) {
-                                        const address = entry.description.replace('CUSTOM_ADDRESS: ', '');
-                                        console.log('🏠 DISPLAY CUSTOM ADDRESS:', {description: entry.description, address});
-                                        return address;
                                       } else if (entry.jobId && entry.jobId.startsWith('custom-address')) {
                                         const address = entry.materials || 'Custom Address';
                                         console.log('🏠 DISPLAY CUSTOM ADDRESS FALLBACK:', {jobId: entry.jobId, address});
