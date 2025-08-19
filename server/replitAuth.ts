@@ -98,8 +98,17 @@ export async function setupAuth(app: Express) {
     verified(null, user);
   };
 
-  for (const domain of process.env
-    .REPLIT_DOMAINS!.split(",")) {
+  // Configure strategies for both development and production domains
+  const domains = [
+    ...process.env.REPLIT_DOMAINS!.split(","),
+    'build-mate-mattroach1111.replit.app'
+  ];
+  
+  // Remove duplicates
+  const uniqueDomains = [...new Set(domains)];
+  
+  for (const domain of uniqueDomains) {
+    console.log("🔐 Configuring strategy for domain:", domain);
     const strategy = new Strategy(
       {
         name: `replitauth:${domain}`,
@@ -116,8 +125,19 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
-    // Use the first configured domain for authentication
-    const domain = process.env.REPLIT_DOMAINS!.split(",")[0];
+    // Determine the correct domain for the current environment
+    const hostname = req.get('host') || req.hostname;
+    console.log("🔐 Login request hostname:", hostname);
+    
+    let domain;
+    if (hostname.includes('build-mate-mattroach1111.replit.app')) {
+      domain = 'build-mate-mattroach1111.replit.app';
+    } else {
+      domain = process.env.REPLIT_DOMAINS!.split(",")[0];
+    }
+    
+    console.log("🔐 Using authentication domain:", domain);
+    
     passport.authenticate(`replitauth:${domain}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
@@ -131,8 +151,15 @@ export async function setupAuth(app: Express) {
     console.log("🔐 Callback received - full URL:", req.url);
     console.log("🔐 Session ID:", req.sessionID);
     
-    // Use the first configured domain for authentication
-    const domain = process.env.REPLIT_DOMAINS!.split(",")[0];
+    // Determine the correct domain for the current environment
+    const hostname = req.get('host') || req.hostname;
+    let domain;
+    if (hostname.includes('build-mate-mattroach1111.replit.app')) {
+      domain = 'build-mate-mattroach1111.replit.app';
+    } else {
+      domain = process.env.REPLIT_DOMAINS!.split(",")[0];
+    }
+    
     console.log("🔐 Using domain for callback:", domain);
     
     passport.authenticate(`replitauth:${domain}`, (err: any, user: any, info: any) => {
