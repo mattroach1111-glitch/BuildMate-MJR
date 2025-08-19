@@ -1249,8 +1249,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   };
 
   const deleteSavedEntry = (id: string) => {
-    // DISABLED: No auto-delete - user must use "Save All" for all changes
-    console.log('Delete disabled - entries will be handled through Save All batch process');
+    // Delete individual timesheet entry immediately
+    console.log('Deleting timesheet entry:', id);
+    deleteTimesheetMutation.mutate(id);
   };
 
   const getTotalHours = () => {
