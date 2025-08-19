@@ -390,6 +390,7 @@ export const insertTimesheetEntrySchema = createInsertSchema(timesheetEntries).o
   createdAt: true,
 }).extend({
   hours: z.string().or(z.number()).transform(val => String(val)),
+  jobId: z.string().optional().nullable(), // Make jobId optional for RDO entries
 });
 
 export const insertJobFileSchema = createInsertSchema(jobFiles).omit({

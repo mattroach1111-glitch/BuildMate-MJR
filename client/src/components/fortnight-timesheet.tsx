@@ -542,8 +542,25 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         const newAddress = houseNumber.trim() + ' ' + streetAddress.trim();
         const newDescription = `CUSTOM_ADDRESS: ${newAddress}`;
         
-        // Update the entry in database
-        editSavedEntry(editAddressData.entryId, 'description', newDescription);
+        // Update locally only - user must "Save All" to persist changes
+        const entryDate = currentFortnightEntries?.find((entry: any) => entry.id === editAddressData.entryId)?.date;
+        if (entryDate) {
+          const dateKey = format(parseISO(entryDate), 'yyyy-MM-dd');
+          setTimesheetData((prev: any) => {
+            const dayEntries = Array.isArray(prev[dateKey]) ? prev[dateKey] : [];
+            const entryToUpdate = dayEntries.find((e: any) => e.id === editAddressData.entryId);
+            if (entryToUpdate) {
+              entryToUpdate.description = newDescription;
+            } else {
+              const savedEntry = currentFortnightEntries?.find((e: any) => e.id === editAddressData.entryId);
+              if (savedEntry) {
+                const localEntry = { ...savedEntry, description: newDescription, isModified: true };
+                dayEntries.push(localEntry);
+              }
+            }
+            return { ...prev, [dateKey]: dayEntries };
+          });
+        }
         
         toast({
           title: "Success",
@@ -840,15 +857,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
     ) : [];
     
-    // If editing a saved entry, use editSavedEntry
-    if (entryIndex < existingEntries.length) {
-      const savedEntry = existingEntries[entryIndex];
-      if (savedEntry.id && (!savedEntry.approved || isAdminView)) {
-
-        editSavedEntry(savedEntry.id, field, value);
-        return;
-      }
-    }
+    // All changes handled locally now - no auto-save
     
     // Otherwise, handle as draft entry
     const draftIndex = entryIndex - existingEntries.length;
@@ -1230,11 +1239,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   // Functions for editing and deleting saved entries
   const editSavedEntry = (id: string, field: string, value: string) => {
-    // DISABLED: No auto-save for individual field changes
-    // Only "Save All" button should save data to prevent auto-save issues
+    // COMPLETELY DISABLED: No database saves from individual field changes
+    // All edits are now stored locally until "Save All" is clicked
     
-    // Instead, update the local state to show changes
-    // Find the entry and update it locally
+    // Update local state only - no API calls
     const entryDate = currentFortnightEntries?.find((entry: any) => entry.id === id)?.date;
     if (entryDate) {
       const dateKey = format(parseISO(entryDate), 'yyyy-MM-dd');
@@ -1654,12 +1662,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               const isCustomAddress = entry?.jobId === 'custom-address' || 
                                                      (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:'));
                               
-                              // Admin override: Allow editing approved entries in admin view
-                              if (entry?.id && (!entry?.approved || isAdminView) && !isCustomAddress) {
-                                editSavedEntry(entry.id, 'hours', e.target.value);
-                              } else {
-                                handleCellChange(day, entryIndex, 'hours', e.target.value);
-                              }
+                              // All changes go through handleCellChange - no auto-save
+                              handleCellChange(day, entryIndex, 'hours', e.target.value);
                             }}
                             className={`w-20 ${isWeekend ? 'text-white placeholder:text-blue-200 bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}
                             disabled={(!isAdminView && entry?.approved) || (isWeekend && !isWeekendUnlocked(dateKey))} // Admin can edit approved entries
@@ -1732,12 +1736,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                           value="no-job"
                                           onSelect={() => {
                                             const dateKey = format(day, 'yyyy-MM-dd');
-                                            // Admin override: Allow editing approved entries in admin view
-                                            if (entry?.id && (!entry?.approved || isAdminView)) {
-                                              editSavedEntry(entry.id, 'jobId', 'no-job');
-                                            } else {
-                                              handleCellChange(day, entryIndex, 'jobId', 'no-job');
-                                            }
+                                            // All changes go through handleCellChange - no auto-save
+                                            handleCellChange(day, entryIndex, 'jobId', 'no-job');
                                             setJobSearchOpen(prev => ({ ...prev, [cellKey]: false }));
                                           }}
                                         >
@@ -1754,12 +1754,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                             }
                                             
                                             // Clear hours when selecting other-address to start fresh
-                                            // Admin override: Allow editing approved entries in admin view  
-                                            if (entry?.id && (!entry?.approved || isAdminView)) {
-                                              editSavedEntry(entry.id, 'hours', '');
-                                            } else {
-                                              handleCellChange(day, entryIndex, 'hours', '');
-                                            }
+                                            handleCellChange(day, entryIndex, 'hours', '');
                                             
                                             // Show address input dialog
                                             setAddressDialogData({dayIndex, entryIndex});
@@ -1778,11 +1773,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                             value={entry?.description ? entry.description.replace('CUSTOM_ADDRESS: ', '') : 'Custom Address'}
                                             onSelect={() => {
                                               const dateKey = format(day, 'yyyy-MM-dd');
-                                              if (entry?.id && !entry?.approved) {
-                                                editSavedEntry(entry.id, 'jobId', 'custom-address');
-                                              } else {
-                                                handleCellChange(day, entryIndex, 'jobId', 'custom-address');
-                                              }
+                                              handleCellChange(day, entryIndex, 'jobId', 'custom-address');
                                               setJobSearchOpen(prev => ({ ...prev, [cellKey]: false }));
                                             }}
                                           >
@@ -1813,11 +1804,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                                       return;
                                                     }
                                                     
-                                                    if (entry?.id && !entry?.approved) {
-                                                      editSavedEntry(entry.id, 'jobId', job.id);
-                                                    } else {
-                                                      handleCellChange(day, entryIndex, 'jobId', job.id);
-                                                    }
+                                                    handleCellChange(day, entryIndex, 'jobId', job.id);
                                                     setJobSearchOpen(prev => ({ ...prev, [cellKey]: false }));
                                                   }}
                                                 >
@@ -1863,19 +1850,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                                   variant: "default",
                                                 });
                                                 // Clear hours when selecting leave-without-pay
-                                                // Admin override: Allow editing approved entries in admin view
-                                                if (entry?.id && (!entry?.approved || isAdminView)) {
-                                                  editSavedEntry(entry.id, 'hours', '0');
-                                                } else {
-                                                  handleCellChange(day, entryIndex, 'hours', '0');
-                                                }
+                                                handleCellChange(day, entryIndex, 'hours', '0');
                                               }
                                               
-                                              if (entry?.id && !entry?.approved) {
-                                                editSavedEntry(entry.id, 'jobId', leaveType.id);
-                                              } else {
-                                                handleCellChange(day, entryIndex, 'jobId', leaveType.id);
-                                              }
+                                              handleCellChange(day, entryIndex, 'jobId', leaveType.id);
                                               setJobSearchOpen(prev => ({ ...prev, [cellKey]: false }));
                                             }}
                                           >
@@ -2615,14 +2593,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   const isCustomAddress = entry?.jobId === 'custom-address' || 
                                                          (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:'));
                                   
-                                  // Admin override: Allow editing approved entries in admin view
-                                  if (entry?.id && (!entry?.approved || isAdminView) && !isCustomAddress) {
-                                    // Edit saved entry directly
-                                    editSavedEntry(entry.id, 'materials', e.target.value);
-                                  } else {
-                                    // Handle unsaved entry
-                                    handleCellChange(day, entryIndex, 'materials', e.target.value);
-                                  }
+                                  // All changes go through handleCellChange - no auto-save  
+                                  handleCellChange(day, entryIndex, 'materials', e.target.value);
                                 }}
                                 className={`min-w-32 ${isWeekend ? 'text-white placeholder:text-blue-200 bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}
                                 disabled={(!isAdminView && entry?.approved) || (isWeekend && !isWeekendUnlocked(dateKey))} // Admin can edit approved entries
