@@ -3370,7 +3370,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Create main BuildFlow Pro folder first
             const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
             
-            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${jobAddress}`, mainFolderId);
+            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${jobAddress}`, mainFolderId || undefined);
             
             const uploadResult = await googleDriveService.uploadFile(
               fileName, 
@@ -3424,7 +3424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Create main BuildFlow Pro folder first
             const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
             
-            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${jobAddress}`, mainFolderId);
+            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${jobAddress}`, mainFolderId || undefined);
             
             const uploadResult = await googleDriveService.uploadFile(
               fileName, 
@@ -3460,7 +3460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 jobId: newJob.id,
                 fileName: fileName,
                 originalName: fileName,
-                fileSize: parseInt(fileMetadata.size || '0'),
+                fileSize: parseInt(String(fileMetadata.size || '0')),
                 mimeType: metadata.contentType || 'application/pdf',
                 objectPath: normalizedPath,
                 googleDriveLink: null,
@@ -3476,7 +3476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               jobId: newJob.id,
               fileName: fileName,
               originalName: fileName,
-              fileSize: parseInt(fileMetadata.size || '0'),
+              fileSize: parseInt(String(fileMetadata.size || '0')),
               mimeType: metadata.contentType || 'application/pdf',
               objectPath: normalizedPath,
               googleDriveLink: null,
@@ -3718,7 +3718,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         status: "active",
         emailAddress,
-        lastChecked: new Date(lastChecked).toISOString(),
+        lastChecked: lastChecked instanceof Date ? lastChecked.toISOString() : new Date(lastChecked || Date.now()).toISOString(),
         recentProcessed: recentActivity,
         totalProcessed
       });
@@ -3839,7 +3839,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Parse the extracted data
-      const extractedData = JSON.parse(document.extractedData);
+      const extractedData = JSON.parse(document.extractedData || '{}');
       
       // Use category override if provided
       const finalCategory = categoryOverride || extractedData.category;
@@ -3848,7 +3848,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let targetJobId = jobId;
       if (!targetJobId) {
         // Try to extract job information from email subject
-        targetJobId = await extractJobFromEmailSubject(document.emailSubject, storage);
+        targetJobId = await extractJobFromEmailSubject(document.emailSubject || undefined, storage);
         
         // If still no job, use the first active job as default
         if (!targetJobId) {
@@ -3945,7 +3945,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           console.log(`📎 Job file record created: ${fileRecord.id}`);
         } catch (fileError) {
-          console.log(`⚠️ Could not create job file record: ${fileError.message}`);
+          console.log(`⚠️ Could not create job file record: ${(fileError as Error).message}`);
         }
 
         // Try to upload to Google Drive if user has it connected
@@ -3958,6 +3958,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Get job for folder naming
             const job = await storage.getJob(targetJobId);
+            if (!job) {
+              throw new Error('Job not found');
+            }
             
             // Get the actual attachment content from the stored base64 data
             let fileBuffer;
@@ -3999,13 +4002,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.log(`☁️ File uploaded to Google Drive: ${uploadResult.webViewLink}`);
             }
           } catch (driveError) {
-            console.log(`⚠️ Google Drive upload failed: ${driveError.message}`);
+            console.log(`⚠️ Google Drive upload failed: ${(driveError as Error).message}`);
           }
         } else {
           console.log(`ℹ️ Google Drive not connected for user ${userId}`);
         }
       } catch (attachmentError) {
-        console.log(`⚠️ File attachment processing failed: ${attachmentError.message}`);
+        console.log(`⚠️ File attachment processing failed: ${(attachmentError as Error).message}`);
       }
 
       // Now approve the document with the job ID
@@ -4361,7 +4364,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           FROM reward_transactions 
           WHERE type IN ('earned', 'bonus')
         `);
-        totalPointsAwarded = Number(pointsResult[0]?.total || 0);
+        totalPointsAwarded = Number((pointsResult.rows || pointsResult)[0]?.total || 0);
       } catch (e) {
         console.log("reward_transactions table not found, using default value");
       }
@@ -4371,7 +4374,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           SELECT COUNT(DISTINCT user_id) as total 
           FROM reward_transactions
         `);
-        activeUsers = Number(activeUsersResult[0]?.total || 0);
+        activeUsers = Number((activeUsersResult.rows || activeUsersResult)[0]?.total || 0);
       } catch (e) {
         console.log("reward_transactions table not found for active users, using default value");
       }
@@ -4390,7 +4393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ORDER BY rp.total_points DESC
           LIMIT 10
         `);
-        topPerformers = topPerformersResult.map((p: any) => ({
+        topPerformers = (topPerformersResult.rows || topPerformersResult).map((p: any) => ({
           userId: p.user_id,
           firstName: p.first_name || 'Unknown',
           lastName: p.last_name || '',
@@ -4410,7 +4413,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             WHERE role = 'staff'
             LIMIT 10
           `);
-          topPerformers = staffResult.map((p: any) => ({
+          topPerformers = (staffResult.rows || staffResult).map((p: any) => ({
             userId: p.user_id,
             firstName: p.first_name || 'Unknown',
             lastName: p.last_name || '',
@@ -4948,7 +4951,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     jobId: entry.jobId,
                     date: entry.date,
                     hours: entry.hours,
-                    notes: entry.notes,
+                    // notes: entry.notes, // Removed - not a valid column
                     status: entry.status,
                     customAddress: entry.customAddress,
                     leaveType: entry.leaveType
