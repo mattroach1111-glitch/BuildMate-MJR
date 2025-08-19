@@ -31,36 +31,16 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const url = queryKey.join("/") as string;
-    
-    // Only log for timesheet queries to avoid noise
-    if (url.includes('/api/admin/timesheets/') || url.includes('/api/timesheet')) {
-      console.log(`🌐 TIMESHEET FETCH REQUEST: ${url}`);
-    }
-    
-    const res = await fetch(url, {
+    const res = await fetch(queryKey.join("/") as string, {
       credentials: "include",
     });
 
-    if (url.includes('/api/admin/timesheets/') || url.includes('/api/timesheet')) {
-      console.log(`🌐 TIMESHEET FETCH RESPONSE: ${url} - Status: ${res.status}`);
-    }
-
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      if (url.includes('/api/admin/timesheets/') || url.includes('/api/timesheet')) {
-        console.log(`🚫 TIMESHEET AUTH ERROR: Returning null for 401 response from ${url}`);
-      }
       return null;
     }
 
     await throwIfResNotOk(res);
-    const data = await res.json();
-    
-    if (url.includes('/api/admin/timesheets/') || url.includes('/api/timesheet')) {
-      console.log(`✅ TIMESHEET FETCH SUCCESS: ${url} - Data length: ${Array.isArray(data) ? data.length : 'not-array'}`);
-    }
-    
-    return data;
+    return await res.json();
   };
 
 export const queryClient = new QueryClient({

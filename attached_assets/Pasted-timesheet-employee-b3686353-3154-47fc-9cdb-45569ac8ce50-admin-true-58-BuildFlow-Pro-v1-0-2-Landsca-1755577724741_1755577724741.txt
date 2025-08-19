@@ -1,0 +1,79 @@
+timesheet?employee=b3686353-3154-47fc-9cdb-45569ac8ce50&admin=true:58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+index-DAzrsvqL.js:914 BuildFlow Pro v1.0.9 - LANDSCAPE MODE DISABLED, FOCUS ON CORE FEATURES: 1755577711783
+timesheet?employee=b3686353-3154-47fc-9cdb-45569ac8ce50&admin=true:64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-DAzrsvqL.js:909 Current fortnight entries: []
+index-DAzrsvqL.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-11 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-DAzrsvqL.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-12 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-DAzrsvqL.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-13 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-DAzrsvqL.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-14 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-DAzrsvqL.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-15 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-DAzrsvqL.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-16 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-DAzrsvqL.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-17 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-DAzrsvqL.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-18 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-DAzrsvqL.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-19 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-DAzrsvqL.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-20 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-DAzrsvqL.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-21 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-DAzrsvqL.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-22 - isWeekend=false, unlocked=false, shouldShow=false, entryIndex=0
+index-DAzrsvqL.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-23 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-DAzrsvqL.js:909 🔧 STAFF UNLOCK BUTTON DEBUG: 2025-08-24 - isWeekend=true, unlocked=false, shouldShow=true, entryIndex=0
+index-DAzrsvqL.js:835 🏠 DIALOG STATE CHANGED: false Data: {dayIndex: -1, entryIndex: -1}
+index-DAzrsvqL.js:48 🌐 TIMESHEET FETCH REQUEST: /api/timesheet
+index-DAzrsvqL.js:909 🔍 TIMESHEET QUERY DEBUG: {isAdminView: false, selectedEmployee: '', enabled: true, isLoading: true, hasError: false, …}
+index-DAzrsvqL.js:909 Current fortnight entries: []
+index-DAzrsvqL.js:909 🏗️ TABLE RENDER: isAdminView=true, selectedEmployee=, shouldShow=
+index-DAzrsvqL.js:909 📊 FORTNIGHT DAYS: 14 days, Current fortnight: {start: Mon Aug 11 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time), end: Sun Aug 24 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time)}
+index-DAzrsvqL.js:909 ❌ TABLE BLOCKED - Admin view requires employee selection
+index-DAzrsvqL.js:909 🚨 DIALOG RENDER CHECK - showLowHoursDialog: false lowHoursTotal: 0
+index-DAzrsvqL.js:909 🚨 CONDITIONAL RENDER CHECK - will render dialog? false
+index-DAzrsvqL.js:909 🔍 TIMESHEET QUERY DEBUG: {isAdminView: true, selectedEmployee: '', enabled: false, isLoading: false, hasError: false, …}
+index-DAzrsvqL.js:909 Current fortnight entries: []
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🏗️ TABLE RENDER: isAdminView=true, selectedEmployee=b3686353-3154-47fc-9cdb-45569ac8ce50, shouldShow=b3686353-3154-47fc-9cdb-45569ac8ce50
+index-DAzrsvqL.js:909 📊 FORTNIGHT DAYS: 14 days, Current fortnight: {start: Mon Aug 11 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time), end: Sun Aug 24 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time)}
+index-DAzrsvqL.js:909 ✅ TABLE WILL RENDER - Weekend detection should start now
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🚨 DIALOG RENDER CHECK - showLowHoursDialog: false lowHoursTotal: 0
+index-DAzrsvqL.js:909 🚨 CONDITIONAL RENDER CHECK - will render dialog? false
+index-DAzrsvqL.js:48 🌐 TIMESHEET FETCH REQUEST: /api/admin/timesheets/b3686353-3154-47fc-9cdb-45569ac8ce50
+index-DAzrsvqL.js:909 🔍 TIMESHEET QUERY DEBUG: {isAdminView: true, selectedEmployee: 'b3686353-3154-47fc-9cdb-45569ac8ce50', enabled: true, isLoading: true, hasError: false, …}
+index-DAzrsvqL.js:909 Current fortnight entries: []
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🏗️ TABLE RENDER: isAdminView=true, selectedEmployee=b3686353-3154-47fc-9cdb-45569ac8ce50, shouldShow=b3686353-3154-47fc-9cdb-45569ac8ce50
+index-DAzrsvqL.js:909 📊 FORTNIGHT DAYS: 14 days, Current fortnight: {start: Mon Aug 11 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time), end: Sun Aug 24 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time)}
+index-DAzrsvqL.js:909 ✅ TABLE WILL RENDER - Weekend detection should start now
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🚨 DIALOG RENDER CHECK - showLowHoursDialog: false lowHoursTotal: 0
+index-DAzrsvqL.js:909 🚨 CONDITIONAL RENDER CHECK - will render dialog? false
+index-DAzrsvqL.js:909 Current fortnight entries: []
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🏗️ TABLE RENDER: isAdminView=true, selectedEmployee=b3686353-3154-47fc-9cdb-45569ac8ce50, shouldShow=b3686353-3154-47fc-9cdb-45569ac8ce50
+index-DAzrsvqL.js:909 📊 FORTNIGHT DAYS: 14 days, Current fortnight: {start: Mon Aug 11 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time), end: Sun Aug 24 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time)}
+index-DAzrsvqL.js:909 ✅ TABLE WILL RENDER - Weekend detection should start now
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🚨 DIALOG RENDER CHECK - showLowHoursDialog: false lowHoursTotal: 0
+index-DAzrsvqL.js:909 🚨 CONDITIONAL RENDER CHECK - will render dialog? false
+index-DAzrsvqL.js:48 🌐 TIMESHEET FETCH RESPONSE: /api/timesheet - Status: 200
+index-DAzrsvqL.js:48 🌐 TIMESHEET FETCH RESPONSE: /api/admin/timesheets/b3686353-3154-47fc-9cdb-45569ac8ce50 - Status: 200
+index-DAzrsvqL.js:48 ✅ TIMESHEET FETCH SUCCESS: /api/timesheet - Data length: 0
+index-DAzrsvqL.js:48 ✅ TIMESHEET FETCH SUCCESS: /api/admin/timesheets/b3686353-3154-47fc-9cdb-45569ac8ce50 - Data length: 0
+index-DAzrsvqL.js:909 Current fortnight entries: []
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🏗️ TABLE RENDER: isAdminView=true, selectedEmployee=b3686353-3154-47fc-9cdb-45569ac8ce50, shouldShow=b3686353-3154-47fc-9cdb-45569ac8ce50
+index-DAzrsvqL.js:909 📊 FORTNIGHT DAYS: 14 days, Current fortnight: {start: Mon Aug 11 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time), end: Sun Aug 24 2025 00:00:00 GMT+1000 (Australian Eastern Standard Time)}
+index-DAzrsvqL.js:909 ✅ TABLE WILL RENDER - Weekend detection should start now
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🔍 TOTAL HOURS DEBUG: {entriesCount: 0, totalHours: 0, lessThan76: true, entries: Array(0)}
+index-DAzrsvqL.js:909 🚨 DIALOG RENDER CHECK - showLowHoursDialog: false lowHoursTotal: 0
+index-DAzrsvqL.js:909 🚨 CONDITIONAL RENDER CHECK - will render dialog? false
+index-DAzrsvqL.js:909 🔍 TIMESHEET QUERY DEBUG: {isAdminView: true, selectedEmployee: 'b3686353-3154-47fc-9cdb-45569ac8ce50', enabled: true, isLoading: false, hasError: false, …}
