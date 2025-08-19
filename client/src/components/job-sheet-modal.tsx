@@ -1482,10 +1482,10 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   }, [jobDetails]);
 
   const handleEditSave = () => {
-    if (!editForm.jobAddress.trim() || !editForm.clientName.trim() || !editForm.projectName.trim()) {
+    if (!editForm.jobAddress.trim() || !editForm.clientName.trim()) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: "Please fill in all required fields (Job Address and Client Name)",
         variant: "destructive",
       });
       return;
@@ -1625,17 +1625,6 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       placeholder="Enter job address"
                       className="mt-1"
                       data-testid="input-edit-address"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-project-name" className="text-sm font-medium">Project Name</Label>
-                    <Input
-                      id="edit-project-name"
-                      value={editForm.projectName}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, projectName: e.target.value }))}
-                      placeholder="Enter project name"
-                      className="mt-1"
-                      data-testid="input-edit-project-name"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
