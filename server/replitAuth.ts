@@ -105,7 +105,7 @@ export async function setupAuth(app: Express) {
         name: `replitauth:${domain}`,
         config,
         scope: "openid email profile offline_access",
-        callbackURL: `https://${domain}/api/callback`,
+        callbackURL: `https://build-mate-mattroach1111.replit.app/api/callback`,
       },
       verify,
     );
