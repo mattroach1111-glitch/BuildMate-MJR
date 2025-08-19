@@ -1862,7 +1862,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                                   variant: "default",
                                                 });
                                                 // Clear hours when selecting leave-without-pay
-                                                if (entry?.id && !entry?.approved) {
+                                                // Admin override: Allow editing approved entries in admin view
+                                                if (entry?.id && (!entry?.approved || isAdminView)) {
                                                   editSavedEntry(entry.id, 'hours', '0');
                                                 } else {
                                                   handleCellChange(day, entryIndex, 'hours', '0');
@@ -1902,14 +1903,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               const isCustomAddress = entry?.jobId === 'custom-address' || 
                                                      (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:'));
                               
-                              if (entry?.id && !entry?.approved && !isCustomAddress) {
+                              // Admin override: Allow editing approved entries in admin view
+                              if (entry?.id && (!entry?.approved || isAdminView) && !isCustomAddress) {
                                 editSavedEntry(entry.id, 'materials', e.target.value);
                               } else {
                                 handleCellChange(day, entryIndex, 'materials', e.target.value);
                               }
                             }}
                             className={`min-w-32 ${isWeekend ? 'text-white placeholder:text-blue-200 bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}
-                            disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))}
+                            disabled={(!isAdminView && entry?.approved) || (isWeekend && !isWeekendUnlocked(dateKey))}
                             readOnly={isWeekend && !isWeekendUnlocked(dateKey)}
                           />
                         </td>
@@ -1933,7 +1935,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
-                            {entry?.id && !entry?.approved && (
+                            {/* Admin override: Allow deleting approved entries in admin view */}
+                            {entry?.id && (!entry?.approved || isAdminView) && (
                               <>
                                 <Button
                                   size="sm"
