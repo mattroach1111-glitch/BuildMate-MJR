@@ -93,7 +93,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null); // Single timeout for all auto-saves
   
   // Helper function to calculate distance between two touch points
-  const getDistance = (touch1: Touch, touch2: Touch) => {
+  const getDistance = (touch1: React.Touch, touch2: React.Touch) => {
     const dx = touch1.clientX - touch2.clientX;
     const dy = touch1.clientY - touch2.clientY;
     return Math.sqrt(dx * dx + dy * dy);
@@ -1583,14 +1583,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               const isCustomAddress = entry?.jobId === 'custom-address' || 
                                                      (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:'));
                               
-                              if (entry?.id && !entry?.approved && !isCustomAddress) {
+                              // Admin override: Allow editing approved entries in admin view
+                              if (entry?.id && (!entry?.approved || isAdminView) && !isCustomAddress) {
                                 editSavedEntry(entry.id, 'hours', e.target.value);
                               } else {
                                 handleCellChange(day, entryIndex, 'hours', e.target.value);
                               }
                             }}
                             className={`w-20 ${isWeekend ? 'text-white placeholder:text-blue-200 bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}
-                            disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))} // Disable for approved entries or locked weekends
+                            disabled={(!isAdminView && entry?.approved) || (isWeekend && !isWeekendUnlocked(dateKey))} // Admin can edit approved entries
                             readOnly={isWeekend && !isWeekendUnlocked(dateKey)} // Make readonly for locked weekends
                           />
                         </td>
@@ -1620,7 +1621,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 return leaveTypes[jobId] || jobId;
                               }
                               
-                              const job = jobs?.find((j: any) => j.id === jobId);
+                              const job = Array.isArray(jobs) ? jobs.find((j: any) => j.id === jobId) : undefined;
                               return job ? (job.jobAddress || job.address || job.jobName || job.name || `Job ${job.id}`) : 'Select job';
                             };
                             
@@ -1637,7 +1638,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     role="combobox"
                                     aria-expanded={jobSearchOpen[cellKey] || false}
                                     className={`min-w-40 justify-between ${isWeekend ? 'text-white bg-blue-800 border-blue-600 hover:bg-blue-700' : ''} ${isWeekend && !isWeekendUnlocked(format(day, 'yyyy-MM-dd')) ? 'cursor-not-allowed opacity-75' : ''}`}
-                                    disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(format(day, 'yyyy-MM-dd')))}
+                                    disabled={(!isAdminView && entry?.approved) || (isWeekend && !isWeekendUnlocked(format(day, 'yyyy-MM-dd')))}
                                   >
                                     <span className="truncate">
                                       {isWeekend && !isWeekendUnlocked(format(day, 'yyyy-MM-dd')) ? "🔒 LOCKED" : getJobDisplayName(currentValue)}
@@ -1660,7 +1661,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                           value="no-job"
                                           onSelect={() => {
                                             const dateKey = format(day, 'yyyy-MM-dd');
-                                            if (entry?.id && !entry?.approved) {
+                                            // Admin override: Allow editing approved entries in admin view
+                                            if (entry?.id && (!entry?.approved || isAdminView)) {
                                               editSavedEntry(entry.id, 'jobId', 'no-job');
                                             } else {
                                               handleCellChange(day, entryIndex, 'jobId', 'no-job');
@@ -1682,7 +1684,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                             }
                                             
                                             // Clear hours when selecting other-address to start fresh
-                                            if (entry?.id && !entry?.approved) {
+                                            // Admin override: Allow editing approved entries in admin view  
+                                            if (entry?.id && (!entry?.approved || isAdminView)) {
                                               editSavedEntry(entry.id, 'hours', '');
                                             } else {
                                               handleCellChange(day, entryIndex, 'hours', '');
@@ -2070,12 +2073,17 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                 {format(currentFortnight.start, 'MMM dd, yyyy')} - {format(currentFortnight.end, 'MMM dd, yyyy')}
               </p>
               {isAdminView && selectedEmployee && Array.isArray(staffMembers) && staffMembers.length > 0 && (
-                <p className="text-sm text-primary font-medium bg-blue-50 px-2 py-1 rounded">
-                  Viewing: {(() => {
-                    const selected = staffMembers.find((s: any) => s.id === selectedEmployee);
-                    return selected ? `${selected.name || 'Unknown Staff Member'}'s Timesheet` : 'Unknown Staff Member\'s Timesheet';
-                  })()}
-                </p>
+                <div className="space-y-1">
+                  <p className="text-sm text-primary font-medium bg-blue-50 px-2 py-1 rounded">
+                    Viewing: {(() => {
+                      const selected = staffMembers.find((s: any) => s.id === selectedEmployee);
+                      return selected ? `${selected.name || 'Unknown Staff Member'}'s Timesheet` : 'Unknown Staff Member\'s Timesheet';
+                    })()}
+                  </p>
+                  <p className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                    ✓ Admin Mode: You can edit all entries, including approved ones
+                  </p>
+                </div>
               )}
             </div>
           </div>
@@ -2581,7 +2589,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   const isCustomAddress = entry?.jobId === 'custom-address' || 
                                                          (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:'));
                                   
-                                  if (entry?.id && !entry?.approved && !isCustomAddress) {
+                                  // Admin override: Allow editing approved entries in admin view
+                                  if (entry?.id && (!entry?.approved || isAdminView) && !isCustomAddress) {
                                     // Edit saved entry directly
                                     editSavedEntry(entry.id, 'materials', e.target.value);
                                   } else {
@@ -2590,7 +2599,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   }
                                 }}
                                 className={`min-w-32 ${isWeekend ? 'text-white placeholder:text-blue-200 bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}
-                                disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))} // Disable for approved entries or locked weekends
+                                disabled={(!isAdminView && entry?.approved) || (isWeekend && !isWeekendUnlocked(dateKey))} // Admin can edit approved entries
                                 readOnly={isWeekend && !isWeekendUnlocked(dateKey)} // Make readonly for locked weekends
                               />
                             </td>
@@ -2616,7 +2625,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 )}
-                                {entry?.id && !entry?.approved && (
+                                {/* Admin override: Allow deleting approved entries in admin view */}
+                                {entry?.id && (!entry?.approved || isAdminView) && (
                                   <Button
                                     size="sm"
                                     variant="destructive"
@@ -2885,7 +2895,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   handleCellChange(day, entryIndex, 'hours', '');
                   
                   // If there was an existing saved entry, delete it so user can save fresh custom address entry
-                  if (entry?.id && !entry?.approved) {
+                  // Admin override: Allow deleting approved entries for custom address updates
+                  if (entry?.id && (!entry?.approved || isAdminView)) {
                     deleteTimesheetMutation.mutate(entry.id);
                   }
                   
