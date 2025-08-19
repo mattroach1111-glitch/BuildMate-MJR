@@ -1030,6 +1030,15 @@ export class DatabaseStorage implements IStorage {
   // Timesheet operations
   async getTimesheetEntries(staffId: string): Promise<TimesheetEntry[]> {
     console.log(`🗃️ STORAGE: Querying timesheet entries for staffId: ${staffId}`);
+    console.log(`🗃️ STORAGE: StaffId type: ${typeof staffId}, length: ${staffId.length}`);
+    
+    // First check if any entries exist for this exact staffId
+    const exactMatch = await db
+      .select({ count: sql`count(*)` })
+      .from(timesheetEntries)
+      .where(eq(timesheetEntries.staffId, staffId));
+    
+    console.log(`🗃️ STORAGE: Exact match count query result:`, exactMatch[0]);
     
     const results = await db
       .select()
@@ -1040,11 +1049,19 @@ export class DatabaseStorage implements IStorage {
     console.log(`🗃️ STORAGE RESULT: Found ${results.length} entries for staffId: ${staffId}`);
     
     if (results.length === 0) {
+      // Check for similar staffIds (maybe whitespace or case issues)
+      const similarEntries = await db
+        .select({ staffId: timesheetEntries.staffId })
+        .from(timesheetEntries)
+        .where(sql`${timesheetEntries.staffId} ILIKE ${'%' + staffId + '%'}`);
+      
+      console.log(`🗃️ DEBUG: Similar staffIds found:`, similarEntries.map(r => r.staffId));
+      
       // Also check what staffIds exist in the database for debugging
       const allStaffIds = await db
         .selectDistinct({ staffId: timesheetEntries.staffId })
         .from(timesheetEntries);
-      console.log(`🗃️ DEBUG: Available staffIds in database:`, allStaffIds.map(r => r.staffId));
+      console.log(`🗃️ DEBUG: All available staffIds:`, allStaffIds.map(r => r.staffId));
     }
     
     return results;
