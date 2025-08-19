@@ -1557,21 +1557,16 @@ export class DatabaseStorage implements IStorage {
 
   // Admin method to create timesheet entry with flexible data
   async createAdminTimesheetEntry(data: any): Promise<any> {
-    // Check if entry already exists for this date and staff
-    const existing = await db
-      .select()
-      .from(timesheetEntries)
-      .where(
-        and(
-          eq(timesheetEntries.staffId, data.staffId),
-          eq(timesheetEntries.date, data.date)
-        )
-      );
-
+    console.log('💾 createAdminTimesheetEntry called with:', JSON.stringify(data, null, 2));
+    
+    // FIXED: Always create new entries - don't check for existing unless it's an exact duplicate
+    // Multiple entries per day are allowed and expected
+    
     let result: any;
-
-    if (existing.length > 0) {
-      // Update existing entry - CRITICAL: Include jobId to allow RDO conversion
+    
+    // Only check for exact duplicates if we have an ID (for updates)
+    if (data.id) {
+      console.log('🔄 Updating existing entry with ID:', data.id);
       const [updated] = await db
         .update(timesheetEntries)
         .set({
@@ -1582,11 +1577,12 @@ export class DatabaseStorage implements IStorage {
           approved: data.approved || false,
           updatedAt: new Date(),
         })
-        .where(eq(timesheetEntries.id, existing[0].id))
+        .where(eq(timesheetEntries.id, data.id))
         .returning();
       result = updated;
     } else {
-      // Create new entry
+      // Always create new entry - multiple entries per day are allowed
+      console.log('➕ Creating new timesheet entry');
       const [entry] = await db
         .insert(timesheetEntries)
         .values({
@@ -1600,6 +1596,7 @@ export class DatabaseStorage implements IStorage {
         })
         .returning();
       result = entry;
+      console.log('✅ Created entry with ID:', result.id);
     }
 
     // Update labor hours for this staff/job combination (only for actual job entries, not RDO/leave)
