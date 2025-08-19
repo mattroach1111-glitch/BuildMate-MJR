@@ -1393,8 +1393,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const employeeId = req.params.employeeId;
       console.log(`🔍 ADMIN TIMESHEET REQUEST: Fetching entries for employeeId: ${employeeId}`);
       
+      // Get entries using storage method
       const entries = await storage.getTimesheetEntries(employeeId);
       console.log(`📊 TIMESHEET RESULT: Found ${entries.length} entries for employeeId: ${employeeId}`);
+      
+      // If no entries found, get debug info
+      if (entries.length === 0) {
+        // Get all staff IDs for comparison
+        const allStaffIds = await db
+          .selectDistinct({ staffId: timesheetEntries.staffId })
+          .from(timesheetEntries)
+          .limit(10);
+        
+        console.log(`🗃️ DEBUG: Available staffIds in database:`, allStaffIds.map(r => r.staffId));
+        console.log(`🗃️ DEBUG: Searched for employeeId: ${employeeId}`);
+        
+        // Return debug info in response when no entries found
+        return res.json({
+          entries: [],
+          debug: {
+            searchedEmployeeId: employeeId,
+            availableStaffIds: allStaffIds.map(r => r.staffId),
+            message: "No entries found for this employee ID. Check available staff IDs for comparison."
+          }
+        });
+      }
       
       if (entries.length > 0) {
         console.log(`📝 SAMPLE ENTRY:`, entries[0]);
