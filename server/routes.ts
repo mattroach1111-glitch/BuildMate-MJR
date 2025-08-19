@@ -1657,10 +1657,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (leaveTypes.includes(requestData.jobId)) {
         const originalJobId = requestData.jobId;
-        console.log(`Transforming leave type '${originalJobId}' to null jobId`);
+        console.log(`🔄 Transforming leave type '${originalJobId}' to null jobId`);
         requestData.jobId = null;
-        // Store leave type in description for reference
-        requestData.description = requestData.description || originalJobId.toUpperCase().replace('-', ' ');
+        // Store leave type in description for reference - ALWAYS set it for leave types
+        const leaveDescription = originalJobId.toUpperCase().replace('-', ' ');
+        requestData.description = leaveDescription;
+        console.log(`📝 Setting description to: '${leaveDescription}'`);
+        console.log(`📦 Full transformed data:`, JSON.stringify(requestData, null, 2));
       }
       
       const validatedData = insertTimesheetEntrySchema.parse(requestData);
