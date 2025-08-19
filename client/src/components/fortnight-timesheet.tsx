@@ -90,7 +90,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   });
   
 
-  const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null); // Single timeout for all auto-saves
+  // Auto-save disabled - users must use "Save All" button
   
   // Helper function to calculate distance between two touch points
   const getDistance = (touch1: React.Touch, touch2: React.Touch) => {
@@ -880,15 +880,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       };
     });
     
-    // Auto-save draft entries after a delay (debounced)
-    if (autoSaveTimeout.current) {
-      clearTimeout(autoSaveTimeout.current);
-    }
-    
-    autoSaveTimeout.current = setTimeout(() => {
-      console.log(`Auto-saving draft change: ${dateKey}, entry ${entryIndex}, ${field} = ${value}`);
-      autoSave();
-    }, 1500); // 1.5 second delay for smoother UX
+    // Auto-save disabled - all changes stored locally until "Save All" is clicked
   };
 
   const saveEntry = (date: Date, entryIndex: number, data: any) => {
@@ -1422,11 +1414,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       // Clear local timesheet data
       setTimesheetData({});
       
-      // Clear any pending auto-save timeout
-      if (autoSaveTimeout.current) {
-        clearTimeout(autoSaveTimeout.current);
-        autoSaveTimeout.current = null;
-      }
+      // Auto-save system removed for simplicity
       
       // Show success message
       toast({
@@ -1444,6 +1432,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         clearTimeout(autoSaveTimeout.current);
       }
     };
+    // No auto-save cleanup needed
   }, []);
 
   // Calculate progress stats for staff view
@@ -1907,16 +1896,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 console.log(`🚫 STAFF WEEKEND MATERIALS BLOCKED: ${dateKey} - Weekend is locked!`);
                                 return; // Prevent materials input on locked weekends
                               }
-                              // Don't auto-save custom addresses - let user save manually
-                              const isCustomAddress = entry?.jobId === 'custom-address' || 
-                                                     (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:'));
-                              
-                              // Admin override: Allow editing approved entries in admin view
-                              if (entry?.id && (!entry?.approved || isAdminView) && !isCustomAddress) {
-                                editSavedEntry(entry.id, 'materials', e.target.value);
-                              } else {
-                                handleCellChange(day, entryIndex, 'materials', e.target.value);
-                              }
+                              // No auto-save - all changes stored locally until "Save All" is clicked
+                              handleCellChange(day, entryIndex, 'materials', e.target.value);
                             }}
                             className={`min-w-32 ${isWeekend ? 'text-white placeholder:text-blue-200 bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}
                             disabled={(!isAdminView && entry?.approved) || (isWeekend && !isWeekendUnlocked(dateKey))}
@@ -2532,17 +2513,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     console.log(`🚫 WEEKEND INPUT BLOCKED: ${dateKey} - Weekend is locked!`);
                                     return; // Prevent any input on locked weekends
                                   }
-                                  // Don't auto-save custom addresses - let user save manually
-                                  const isCustomAddress = entry?.jobId === 'custom-address' || 
-                                                         (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:'));
-                                  
-                                  if (entry?.id && !entry?.approved && !isCustomAddress) {
-                                    // Edit saved entry directly
-                                    editSavedEntry(entry.id, 'hours', e.target.value);
-                                  } else {
-                                    // Handle unsaved entry
-                                    handleCellChange(day, entryIndex, 'hours', e.target.value);
-                                  }
+                                  // No auto-save - all changes stored locally until "Save All" is clicked
+                                  handleCellChange(day, entryIndex, 'hours', e.target.value);
                                 }}
                                 className={`w-20 ${isWeekend ? 'text-white placeholder:text-blue-200 bg-blue-800 border-blue-600' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}
                                 disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))} // Disable for approved entries or locked weekends
@@ -2578,13 +2550,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                     return;
                                   }
                                   
-                                  if (entry?.id && !entry?.approved) {
-                                    // Edit saved entry directly
-                                    editSavedEntry(entry.id, 'jobId', value);
-                                  } else {
-                                    // Handle unsaved entry
-                                    handleCellChange(day, entryIndex, 'jobId', value);
-                                  }
+                                  // No auto-save - all changes stored locally until "Save All" is clicked
+                                  handleCellChange(day, entryIndex, 'jobId', value);
                                 }}
                                 disabled={entry?.approved || (isWeekend && !isWeekendUnlocked(dateKey))} // Disable for approved entries or locked weekends
                               >
