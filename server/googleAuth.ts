@@ -53,11 +53,17 @@ export class GoogleDriveAuth {
       'https://www.googleapis.com/auth/drive.file'
     ];
 
-    return this.oauth2Client.generateAuthUrl({
+    const authUrl = this.oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
       prompt: 'consent'
     });
+
+    console.log('🔵 Generated OAuth URL:', authUrl);
+    console.log('🔵 OAuth scopes requested:', scopes);
+    console.log('🔵 Client ID being used:', process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...');
+    
+    return authUrl;
   }
 
   // Exchange authorization code for tokens
