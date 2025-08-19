@@ -1393,31 +1393,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const employeeId = req.params.employeeId;
       console.log(`🔍 ADMIN TIMESHEET REQUEST: Fetching entries for employeeId: ${employeeId}`);
       
-      // Get entries using storage method
-      const entries = await storage.getTimesheetEntries(employeeId);
-      console.log(`📊 TIMESHEET RESULT: Found ${entries.length} entries for employeeId: ${employeeId}`);
+      // CRITICAL FIX: Find the user ID that corresponds to this employee ID
+      // timesheetEntries.staffId references users.id, not employees.id
+      const userWithEmployee = await db
+        .select({ userId: users.id })
+        .from(users)
+        .where(eq(users.employeeId, employeeId))
+        .limit(1);
       
-      // If no entries found, get debug info
-      if (entries.length === 0) {
-        // Get all staff IDs for comparison
-        const allStaffIds = await db
-          .selectDistinct({ staffId: timesheetEntries.staffId })
-          .from(timesheetEntries)
-          .limit(10);
-        
-        console.log(`🗃️ DEBUG: Available staffIds in database:`, allStaffIds.map(r => r.staffId));
-        console.log(`🗃️ DEBUG: Searched for employeeId: ${employeeId}`);
-        
-        // Return debug info in response when no entries found
-        return res.json({
-          entries: [],
-          debug: {
-            searchedEmployeeId: employeeId,
-            availableStaffIds: allStaffIds.map(r => r.staffId),
-            message: "No entries found for this employee ID. Check available staff IDs for comparison."
-          }
-        });
+      if (userWithEmployee.length === 0) {
+        console.log(`❌ No user found linked to employeeId: ${employeeId}`);
+        // Also check if this is actually a user ID being passed directly
+        const directUserQuery = await db
+          .select({ userId: users.id })
+          .from(users)
+          .where(eq(users.id, employeeId))
+          .limit(1);
+          
+        if (directUserQuery.length === 0) {
+          return res.json({
+            entries: [],
+            debug: {
+              searchedEmployeeId: employeeId,
+              message: "No user found linked to this employee ID. Employee may not have a user account."
+            }
+          });
+        } else {
+          // This was actually a user ID, use it directly
+          const entries = await storage.getTimesheetEntries(employeeId);
+          console.log(`📊 TIMESHEET RESULT: Found ${entries.length} entries for userId: ${employeeId}`);
+          return res.json(entries);
+        }
       }
+      
+      const actualUserId = userWithEmployee[0].userId;
+      console.log(`✅ Found user ID ${actualUserId} for employee ID ${employeeId}`);
+      
+      // Get entries using the correct user ID
+      const entries = await storage.getTimesheetEntries(actualUserId);
+      console.log(`📊 TIMESHEET RESULT: Found ${entries.length} entries for userId: ${actualUserId} (employee: ${employeeId})`);
       
       if (entries.length > 0) {
         console.log(`📝 SAMPLE ENTRY:`, entries[0]);
