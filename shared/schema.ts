@@ -574,7 +574,7 @@ export const rewardCatalog = pgTable("reward_catalog", {
   icon: varchar("icon"), // Icon for the reward
   category: varchar("category").notNull(), // "time_off", "perks", "vouchers", etc.
   isActive: boolean("is_active").notNull().default(true),
-  maxRedemptionsPerMonth: integer("max_redemptions_per_month").default(null), // null = unlimited
+  maxRedemptionsPerMonth: integer("max_redemptions_per_month"), // null = unlimited
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

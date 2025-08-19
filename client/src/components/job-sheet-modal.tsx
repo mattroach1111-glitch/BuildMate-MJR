@@ -1101,8 +1101,8 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
   const getSortedLaborEntries = (laborEntries: LaborEntry[]) => {
     return [...laborEntries].sort((a, b) => {
-      const nameA = a.staffId; // Use staffId directly since staff relation might not be populated
-      const nameB = b.staffId;
+      const nameA = (a as any).staff?.name || a.staffId; // Use staff name if available, fallback to staffId
+      const nameB = (b as any).staff?.name || b.staffId;
       
       // Special case: Mark Plastering always goes to the bottom
       const isMarkPlasteringA = nameA.toLowerCase().includes('mark plastering') || nameA.toLowerCase().includes('plastering');
@@ -1842,11 +1842,11 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                             <div className="flex items-center gap-2">
                               <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
                                 <span className="text-xs font-medium text-primary">
-                                  {entry.staffId.charAt(0).toUpperCase()}
+                                  {((entry as any).staff?.name || entry.staffId).charAt(0).toUpperCase()}
                                 </span>
                               </div>
                               <span className="font-medium" data-testid={`text-labor-staff-${entry.id}`}>
-                                {entry.staffId}
+                                {(entry as any).staff?.name || entry.staffId}
                               </span>
                             </div>
                           </td>
