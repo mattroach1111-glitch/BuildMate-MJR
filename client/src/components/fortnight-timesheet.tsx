@@ -614,8 +614,13 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   });
 
   const { data: timesheetEntries, refetch: refetchTimesheetEntries } = useQuery({
-    queryKey: isAdminView ? ["/api/admin/timesheets"] : ["/api/timesheet"],
+    queryKey: isAdminView && selectedEmployee 
+      ? ["/api/admin/timesheets", selectedEmployee] 
+      : isAdminView 
+        ? ["/api/admin/timesheets"] 
+        : ["/api/timesheet"],
     retry: false,
+    enabled: !isAdminView || !!selectedEmployee, // Only fetch when employee is selected in admin view
     refetchOnMount: true,
     refetchOnWindowFocus: false,
   });
