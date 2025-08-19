@@ -294,7 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Google Drive authentication routes
+  // Google Drive authentication routes  
   app.get('/api/google-drive/auth-url', isAuthenticated, async (req: any, res) => {
     console.log(`🚀🚀🚀 ROUTE HIT: /api/google-drive/auth-url at ${new Date().toISOString()}`);
     try {
@@ -4952,8 +4952,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     date: entry.date,
                     hours: entry.hours,
                     // notes: entry.notes, // Removed - not a valid column
-                    status: entry.status,
-                    customAddress: entry.customAddress,
+                    // status: entry.status, // Removed - not a valid column
+                    // customAddress: entry.customAddress, // Removed - not a valid column
                     leaveType: entry.leaveType
                   }
                 });
