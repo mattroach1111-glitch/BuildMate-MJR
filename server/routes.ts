@@ -1857,7 +1857,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
               
               // Create or find Timesheets folder inside BuildFlow Pro
-              const buildFlowFolderId = await googleDriveService.findOrCreateFolder('Timesheets', mainFolderId);
+              const buildFlowFolderId = await googleDriveService.findOrCreateFolder('Timesheets', mainFolderId || undefined);
               
               // Upload PDF to Google Drive
               driveLink = await googleDriveService.uploadPDF(fileName, pdfBuffer, buildFlowFolderId || undefined);
@@ -1891,7 +1891,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const submittedDates = entries.map(entry => entry.date).filter(Boolean);
           
           // Award points for each unique submission date
-          const uniqueDates = [...new Set(submittedDates)];
+          const uniqueDates = Array.from(new Set(submittedDates));
           let totalPointsEarned = 0;
           let newAchievements: any[] = [];
           let currentStreak = 0;
@@ -2481,7 +2481,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(timesheetEntries.staffId, employeeId));
       
       // Also update labor hours for all jobs this employee worked on
-      const jobIds = [...new Set(entries.map(entry => entry.jobId).filter(Boolean))];
+      const jobIds = Array.from(new Set(entries.map(entry => entry.jobId).filter(Boolean)));
       for (const jobId of jobIds) {
         if (jobId) {
           await storage.updateLaborHoursFromTimesheet(employeeId, jobId);
@@ -2952,7 +2952,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
       
       // Create/find job folder inside BuildFlow Pro folder
-      const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId);
+      const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId || undefined);
       
       // Upload file to Google Drive
       const uploadResult = await googleDriveService.uploadFile(
@@ -3041,7 +3041,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
       
       // Create/find job folder inside BuildFlow Pro folder
-      const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId);
+      const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId || undefined);
       
       // Upload file to Google Drive
       const uploadResult = await googleDriveService.uploadFile(fileName, fileBuffer, mimeType || 'application/octet-stream', jobFolderId || undefined);
@@ -3979,7 +3979,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
             
             // Create/find job folder
-            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId);
+            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId || undefined);
             
             // Upload file to Google Drive
             const uploadResult = await googleDriveService.uploadFile(
