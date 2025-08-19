@@ -834,26 +834,61 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   const handleCellChange = (date: Date, entryIndex: number, field: string, value: string) => {
     const dateKey = format(date, 'yyyy-MM-dd');
+    
+    // Get current entries for this day to determine if this is a saved or draft entry
+    const existingEntries = Array.isArray(currentFortnightEntries) ? currentFortnightEntries.filter((entry: any) => 
+      format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
+    ) : [];
+    
+    // If editing a saved entry, use editSavedEntry
+    if (entryIndex < existingEntries.length) {
+      const savedEntry = existingEntries[entryIndex];
+      if (savedEntry.id && (!savedEntry.approved || isAdminView)) {
+        console.log(`✏️ Editing saved entry ${savedEntry.id}: ${field} = ${value}`);
+        editSavedEntry(savedEntry.id, field, value);
+        return;
+      }
+    }
+    
+    // Otherwise, handle as draft entry
+    const draftIndex = entryIndex - existingEntries.length;
+    console.log(`📝 Updating draft entry ${draftIndex} for ${dateKey}: ${field} = ${value}`);
+    
     setTimesheetData((prev: any) => {
       const dayEntries = Array.isArray(prev[dateKey]) ? prev[dateKey] : [];
       const updatedEntries = [...dayEntries];
       
-      if (!updatedEntries[entryIndex]) {
-        updatedEntries[entryIndex] = {};
+      // Ensure draft entry exists
+      while (updatedEntries.length <= draftIndex) {
+        updatedEntries.push({
+          hours: '',
+          jobId: '',
+          materials: '',
+          description: '',
+          id: `draft_${Date.now()}_${Math.random()}`
+        });
       }
       
-      updatedEntries[entryIndex] = {
-        ...updatedEntries[entryIndex],
+      updatedEntries[draftIndex] = {
+        ...updatedEntries[draftIndex],
         [field]: value
       };
-      
-      // No auto-save - user must use manual save button
       
       return {
         ...prev,
         [dateKey]: updatedEntries
       };
     });
+    
+    // Auto-save draft entries after a delay (debounced)
+    if (autoSaveTimeout.current) {
+      clearTimeout(autoSaveTimeout.current);
+    }
+    
+    autoSaveTimeout.current = setTimeout(() => {
+      console.log(`Auto-saving draft change: ${dateKey}, entry ${entryIndex}, ${field} = ${value}`);
+      autoSave();
+    }, 1500); // 1.5 second delay for smoother UX
   };
 
   const saveEntry = (date: Date, entryIndex: number, data: any) => {
@@ -1243,25 +1278,55 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   const addJobEntry = (date: Date) => {
     const dateKey = format(date, 'yyyy-MM-dd');
+    console.log(`➕ Adding job entry for ${dateKey}`);
+    
     setTimesheetData((prev: any) => {
       const dayEntries = Array.isArray(prev[dateKey]) ? prev[dateKey] : [];
+      const newEntry = {
+        hours: '',
+        jobId: '',
+        materials: '',
+        description: '',
+        id: `draft_${Date.now()}_${Math.random()}` // Temporary ID for tracking
+      };
+      
+      console.log(`➕ Added new entry for ${dateKey}:`, newEntry);
       return {
         ...prev,
-        [dateKey]: [...dayEntries, {}]
+        [dateKey]: [...dayEntries, newEntry]
       };
     });
   };
 
   const removeJobEntry = (date: Date, entryIndex: number) => {
     const dateKey = format(date, 'yyyy-MM-dd');
-    setTimesheetData((prev: any) => {
-      const dayEntries = Array.isArray(prev[dateKey]) ? prev[dateKey] : [];
-      const updatedEntries = dayEntries.filter((_, index) => index !== entryIndex);
-      return {
-        ...prev,
-        [dateKey]: updatedEntries
-      };
-    });
+    console.log(`➖ Removing job entry ${entryIndex} for ${dateKey}`);
+    
+    // Get current entries for this day
+    const existingEntries = Array.isArray(currentFortnightEntries) ? currentFortnightEntries.filter((entry: any) => 
+      format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
+    ) : [];
+    const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
+    
+    // If removing a saved entry, delete it from database
+    if (entryIndex < existingEntries.length) {
+      const entryToDelete = existingEntries[entryIndex];
+      if (entryToDelete.id) {
+        console.log(`🗑️ Deleting saved entry ${entryToDelete.id}`);
+        deleteSavedEntry(entryToDelete.id);
+      }
+    } else {
+      // Removing a draft entry - just update local state
+      const draftIndex = entryIndex - existingEntries.length;
+      setTimesheetData((prev: any) => {
+        const currentDayEntries = Array.isArray(prev[dateKey]) ? prev[dateKey] : [];
+        const updatedEntries = currentDayEntries.filter((_, index) => index !== draftIndex);
+        return {
+          ...prev,
+          [dateKey]: updatedEntries
+        };
+      });
+    }
   };
 
   const exportToPDF = () => {
@@ -1486,17 +1551,21 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                       format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
                     ) : [];
                     
-                    let entriesToShow;
-                    const approvedEntries = existingEntries.filter((entry: any) => entry.approved);
-                    const unapprovedEntries = existingEntries.filter((entry: any) => !entry.approved);
+                    // IMPROVED: Combine all entries (saved + draft) for smoother multiple entries per day
+                    let entriesToShow = [];
                     
-                    if (approvedEntries.length > 0) {
-                      entriesToShow = approvedEntries;
-                    } else if (unapprovedEntries.length > 0) {
-                      entriesToShow = unapprovedEntries;
-                    } else if (dayEntries.length > 0) {
-                      entriesToShow = dayEntries;
-                    } else {
+                    // Always show existing saved entries first (approved and unapproved)
+                    if (existingEntries.length > 0) {
+                      entriesToShow = [...existingEntries];
+                    }
+                    
+                    // Add draft entries that aren't yet saved
+                    if (dayEntries.length > 0) {
+                      entriesToShow = [...entriesToShow, ...dayEntries];
+                    }
+                    
+                    // If no entries at all, show one empty row
+                    if (entriesToShow.length === 0) {
                       entriesToShow = [{}];
                     }
                     
@@ -2873,14 +2942,21 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   const approvedEntries = existingEntries.filter((entry: any) => entry.approved);
                   const unapprovedEntries = existingEntries.filter((entry: any) => !entry.approved);
                   
-                  let entriesToShow;
-                  if (approvedEntries.length > 0) {
-                    entriesToShow = approvedEntries;
-                  } else if (unapprovedEntries.length > 0) {
-                    entriesToShow = unapprovedEntries;
-                  } else if (dayEntries.length > 0) {
-                    entriesToShow = dayEntries;
-                  } else {
+                  // IMPROVED: Combine all entries (saved + draft) for smoother multiple entries per day
+                  let entriesToShow = [];
+                  
+                  // Always show existing saved entries first
+                  if (existingEntries.length > 0) {
+                    entriesToShow = [...existingEntries];
+                  }
+                  
+                  // Add draft entries
+                  if (dayEntries.length > 0) {
+                    entriesToShow = [...entriesToShow, ...dayEntries];
+                  }
+                  
+                  // If no entries at all, show one empty
+                  if (entriesToShow.length === 0) {
                     entriesToShow = [{}];
                   }
                   
