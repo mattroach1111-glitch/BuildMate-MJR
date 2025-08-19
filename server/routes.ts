@@ -296,19 +296,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Google Drive authentication routes
   app.get('/api/google-drive/auth-url', isAuthenticated, async (req: any, res) => {
+    console.log(`🚀🚀🚀 ROUTE HIT: /api/google-drive/auth-url at ${new Date().toISOString()}`);
     try {
-      console.log("🚀 Google Drive auth-url endpoint hit - FORCING NEW INSTANCE");
-      console.log("🚀 Environment check - GOOGLE_REDIRECT_URI:", process.env.GOOGLE_REDIRECT_URI);
-      console.log("🚀 Environment check - REPLIT_DEPLOYMENT:", process.env.REPLIT_DEPLOYMENT);
+      // Directly create OAuth client here to bypass any caching
+      const { google } = require('googleapis');
+      const correctRedirectUri = 'https://build-mate-mattroach1111.replit.app/api/google-drive/callback';
       
-      // Force bypass any caching - create completely new instance
-      delete require.cache[require.resolve('./googleAuth')];
-      const { GoogleDriveAuth: FreshGoogleDriveAuth } = require('./googleAuth');
-      const googleAuth = new FreshGoogleDriveAuth();
+      console.log(`🚀 Creating OAuth client directly with URI: ${correctRedirectUri}`);
       
-      const authUrl = googleAuth.getAuthUrl();
-      console.log("🔵 Generated Google Drive auth URL:", authUrl);
-      console.log("🚀 Checking if URL contains 'https://1/':", authUrl.includes('https://1/'));
+      const oauth2Client = new google.auth.OAuth2(
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET,
+        correctRedirectUri
+      );
+      
+      const scopes = ['https://www.googleapis.com/auth/drive.file'];
+      const authUrl = oauth2Client.generateAuthUrl({
+        access_type: 'offline',
+        scope: scopes,
+        prompt: 'consent'
+      });
+      
+      console.log("🔵 DIRECT Generated Google Drive auth URL:", authUrl);
+      console.log("🚀 DIRECT Checking if URL contains 'https://1/':", authUrl.includes('https://1/'));
       
       res.json({ authUrl });
     } catch (error) {

@@ -34,14 +34,15 @@ export class GoogleDriveAuth {
     
     // Force override - explicitly set the correct redirect URI
     const correctRedirectUri = 'https://build-mate-mattroach1111.replit.app/api/google-drive/callback';
+    console.log(`🔵 GoogleDriveAuth constructor called at ${new Date().toISOString()}`);
+    console.log(`🔵 FORCED redirect URI: ${correctRedirectUri}`);
+    console.log(`🔵 Environment GOOGLE_REDIRECT_URI: ${process.env.GOOGLE_REDIRECT_URI}`);
     
     this.oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
       correctRedirectUri
     );
-    
-    console.log(`🔵 FORCED redirect URI: ${correctRedirectUri}`);
     
     console.log(`🔵 OAuth2 client created, checking configured redirect URI...`);
     console.log(`🔵 OAuth2 client internal redirect URI: ${(this.oauth2Client as any)._redirectUri || 'unknown'}`);
