@@ -32,11 +32,16 @@ export class GoogleDriveAuth {
     
     console.log(`🔵 Final OAuth2 config - ClientID: ${process.env.GOOGLE_CLIENT_ID?.substring(0, 10)}..., RedirectURI: ${redirectUri}`);
     
+    // Force override - explicitly set the correct redirect URI
+    const correctRedirectUri = 'https://build-mate-mattroach1111.replit.app/api/google-drive/callback';
+    
     this.oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      redirectUri
+      correctRedirectUri
     );
+    
+    console.log(`🔵 FORCED redirect URI: ${correctRedirectUri}`);
     
     console.log(`🔵 OAuth2 client created, checking configured redirect URI...`);
     console.log(`🔵 OAuth2 client internal redirect URI: ${(this.oauth2Client as any)._redirectUri || 'unknown'}`);
