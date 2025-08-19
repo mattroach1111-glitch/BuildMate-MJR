@@ -1649,9 +1649,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const validatedData = insertTimesheetEntrySchema.parse(req.body);
+      console.log("Raw request body:", JSON.stringify(req.body, null, 2));
+      
+      // Transform leave types to null jobId before validation
+      const requestData = { ...req.body };
+      const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'];
+      
+      if (leaveTypes.includes(requestData.jobId)) {
+        const originalJobId = requestData.jobId;
+        console.log(`Transforming leave type '${originalJobId}' to null jobId`);
+        requestData.jobId = null;
+        // Store leave type in description for reference
+        requestData.description = requestData.description || originalJobId.toUpperCase().replace('-', ' ');
+      }
+      
+      const validatedData = insertTimesheetEntrySchema.parse(requestData);
       
       console.log("Admin creating timesheet entry for staffId:", validatedData.staffId);
+      console.log("Validated data:", JSON.stringify(validatedData, null, 2));
       console.log("Admin user ID:", userId);
       
       // Check if staffId is a valid user, if not, create a user record for the employee
