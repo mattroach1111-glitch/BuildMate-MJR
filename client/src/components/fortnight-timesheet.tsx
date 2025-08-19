@@ -1574,10 +1574,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               </div>
                               {(() => {
                                 const shouldShowButton = isWeekend && !isWeekendUnlocked(dateKey);
-                                // Remove debug logging in production for cleaner user experience
-                                if (process.env.NODE_ENV === 'development') {
-                                  console.log(`🔧 STAFF UNLOCK BUTTON DEBUG: ${dateKey} - isWeekend=${isWeekend}, unlocked=${isWeekendUnlocked(dateKey)}, shouldShow=${shouldShowButton}, entryIndex=${entryIndex}`);
-                                }
+                                // Unlock button logic without debug logging for cleaner console
                                 return shouldShowButton;
                               })() && (
                                 <AlertDialog>
@@ -2391,23 +2388,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0 = Sunday, 6 = Saturday
                         const isWeekendLocked = isWeekend && !isWeekendUnlocked(dateKey);
                         
-                        // Force weekend detection first
-                        console.log(`📅 PROCESSING DAY: ${format(day, 'EEE, MMM dd')} - Day: ${dayOfWeek}, Date: ${dateKey}`);
-                        
-                        // Check if this is actually a weekend (Saturday=6, Sunday=0)
-                        if (dayOfWeek === 6) {
-                          console.log(`🔵 SATURDAY DETECTED: ${format(day, 'EEE, MMM dd')} - Day ${dayOfWeek}`);
-                        }
-                        if (dayOfWeek === 0) {
-                          console.log(`🔵 SUNDAY DETECTED: ${format(day, 'EEE, MMM dd')} - Day ${dayOfWeek}`);
-                        }
-                        
-                        // Weekend detection with detailed logging
-                        if (isWeekend) {
-                          console.log(`🔴 WEEKEND CONFIRMED: ${format(day, 'EEE, MMM dd')} - Day: ${dayOfWeek} (${dayOfWeek === 0 ? 'Sunday' : 'Saturday'})`);
-                          console.log(`🔐 LOCK CHECK: Unlocked=${isWeekendUnlocked(dateKey)}, Locked=${isWeekendLocked}`);
-                          console.log(`🗂️ UNLOCKED SET:`, Array.from(unlockedWeekends));
-                        }
+                        // Weekend detection without debug logging for cleaner console
                         const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
                         const existingEntries = Array.isArray(currentFortnightEntries) ? currentFortnightEntries.filter((entry: any) => 
                           format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey
@@ -2459,7 +2440,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   </div>
                                   {(() => {
                                     const shouldShowButton = isWeekend && !isWeekendUnlocked(dateKey);
-                                    console.log(`🔧 UNLOCK BUTTON DEBUG: ${dateKey} - isWeekend=${isWeekend}, unlocked=${isWeekendUnlocked(dateKey)}, shouldShow=${shouldShowButton}, entryIndex=${entryIndex}`);
+                                    // Unlock button logic
                                     return shouldShowButton;
                                   })() && (
                                     <AlertDialog>
