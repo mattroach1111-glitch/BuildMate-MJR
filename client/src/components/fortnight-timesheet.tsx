@@ -613,7 +613,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     retry: false,
   });
 
-  const { data: timesheetEntries, refetch: refetchTimesheetEntries } = useQuery({
+  const { data: timesheetEntries, refetch: refetchTimesheetEntries, isLoading, error } = useQuery({
     queryKey: isAdminView && selectedEmployee 
       ? ["/api/admin/timesheets", selectedEmployee] 
       : isAdminView 
@@ -624,6 +624,24 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     refetchOnMount: true,
     refetchOnWindowFocus: false,
   });
+
+  // Debug the query state
+  useEffect(() => {
+    console.log(`🔍 TIMESHEET QUERY DEBUG:`, {
+      isAdminView,
+      selectedEmployee,
+      enabled: !isAdminView || !!selectedEmployee,
+      isLoading,
+      hasError: !!error,
+      dataType: typeof timesheetEntries,
+      dataLength: Array.isArray(timesheetEntries) ? timesheetEntries.length : 'not-array',
+      queryKey: isAdminView && selectedEmployee 
+        ? ["/api/admin/timesheets", selectedEmployee] 
+        : isAdminView 
+          ? ["/api/admin/timesheets"] 
+          : ["/api/timesheet"]
+    });
+  }, [isAdminView, selectedEmployee, isLoading, error, timesheetEntries]);
 
   // Update selected employee when prop changes
   useEffect(() => {
