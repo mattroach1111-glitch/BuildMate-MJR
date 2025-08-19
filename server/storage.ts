@@ -1029,11 +1029,25 @@ export class DatabaseStorage implements IStorage {
 
   // Timesheet operations
   async getTimesheetEntries(staffId: string): Promise<TimesheetEntry[]> {
-    return await db
+    console.log(`🗃️ STORAGE: Querying timesheet entries for staffId: ${staffId}`);
+    
+    const results = await db
       .select()
       .from(timesheetEntries)
       .where(eq(timesheetEntries.staffId, staffId))
       .orderBy(desc(timesheetEntries.date));
+    
+    console.log(`🗃️ STORAGE RESULT: Found ${results.length} entries for staffId: ${staffId}`);
+    
+    if (results.length === 0) {
+      // Also check what staffIds exist in the database for debugging
+      const allStaffIds = await db
+        .selectDistinct({ staffId: timesheetEntries.staffId })
+        .from(timesheetEntries);
+      console.log(`🗃️ DEBUG: Available staffIds in database:`, allStaffIds.map(r => r.staffId));
+    }
+    
+    return results;
   }
 
   async createTimesheetEntry(entry: InsertTimesheetEntry): Promise<TimesheetEntry> {

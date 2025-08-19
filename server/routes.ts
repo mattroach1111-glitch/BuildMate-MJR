@@ -1336,7 +1336,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const employeeId = req.params.employeeId;
+      console.log(`🔍 ADMIN TIMESHEET REQUEST: Fetching entries for employeeId: ${employeeId}`);
+      
       const entries = await storage.getTimesheetEntries(employeeId);
+      console.log(`📊 TIMESHEET RESULT: Found ${entries.length} entries for employeeId: ${employeeId}`);
+      
+      if (entries.length > 0) {
+        console.log(`📝 SAMPLE ENTRY:`, entries[0]);
+      }
+      
       res.json(entries);
     } catch (error) {
       console.error("Error fetching employee timesheet entries:", error);
