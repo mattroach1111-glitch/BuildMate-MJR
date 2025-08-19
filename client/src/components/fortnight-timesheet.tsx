@@ -1666,7 +1666,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 </PopoverTrigger>
                                 <PopoverContent className="w-80 p-0" align="start">
                                   <Command>
-                                    {/* Search bar completely removed - same interface for admin and staff */}
+                                    <CommandInput 
+                                      placeholder="Search jobs..." 
+                                      value={jobSearchQuery[cellKey] || ''}
+                                      onValueChange={(search) => setJobSearchQuery(prev => ({ ...prev, [cellKey]: search }))}
+                                    />
                                     <CommandList className="max-h-64">
                                       <CommandEmpty>No job found.</CommandEmpty>
                                       <CommandGroup>
