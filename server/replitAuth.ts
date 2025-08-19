@@ -35,13 +35,12 @@ export function getSession() {
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
     resave: false,
-    saveUninitialized: true, // Changed to true for OAuth flow
+    saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+      secure: false, // Allow cookies to work in both development and production
       maxAge: sessionTtl,
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site cookies in production
-      domain: process.env.NODE_ENV === 'production' ? '.replit.app' : undefined, // Set domain for replit.app
+      sameSite: 'lax',
     },
   });
 }
@@ -70,18 +69,6 @@ async function upsertUser(
 
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
-  
-  // Add CORS headers for authentication in production
-  if (process.env.NODE_ENV === 'production') {
-    app.use((req, res, next) => {
-      res.header('Access-Control-Allow-Credentials', 'true');
-      res.header('Access-Control-Allow-Origin', req.headers.origin);
-      res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
-      next();
-    });
-  }
-  
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
@@ -98,17 +85,8 @@ export async function setupAuth(app: Express) {
     verified(null, user);
   };
 
-  // Configure strategies for both development and production domains
-  const domains = [
-    ...process.env.REPLIT_DOMAINS!.split(","),
-    'build-mate-mattroach1111.replit.app'
-  ];
-  
-  // Remove duplicates
-  const uniqueDomains = [...new Set(domains)];
-  
-  for (const domain of uniqueDomains) {
-    console.log("🔐 Configuring strategy for domain:", domain);
+  for (const domain of process.env
+    .REPLIT_DOMAINS!.split(",")) {
     const strategy = new Strategy(
       {
         name: `replitauth:${domain}`,
@@ -125,70 +103,16 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
-    // Determine the correct domain for the current environment
-    const hostname = req.get('host') || req.hostname;
-    console.log("🔐 Login request hostname:", hostname);
-    
-    let domain;
-    if (hostname.includes('build-mate-mattroach1111.replit.app')) {
-      domain = 'build-mate-mattroach1111.replit.app';
-    } else {
-      domain = process.env.REPLIT_DOMAINS!.split(",")[0];
-    }
-    
-    console.log("🔐 Using authentication domain:", domain);
-    
-    passport.authenticate(`replitauth:${domain}`, {
+    passport.authenticate(`replitauth:${req.hostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
     })(req, res, next);
   });
 
   app.get("/api/callback", (req, res, next) => {
-    console.log("🔐🔐🔐 CALLBACK ROUTE HIT! 🔐🔐🔐");
-    console.log("🔐 Callback received - query params:", req.query);
-    console.log("🔐 Callback received - hostname:", req.hostname);
-    console.log("🔐 Callback received - full URL:", req.url);
-    console.log("🔐 Session ID:", req.sessionID);
-    
-    // Determine the correct domain for the current environment
-    const hostname = req.get('host') || req.hostname;
-    let domain;
-    if (hostname.includes('build-mate-mattroach1111.replit.app')) {
-      domain = 'build-mate-mattroach1111.replit.app';
-    } else {
-      domain = process.env.REPLIT_DOMAINS!.split(",")[0];
-    }
-    
-    console.log("🔐 Using domain for callback:", domain);
-    
-    passport.authenticate(`replitauth:${domain}`, (err: any, user: any, info: any) => {
-      console.log("🔐 Passport authenticate result:", { err: !!err, user: !!user, info });
-      
-      if (err) {
-        console.error("🔐 Callback authentication error:", err);
-        console.error("🔐 Error details:", JSON.stringify(err, null, 2));
-        return res.redirect("/api/login");
-      }
-      
-      if (!user) {
-        console.error("🔐 Callback authentication failed - no user:", info);
-        console.error("🔐 Info details:", JSON.stringify(info, null, 2));
-        return res.redirect("/api/login");
-      }
-      
-      console.log("🔐 User object:", JSON.stringify(user, null, 2));
-      
-      req.logIn(user, (err) => {
-        if (err) {
-          console.error("🔐 Login error:", err);
-          console.error("🔐 Login error details:", JSON.stringify(err, null, 2));
-          return res.redirect("/api/login");
-        }
-        
-        console.log("🔐 Callback authentication successful, redirecting to /");
-        return res.redirect("/");
-      });
+    passport.authenticate(`replitauth:${req.hostname}`, {
+      successReturnToOrRedirect: "/",
+      failureRedirect: "/api/login",
     })(req, res, next);
   });
 
