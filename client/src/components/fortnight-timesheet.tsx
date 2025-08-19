@@ -2270,6 +2270,18 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                       <p className="text-sm">This staff member hasn't submitted any timesheets for this fortnight period.</p>
                       <p className="text-xs mt-2 text-green-600">✓ System is working correctly - staff member has no entries in database</p>
                     </div>
+                    {(timesheetEntries as any)?.debug && (
+                      <div className="mt-6 p-4 bg-muted rounded-lg text-sm text-left max-w-md mx-auto">
+                        <p className="font-medium text-center mb-3">Debug Information:</p>
+                        <p><strong>Searched for:</strong> {(timesheetEntries as any).debug.searchedEmployeeId}</p>
+                        <p className="mt-2"><strong>Available Staff IDs in database:</strong></p>
+                        <div className="mt-1 text-xs font-mono max-h-32 overflow-y-auto bg-background p-2 rounded border">
+                          {(timesheetEntries as any).debug.availableStaffIds?.map((id: string, index: number) => (
+                            <div key={index} className="py-1">{id}</div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
                 
