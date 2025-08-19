@@ -1909,7 +1909,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         </td>
                         <td className="p-3">
                           <div className="flex gap-2">
-                            {entryIndex === 0 && !isFortnightConfirmed() && !(isWeekend && !isWeekendUnlocked(dateKey)) && (
+                            {entryIndex === (entriesToShow.length - 1) && !isFortnightConfirmed() && !(isWeekend && !isWeekendUnlocked(dateKey)) && (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -2631,7 +2631,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             </td>
                             <td className="p-3">
                               <div className="flex gap-2">
-                                {entryIndex === 0 && !isFortnightConfirmed() && !(isWeekend && !isWeekendUnlocked(dateKey)) && (
+                                {entryIndex === (entriesToShow.length - 1) && !isFortnightConfirmed() && !(isWeekend && !isWeekendUnlocked(dateKey)) && (
                                   <Button
                                     size="sm"
                                     variant="outline"
