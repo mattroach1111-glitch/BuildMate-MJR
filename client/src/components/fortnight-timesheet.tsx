@@ -1100,7 +1100,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   const entryDescription = entryData.description || '';
                   const descriptionMatch = savedDescription === entryDescription;
                   
-
+                  const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'];
+                  const isLeaveType = leaveTypes.includes(entryData.jobId);
+                  const isCustomAddress = entryData.jobId === 'custom-address' || (entryData.description && entryData.description.startsWith('CUSTOM_ADDRESS:'));
                   
                   if (isLeaveType) {
                     return dateMatches && jobMatches && materialsMatch;
@@ -1259,12 +1261,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         return total + (isNaN(hours) ? 0 : hours);
       }, 0) : 0;
     
-    console.log('🔍 TOTAL HOURS DEBUG:', {
-      entriesCount: currentFortnightEntries?.length || 0,
-      totalHours: savedHours,
-      lessThan76: savedHours < 76,
-      entries: currentFortnightEntries?.map(e => ({ hours: e.hours, date: e.date })) || []
-    });
+    // Remove debug logging in production for cleaner user experience
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 TOTAL HOURS DEBUG:', {
+        entriesCount: currentFortnightEntries?.length || 0,
+        totalHours: savedHours,
+        lessThan76: savedHours < 76,
+        entries: currentFortnightEntries?.map(e => ({ hours: e.hours, date: e.date })) || []
+      });
+    }
 
     return isNaN(savedHours) ? 0 : savedHours;
   };
@@ -1580,7 +1585,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               </div>
                               {(() => {
                                 const shouldShowButton = isWeekend && !isWeekendUnlocked(dateKey);
-                                console.log(`🔧 STAFF UNLOCK BUTTON DEBUG: ${dateKey} - isWeekend=${isWeekend}, unlocked=${isWeekendUnlocked(dateKey)}, shouldShow=${shouldShowButton}, entryIndex=${entryIndex}`);
+                                // Remove debug logging in production for cleaner user experience
+                                if (process.env.NODE_ENV === 'development') {
+                                  console.log(`🔧 STAFF UNLOCK BUTTON DEBUG: ${dateKey} - isWeekend=${isWeekend}, unlocked=${isWeekendUnlocked(dateKey)}, shouldShow=${shouldShowButton}, entryIndex=${entryIndex}`);
+                                }
                                 return shouldShowButton;
                               })() && (
                                 <AlertDialog>
@@ -3001,8 +3009,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         
         {/* Low Hours Warning Dialog - ADMIN AND STAFF */}
         {(() => {
-          console.log('🚨 DIALOG RENDER CHECK - showLowHoursDialog:', showLowHoursDialog, 'lowHoursTotal:', lowHoursTotal);
-          console.log('🚨 CONDITIONAL RENDER CHECK - will render dialog?', !!showLowHoursDialog);
+          // Remove debug logging in production for cleaner user experience
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🚨 DIALOG RENDER CHECK - showLowHoursDialog:', showLowHoursDialog, 'lowHoursTotal:', lowHoursTotal);
+            console.log('🚨 CONDITIONAL RENDER CHECK - will render dialog?', !!showLowHoursDialog);
+          }
           return null;
         })()}
         {showLowHoursDialog && (
