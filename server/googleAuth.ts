@@ -23,6 +23,9 @@ export class GoogleDriveAuth {
     }
     
     console.log(`🔵 Google Drive redirect URI: ${redirectUri}`);
+    console.log(`🔵 Environment debug - REPLIT_DEPLOYMENT: '${process.env.REPLIT_DEPLOYMENT}'`);
+    console.log(`🔵 Environment debug - REPLIT_DEV_DOMAIN: '${process.env.REPLIT_DEV_DOMAIN}'`);
+    console.log(`🔵 Environment debug - deploymentUrl: '${process.env.REPLIT_DEPLOYMENT ? `https://${process.env.REPLIT_DEPLOYMENT}.replit.app` : process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'http://localhost:5000'}'`);
     
     this.oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
