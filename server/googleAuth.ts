@@ -12,14 +12,17 @@ export class GoogleDriveAuth {
     if (process.env.GOOGLE_REDIRECT_URI) {
       redirectUri = process.env.GOOGLE_REDIRECT_URI;
     } else {
-      // Use the current request host from environment variables
-      const deploymentUrl = process.env.REPLIT_DEPLOYMENT 
-        ? `https://${process.env.REPLIT_DEPLOYMENT}.replit.app`
-        : process.env.REPLIT_DEV_DOMAIN 
-        ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-        : 'http://localhost:5000';
-      
-      redirectUri = `${deploymentUrl}/api/google-drive/callback`;
+      // Detect deployment environment and construct proper URL
+      if (process.env.REPLIT_DEPLOYMENT) {
+        // Production deployment
+        redirectUri = `https://${process.env.REPLIT_DEPLOYMENT}.replit.app/api/google-drive/callback`;
+      } else if (process.env.REPLIT_DEV_DOMAIN) {
+        // Development environment
+        redirectUri = `https://${process.env.REPLIT_DEV_DOMAIN}/api/google-drive/callback`;
+      } else {
+        // Fallback - you're using the deployed app build-mate-mattroach1111.replit.app
+        redirectUri = 'https://build-mate-mattroach1111.replit.app/api/google-drive/callback';
+      }
     }
     
     console.log(`🔵 Google Drive redirect URI: ${redirectUri}`);
