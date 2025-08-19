@@ -625,9 +625,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     refetchOnWindowFocus: false,
   });
 
-  // Extract debug data if present
-  const debugData = (timesheetEntries as any)?.debug;
-  const actualEntries = debugData ? [] : timesheetEntries;
+
 
 
 
@@ -2266,7 +2264,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               </CardHeader>
               <CardContent>
                 {/* Show empty state for admin view when no timesheet entries */}
-                {isAdminView && selectedEmployee && ((Array.isArray(timesheetEntries) && timesheetEntries.length === 0) || debugData) && (
+                {isAdminView && selectedEmployee && Array.isArray(timesheetEntries) && timesheetEntries.length === 0 && (
                   <div className="text-center py-8">
                     <div className="text-muted-foreground mb-2">
                       <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -2274,18 +2272,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                       <p className="text-sm">This staff member hasn't submitted any timesheets for this fortnight period.</p>
                       <p className="text-xs mt-2 text-green-600">✓ System is working correctly - staff member has no entries in database</p>
                     </div>
-                    {debugData && (
-                      <div className="mt-6 p-4 bg-muted rounded-lg text-sm text-left max-w-md mx-auto">
-                        <p className="font-medium text-center mb-3">Debug Information:</p>
-                        <p><strong>Searched for:</strong> {debugData.searchedEmployeeId}</p>
-                        <p className="mt-2"><strong>Available Staff IDs in database:</strong></p>
-                        <div className="mt-1 text-xs font-mono max-h-32 overflow-y-auto bg-background p-2 rounded border">
-                          {debugData.availableStaffIds?.map((id: string, index: number) => (
-                            <div key={index} className="py-1">{id}</div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
                 
