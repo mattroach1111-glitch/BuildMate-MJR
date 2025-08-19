@@ -11,15 +11,15 @@ export class GoogleDriveAuth {
     
     if (process.env.GOOGLE_REDIRECT_URI) {
       redirectUri = process.env.GOOGLE_REDIRECT_URI;
-    } else if (process.env.REPLIT_DEPLOYMENT) {
-      // Production deployment on Replit
-      redirectUri = `https://${process.env.REPLIT_DEPLOYMENT}/api/google-drive/callback`;
-    } else if (process.env.REPLIT_DEV_DOMAIN) {
-      // Development environment on Replit
-      redirectUri = `https://${process.env.REPLIT_DEV_DOMAIN}/api/google-drive/callback`;
     } else {
-      // Local development fallback
-      redirectUri = 'http://localhost:5000/api/google-drive/callback';
+      // Use the current request host from environment variables
+      const deploymentUrl = process.env.REPLIT_DEPLOYMENT 
+        ? `https://${process.env.REPLIT_DEPLOYMENT}.replit.app`
+        : process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+        : 'http://localhost:5000';
+      
+      redirectUri = `${deploymentUrl}/api/google-drive/callback`;
     }
     
     console.log(`🔵 Google Drive redirect URI: ${redirectUri}`);
