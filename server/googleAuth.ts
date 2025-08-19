@@ -27,11 +27,16 @@ export class GoogleDriveAuth {
     console.log(`🔵 Environment debug - REPLIT_DEV_DOMAIN: '${process.env.REPLIT_DEV_DOMAIN}'`);
     console.log(`🔵 Environment debug - deploymentUrl: '${process.env.REPLIT_DEPLOYMENT ? `https://${process.env.REPLIT_DEPLOYMENT}.replit.app` : process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'http://localhost:5000'}'`);
     
+    console.log(`🔵 Final OAuth2 config - ClientID: ${process.env.GOOGLE_CLIENT_ID?.substring(0, 10)}..., RedirectURI: ${redirectUri}`);
+    
     this.oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
       redirectUri
     );
+    
+    console.log(`🔵 OAuth2 client created, checking configured redirect URI...`);
+    console.log(`🔵 OAuth2 client internal redirect URI: ${(this.oauth2Client as any)._redirectUri || 'unknown'}`);
   }
 
   // Generate the URL for users to authorize the app
