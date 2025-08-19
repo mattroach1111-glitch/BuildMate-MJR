@@ -852,7 +852,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     
     // Otherwise, handle as draft entry
     const draftIndex = entryIndex - existingEntries.length;
-    console.log(`📝 Updating draft entry ${draftIndex} for ${dateKey}: ${field} = ${value}`);
     
     setTimesheetData((prev: any) => {
       const dayEntries = Array.isArray(prev[dateKey]) ? prev[dateKey] : [];
@@ -1267,7 +1266,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   const addJobEntry = (date: Date) => {
     const dateKey = format(date, 'yyyy-MM-dd');
-    console.log(`➕ Adding job entry for ${dateKey}`);
     
     setTimesheetData((prev: any) => {
       const dayEntries = Array.isArray(prev[dateKey]) ? prev[dateKey] : [];
@@ -1279,7 +1277,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         id: `draft_${Date.now()}_${Math.random()}` // Temporary ID for tracking
       };
       
-      console.log(`➕ Added new entry for ${dateKey}:`, newEntry);
       return {
         ...prev,
         [dateKey]: [...dayEntries, newEntry]
@@ -1289,7 +1286,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   const removeJobEntry = (date: Date, entryIndex: number) => {
     const dateKey = format(date, 'yyyy-MM-dd');
-    console.log(`➖ Removing job entry ${entryIndex} for ${dateKey}`);
     
     // Get current entries for this day
     const existingEntries = Array.isArray(currentFortnightEntries) ? currentFortnightEntries.filter((entry: any) => 
@@ -1301,7 +1297,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     if (entryIndex < existingEntries.length) {
       const entryToDelete = existingEntries[entryIndex];
       if (entryToDelete.id) {
-        console.log(`🗑️ Deleting saved entry ${entryToDelete.id}`);
         deleteSavedEntry(entryToDelete.id);
       }
     } else {
@@ -1609,7 +1604,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             value={entry?.hours || ''}
                             onChange={(e) => {
                               if (isWeekend && !isWeekendUnlocked(dateKey)) {
-                                console.log(`🚫 STAFF WEEKEND INPUT BLOCKED: ${dateKey} - Weekend is locked!`);
                                 return; // Prevent any input on locked weekends
                               }
                               
@@ -1726,7 +1720,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                           onSelect={() => {
                                             const dateKey = format(day, 'yyyy-MM-dd');
                                             if (isWeekend && !isWeekendUnlocked(dateKey)) {
-                                              console.log(`🚫 STAFF WEEKEND JOB BLOCKED: ${dateKey} - Weekend is locked!`);
                                               return;
                                             }
                                             
@@ -1874,7 +1867,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             value={entry?.materials || ''}
                             onChange={(e) => {
                               if (isWeekend && !isWeekendUnlocked(dateKey)) {
-                                console.log(`🚫 STAFF WEEKEND MATERIALS BLOCKED: ${dateKey} - Weekend is locked!`);
                                 return; // Prevent materials input on locked weekends
                               }
                               // No auto-save - all changes stored locally until "Save All" is clicked
@@ -2472,7 +2464,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 value={entry?.hours || ''}
                                 onChange={(e) => {
                                   if (isWeekend && !isWeekendUnlocked(dateKey)) {
-                                    console.log(`🚫 WEEKEND INPUT BLOCKED: ${dateKey} - Weekend is locked!`);
                                     return; // Prevent any input on locked weekends
                                   }
                                   // No auto-save - all changes stored locally until "Save All" is clicked
@@ -2492,7 +2483,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 }
                                 onValueChange={(value) => {
                                   if (isWeekend && !isWeekendUnlocked(dateKey)) {
-                                    console.log(`🚫 WEEKEND SELECT BLOCKED: ${dateKey} - Weekend is locked!`);
                                     return; // Prevent any selection on locked weekends
                                   }
                                   
@@ -2506,7 +2496,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                       return;
                                     }
                                     // Show address input dialog for new custom address
-                                    console.log('🏠 OTHER ADDRESS SELECTED - Opening dialog for dayIndex:', dayIndex, 'entryIndex:', entryIndex);
                                     setShowAddressDialog(true);
                                     setAddressDialogData({dayIndex, entryIndex});
                                     return;
@@ -2591,7 +2580,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 value={entry?.materials || ''}
                                 onChange={(e) => {
                                   if (isWeekend && !isWeekendUnlocked(dateKey)) {
-                                    console.log(`🚫 WEEKEND MATERIALS INPUT BLOCKED: ${dateKey} - Weekend is locked!`);
                                     return; // Prevent any input on locked weekends
                                   }
                                   // Don't auto-save custom addresses - let user save manually
