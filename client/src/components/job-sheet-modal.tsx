@@ -971,7 +971,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   });
 
   // Handle file upload
-  const handleGetUploadParameters = async (file: any) => {
+  const handleGetUploadParameters = async (file: any): Promise<{ method: "PUT"; url: string; headers?: Record<string, string> }> => {
     try {
       console.log("Getting upload parameters for file:", file?.name || 'unknown');
       const response = await apiRequest("POST", "/api/job-files/upload-url");
@@ -992,7 +992,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     } catch (error) {
       console.error("Error getting upload parameters:", error);
       
-      if (error.message.includes('401')) {
+      if ((error as Error).message?.includes('401')) {
         toast({
           title: "Authentication Error",
           description: "You are logged out. Please log in again.",
@@ -1001,7 +1001,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
         setTimeout(() => {
           window.location.href = "/api/login";
         }, 1000);
-        return;
+        throw error;
       }
       
       toast({
@@ -1101,8 +1101,8 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
   const getSortedLaborEntries = (laborEntries: LaborEntry[]) => {
     return [...laborEntries].sort((a, b) => {
-      const nameA = a.staff?.name || a.staffId;
-      const nameB = b.staff?.name || b.staffId;
+      const nameA = a.staffId; // Use staffId directly since staff relation might not be populated
+      const nameB = b.staffId;
       
       // Special case: Mark Plastering always goes to the bottom
       const isMarkPlasteringA = nameA.toLowerCase().includes('mark plastering') || nameA.toLowerCase().includes('plastering');
@@ -1842,11 +1842,11 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                             <div className="flex items-center gap-2">
                               <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
                                 <span className="text-xs font-medium text-primary">
-                                  {(entry.staff?.name || entry.staffId).charAt(0).toUpperCase()}
+                                  {entry.staffId.charAt(0).toUpperCase()}
                                 </span>
                               </div>
                               <span className="font-medium" data-testid={`text-labor-staff-${entry.id}`}>
-                                {entry.staff?.name || entry.staffId}
+                                {entry.staffId}
                               </span>
                             </div>
                           </td>
