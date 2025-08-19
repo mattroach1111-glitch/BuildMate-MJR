@@ -2488,7 +2488,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               >
                                 <SelectTrigger className={`min-w-40 ${isWeekend ? 'text-white border-blue-400 bg-blue-800' : ''} ${isWeekend && !isWeekendUnlocked(dateKey) ? 'cursor-not-allowed opacity-75' : ''}`}>
                                   <SelectValue placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "Select job"}>
-                                    {entry?.jobId && (() => {
+                                    {(entry?.jobId || (entry?.jobId === null && entry?.description)) && (() => {
                                       const leaveTypes: { [key: string]: string } = {
                                         'sick-leave': 'Sick Leave',
                                         'personal-leave': 'Personal Leave', 
@@ -2503,7 +2503,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                       // First check for leave types stored in description when jobId is null
                                       if (entry.jobId === null && entry.description) {
                                         const desc = entry.description.toUpperCase();
+                                        console.log('🔍 RDO DEBUG: entry.jobId is null, description:', entry.description, 'uppercase:', desc);
                                         if (desc === 'RDO' || desc === 'ROSTERED DAY OFF') {
+                                          console.log('✅ RDO MATCH FOUND - displaying RDO');
                                           return 'RDO (Rest Day Off)';
                                         } else if (desc === 'SICK LEAVE' || desc === 'SICK-LEAVE') {
                                           return 'Sick Leave';
