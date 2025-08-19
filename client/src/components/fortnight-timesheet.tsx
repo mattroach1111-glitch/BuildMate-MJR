@@ -1133,28 +1133,55 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       return;
     }
 
-    // Save/update all entries in parallel
+    // Save/update all entries with improved error handling
+    let successCount = 0;
+    let failureCount = 0;
+    const failureDetails: string[] = [];
+    
     try {
-      const savePromises = [
-        // Create new entries
-        ...entriesToSave.map(entry => 
-          new Promise((resolve, reject) => {
-            updateTimesheetMutation.mutate(entry, {
-              onSuccess: resolve,
-              onError: reject
-            });
-          })
-        ),
-        // DISABLED: Individual field updates removed - will implement batch entry replacement later
-        // For now, just don't update existing entries during "Save All"
-      ];
+      const savePromises = entriesToSave.map(entry => 
+        new Promise((resolve, reject) => {
+          updateTimesheetMutation.mutate(entry, {
+            onSuccess: () => {
+              successCount++;
+              resolve(true);
+            },
+            onError: (error: any) => {
+              failureCount++;
+              const errorMsg = error?.message || 'Unknown error';
+              failureDetails.push(`Failed to save entry for ${entry.date}: ${errorMsg}`);
+              console.error('Individual entry save error:', error);
+              resolve(false); // Don't reject, just mark as failed
+            }
+          });
+        })
+      );
 
       await Promise.all(savePromises);
+      
+      // Show results based on success/failure counts
+      if (failureCount > 0 && successCount === 0) {
+        // All failed
+        toast({
+          title: "Save Failed",
+          description: `Failed to save all ${failureCount} entries. ${failureDetails[0] || 'Check console for details.'}`,
+          variant: "destructive",
+        });
+        return;
+      } else if (failureCount > 0) {
+        // Partial success
+        toast({
+          title: "Partial Save",
+          description: `Saved ${successCount} entries, but ${failureCount} failed. Check console for details.`,
+          variant: "destructive",
+        });
+        // Continue to show success animation for the successful entries
+      }
     } catch (error) {
-      console.error('Error saving entries:', error);
+      console.error('Unexpected error during save:', error);
       toast({
-        title: "Save Error",
-        description: "Failed to save one or more entries. Check console for details.",
+        title: "Unexpected Error",
+        description: "An unexpected error occurred while saving. Check console for details.",
         variant: "destructive",
       });
       return;
@@ -1165,18 +1192,20 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     // Only clear local data after successful refresh
     setTimesheetData({});
     
+    // Show success animation and toast for any successful saves
+    if (successCount > 0) {
+      setShowSuccessAnimation(true);
+      setTimeout(() => setShowSuccessAnimation(false), 3000);
 
-
-    // Show success animation
-    setShowSuccessAnimation(true);
-    setTimeout(() => setShowSuccessAnimation(false), 3000);
-
-    const totalChanges = entriesToSave.length + entriesToUpdate.length;
-    toast({
-      title: "Timesheet Saved",
-      description: `Successfully saved ${totalChanges} entries! (${entriesToSave.length} new, ${entriesToUpdate.length} updated)`,
-      variant: "default",
-    });
+      // Only show success toast if there were no failures (to avoid duplicate messages)
+      if (failureCount === 0) {
+        toast({
+          title: "Timesheet Saved Successfully",
+          description: `Successfully saved ${successCount} entries! (${entriesToSave.length} new, ${entriesToUpdate.length} updated)`,
+          variant: "default",
+        });
+      }
+    }
   };
 
   // Functions for editing and deleting saved entries

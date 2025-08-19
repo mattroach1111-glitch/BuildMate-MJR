@@ -1571,10 +1571,11 @@ export class DatabaseStorage implements IStorage {
     let result: any;
 
     if (existing.length > 0) {
-      // Update existing entry
+      // Update existing entry - CRITICAL: Include jobId to allow RDO conversion
       const [updated] = await db
         .update(timesheetEntries)
         .set({
+          jobId: data.jobId || null, // Fix: Allow clearing jobId for RDO entries
           hours: data.hours,
           description: data.description,
           materials: data.materials,
