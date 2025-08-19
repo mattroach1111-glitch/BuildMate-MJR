@@ -3251,7 +3251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`🔵 Creating new employee for this job only: ${laborEntry.employeeName}`);
             const newEmployee = await storage.createEmployeeForJob({
               name: laborEntry.employeeName
-            }, newJob.id, parseFloat(laborEntry.rate) || parseFloat(defaultHourlyRate));
+            }, newJob.id, parseFloat(laborEntry.rate) || 64.0);
             employeeId = newEmployee.id;
           }
           
@@ -4638,7 +4638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error("Error exporting data:", error);
-      res.status(500).json({ message: "Failed to export data", error: error.message });
+      res.status(500).json({ message: "Failed to export data", error: (error as Error).message });
     }
   });
 
