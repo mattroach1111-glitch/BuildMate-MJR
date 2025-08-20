@@ -1,0 +1,35 @@
+timesheet?employee=46405297&admin=true:58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+index-DnbD5EqT.js:914 BuildFlow Pro v1.0.9 - LANDSCAPE MODE DISABLED, FOCUS ON CORE FEATURES: 1755647923253
+timesheet?employee=46405297&admin=true:64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-DnbD5EqT.js:909 🔍 RDO DEBUG: entry.jobId is null, description: TAFE uppercase: TAFE
+index-DnbD5EqT.js:909 ✅ API SUCCESS: /api/admin/timesheets/46405297 (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-DnbD5EqT.js:909 🔍 RDO DEBUG: entry.jobId is null, description: TAFE uppercase: TAFE
+index-DnbD5EqT.js:909 🔍 RDO DEBUG: entry.jobId is null, description: TAFE uppercase: TAFE
+index-DnbD5EqT.js:909 💾 SAVE ALL: Starting save process... {entriesToSave: 1, entriesToUpdate: 0}
+index-DnbD5EqT.js:909 💾 Saving entry: {date: '2025-08-22', hours: 0, materials: '', jobId: 'rdo', staffId: '46405297', …}
+index-DnbD5EqT.js:909 ✅ Entry saved successfully: Response {type: 'basic', url: 'https://build-mate-mattroach1111.replit.app/api/admin/timesheet', redirected: false, status: 201, ok: true, …}
+index-DnbD5EqT.js:909 📊 SAVE RESULTS: {successCount: 1, failureCount: 0}
+index-DnbD5EqT.js:909 🎉 SHOWING SUCCESS ANIMATION
+index-DnbD5EqT.js:909 🔍 RDO DEBUG: entry.jobId is null, description: TAFE uppercase: TAFE
+index-DnbD5EqT.js:909 🔍 RDO DEBUG: entry.jobId is null, description: TAFE uppercase: TAFE
+index-DnbD5EqT.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-DnbD5EqT.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-DnbD5EqT.js:909 ✅ API SUCCESS: /api/admin/timesheets/46405297 (12) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-DnbD5EqT.js:909 🔍 RDO DEBUG: entry.jobId is null, description: TAFE uppercase: TAFE
+index-DnbD5EqT.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-DnbD5EqT.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-DnbD5EqT.js:909 ⏰ SUCCESS ANIMATION ENDED
+index-DnbD5EqT.js:909 🔍 RDO DEBUG: entry.jobId is null, description: TAFE uppercase: TAFE
+index-DnbD5EqT.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-DnbD5EqT.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-DnbD5EqT.js:909 🔍 RDO DEBUG: entry.jobId is null, description: TAFE uppercase: TAFE
+index-DnbD5EqT.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-DnbD5EqT.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-DnbD5EqT.js:909 Deleting timesheet entry: 26bb7fd3-956f-4f5d-8d68-1aac21196384
+index-DnbD5EqT.js:909 🔍 RDO DEBUG: entry.jobId is null, description: TAFE uppercase: TAFE
+index-DnbD5EqT.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-DnbD5EqT.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-DnbD5EqT.js:909 🔍 RDO DEBUG: entry.jobId is null, description: TAFE uppercase: TAFE
+index-DnbD5EqT.js:909 ✅ API SUCCESS: /api/admin/timesheets/46405297 (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-DnbD5EqT.js:909 🔍 RDO DEBUG: entry.jobId is null, description: TAFE uppercase: TAFE
+index-DnbD5EqT.js:909 🔍 RDO DEBUG: entry.jobId is null, description: TAFE uppercase: TAFE
