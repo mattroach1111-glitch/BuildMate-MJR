@@ -989,7 +989,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     return errors;
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+
   const saveAllEntries = async () => {
+    // Prevent double-clicking by checking if already saving
+    if (isSaving) {
+      console.log('⚠️ Save already in progress, ignoring duplicate click');
+      return;
+    }
+
     // If timesheetData is empty, there's nothing to save - this prevents unnecessary operations
     if (Object.keys(timesheetData).length === 0) {
       toast({
@@ -999,6 +1007,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       });
       return;
     }
+
+    setIsSaving(true);
     
     // Validate entries before saving
     const validationErrors = validateEntries(timesheetData);
@@ -1008,6 +1018,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         description: validationErrors[0], // Show first error
         variant: "destructive",
       });
+      setIsSaving(false);
       return;
     }
     
@@ -1130,6 +1141,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         description: "All timesheet entries are already saved. Use individual entry editing or add new entries to make changes.",
         variant: "default",
       });
+      setIsSaving(false);
       return;
     }
 
@@ -1186,6 +1198,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           description: `Failed to save all ${failureCount} entries. ${failureDetails[0] || 'Check console for details.'}`,
           variant: "destructive",
         });
+        setIsSaving(false);
         return;
       } else if (failureCount > 0) {
         // Partial success
@@ -1203,6 +1216,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         description: "An unexpected error occurred while saving. Check console for details.",
         variant: "destructive",
       });
+      setIsSaving(false);
       return;
     }
 
@@ -1232,6 +1246,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     } else {
       console.log('❌ NO SUCCESS - Not showing animation');
     }
+
+    // Always clear saving state when done
+    setIsSaving(false);
   };
 
   // Functions for editing and deleting saved entries
@@ -2132,12 +2149,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             <Button 
               onClick={saveAllEntries}
               variant="default"
-              disabled={updateTimesheetMutation.isPending}
+              disabled={isSaving || updateTimesheetMutation.isPending}
               className="bg-green-600 hover:bg-green-700"
               data-testid="button-save-all-timesheet"
             >
               <Save className="h-4 w-4 mr-2" />
-              {updateTimesheetMutation.isPending ? 'Saving...' : 'Save All'}
+              {isSaving ? 'Saving...' : 'Save All'}
             </Button>
             <Button onClick={exportToPDF} variant="outline">
               <Download className="h-4 w-4 mr-2" />
