@@ -2066,7 +2066,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const submittedDates = entries.map(entry => entry.date).filter(Boolean);
           
           // Award points for each unique submission date
-          const uniqueDates = [...new Set(submittedDates)];
+          const uniqueDates = Array.from(new Set(submittedDates));
           let totalPointsEarned = 0;
           let newAchievements: any[] = [];
           let currentStreak = 0;
@@ -3201,7 +3201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`🔵 Creating new employee for this job only: ${laborEntry.employeeName}`);
             const newEmployee = await storage.createEmployeeForJob({
               name: laborEntry.employeeName
-            }, newJob.id, parseFloat(laborEntry.rate) || parseFloat(defaultHourlyRate));
+            }, newJob.id, parseFloat(laborEntry.rate) || 64);
             employeeId = newEmployee.id;
           }
           
@@ -4891,7 +4891,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     jobId: entry.jobId,
                     date: entry.date,
                     hours: entry.hours,
-                    notes: entry.notes,
+                    materials: entry.materials,
                     status: entry.status,
                     customAddress: entry.customAddress,
                     leaveType: entry.leaveType
