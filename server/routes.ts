@@ -749,8 +749,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      await storage.permanentlyDeleteJob(req.params.id);
-      res.json({ message: "Job permanently deleted" });
+      const jobId = req.params.id;
+      console.log(`🗑️ Starting permanent deletion process for job: ${jobId}`);
+
+      // Get complete job data before deletion
+      const jobData = await storage.getJobWithCompleteDetails(jobId);
+      if (!jobData) {
+        return res.status(404).json({ message: "Job not found" });
+      }
+
+      console.log(`📄 Generating PDF for job: ${jobData.jobAddress}`);
+
+      // Generate PDF using the job data
+      const { TimesheetPDFGenerator } = await import('./pdfGenerator');
+      const pdfGenerator = new TimesheetPDFGenerator();
+      const pdfBuffer = pdfGenerator.generateJobSheetPDF(jobData);
+
+      // Try to upload to Google Drive if user has connected their account
+      let driveUploadSuccess = false;
+      if (user.googleDriveTokens) {
+        try {
+          const { GoogleDriveService } = await import('./googleDriveService');
+          const driveService = new GoogleDriveService();
+          
+          // Parse tokens from stored JSON
+          const tokens = JSON.parse(user.googleDriveTokens);
+          driveService.setUserTokens(tokens);
+
+          if (driveService.isReady()) {
+            console.log(`☁️ Uploading PDF to Google Drive for job: ${jobData.jobAddress}`);
+            
+            // Create the main BuildFlow Pro folder
+            const mainFolderId = await driveService.findOrCreateFolder('BuildFlow Pro');
+            if (mainFolderId) {
+              // Create job folder
+              const jobFolderId = await driveService.findOrCreateFolder(`Job - ${jobData.jobAddress}`, mainFolderId);
+              if (jobFolderId) {
+                // Generate filename with date and job info
+                const sanitizedAddress = jobData.jobAddress.replace(/[^a-zA-Z0-9\s-]/g, '');
+                const dateStr = new Date().toISOString().split('T')[0];
+                const fileName = `JobSheet_${sanitizedAddress}_${dateStr}.pdf`;
+                
+                // Upload the PDF
+                const uploadResult = await driveService.uploadFile(fileName, pdfBuffer, 'application/pdf', jobFolderId);
+                
+                if (uploadResult) {
+                  console.log(`✅ Job sheet PDF uploaded to Google Drive: ${fileName}`);
+                  console.log(`🔗 Google Drive link: ${uploadResult.webViewLink}`);
+                  driveUploadSuccess = true;
+                } else {
+                  console.warn(`⚠️ Failed to upload PDF to Google Drive for job: ${jobData.jobAddress}`);
+                }
+              }
+            }
+          } else {
+            console.log(`⚠️ Google Drive not authenticated for user - skipping PDF upload`);
+          }
+        } catch (driveError) {
+          console.error(`❌ Error uploading to Google Drive:`, driveError);
+          console.log(`⚠️ Google Drive upload failed - continuing with job deletion`);
+          // Continue with deletion even if Google Drive upload fails
+        }
+      } else {
+        console.log(`⚠️ User has no Google Drive connection - skipping PDF upload`);
+      }
+
+      // Proceed with permanent deletion
+      console.log(`🗑️ Proceeding with permanent deletion of job: ${jobId}`);
+      await storage.permanentlyDeleteJob(jobId);
+      
+      const message = driveUploadSuccess 
+        ? `Job permanently deleted and PDF saved to Google Drive` 
+        : `Job permanently deleted (PDF backup skipped - Google Drive not connected)`;
+
+      console.log(`✅ ${message}: ${jobData.jobAddress}`);
+      res.json({ 
+        message,
+        pdfBackedUp: driveUploadSuccess,
+        jobAddress: jobData.jobAddress
+      });
+      
     } catch (error) {
       console.error("Error permanently deleting job:", error);
       res.status(500).json({ message: "Failed to permanently delete job" });

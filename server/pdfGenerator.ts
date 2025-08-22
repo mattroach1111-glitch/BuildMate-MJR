@@ -24,6 +24,44 @@ interface Employee {
   hourlyRate: number;
 }
 
+interface JobSheetData {
+  id: string;
+  jobAddress: string;
+  clientName: string;
+  projectName: string;
+  projectManager?: string;
+  status: string;
+  totalCost: number;
+  createdAt: string;
+  laborEntries: Array<{
+    id: string;
+    date: string;
+    hours: number;
+    description: string;
+    hourlyRate: number;
+    employee: { name: string };
+  }>;
+  materials: Array<{
+    id: string;
+    name: string;
+    cost: number;
+    quantity: number;
+    supplier?: string;
+  }>;
+  subTrades: Array<{
+    id: string;
+    name: string;
+    cost: number;
+    description?: string;
+  }>;
+  otherCosts: Array<{
+    id: string;
+    name: string;
+    cost: number;
+    description?: string;
+  }>;
+}
+
 export class TimesheetPDFGenerator {
   generateTimesheetPDF(
     employee: Employee,
@@ -128,6 +166,250 @@ export class TimesheetPDFGenerator {
     doc.text('Date: ___________', 20, yPos + 50);
     
     // Convert to buffer
+    const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+    return pdfBuffer;
+  }
+
+  generateJobSheetPDF(jobData: JobSheetData): Buffer {
+    console.log('Generating Job Sheet PDF for:', jobData.jobAddress);
+    
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    let yPos = 25;
+
+    // Header
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('BuildFlow Pro - Job Sheet', pageWidth / 2, yPos, { align: 'center' });
+    yPos += 20;
+
+    // Job Information
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Job Information', 20, yPos);
+    yPos += 10;
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Job Address: ${jobData.jobAddress}`, 20, yPos);
+    yPos += 8;
+    doc.text(`Client: ${jobData.clientName}`, 20, yPos);
+    yPos += 8;
+    doc.text(`Project: ${jobData.projectName}`, 20, yPos);
+    yPos += 8;
+    if (jobData.projectManager) {
+      doc.text(`Project Manager: ${jobData.projectManager}`, 20, yPos);
+      yPos += 8;
+    }
+    doc.text(`Status: ${jobData.status}`, 20, yPos);
+    yPos += 8;
+    doc.text(`Created: ${format(parseISO(jobData.createdAt), 'dd/MM/yyyy')}`, 20, yPos);
+    yPos += 15;
+
+    // Labor Section
+    if (jobData.laborEntries.length > 0) {
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Labor Entries', 20, yPos);
+      yPos += 10;
+
+      // Labor table headers
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Date', 20, yPos);
+      doc.text('Employee', 55, yPos);
+      doc.text('Hours', 100, yPos);
+      doc.text('Rate', 125, yPos);
+      doc.text('Cost', 150, yPos);
+      doc.text('Description', 175, yPos);
+      
+      doc.line(20, yPos + 2, pageWidth - 20, yPos + 2);
+      yPos += 8;
+
+      doc.setFont('helvetica', 'normal');
+      let totalLaborCost = 0;
+
+      for (const entry of jobData.laborEntries) {
+        if (yPos > pageHeight - 30) {
+          doc.addPage();
+          yPos = 30;
+        }
+
+        const cost = entry.hours * entry.hourlyRate;
+        totalLaborCost += cost;
+
+        doc.text(format(parseISO(entry.date), 'dd/MM'), 20, yPos);
+        doc.text(entry.employee.name.substring(0, 15), 55, yPos);
+        doc.text(entry.hours.toString(), 100, yPos);
+        doc.text(`$${entry.hourlyRate}`, 125, yPos);
+        doc.text(`$${cost.toFixed(2)}`, 150, yPos);
+        doc.text(entry.description.substring(0, 25), 175, yPos);
+        yPos += 7;
+      }
+
+      yPos += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Total Labor: $${totalLaborCost.toFixed(2)}`, 150, yPos);
+      yPos += 15;
+    }
+
+    // Materials Section
+    if (jobData.materials.length > 0) {
+      if (yPos > pageHeight - 80) {
+        doc.addPage();
+        yPos = 30;
+      }
+
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Materials', 20, yPos);
+      yPos += 10;
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Item', 20, yPos);
+      doc.text('Qty', 100, yPos);
+      doc.text('Unit Cost', 125, yPos);
+      doc.text('Total', 155, yPos);
+      doc.text('Supplier', 180, yPos);
+      
+      doc.line(20, yPos + 2, pageWidth - 20, yPos + 2);
+      yPos += 8;
+
+      doc.setFont('helvetica', 'normal');
+      let totalMaterialsCost = 0;
+
+      for (const material of jobData.materials) {
+        if (yPos > pageHeight - 30) {
+          doc.addPage();
+          yPos = 30;
+        }
+
+        totalMaterialsCost += material.cost;
+        
+        doc.text(material.name.substring(0, 30), 20, yPos);
+        doc.text(material.quantity.toString(), 100, yPos);
+        doc.text(`$${(material.cost / material.quantity).toFixed(2)}`, 125, yPos);
+        doc.text(`$${material.cost.toFixed(2)}`, 155, yPos);
+        doc.text((material.supplier || 'N/A').substring(0, 15), 180, yPos);
+        yPos += 7;
+      }
+
+      yPos += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Total Materials: $${totalMaterialsCost.toFixed(2)}`, 155, yPos);
+      yPos += 15;
+    }
+
+    // Sub-Trades Section
+    if (jobData.subTrades.length > 0) {
+      if (yPos > pageHeight - 60) {
+        doc.addPage();
+        yPos = 30;
+      }
+
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Sub-Trades', 20, yPos);
+      yPos += 10;
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Trade', 20, yPos);
+      doc.text('Cost', 150, yPos);
+      doc.text('Description', 180, yPos);
+      
+      doc.line(20, yPos + 2, pageWidth - 20, yPos + 2);
+      yPos += 8;
+
+      doc.setFont('helvetica', 'normal');
+      let totalSubTradesCost = 0;
+
+      for (const subTrade of jobData.subTrades) {
+        if (yPos > pageHeight - 30) {
+          doc.addPage();
+          yPos = 30;
+        }
+
+        totalSubTradesCost += subTrade.cost;
+        
+        doc.text(subTrade.name.substring(0, 40), 20, yPos);
+        doc.text(`$${subTrade.cost.toFixed(2)}`, 150, yPos);
+        doc.text((subTrade.description || '').substring(0, 20), 180, yPos);
+        yPos += 7;
+      }
+
+      yPos += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Total Sub-Trades: $${totalSubTradesCost.toFixed(2)}`, 150, yPos);
+      yPos += 15;
+    }
+
+    // Other Costs Section
+    if (jobData.otherCosts.length > 0) {
+      if (yPos > pageHeight - 60) {
+        doc.addPage();
+        yPos = 30;
+      }
+
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Other Costs', 20, yPos);
+      yPos += 10;
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Item', 20, yPos);
+      doc.text('Cost', 150, yPos);
+      doc.text('Description', 180, yPos);
+      
+      doc.line(20, yPos + 2, pageWidth - 20, yPos + 2);
+      yPos += 8;
+
+      doc.setFont('helvetica', 'normal');
+      let totalOtherCosts = 0;
+
+      for (const otherCost of jobData.otherCosts) {
+        if (yPos > pageHeight - 30) {
+          doc.addPage();
+          yPos = 30;
+        }
+
+        totalOtherCosts += otherCost.cost;
+        
+        doc.text(otherCost.name.substring(0, 40), 20, yPos);
+        doc.text(`$${otherCost.cost.toFixed(2)}`, 150, yPos);
+        doc.text((otherCost.description || '').substring(0, 20), 180, yPos);
+        yPos += 7;
+      }
+
+      yPos += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Total Other Costs: $${totalOtherCosts.toFixed(2)}`, 150, yPos);
+      yPos += 15;
+    }
+
+    // Final Summary
+    if (yPos > pageHeight - 60) {
+      doc.addPage();
+      yPos = 30;
+    }
+
+    yPos += 10;
+    doc.line(20, yPos, pageWidth - 20, yPos);
+    yPos += 15;
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`TOTAL JOB COST: $${jobData.totalCost.toFixed(2)}`, pageWidth / 2, yPos, { align: 'center' });
+
+    // Footer
+    yPos += 25;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated on ${format(new Date(), 'dd/MM/yyyy HH:mm')} by BuildFlow Pro`, 20, yPos);
+
     const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
     return pdfBuffer;
   }

@@ -399,6 +399,81 @@ export class DatabaseStorage implements IStorage {
     return job;
   }
 
+  async getJobWithCompleteDetails(id: string): Promise<any | undefined> {
+    const job = await this.getJob(id);
+    if (!job) return undefined;
+
+    // Get all related data
+    const [laborData, materialsData, subTradesData, otherCostsData] = await Promise.all([
+      db.select({
+        id: laborEntries.id,
+        date: laborEntries.createdAt,
+        hours: laborEntries.hoursLogged,
+        description: laborEntries.description,
+        hourlyRate: laborEntries.hourlyRate,
+        employeeId: laborEntries.staffId,
+        employeeName: employees.name
+      })
+      .from(laborEntries)
+      .leftJoin(employees, eq(laborEntries.staffId, employees.id))
+      .where(eq(laborEntries.jobId, id)),
+      
+      db.select().from(materials).where(eq(materials.jobId, id)),
+      db.select().from(subTrades).where(eq(subTrades.jobId, id)),
+      db.select().from(otherCosts).where(eq(otherCosts.jobId, id))
+    ]);
+
+    // Calculate total cost
+    const laborTotal = laborData.reduce((sum, entry) => 
+      sum + (parseFloat(entry.hours) * parseFloat(entry.hourlyRate)), 0);
+    const materialsTotal = materialsData.reduce((sum, item) => 
+      sum + parseFloat(item.amount), 0);
+    const subTradesTotal = subTradesData.reduce((sum, item) => 
+      sum + parseFloat(item.amount), 0);
+    const otherTotal = otherCostsData.reduce((sum, item) => 
+      sum + parseFloat(item.amount), 0);
+
+    const totalCost = laborTotal + materialsTotal + subTradesTotal + otherTotal;
+
+    return {
+      id: job.id,
+      jobAddress: job.jobAddress,
+      clientName: job.clientName,
+      projectName: job.projectName,
+      projectManager: job.projectManager,
+      status: job.status,
+      totalCost,
+      createdAt: job.createdAt?.toISOString() || new Date().toISOString(),
+      laborEntries: laborData.map(entry => ({
+        id: entry.id,
+        date: entry.date?.toISOString() || new Date().toISOString(),
+        hours: parseFloat(entry.hours),
+        description: entry.description || '',
+        hourlyRate: parseFloat(entry.hourlyRate),
+        employee: { name: entry.employeeName || 'Unknown Employee' }
+      })),
+      materials: materialsData.map(material => ({
+        id: material.id,
+        name: material.description,
+        cost: parseFloat(material.amount),
+        quantity: 1, // Default quantity since it's not stored separately
+        supplier: material.supplier
+      })),
+      subTrades: subTradesData.map(subTrade => ({
+        id: subTrade.id,
+        name: subTrade.description,
+        cost: parseFloat(subTrade.amount),
+        description: subTrade.supplier
+      })),
+      otherCosts: otherCostsData.map(otherCost => ({
+        id: otherCost.id,
+        name: otherCost.description,
+        cost: parseFloat(otherCost.amount),
+        description: otherCost.supplier
+      }))
+    };
+  }
+
   async createJob(job: InsertJob): Promise<Job> {
     const [createdJob] = await db.insert(jobs).values(job).returning();
     
