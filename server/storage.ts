@@ -754,27 +754,46 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createLaborEntry(entry: InsertLaborEntry): Promise<LaborEntry> {
+    // Ensure new labor entries initialize manual and timesheet hours properly
+    const entryWithHours = {
+      ...entry,
+      manualHours: entry.hoursLogged || "0", // Initial hours are considered manual
+      timesheetHours: "0", // Will be populated when timesheets are approved
+    };
+    
     const [createdEntry] = await db
       .insert(laborEntries)
-      .values(entry)
+      .values(entryWithHours)
       .returning();
     return createdEntry;
   }
 
   async updateLaborEntry(id: string, entry: Partial<InsertLaborEntry>): Promise<LaborEntry> {
-    // If hours are being updated, track them as manual hours
+    // If hours are being updated, properly calculate manual hours adjustment
     if (entry.hoursLogged !== undefined) {
       const currentEntry = await db.select().from(laborEntries).where(eq(laborEntries.id, id)).limit(1);
       if (currentEntry.length > 0) {
-        const currentTimesheetHours = parseFloat(currentEntry[0].timesheetHours?.toString() || '0');
-        const newManualHours = parseFloat(entry.hoursLogged.toString()) - currentTimesheetHours;
+        const current = currentEntry[0];
+        const currentManualHours = parseFloat(current.manualHours?.toString() || '0');
+        const currentTimesheetHours = parseFloat(current.timesheetHours?.toString() || '0');
+        const currentTotalHours = parseFloat(current.hoursLogged?.toString() || '0');
+        const newTotalHours = parseFloat(entry.hoursLogged.toString());
         
-        // Update with proper manual/timesheet hour tracking
+        // Calculate the difference in total hours and adjust manual hours accordingly
+        const hoursDifference = newTotalHours - currentTotalHours;
+        const newManualHours = currentManualHours + hoursDifference;
+        
+        console.log(`[MANUAL_HOURS] Entry ${id}: Current manual=${currentManualHours}, timesheet=${currentTimesheetHours}, total=${currentTotalHours}`);
+        console.log(`[MANUAL_HOURS] Entry ${id}: New total=${newTotalHours}, difference=${hoursDifference}, new manual=${newManualHours}`);
+        
+        // Update with adjusted manual hours, keeping timesheet hours unchanged
         const [updatedEntry] = await db
           .update(laborEntries)
           .set({ 
-            ...entry, 
+            hoursLogged: newTotalHours.toString(),
             manualHours: Math.max(0, newManualHours).toString(), // Ensure non-negative
+            timesheetHours: currentTimesheetHours.toString(), // Keep timesheet hours unchanged
+            hourlyRate: entry.hourlyRate || current.hourlyRate, // Update hourly rate if provided
             updatedAt: new Date() 
           })
           .where(eq(laborEntries.id, id))
@@ -2151,14 +2170,20 @@ export class DatabaseStorage implements IStorage {
     console.log("🔄 Checking labor entry hour migration...");
     
     try {
-      // Find entries where manualHours and timesheetHours are both 0 but hoursLogged > 0
+      // Find entries where manualHours and timesheetHours are NULL or 0, but hoursLogged > 0
       const entriesToMigrate = await db
         .select()
         .from(laborEntries)
         .where(
           and(
-            eq(laborEntries.manualHours, "0"),
-            eq(laborEntries.timesheetHours, "0"),
+            or(
+              isNull(laborEntries.manualHours),
+              eq(laborEntries.manualHours, "0")
+            ),
+            or(
+              isNull(laborEntries.timesheetHours), 
+              eq(laborEntries.timesheetHours, "0")
+            ),
             sql`CAST(${laborEntries.hoursLogged} AS NUMERIC) > 0`
           )
         );
@@ -2171,7 +2196,7 @@ export class DatabaseStorage implements IStorage {
       console.log(`🔄 Found ${entriesToMigrate.length} labor entries to migrate`);
 
       for (const entry of entriesToMigrate) {
-        // Set existing hoursLogged as manualHours (since they were manually entered)
+        // Set existing hoursLogged as manualHours (since they were manually entered before timesheet system)
         await db
           .update(laborEntries)
           .set({
