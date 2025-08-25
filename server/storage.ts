@@ -783,6 +783,7 @@ export class DatabaseStorage implements IStorage {
         const hoursDifference = newTotalHours - currentTotalHours;
         const newManualHours = currentManualHours + hoursDifference;
         
+        console.log(`[MANUAL_HOURS] Entry ${id}: Raw current entry:`, current);
         console.log(`[MANUAL_HOURS] Entry ${id}: Current manual=${currentManualHours}, timesheet=${currentTimesheetHours}, total=${currentTotalHours}`);
         console.log(`[MANUAL_HOURS] Entry ${id}: New total=${newTotalHours}, difference=${hoursDifference}, new manual=${newManualHours}`);
         
@@ -821,6 +822,8 @@ export class DatabaseStorage implements IStorage {
     const employeeId = user[0]?.employeeId || staffId; // Use employeeId if available, otherwise use staffId directly
     
     console.log(`[LABOR_UPDATE] Starting: staffId=${staffId}, employeeId=${employeeId}, jobId=${jobId}`);
+    console.log(`[LABOR_UPDATE] User lookup result:`, user[0] || 'No user found');
+    console.log(`[LABOR_UPDATE] Will search for labor entry with staffId=${employeeId} and jobId=${jobId}`);
 
     // Get total hours from timesheet for this staff and job (only approved entries)
     const result = await db
@@ -855,10 +858,13 @@ export class DatabaseStorage implements IStorage {
     }
 
     const currentEntry = existingEntry[0];
+    console.log(`[LABOR_UPDATE] Raw current entry:`, currentEntry);
+    
     const manualHours = parseFloat(currentEntry.manualHours?.toString() || '0');
     const newTotalHours = manualHours + timesheetHours;
 
     console.log(`[LABOR_UPDATE] Manual hours: ${manualHours}, Timesheet hours: ${timesheetHours}, New total: ${newTotalHours}`);
+    console.log(`[LABOR_UPDATE] Raw manualHours value:`, currentEntry.manualHours, 'Type:', typeof currentEntry.manualHours);
 
     // Update labor entry with separate timesheet hours and recalculated total
     const updateResult = await db
