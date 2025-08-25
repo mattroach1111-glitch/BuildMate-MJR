@@ -823,9 +823,6 @@ export class DatabaseStorage implements IStorage {
     const user = await db.select().from(users).where(eq(users.id, staffId)).limit(1);
     const employeeId = user[0]?.employeeId || staffId; // Use employeeId if available, otherwise use staffId directly
     
-    console.log(`[LABOR_UPDATE] Starting: staffId=${staffId}, employeeId=${employeeId}, jobId=${jobId}`);
-    console.log(`[LABOR_UPDATE] User lookup result:`, user[0] || 'No user found');
-    console.log(`[LABOR_UPDATE] Will search for labor entry with staffId=${employeeId} and jobId=${jobId}`);
 
     // Get total hours from timesheet for this staff and job (only approved entries)
     const result = await db
@@ -855,7 +852,6 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
 
     if (existingEntry.length === 0) {
-      console.log(`[LABOR_UPDATE] No labor entry found for employeeId=${employeeId}, jobId=${jobId} - skipping update`);
       return;
     }
 
@@ -868,7 +864,6 @@ export class DatabaseStorage implements IStorage {
     // migrate the existing hours to manual hours
     if (manualHours === 0 && currentTimesheetHours === 0 && currentTotalHours > 0) {
       manualHours = currentTotalHours;
-      console.log(`[LABOR_UPDATE] Migrating existing hours: ${currentTotalHours} -> manual hours`);
     }
     
     const newTotalHours = manualHours + timesheetHours;
