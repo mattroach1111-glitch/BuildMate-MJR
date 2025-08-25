@@ -774,27 +774,29 @@ export class DatabaseStorage implements IStorage {
       const currentEntry = await db.select().from(laborEntries).where(eq(laborEntries.id, id)).limit(1);
       if (currentEntry.length > 0) {
         const current = currentEntry[0];
-        const currentManualHours = parseFloat(current.manualHours?.toString() || '0');
-        const currentTimesheetHours = parseFloat(current.timesheetHours?.toString() || '0');
+        let currentManualHours = parseFloat(current.manualHours?.toString() || '0');
+        let currentTimesheetHours = parseFloat(current.timesheetHours?.toString() || '0');
         const currentTotalHours = parseFloat(current.hoursLogged?.toString() || '0');
         const newTotalHours = parseFloat(entry.hoursLogged.toString());
+        
+        // If both manual and timesheet hours are 0 but total hours exist, 
+        // it means this is an old entry that needs migration
+        if (currentManualHours === 0 && currentTimesheetHours === 0 && currentTotalHours > 0) {
+          currentManualHours = currentTotalHours; // Treat existing hours as manual
+        }
         
         // Calculate the difference in total hours and adjust manual hours accordingly
         const hoursDifference = newTotalHours - currentTotalHours;
         const newManualHours = currentManualHours + hoursDifference;
-        
-        console.log(`[MANUAL_HOURS] Entry ${id}: Raw current entry:`, current);
-        console.log(`[MANUAL_HOURS] Entry ${id}: Current manual=${currentManualHours}, timesheet=${currentTimesheetHours}, total=${currentTotalHours}`);
-        console.log(`[MANUAL_HOURS] Entry ${id}: New total=${newTotalHours}, difference=${hoursDifference}, new manual=${newManualHours}`);
         
         // Update with adjusted manual hours, keeping timesheet hours unchanged
         const [updatedEntry] = await db
           .update(laborEntries)
           .set({ 
             hoursLogged: newTotalHours.toString(),
-            manualHours: Math.max(0, newManualHours).toString(), // Ensure non-negative
-            timesheetHours: currentTimesheetHours.toString(), // Keep timesheet hours unchanged
-            hourlyRate: entry.hourlyRate || current.hourlyRate, // Update hourly rate if provided
+            manualHours: Math.max(0, newManualHours).toString(),
+            timesheetHours: currentTimesheetHours.toString(),
+            hourlyRate: entry.hourlyRate || current.hourlyRate,
             updatedAt: new Date() 
           })
           .where(eq(laborEntries.id, id))
@@ -858,18 +860,24 @@ export class DatabaseStorage implements IStorage {
     }
 
     const currentEntry = existingEntry[0];
-    console.log(`[LABOR_UPDATE] Raw current entry:`, currentEntry);
+    let manualHours = parseFloat(currentEntry.manualHours?.toString() || '0');
+    const currentTimesheetHours = parseFloat(currentEntry.timesheetHours?.toString() || '0');
+    const currentTotalHours = parseFloat(currentEntry.hoursLogged?.toString() || '0');
     
-    const manualHours = parseFloat(currentEntry.manualHours?.toString() || '0');
+    // If both manual and timesheet hours are 0 but total hours exist,
+    // migrate the existing hours to manual hours
+    if (manualHours === 0 && currentTimesheetHours === 0 && currentTotalHours > 0) {
+      manualHours = currentTotalHours;
+      console.log(`[LABOR_UPDATE] Migrating existing hours: ${currentTotalHours} -> manual hours`);
+    }
+    
     const newTotalHours = manualHours + timesheetHours;
-
-    console.log(`[LABOR_UPDATE] Manual hours: ${manualHours}, Timesheet hours: ${timesheetHours}, New total: ${newTotalHours}`);
-    console.log(`[LABOR_UPDATE] Raw manualHours value:`, currentEntry.manualHours, 'Type:', typeof currentEntry.manualHours);
 
     // Update labor entry with separate timesheet hours and recalculated total
     const updateResult = await db
       .update(laborEntries)
       .set({ 
+        manualHours: manualHours.toString(), // Update manual hours (including any migration)
         timesheetHours: timesheetHours.toString(),
         hoursLogged: newTotalHours.toString(),
         updatedAt: new Date() 
@@ -880,8 +888,6 @@ export class DatabaseStorage implements IStorage {
           eq(laborEntries.jobId, jobId)
         )
       );
-    
-    console.log(`[LABOR_UPDATE] Completed for employeeId=${employeeId}, jobId=${jobId}, manual=${manualHours}, timesheet=${timesheetHours}, total=${newTotalHours}`);
   }
 
   async addExtraHoursToLaborEntry(laborEntryId: string, extraHours: string): Promise<LaborEntry> {
