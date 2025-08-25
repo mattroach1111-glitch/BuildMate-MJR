@@ -276,8 +276,9 @@ const findBestJobMatch = async (timesheetJobDescription: string, threshold: numb
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Initialize reward settings in database on startup
+  // Initialize reward settings and migrate labor entries on startup
   await initializeRewardSettings();
+  await storage.migrateLaborEntryHours();
   // Auth middleware
   await setupAuth(app);
 

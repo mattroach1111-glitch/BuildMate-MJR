@@ -762,6 +762,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateLaborEntry(id: string, entry: Partial<InsertLaborEntry>): Promise<LaborEntry> {
+    // If hours are being updated, track them as manual hours
+    if (entry.hoursLogged !== undefined) {
+      const currentEntry = await db.select().from(laborEntries).where(eq(laborEntries.id, id)).limit(1);
+      if (currentEntry.length > 0) {
+        const currentTimesheetHours = parseFloat(currentEntry[0].timesheetHours?.toString() || '0');
+        const newManualHours = parseFloat(entry.hoursLogged.toString()) - currentTimesheetHours;
+        
+        // Update with proper manual/timesheet hour tracking
+        const [updatedEntry] = await db
+          .update(laborEntries)
+          .set({ 
+            ...entry, 
+            manualHours: Math.max(0, newManualHours).toString(), // Ensure non-negative
+            updatedAt: new Date() 
+          })
+          .where(eq(laborEntries.id, id))
+          .returning();
+        return updatedEntry;
+      }
+    }
+
+    // For other updates (not hours), just update normally
     const [updatedEntry] = await db
       .update(laborEntries)
       .set({ ...entry, updatedAt: new Date() })
@@ -793,8 +815,8 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-    const totalHours = result[0]?.totalHours || 0;
-    console.log(`[LABOR_UPDATE] Calculated hours from timesheet: ${totalHours}`);
+    const timesheetHours = parseFloat(result[0]?.totalHours?.toString() || '0');
+    console.log(`[LABOR_UPDATE] Calculated timesheet hours: ${timesheetHours}`);
 
     // Check if labor entry exists first
     const existingEntry = await db
@@ -813,12 +835,20 @@ export class DatabaseStorage implements IStorage {
       return;
     }
 
-    console.log(`[LABOR_UPDATE] Existing entry hours: ${existingEntry[0].hoursLogged}, updating to: ${totalHours}`);
+    const currentEntry = existingEntry[0];
+    const manualHours = parseFloat(currentEntry.manualHours?.toString() || '0');
+    const newTotalHours = manualHours + timesheetHours;
 
-    // Update labor entry hours using the employee ID (not user ID)
+    console.log(`[LABOR_UPDATE] Manual hours: ${manualHours}, Timesheet hours: ${timesheetHours}, New total: ${newTotalHours}`);
+
+    // Update labor entry with separate timesheet hours and recalculated total
     const updateResult = await db
       .update(laborEntries)
-      .set({ hoursLogged: totalHours.toString(), updatedAt: new Date() })
+      .set({ 
+        timesheetHours: timesheetHours.toString(),
+        hoursLogged: newTotalHours.toString(),
+        updatedAt: new Date() 
+      })
       .where(
         and(
           eq(laborEntries.staffId, employeeId), // Use employee ID for labor entries
@@ -826,7 +856,7 @@ export class DatabaseStorage implements IStorage {
         )
       );
     
-    console.log(`[LABOR_UPDATE] Completed for employeeId=${employeeId}, jobId=${jobId}, hours=${totalHours}`);
+    console.log(`[LABOR_UPDATE] Completed for employeeId=${employeeId}, jobId=${jobId}, manual=${manualHours}, timesheet=${timesheetHours}, total=${newTotalHours}`);
   }
 
   async addExtraHoursToLaborEntry(laborEntryId: string, extraHours: string): Promise<LaborEntry> {
@@ -2114,6 +2144,50 @@ export class DatabaseStorage implements IStorage {
 
   async deleteJobUpdateNote(jobId: string): Promise<void> {
     await db.delete(jobUpdateNotes).where(eq(jobUpdateNotes.jobId, jobId));
+  }
+
+  // Migration function to populate manual/timesheet hours for existing entries
+  async migrateLaborEntryHours(): Promise<void> {
+    console.log("🔄 Checking labor entry hour migration...");
+    
+    try {
+      // Find entries where manualHours and timesheetHours are both 0 but hoursLogged > 0
+      const entriesToMigrate = await db
+        .select()
+        .from(laborEntries)
+        .where(
+          and(
+            eq(laborEntries.manualHours, "0"),
+            eq(laborEntries.timesheetHours, "0"),
+            sql`CAST(${laborEntries.hoursLogged} AS NUMERIC) > 0`
+          )
+        );
+
+      if (entriesToMigrate.length === 0) {
+        console.log("✅ No labor entries need migration");
+        return;
+      }
+
+      console.log(`🔄 Found ${entriesToMigrate.length} labor entries to migrate`);
+
+      for (const entry of entriesToMigrate) {
+        // Set existing hoursLogged as manualHours (since they were manually entered)
+        await db
+          .update(laborEntries)
+          .set({
+            manualHours: entry.hoursLogged,
+            timesheetHours: "0", // Will be recalculated by timesheet logic
+            updatedAt: new Date()
+          })
+          .where(eq(laborEntries.id, entry.id));
+        
+        console.log(`✅ Migrated labor entry ${entry.id}: ${entry.hoursLogged} hours -> manual hours`);
+      }
+
+      console.log("✅ Labor entry migration completed successfully");
+    } catch (error) {
+      console.error("❌ Failed to migrate labor entry hours:", error);
+    }
   }
 }
 
