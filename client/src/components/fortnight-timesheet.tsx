@@ -40,7 +40,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     return Math.max(0, Math.floor(daysDiff / 14));
   };
 
-  const [currentFortnightIndex, setCurrentFortnightIndex] = useState(0); // Start with current fortnight (Aug 11-24)
+  const [currentFortnightIndex, setCurrentFortnightIndex] = useState(getCurrentFortnightIndex()); // Start with current fortnight
   const [timesheetData, setTimesheetData] = useState<any>({});
   const [unlockedWeekends, setUnlockedWeekends] = useState<Set<string>>(new Set());
   const [customAddresses, setCustomAddresses] = useState<{[key: string]: {houseNumber: string, streetAddress: string}}>({});
