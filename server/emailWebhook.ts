@@ -43,7 +43,7 @@ export function setupEmailWebhook(app: Express) {
       
       // Convert webhook data to EmailMessage format
       const emailMessage = {
-        id: emailData.messageId,
+        id: emailData.messageId || `webhook-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         from: emailData.from,
         to: emailData.to,
         subject: emailData.subject,
@@ -55,7 +55,7 @@ export function setupEmailWebhook(app: Express) {
           content: Buffer.from(att.content, 'base64'),
           size: att.size
         })),
-        date: new Date(emailData.date),
+        date: new Date(emailData.date || new Date().toISOString()),
         processed: false
       };
       

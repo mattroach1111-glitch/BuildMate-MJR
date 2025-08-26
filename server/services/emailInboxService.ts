@@ -281,7 +281,7 @@ export class EmailInboxService {
       
       // Create processing log entry
       const logEntry = await storage.createEmailProcessingLog({
-        messageId: emailMessage.id,
+        messageId: emailMessage.id || `email-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         fromEmail: emailMessage.from,
         toEmail: emailMessage.to,
         subject: emailMessage.subject,
