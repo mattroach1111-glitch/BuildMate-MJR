@@ -5,15 +5,19 @@ import { GoogleDriveAuth } from './googleAuth';
 export class GoogleDriveService {
   private drive: any;
   private googleAuth: GoogleDriveAuth;
+  private userId?: string;
+  private onTokenRefresh?: (newTokens: any) => Promise<void>;
 
   constructor() {
     this.googleAuth = new GoogleDriveAuth();
   }
 
   // Set user tokens for authenticated requests
-  setUserTokens(tokens: any) {
+  setUserTokens(tokens: any, userId?: string, onTokenRefresh?: (newTokens: any) => Promise<void>) {
     this.googleAuth.setTokens(tokens);
     this.drive = this.googleAuth.getDriveClient();
+    this.userId = userId;
+    this.onTokenRefresh = onTokenRefresh;
   }
 
   // Check if service is ready to use
@@ -31,6 +35,49 @@ export class GoogleDriveService {
     return await this.googleAuth.getTokens(code);
   }
 
+  // Execute an operation with automatic token refresh on auth errors
+  private async executeWithTokenRefresh<T>(operation: () => Promise<T>): Promise<T | null> {
+    try {
+      return await operation();
+    } catch (error: any) {
+      // Check if it's an authentication error
+      if (this.isAuthError(error)) {
+        console.log('🔄 Google Drive token expired, attempting refresh...');
+        
+        try {
+          // Attempt to refresh tokens
+          const newTokens = await this.googleAuth.refreshTokens();
+          console.log('✅ Google Drive tokens refreshed successfully');
+          
+          // Save new tokens to database if callback provided
+          if (this.onTokenRefresh) {
+            await this.onTokenRefresh(newTokens);
+            console.log('💾 Updated tokens saved to database');
+          }
+          
+          // Retry the original operation
+          return await operation();
+          
+        } catch (refreshError) {
+          console.error('❌ Failed to refresh Google Drive tokens:', refreshError);
+          return null;
+        }
+      } else {
+        console.error('❌ Google Drive operation failed:', error);
+        return null;
+      }
+    }
+  }
+
+  // Check if error is related to authentication/authorization
+  private isAuthError(error: any): boolean {
+    const statusCode = error.response?.status || error.status || error.code;
+    return statusCode === 401 || statusCode === 403 || 
+           error.message?.includes('invalid_grant') ||
+           error.message?.includes('unauthorized') ||
+           error.message?.includes('invalid_token');
+  }
+
   async uploadPDF(fileName: string, pdfBuffer: Buffer, folderId?: string): Promise<string | null> {
     const result = await this.uploadFile(fileName, pdfBuffer, 'application/pdf', folderId);
     return result?.webViewLink || null;
@@ -42,7 +89,7 @@ export class GoogleDriveService {
       return null;
     }
 
-    try {
+    return await this.executeWithTokenRefresh(async () => {
       // Create a readable stream from the buffer
       const stream = new Readable();
       stream.push(fileBuffer);
@@ -74,10 +121,7 @@ export class GoogleDriveService {
         webViewLink: response.data.webViewLink,
         fileId: fileId
       };
-    } catch (error) {
-      console.error('Error uploading to Google Drive:', error);
-      return null;
-    }
+    });
   }
 
   async makeFilePublic(fileId: string): Promise<boolean> {
@@ -107,7 +151,7 @@ export class GoogleDriveService {
       return null;
     }
 
-    try {
+    return await this.executeWithTokenRefresh(async () => {
       const fileMetadata = {
         name: folderName,
         mimeType: 'application/vnd.google-apps.folder',
@@ -126,10 +170,7 @@ export class GoogleDriveService {
       await this.makeFilePublic(folderId);
       
       return folderId;
-    } catch (error) {
-      console.error('Error creating folder in Google Drive:', error);
-      return null;
-    }
+    });
   }
 
   async findOrCreateFolder(folderName: string, parentFolderId?: string): Promise<string | null> {

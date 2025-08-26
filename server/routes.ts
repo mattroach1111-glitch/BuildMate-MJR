@@ -3924,7 +3924,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             const googleDriveService = new GoogleDriveService();
             const tokens = JSON.parse(user.googleDriveTokens);
-            googleDriveService.setUserTokens(tokens);
+            
+            // Set up token refresh callback to save updated tokens
+            const tokenRefreshCallback = async (newTokens: any) => {
+              await storage.updateUser(userId, {
+                googleDriveTokens: JSON.stringify(newTokens)
+              });
+            };
+            
+            googleDriveService.setUserTokens(tokens, userId, tokenRefreshCallback);
             
             // Create main BuildFlow Pro folder first
             const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
