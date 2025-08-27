@@ -90,16 +90,17 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     retry: false,
   });
 
-  // Mutation for saving job update notes - MANUAL SAVE ONLY (no auto-save)
+  // Mutation for saving job update notes - with scroll protection
   const saveNoteMutation = useMutation({
     mutationFn: (data: { jobId: string; note: string }) =>
       apiRequest("POST", "/api/job-update-notes", data),
     onSuccess: () => {
-      // Only invalidate on manual save - no auto-save disruptions
-      queryClient.invalidateQueries({ queryKey: ["/api/job-update-notes"] });
+      // Don't invalidate queries during auto-save to prevent scroll jumping
+      // Notes are saved to database but UI doesn't refresh until form submission
+      console.log("Note auto-saved successfully");
     },
     onError: (error) => {
-      console.log("Manual note save failed:", error);
+      console.log("Note auto-save failed:", error);
     },
   });
 
@@ -272,6 +273,8 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
         setEmailSuggestions(getSavedEmailSuggestions());
       }
       
+      // Refresh saved notes after successful submission
+      queryClient.invalidateQueries({ queryKey: ["/api/job-update-notes"] });
       toast({
         title: "Updates Sent",
         description: response.message || "Job updates have been emailed successfully.",
@@ -640,8 +643,8 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                                   
                                   formField.onChange(e);
                                   
-                                  // Auto-save disabled to prevent scroll jumping
-                                  // debouncedSave(job.id, e.target.value);
+                                  // Auto-save re-enabled with scroll protection
+                                  debouncedSave(job.id, e.target.value);
                                   
                                   // Restore cursor position after state update
                                   requestAnimationFrame(() => {
