@@ -90,18 +90,16 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
     retry: false,
   });
 
-  // Mutation for saving job update notes with focus preservation
+  // Mutation for saving job update notes - MANUAL SAVE ONLY (no auto-save)
   const saveNoteMutation = useMutation({
     mutationFn: (data: { jobId: string; note: string }) =>
       apiRequest("POST", "/api/job-update-notes", data),
     onSuccess: () => {
-      // Invalidate queries with a delay to prevent focus loss during typing
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/job-update-notes"] });
-      }, 5000); // 5 second delay to avoid interfering with active typing
+      // Only invalidate on manual save - no auto-save disruptions
+      queryClient.invalidateQueries({ queryKey: ["/api/job-update-notes"] });
     },
     onError: (error) => {
-      console.log("Note auto-save failed:", error);
+      console.log("Manual note save failed:", error);
     },
   });
 
@@ -642,8 +640,8 @@ export function JobUpdateForm({ onClose, projectManager }: JobUpdateFormProps) {
                                   
                                   formField.onChange(e);
                                   
-                                  // Auto-save note with proper debouncing
-                                  debouncedSave(job.id, e.target.value);
+                                  // Auto-save disabled to prevent scroll jumping
+                                  // debouncedSave(job.id, e.target.value);
                                   
                                   // Restore cursor position after state update
                                   requestAnimationFrame(() => {

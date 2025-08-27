@@ -1488,14 +1488,12 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     if (dialogContentRef.current) {
       const currentScrollTop = dialogContentRef.current.scrollTop;
       setScrollPosition(currentScrollTop);
-      console.log("📍 Saved scroll position:", currentScrollTop);
     }
   }, []);
 
   // Restore scroll position after mutations
   const restoreScrollPosition = useCallback(() => {
     if (dialogContentRef.current && scrollPosition > 0) {
-      console.log("🔄 Attempting to restore scroll position:", scrollPosition);
       // Use multiple requestAnimationFrame calls to ensure DOM has fully updated
       // and give time for React Query to finish re-rendering
       requestAnimationFrame(() => {
@@ -1503,7 +1501,6 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
           setTimeout(() => {
             if (dialogContentRef.current) {
               dialogContentRef.current.scrollTop = scrollPosition;
-              console.log("✅ Scroll position restored to:", scrollPosition);
             }
           }, 150); // Additional delay to ensure re-render is complete
         });
