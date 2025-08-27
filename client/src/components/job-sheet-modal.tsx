@@ -389,6 +389,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return response.json();
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
       toast({
         title: "Success",
@@ -421,6 +422,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return response.json();
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
     },
   });
@@ -431,6 +433,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return response.json();
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
       toast({
         title: "Success",
@@ -466,6 +469,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return response.json();
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
       setEditingLaborEntry(null);
       setEditLaborHours("");
@@ -545,6 +549,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return response.json();
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
       toast({
         title: "Success",
@@ -580,6 +585,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return response.json();
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
       toast({
         title: "Success",
@@ -655,6 +661,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return response.json();
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
       toast({
         title: "Success",
@@ -693,6 +700,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return response.json();
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
       setEditingMaterial(null);
       toast({
@@ -720,6 +728,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return response.json();
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
       setEditingSubTrade(null);
       toast({
@@ -745,6 +754,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return response.json();
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
       setEditingOtherCost(null);
       toast({
@@ -770,6 +780,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return response.json();
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
       setEditingTipFee(null);
       toast({
@@ -792,6 +803,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       await apiRequest("DELETE", `/api/materials/${materialId}`);
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
       toast({
         title: "Success",
@@ -812,6 +824,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       await apiRequest("DELETE", `/api/subtrades/${subTradeId}`);
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
       toast({
         title: "Success",
@@ -832,6 +845,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       await apiRequest("DELETE", `/api/othercosts/${otherCostId}`);
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
       toast({
         title: "Success",
@@ -852,6 +866,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       await apiRequest("DELETE", `/api/tipfees/${tipFeeId}`);
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
       toast({
         title: "Success",
@@ -919,6 +934,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return await apiRequest("POST", "/api/job-files", fileData);
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId, "files"] });
       toast({
         title: "Success",
@@ -950,6 +966,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return await apiRequest("DELETE", `/api/job-files/${fileId}`);
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId, "files"] });
       toast({
         title: "Success",
@@ -1469,18 +1486,27 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   // Save scroll position before mutations
   const saveScrollPosition = useCallback(() => {
     if (dialogContentRef.current) {
-      setScrollPosition(dialogContentRef.current.scrollTop);
+      const currentScrollTop = dialogContentRef.current.scrollTop;
+      setScrollPosition(currentScrollTop);
+      console.log("📍 Saved scroll position:", currentScrollTop);
     }
   }, []);
 
   // Restore scroll position after mutations
   const restoreScrollPosition = useCallback(() => {
     if (dialogContentRef.current && scrollPosition > 0) {
-      // Use requestAnimationFrame to ensure DOM has updated
+      console.log("🔄 Attempting to restore scroll position:", scrollPosition);
+      // Use multiple requestAnimationFrame calls to ensure DOM has fully updated
+      // and give time for React Query to finish re-rendering
       requestAnimationFrame(() => {
-        if (dialogContentRef.current) {
-          dialogContentRef.current.scrollTop = scrollPosition;
-        }
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            if (dialogContentRef.current) {
+              dialogContentRef.current.scrollTop = scrollPosition;
+              console.log("✅ Scroll position restored to:", scrollPosition);
+            }
+          }, 150); // Additional delay to ensure re-render is complete
+        });
       });
     }
   }, [scrollPosition]);
