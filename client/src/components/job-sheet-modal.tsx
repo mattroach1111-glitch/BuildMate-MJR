@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -89,6 +89,10 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const DELETION_PASSWORD = localStorage.getItem('buildflow-deletion-password') || 'Festool1!';
   const [editingLaborEntry, setEditingLaborEntry] = useState<string | null>(null);
   const [editLaborHours, setEditLaborHours] = useState<string>("");
+
+  // Scroll position preservation
+  const [scrollPosition, setScrollPosition] = useState<number>(0);
+  const dialogContentRef = useRef<HTMLDivElement>(null);
 
   const { data: jobDetails, isLoading } = useQuery<JobDetails>({
     queryKey: ["/api/jobs", jobId],
@@ -247,6 +251,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return response.json();
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
       setIsEditing(false);
@@ -612,6 +617,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return response.json();
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
       toast({
         title: "Success",
@@ -1326,6 +1332,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return response.json();
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId, "notes"] });
       setNewNoteText("");
       setIsAddingNote(false);
@@ -1362,6 +1369,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return response.json();
     },
     onSuccess: () => {
+      saveScrollPosition();
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId, "notes"] });
       setEditingNote(null);
       setEditNoteText("");
@@ -1458,6 +1466,25 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     });
   };
 
+  // Save scroll position before mutations
+  const saveScrollPosition = useCallback(() => {
+    if (dialogContentRef.current) {
+      setScrollPosition(dialogContentRef.current.scrollTop);
+    }
+  }, []);
+
+  // Restore scroll position after mutations
+  const restoreScrollPosition = useCallback(() => {
+    if (dialogContentRef.current && scrollPosition > 0) {
+      // Use requestAnimationFrame to ensure DOM has updated
+      requestAnimationFrame(() => {
+        if (dialogContentRef.current) {
+          dialogContentRef.current.scrollTop = scrollPosition;
+        }
+      });
+    }
+  }, [scrollPosition]);
+
   useEffect(() => {
     if (jobDetails) {
       setBuilderMargin(jobDetails.builderMargin);
@@ -1480,6 +1507,11 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       });
     }
   }, [jobDetails]);
+
+  // Restore scroll position after data updates
+  useEffect(() => {
+    restoreScrollPosition();
+  }, [jobDetails, jobFiles, jobTimesheets, jobNotes, restoreScrollPosition]);
 
   const handleEditSave = () => {
     if (!editForm.jobAddress.trim() || !editForm.clientName.trim()) {
@@ -1578,6 +1610,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
+        ref={dialogContentRef}
         className="sm:max-w-6xl sm:max-h-[95vh] 
                    max-sm:!fixed max-sm:!inset-0 max-sm:!w-screen max-sm:!h-screen max-sm:!max-w-none max-sm:!max-h-none 
                    max-sm:!rounded-none max-sm:!border-0 max-sm:!m-0 max-sm:!p-0 max-sm:!translate-x-0 max-sm:!translate-y-0 
