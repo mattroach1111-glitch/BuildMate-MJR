@@ -64,22 +64,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <div id="app-container">
-        <Toaster />
-        <AppContent />
+        <Router />
       </div>
     </QueryClientProvider>
-  );
-}
-
-function AppContent() {
-  const { user, isAuthenticated } = useAuth();
-  
-  return (
-    <>
-      <Router />
-      <NotificationPopup userEmail={(user as any)?.email} />
-      {isAuthenticated && <PWAInstallPrompt />}
-    </>
   );
 }
 
