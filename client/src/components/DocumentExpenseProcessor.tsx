@@ -40,14 +40,14 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   const [selectedJobId, setSelectedJobId] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastProcessedExpense, setLastProcessedExpense] = useState<ProcessedExpense | null>(null);
-  const [pendingExpense, setPendingExpense] = useState<PendingExpense | null>(null);
+  const [pendingExpenses, setPendingExpenses] = useState<PendingExpense[]>([]);
   const [isAddingToJobSheet, setIsAddingToJobSheet] = useState(false);
   const [jobAddress, setJobAddress] = useState<string>("");
   const [clientName, setClientName] = useState<string>("");
   const [projectManager, setProjectManager] = useState<string>("");
   const [isAddingNewProjectManager, setIsAddingNewProjectManager] = useState(false);
   const [newProjectManagerName, setNewProjectManagerName] = useState<string>("");
-  const [lastUploadedFile, setLastUploadedFile] = useState<any>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [previewDoc, setPreviewDoc] = useState<{
     url: string;
     filename: string;
@@ -122,13 +122,13 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       console.log("🔵 Document processed successfully:", data);
       setLastProcessedExpense(data.expenseData);
       
-      // Create pending expense for user review
+      // Create pending expense for user review and add to array
       const pending: PendingExpense = {
         ...data.expenseData,
         id: crypto.randomUUID(),
         approved: false,
       };
-      setPendingExpense(pending);
+      setPendingExpenses(current => [...current, pending]);
       
       toast({
         title: "Document processed successfully!",
@@ -157,29 +157,34 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       return await response.json();
     },
     onSuccess: async (data: any) => {
-      // Save the uploaded file as a job file attachment if we have one
-      if (lastUploadedFile && selectedJobId) {
+      // Save the uploaded files as job file attachments if we have any
+      if (uploadedFiles.length > 0 && selectedJobId) {
         try {
-          await apiRequest("POST", "/api/job-files", {
-            jobId: selectedJobId,
-            fileName: lastUploadedFile.name || "document.pdf",
-            originalName: lastUploadedFile.name || "document.pdf",
-            fileSize: lastUploadedFile.size || 0,
-            mimeType: lastUploadedFile.type || "application/pdf",
-            objectPath: lastUploadedFile.uploadURL
-          });
+          // Save all uploaded files
+          for (const uploadedFile of uploadedFiles) {
+            await apiRequest("POST", "/api/job-files", {
+              jobId: selectedJobId,
+              fileName: uploadedFile.name || "document.pdf",
+              originalName: uploadedFile.name || "document.pdf",
+              fileSize: uploadedFile.size || 0,
+              mimeType: uploadedFile.type || "application/pdf",
+              objectPath: uploadedFile.uploadURL
+            });
+          }
           console.log("✅ Saved document as job file attachment");
 
           // Automatically upload to Google Drive after saving to job
           try {
-            await apiRequest("POST", "/api/documents/upload-to-drive", {
-              documentURL: lastUploadedFile.uploadURL,
-              fileName: lastUploadedFile.name,
-              mimeType: lastUploadedFile.type,
-              fileSize: lastUploadedFile.size,
-              jobId: selectedJobId
-            });
-            console.log("✅ Automatically uploaded to Google Drive");
+            for (const uploadedFile of uploadedFiles) {
+              await apiRequest("POST", "/api/documents/upload-to-drive", {
+                documentURL: uploadedFile.uploadURL,
+                fileName: uploadedFile.name,
+                mimeType: uploadedFile.type,
+                fileSize: uploadedFile.size,
+                jobId: selectedJobId
+              });
+            }
+            console.log("✅ Automatically uploaded all files to Google Drive");
           } catch (driveError: any) {
             console.log("ℹ️ Google Drive upload not available:", driveError.message);
             // Show helpful message about Google Drive connection
@@ -191,7 +196,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
             }
           }
 
-          setLastUploadedFile(null); // Clear after saving
+          setUploadedFiles([]); // Clear after saving
         } catch (fileError) {
           console.error("Failed to save document as job file:", fileError);
           // Don't fail the entire process if file saving fails
@@ -199,16 +204,25 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       }
       
       // Only show Google Drive success if it was actually uploaded
-      const wasUploadedToDrive = lastUploadedFile && selectedJobId;
+      const wasUploadedToDrive = uploadedFiles.length > 0 && selectedJobId;
+      
+      // Find the approved expense to show in toast
+      const approvedExpense = data.expenseData || data;
       toast({
         title: "Added to job sheet!",
-        description: wasUploadedToDrive 
-          ? `${pendingExpense?.vendor} - $${pendingExpense?.amount} added successfully`
-          : `${pendingExpense?.vendor} - $${pendingExpense?.amount} added successfully`,
+        description: `${approvedExpense?.vendor} - $${approvedExpense?.amount} added successfully`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", selectedJobId, "files"] });
-      setPendingExpense(null);
+      
+      // Remove the approved expense from pending list
+      const expenseToRemove = pendingExpenses.find(exp => 
+        exp.vendor === approvedExpense?.vendor && 
+        exp.amount === approvedExpense?.amount
+      );
+      if (expenseToRemove) {
+        setPendingExpenses(current => current.filter(expense => expense.id !== expenseToRemove.id));
+      }
       onSuccess?.();
     },
     onError: (error: any) => {
@@ -283,24 +297,25 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
   });
 
   // Helper functions for expense review
-  const handleCategoryChange = (newCategory: 'materials' | 'subtrades' | 'other_costs' | 'tip_fees') => {
-    if (pendingExpense) {
-      setPendingExpense({
-        ...pendingExpense,
-        category: newCategory,
-      });
-    }
+  const handleCategoryChange = (expenseId: string, newCategory: 'materials' | 'subtrades' | 'other_costs' | 'tip_fees') => {
+    setPendingExpenses(current => 
+      current.map(expense => 
+        expense.id === expenseId 
+          ? { ...expense, category: newCategory }
+          : expense
+      )
+    );
   };
 
-  const handleApproveExpense = () => {
-    if (pendingExpense && selectedJobId) {
+  const handleApproveExpense = (expense: PendingExpense) => {
+    if (expense && selectedJobId) {
       setIsAddingToJobSheet(true);
-      addToJobSheetMutation.mutate(pendingExpense);
+      addToJobSheetMutation.mutate(expense);
     }
   };
 
-  const handleRejectExpense = () => {
-    setPendingExpense(null);
+  const handleRejectExpense = (expenseId: string) => {
+    setPendingExpenses(current => current.filter(expense => expense.id !== expenseId));
     toast({
       title: "Expense discarded",
       description: "The extracted information has been discarded",
@@ -375,7 +390,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
         console.log("🔵 Job ID:", currentJobId);
         
         // Store the uploaded file info for later saving as job file
-        setLastUploadedFile(file);
+        setUploadedFiles(current => [...current, file]);
         
         await processDocumentMutation.mutateAsync({
           documentURL: file.uploadURL || "",
@@ -589,126 +604,133 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
 
 
         {/* Pending Expense Review */}
-        {pendingExpense && !isProcessing && (
-          <Card className="border-orange-200 bg-orange-50">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-orange-800">
-                <AlertCircle className="h-4 w-4" />
-                Review Extracted Information
-              </CardTitle>
-              <CardDescription className="text-orange-700">
-                Please review and confirm the details before adding to job sheet
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div><strong>Vendor:</strong> {pendingExpense.vendor}</div>
-                <div><strong>Amount:</strong> ${pendingExpense.amount.toFixed(2)}</div>
-                <div className="col-span-2"><strong>Description:</strong> {pendingExpense.description}</div>
-                <div><strong>Date:</strong> {pendingExpense.date}</div>
-                <div><strong>Confidence:</strong> {Math.round(pendingExpense.confidence * 100)}%</div>
-              </div>
-              
-              {/* Category Selection */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-orange-800">Category</label>
-                <Select 
-                  value={pendingExpense.category} 
-                  onValueChange={handleCategoryChange}
-                >
-                  <SelectTrigger className="border-orange-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="materials">Materials</SelectItem>
-                    <SelectItem value="subtrades">Sub-trades</SelectItem>
-                    <SelectItem value="other_costs">Other Costs</SelectItem>
-                    <SelectItem value="tip_fees">Tip Fees</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="flex gap-2 pt-2">
-                {lastUploadedFile?.uploadURL && (
-                  <Button 
-                    onClick={() => setPreviewDoc({
-                      url: lastUploadedFile.uploadURL,
-                      filename: lastUploadedFile.name,
-                      mimeType: lastUploadedFile.type,
-                      fileSize: lastUploadedFile.size
-                    })}
-                    variant="outline"
-                    className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                    data-testid="button-preview-document"
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    Preview
-                  </Button>
-                )}
-                <Button 
-                  onClick={handleApproveExpense}
-                  disabled={isAddingToJobSheet || !selectedJobId}
-                  className="flex-1 bg-green-600 hover:bg-green-700"
-                  data-testid="button-approve-expense"
-                >
-                  {isAddingToJobSheet ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Adding to Job Sheet...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Add to Job Sheet
-                    </>
-                  )}
-                </Button>
-                <Button 
-                  onClick={handleRejectExpense}
-                  variant="outline"
-                  className="border-red-300 text-red-700 hover:bg-red-50"
-                  data-testid="button-reject-expense"
-                >
-                  Discard
-                </Button>
-              </div>
+        {pendingExpenses.length > 0 && !isProcessing && (
+          <div className="space-y-4">
+            {pendingExpenses.map((expense, index) => {
+              const relatedFile = uploadedFiles[index] || uploadedFiles[0];
+              return (
+                <Card key={expense.id} className="border-orange-200 bg-orange-50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-orange-800">
+                      <AlertCircle className="h-4 w-4" />
+                      Review Extracted Information #{index + 1}
+                    </CardTitle>
+                    <CardDescription className="text-orange-700">
+                      Please review and confirm the details before adding to job sheet
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div><strong>Vendor:</strong> {expense.vendor}</div>
+                      <div><strong>Amount:</strong> ${expense.amount.toFixed(2)}</div>
+                      <div className="col-span-2"><strong>Description:</strong> {expense.description}</div>
+                      <div><strong>Date:</strong> {expense.date}</div>
+                      <div><strong>Confidence:</strong> {Math.round(expense.confidence * 100)}%</div>
+                    </div>
+                    
+                    {/* Category Selection */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-orange-800">Category</label>
+                      <Select 
+                        value={expense.category} 
+                        onValueChange={(value) => handleCategoryChange(expense.id, value as any)}
+                      >
+                        <SelectTrigger className="border-orange-200">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="materials">Materials</SelectItem>
+                          <SelectItem value="subtrades">Sub-trades</SelectItem>
+                          <SelectItem value="other_costs">Other Costs</SelectItem>
+                          <SelectItem value="tip_fees">Tip Fees</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 pt-2">
+                      {relatedFile?.uploadURL && (
+                        <Button 
+                          onClick={() => setPreviewDoc({
+                            url: relatedFile.uploadURL,
+                            filename: relatedFile.name,
+                            mimeType: relatedFile.type,
+                            fileSize: relatedFile.size
+                          })}
+                          variant="outline"
+                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                          data-testid={`button-preview-document-${expense.id}`}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          Preview
+                        </Button>
+                      )}
+                      <Button 
+                        onClick={() => handleApproveExpense(expense)}
+                        disabled={isAddingToJobSheet || !selectedJobId}
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                        data-testid={`button-approve-expense-${expense.id}`}
+                      >
+                        {isAddingToJobSheet ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            Adding to Job Sheet...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Add to Job Sheet
+                          </>
+                        )}
+                      </Button>
+                      <Button 
+                        onClick={() => handleRejectExpense(expense.id)}
+                        variant="outline"
+                        className="border-red-300 text-red-700 hover:bg-red-50"
+                        data-testid={`button-reject-expense-${expense.id}`}
+                      >
+                        Discard
+                      </Button>
+                    </div>
 
-              {/* Google Drive Upload Option */}
-              {lastUploadedFile && selectedJobId && (
-                <div className="pt-3 border-t border-orange-200">
-                  <div className="flex items-center justify-between text-sm text-orange-800 mb-2">
-                    <span>💡 Optional: Save to Google Drive</span>
-                  </div>
-                  <Button
-                    onClick={() => uploadToGoogleDriveMutation.mutate({ 
-                      jobId: selectedJobId, 
-                      fileInfo: lastUploadedFile 
-                    })}
-                    disabled={uploadToGoogleDriveMutation.isPending}
-                    variant="outline" 
-                    size="sm"
-                    className="w-full border-blue-300 text-blue-700 hover:bg-blue-50"
-                    data-testid="button-upload-to-drive"
-                  >
-                    {uploadToGoogleDriveMutation.isPending ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Uploading to Drive...
-                      </>
-                    ) : (
-                      <>
-                        🔗 Upload to Google Drive
-                      </>
+                    {/* Google Drive Upload Option */}
+                    {relatedFile && selectedJobId && (
+                      <div className="pt-3 border-t border-orange-200">
+                        <div className="flex items-center justify-between text-sm text-orange-800 mb-2">
+                          <span>💡 Optional: Save to Google Drive</span>
+                        </div>
+                        <Button
+                          onClick={() => uploadToGoogleDriveMutation.mutate({ 
+                            jobId: selectedJobId, 
+                            fileInfo: relatedFile 
+                          })}
+                          disabled={uploadToGoogleDriveMutation.isPending}
+                          variant="outline" 
+                          size="sm"
+                          className="w-full border-blue-300 text-blue-700 hover:bg-blue-50"
+                          data-testid={`button-upload-to-drive-${expense.id}`}
+                        >
+                          {uploadToGoogleDriveMutation.isPending ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Uploading to Drive...
+                            </>
+                          ) : (
+                            <>
+                              🔗 Upload to Google Drive
+                            </>
+                          )}
+                        </Button>
+                        <p className="text-xs text-gray-600 mt-1">
+                          Creates clickable links in job sheet PDFs
+                        </p>
+                      </div>
                     )}
-                  </Button>
-                  <p className="text-xs text-gray-600 mt-1">
-                    Creates clickable links in job sheet PDFs
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         )}
 
         {/* Instructions */}
