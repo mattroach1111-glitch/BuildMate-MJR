@@ -10,6 +10,12 @@ app.use(express.urlencoded({ extended: false }));
 import { setupEmailWebhook } from "./emailWebhook";
 setupEmailWebhook(app);
 
+// Serve test page for GST functionality
+import path from 'path';
+app.get('/test-gst', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'test-gst.html'));
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
