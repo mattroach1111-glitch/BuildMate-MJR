@@ -32,6 +32,7 @@ interface ProcessedExpense {
 interface PendingExpense extends ProcessedExpense {
   id: string;
   approved: boolean;
+  gstOption: 'include' | 'exclude';
 }
 
 
@@ -127,6 +128,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
         ...data.expenseData,
         id: crypto.randomUUID(),
         approved: false,
+        gstOption: 'include', // Default to GST-inclusive
       };
       setPendingExpenses(current => [...current, pending]);
       
@@ -307,10 +309,50 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     );
   };
 
+  const handleGstOptionChange = (expenseId: string, newGstOption: 'include' | 'exclude') => {
+    setPendingExpenses(current => 
+      current.map(expense => 
+        expense.id === expenseId 
+          ? { ...expense, gstOption: newGstOption }
+          : expense
+      )
+    );
+  };
+
+  // GST calculation helper (10% Australian GST)
+  const calculateGstAmount = (baseAmount: number, gstOption: 'include' | 'exclude', originalGstOption: 'include' | 'exclude' = 'include') => {
+    // If we want the same option as the original, return the base amount
+    if (gstOption === originalGstOption) {
+      return baseAmount;
+    }
+    
+    // If original was GST-inclusive and we want exclusive
+    if (originalGstOption === 'include' && gstOption === 'exclude') {
+      return baseAmount / 1.1; // Remove 10% GST
+    }
+    
+    // If original was GST-exclusive and we want inclusive  
+    if (originalGstOption === 'exclude' && gstOption === 'include') {
+      return baseAmount * 1.1; // Add 10% GST
+    }
+    
+    return baseAmount;
+  };
+
   const handleApproveExpense = (expense: PendingExpense) => {
     if (expense && selectedJobId) {
       setIsAddingToJobSheet(true);
-      addToJobSheetMutation.mutate(expense);
+      
+      // Calculate the final amount based on GST option
+      const finalAmount = calculateGstAmount(expense.amount, expense.gstOption, 'include');
+      
+      // Create expense data with calculated amount
+      const expenseToSubmit = {
+        ...expense,
+        amount: finalAmount
+      };
+      
+      addToJobSheetMutation.mutate(expenseToSubmit);
     }
   };
 
@@ -622,7 +664,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div><strong>Vendor:</strong> {expense.vendor}</div>
-                      <div><strong>Amount:</strong> ${expense.amount.toFixed(2)}</div>
+                      <div><strong>Amount:</strong> ${calculateGstAmount(expense.amount, expense.gstOption, 'include').toFixed(2)} {expense.gstOption === 'include' ? '(inc GST)' : '(exc GST)'}</div>
                       <div className="col-span-2"><strong>Description:</strong> {expense.description}</div>
                       <div><strong>Date:</strong> {expense.date}</div>
                       <div><strong>Confidence:</strong> {Math.round(expense.confidence * 100)}%</div>
@@ -645,6 +687,26 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
                           <SelectItem value="tip_fees">Tip Fees</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                    
+                    {/* GST Option Selection */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-orange-800">GST Option</label>
+                      <Select 
+                        value={expense.gstOption} 
+                        onValueChange={(value) => handleGstOptionChange(expense.id, value as 'include' | 'exclude')}
+                      >
+                        <SelectTrigger className="border-orange-200">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="include">Include GST (${calculateGstAmount(expense.amount, 'include', 'include').toFixed(2)})</SelectItem>
+                          <SelectItem value="exclude">Exclude GST (${calculateGstAmount(expense.amount, 'exclude', 'include').toFixed(2)})</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-orange-600">
+                        Choose whether to add the GST-inclusive or GST-exclusive amount to the job sheet
+                      </p>
                     </div>
                     
                     {/* Action Buttons */}
