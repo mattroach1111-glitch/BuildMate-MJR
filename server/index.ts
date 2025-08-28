@@ -11,9 +11,11 @@ import { setupEmailWebhook } from "./emailWebhook";
 setupEmailWebhook(app);
 
 // Serve test page for GST functionality
-import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 app.get('/test-gst', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'test-gst.html'));
+  res.sendFile(join(__dirname, 'public', 'test-gst.html'));
 });
 
 app.use((req, res, next) => {
