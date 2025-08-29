@@ -1,0 +1,87 @@
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully
+(index):58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+(index):64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-DmFRyKgS.js:759 🔵 Job selection changed: 
+index-DmFRyKgS.js:759 🔵 Job address changed: 
+index-DmFRyKgS.js:759 🔵 Client name changed: 
+index-DmFRyKgS.js:759 🔵 Project manager changed: 
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+index-DmFRyKgS.js:92  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-DmFRyKgS.js:92
+index-DmFRyKgS.js:759 🔵 Job selection changed: 
+index-DmFRyKgS.js:759 🔵 Job address changed: 
+index-DmFRyKgS.js:759 🔵 Client name changed: 
+index-DmFRyKgS.js:759 🔵 Project manager changed: 
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+index-DmFRyKgS.js:759 🔵 Job selection changed: 7e507879-d691-495b-8333-4db6ab483f31
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+index-DmFRyKgS.js:92  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-DmFRyKgS.js:92
+index-DmFRyKgS.js:759 🔵 UPLOAD DEBUG: Getting upload parameters for file: File
+index-DmFRyKgS.js:759 🔵 Making API request to /api/documents/upload
+index-DmFRyKgS.js:759 🔵 API response status: 200
+index-DmFRyKgS.js:759 🔵 API response data: Object
+index-DmFRyKgS.js:759 🔵 UPLOAD DEBUG: Upload URL response: Object
+index-DmFRyKgS.js:759 🟢 UPLOAD COMPLETE: Object
+index-DmFRyKgS.js:759 🔵 Selected Job ID: 7e507879-d691-495b-8333-4db6ab483f31
+index-DmFRyKgS.js:759 🟢 PROCESSING FILES: 1
+index-DmFRyKgS.js:759 🟢 PROCESSING FILE: Object
+index-DmFRyKgS.js:759 🔵 Document URL: https://storage.googleapis.com/replit-objstore-24d4ec2f-e1e3-47ea-be49-d2813cd4465c/.private/uploads/26538038-d27a-416a-a31d-8d2cc9f6039f?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=heimdall-production%40replit-user-deployments.iam.gserviceaccount.com%2F20250829%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20250829T000802Z&X-Goog-Expires=899&X-Goog-Signature=bb98706927ed871d56ec95ec03b75a391e9d16e6069df01c0a32065e38233eb57c2ba435a6c544f3c2917dbfb2264abb1f946917381d55744567db5aec0df8d9b2d255e1599423f66a06a4cf369ef6a638288464651f6fe48798e47a6365211e810ca61e4e139b37aa8045239be0cad081693da1eb0ac6c89f0d075a18e651da534015ecce1295f9549bfd0bd50a1b9a0490b0640f3359dec9319cf958b177a2b80196042d3ddf1b962b3ec5ede97fb0ae13a40380d707f829b259de23d5331d6a8e17ecea5c54e6563209bfbb29129e68f044a9508165f2596f2e3c51a1dfd34aed0194edf5232775eddf50abce15942248bf68d5c414c4f050f964cecae46a&X-Goog-SignedHeaders=host
+index-DmFRyKgS.js:759 🔵 Job ID: 7e507879-d691-495b-8333-4db6ab483f31
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+index-DmFRyKgS.js:759 🔵 Document processed successfully: Object
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+index-DmFRyKgS.js:92  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-DmFRyKgS.js:92
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+index-DmFRyKgS.js:759 🔵 UPLOAD DEBUG: Getting upload parameters for file: File
+index-DmFRyKgS.js:759 🔵 Making API request to /api/documents/upload
+index-DmFRyKgS.js:759 🔵 API response status: 200
+index-DmFRyKgS.js:759 🔵 API response data: Object
+index-DmFRyKgS.js:759 🔵 UPLOAD DEBUG: Upload URL response: Object
+index-DmFRyKgS.js:759 🟢 UPLOAD COMPLETE: Object
+index-DmFRyKgS.js:759 🔵 Selected Job ID: 7e507879-d691-495b-8333-4db6ab483f31
+index-DmFRyKgS.js:759 🟢 PROCESSING FILES: 1
+index-DmFRyKgS.js:759 🟢 PROCESSING FILE: Object
+index-DmFRyKgS.js:759 🔵 Document URL: https://storage.googleapis.com/replit-objstore-24d4ec2f-e1e3-47ea-be49-d2813cd4465c/.private/uploads/e05bc400-ca9f-48db-a3d1-2ae01c0098a9?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=heimdall-production%40replit-user-deployments.iam.gserviceaccount.com%2F20250829%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20250829T000922Z&X-Goog-Expires=899&X-Goog-Signature=4cf2e9fcb5768937ab422cb78d3271911f2821db997f509d39695f254e27ba077aeb8c8f6a9120e2a54f7cb84e23b58723ca2fbd699b36258bde53ecedb3e7169b367930cd079783233efb34fcf72d88cbfcadb3a63af51f4920634f9d5796d18c94e2fdb02731537d6a14b7a0d75c427aa551fe5f28ebf6a885fdbbf448c8852798b89511b7675a3662469a9aa1746e11060de72028adb6be3032a0a58bb7e43083b75ff3f6315de890200c1d9f7ee84241851866c353798ca0cea95da507531103d69cb7f4978da69284b91352a90474f39f5f1e1fe5994a4ab488b229c84c372ed8225cde25ba68dccc21dd12a94ec4842a0c6be7df9ce10c43dfff7bdc84&X-Goog-SignedHeaders=host
+index-DmFRyKgS.js:759 🔵 Job ID: 7e507879-d691-495b-8333-4db6ab483f31
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+index-DmFRyKgS.js:759 🔵 Document processed successfully: Object
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+index-DmFRyKgS.js:759 ✅ Saved document as job file attachment
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+index-DmFRyKgS.js:759 ✅ Automatically uploaded all files to Google Drive
+index-DmFRyKgS.js:759 🏢 Frontend jobs loaded: 44 jobs
+index-DmFRyKgS.js:759 🏢 Sample job structure: Object
+/api/email-processing/pending:1   Failed to load resource: the server responded with a status of 500 ()
+index-DmFRyKgS.js:759   GET https://build-mate-mattroach1111.replit.app/api/email-processing/pending 500 (Internal Server Error)
+queryFn @ index-DmFRyKgS.js:759
+a @ index-DmFRyKgS.js:48
+N @ index-DmFRyKgS.js:48
+start @ index-DmFRyKgS.js:48
+fetch @ index-DmFRyKgS.js:48
+H0 @ index-DmFRyKgS.js:48
+(anonymous) @ index-DmFRyKgS.js:48

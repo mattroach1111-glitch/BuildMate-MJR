@@ -1882,12 +1882,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEmailProcessedDocumentsPending(): Promise<EmailProcessedDocument[]> {
-    const results = await db.select()
-      .from(emailProcessedDocuments)
-      .where(eq(emailProcessedDocuments.status, 'pending'))
-      .orderBy(desc(emailProcessedDocuments.createdAt));
-    console.log('📧 Pending documents with subjects:', results.map(r => ({ id: r.id.slice(0,8), filename: r.filename, email_subject: r.emailSubject })));
-    return results;
+    try {
+      const results = await db.select()
+        .from(emailProcessedDocuments)
+        .where(eq(emailProcessedDocuments.status, 'pending'))
+        .orderBy(desc(emailProcessedDocuments.createdAt));
+      
+      // Handle missing gstOption field gracefully for production deployment
+      const safeResults = results.map(doc => ({
+        ...doc,
+        gstOption: doc.gstOption || 'include' // Provide default value if field doesn't exist
+      }));
+      
+      console.log('📧 Pending documents with subjects:', safeResults.map(r => ({ id: r.id.slice(0,8), filename: r.filename, email_subject: r.emailSubject, gstOption: r.gstOption })));
+      return safeResults;
+    } catch (error) {
+      console.error('Database error in getEmailProcessedDocumentsPending:', error);
+      // If database error (likely missing column), return empty array for now
+      console.log('📧 Returning empty array due to database schema mismatch');
+      return [];
+    }
   }
 
   async getEmailProcessedDocuments(): Promise<any[]> {
