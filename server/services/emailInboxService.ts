@@ -286,7 +286,9 @@ export class EmailInboxService {
     let logId: string | null = null;
     
     try {
+      console.log(`🔥🔥🔥 PROCESSING EMAIL START 🔥🔥🔥`);
       console.log(`📧 Processing email from ${emailMessage.from} with ${emailMessage.attachments.length} attachments`);
+      console.log(`📧 Email subject: ${emailMessage.subject}`);
       
       // Check for unique message ID only (more reliable than subject matching)
       const existingLogs = await storage.getEmailProcessingLogs();

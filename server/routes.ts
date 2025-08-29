@@ -3522,6 +3522,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Manual email processing trigger
   app.post("/api/email-inbox/process", isAuthenticated, async (req: any, res) => {
     try {
+      console.log('🔥🔥🔥 EMAIL PROCESSING ROUTE HIT 🔥🔥🔥');
       console.log('📧 Manual email processing triggered by user');
       const userId = req.user?.claims?.sub;
       console.log('📧 User ID:', userId);
