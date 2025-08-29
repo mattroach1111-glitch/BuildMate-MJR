@@ -486,8 +486,8 @@ export default function EmailProcessingReview() {
                         jobId: selectedJobId
                       });
                     }}
-                    disabled={approveMutation.isPending}
-                    className="bg-green-600 hover:bg-green-700"
+                    disabled={approveMutation.isPending || rejectMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <CheckCircle className="h-3 w-3 mr-1" />
                     Approve
@@ -496,8 +496,8 @@ export default function EmailProcessingReview() {
                     size="sm"
                     variant="outline"
                     onClick={() => rejectMutation.mutate(doc.id)}
-                    disabled={rejectMutation.isPending}
-                    className="text-red-600 border-red-200 hover:bg-red-50"
+                    disabled={approveMutation.isPending || rejectMutation.isPending}
+                    className="text-red-600 border-red-200 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <XCircle className="h-3 w-3 mr-1" />
                     Reject

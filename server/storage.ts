@@ -1913,25 +1913,47 @@ export class DatabaseStorage implements IStorage {
 
   async approveEmailProcessedDocument(id: string, jobId?: string): Promise<void> {
     console.log(`📋 Approving document ${id} for job ${jobId}`);
-    await db.update(emailProcessedDocuments)
-      .set({ 
-        status: 'approved',
-        jobId,
-        processedAt: new Date()
-      })
-      .where(eq(emailProcessedDocuments.id, id));
-    console.log(`✅ Document ${id} approved and assigned to job ${jobId}`);
+    try {
+      const result = await db.update(emailProcessedDocuments)
+        .set({ 
+          status: 'approved',
+          jobId,
+          processedAt: new Date()
+        })
+        .where(eq(emailProcessedDocuments.id, id))
+        .returning();
+      
+      if (result.length === 0) {
+        throw new Error(`No document found with id ${id}`);
+      }
+      
+      console.log(`✅ Document ${id} approved and assigned to job ${jobId}. Updated status:`, result[0].status);
+    } catch (error) {
+      console.error(`❌ Failed to approve document ${id}:`, error);
+      throw error;
+    }
   }
 
   async rejectEmailProcessedDocument(id: string): Promise<void> {
     console.log(`❌ Rejecting document ${id}`);
-    await db.update(emailProcessedDocuments)
-      .set({ 
-        status: 'rejected',
-        processedAt: new Date()
-      })
-      .where(eq(emailProcessedDocuments.id, id));
-    console.log(`✅ Document ${id} rejected`);
+    try {
+      const result = await db.update(emailProcessedDocuments)
+        .set({ 
+          status: 'rejected',
+          processedAt: new Date()
+        })
+        .where(eq(emailProcessedDocuments.id, id))
+        .returning();
+      
+      if (result.length === 0) {
+        throw new Error(`No document found with id ${id}`);
+      }
+      
+      console.log(`✅ Document ${id} rejected. Updated status:`, result[0].status);
+    } catch (error) {
+      console.error(`❌ Failed to reject document ${id}:`, error);
+      throw error;
+    }
   }
 
   // Delete old rejected email processed documents  
