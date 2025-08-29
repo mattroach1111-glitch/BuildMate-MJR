@@ -451,9 +451,30 @@ export class EmailInboxService {
       );
       
       console.log('📧 IMAP service created successfully, fetching unread emails...');
-      // Fetch unread emails with attachments
+      // Fetch unread emails with attachments and enhanced debugging
+      console.log('📧 Email credentials being used:');
+      console.log(`📧 Host: ${emailHost}`);
+      console.log(`📧 Port: ${emailPort}`);
+      console.log(`📧 User: ${emailUser}`);
+      console.log('📧 Password: [HIDDEN]');
+      
       const unreadEmails = await emailService.getUnreadEmails();
       console.log(`📧 Found ${unreadEmails.length} unread emails with attachments`);
+      
+      if (unreadEmails.length === 0) {
+        console.log('📧 No unread emails found. This could mean:');
+        console.log('📧 1. All emails in the inbox have been read');
+        console.log('📧 2. There are no emails with document attachments');
+        console.log('📧 3. The email credentials are pointing to the wrong mailbox');
+        console.log('📧 4. The emails are in a different folder (not INBOX)');
+      } else {
+        console.log('📧 Unread emails found:');
+        unreadEmails.forEach((email, index) => {
+          console.log(`📧 Email ${index + 1}: "${email.subject}" from ${email.from}`);
+          console.log(`📧   - ${email.attachments.length} attachments`);
+          console.log(`📧   - Date: ${email.date}`);
+        });
+      }
       
       let processed = 0;
       const errors: string[] = [];
