@@ -319,6 +319,8 @@ export class EmailInboxService {
         }
       }
       
+      console.log(`📧 About to process ${emailMessage.attachments.length} attachments`);
+      
       // Process attachments
       const processedDocuments: ProcessedDocument[] = [];
       
@@ -329,7 +331,9 @@ export class EmailInboxService {
           continue;
         }
         
+        console.log(`📧 Processing attachment: ${attachment.filename} (${attachment.contentType})`);
         const processed = await this.processDocumentWithAI(attachment);
+        console.log(`📧 AI processing result:`, processed ? 'SUCCESS' : 'FAILED');
         if (processed) {
           processedDocuments.push(processed);
           
@@ -395,7 +399,10 @@ export class EmailInboxService {
       return true;
       
     } catch (error) {
-      console.error('Error processing email:', error);
+      console.error('❌ ERROR IN PROCESSEMAIL:', error);
+      console.error('❌ ERROR STACK:', error.stack);
+      console.error('❌ ERROR TYPE:', typeof error);
+      console.error('❌ ERROR STRING:', String(error));
       if (logId) {
         await storage.updateEmailProcessingLogStatus(logId, "failed", String(error));
       }
