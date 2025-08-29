@@ -38,17 +38,28 @@ export function EmailInboxInfo() {
   // Manual email processing trigger
   const processEmailsMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/email-inbox/process", {});
-      return response.json();
+      console.log('🔵 Frontend: Starting email processing request...');
+      try {
+        const response = await apiRequest("POST", "/api/email-inbox/process", {});
+        console.log('🔵 Frontend: API response received:', response.status);
+        const data = await response.json();
+        console.log('🔵 Frontend: Response data:', data);
+        return data;
+      } catch (error) {
+        console.error('🔴 Frontend: API request failed:', error);
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('🟢 Frontend: Email processing succeeded:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/email-inbox/status"] });
       toast({
         title: "Email Processing Started",
         description: "Checking for new emails and processing documents...",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('🔴 Frontend: Email processing failed:', error);
       toast({
         title: "Error",
         description: "Failed to start email processing",
@@ -205,7 +216,10 @@ export function EmailInboxInfo() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => processEmailsMutation.mutate()}
+              onClick={() => {
+                console.log('🔵 Frontend: Check for new emails button clicked');
+                processEmailsMutation.mutate();
+              }}
               disabled={processEmailsMutation.isPending}
               className="w-full"
               data-testid="button-process-emails"
