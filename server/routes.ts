@@ -3813,7 +3813,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/email-processing/approve/:id', isAuthenticated, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const { jobId, categoryOverride, gstOption } = req.body;
+      const { jobId, categoryOverride, gstOption = 'include' } = req.body;
       
       // Get the document data before approving
       const documents = await storage.getEmailProcessedDocumentsPending();

@@ -342,7 +342,7 @@ export class EmailInboxService {
           await storage.createEmailProcessedDocument({
             filename: processed.filename,
             vendor: processed.vendor,
-            amount: Number(processed.amount),
+            amount: processed.amount.toString(), // Convert to string for database
             category: processed.category,
             status: 'pending',
             emailSubject: emailMessage.subject,
@@ -350,7 +350,8 @@ export class EmailInboxService {
             extractedData: JSON.stringify(processed),
             attachmentContent: attachment.content.toString('base64'), // Store original attachment for Google Drive upload
             mimeType: attachment.contentType, // Store MIME type for proper file handling
-            userId: targetUser.id
+            userId: targetUser.id,
+            gstOption: 'include' // Add default GST option
           });
           
           console.log(`📋 Document saved for review approval`);
