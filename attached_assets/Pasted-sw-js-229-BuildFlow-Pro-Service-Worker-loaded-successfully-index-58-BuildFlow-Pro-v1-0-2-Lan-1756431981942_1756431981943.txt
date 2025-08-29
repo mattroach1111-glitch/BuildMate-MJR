@@ -1,0 +1,25 @@
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully
+(index):58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+(index):64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-JnrJ2T0_.js:759 🔵 Job selection changed: 
+index-JnrJ2T0_.js:759 🔵 Job address changed: 
+index-JnrJ2T0_.js:759 🔵 Client name changed: 
+index-JnrJ2T0_.js:759 🔵 Project manager changed: 
+index-JnrJ2T0_.js:759 🔵 Frontend: Check for new emails button clicked
+index-JnrJ2T0_.js:759 🔵 Frontend: Starting email processing request...
+index-JnrJ2T0_.js:759 🔵 Frontend: API response received: 200
+index-JnrJ2T0_.js:759 🔵 Frontend: Response data: {message: 'Email processing completed', processed: 68, errors: Array(3)}
+index-JnrJ2T0_.js:759 🟢 Frontend: Email processing succeeded: {message: 'Email processing completed', processed: 68, errors: Array(3)}
+index-JnrJ2T0_.js:759 ⚠️ Email processing had errors: (3) ['Failed to process email "test gst" from accounts@m…eturned false. Last error in processEmail method.', 'Failed to process email "test gst" from accounts@m…eturned false. Last error in processEmail method.', 'Failed to process email "test gst" from accounts@m…eturned false. Last error in processEmail method.']
+index-JnrJ2T0_.js:759 🔍 DETAILED ERROR ANALYSIS:
+index-JnrJ2T0_.js:759 ❌ Error 1: Failed to process email "test gst" from accounts@mjrbuilders.com.au - processing returned false. Last error in processEmail method.
+index-JnrJ2T0_.js:759 🔍 Full error details for Error 1: {errorString: 'Failed to process email "test gst" from accounts@m…eturned false. Last error in processEmail method.', errorLength: 131, containsStack: false, containsType: false, splitByPipe: Array(1)}
+index-JnrJ2T0_.js:759 ❌ Error 2: Failed to process email "test gst" from accounts@mjrbuilders.com.au - processing returned false. Last error in processEmail method.
+index-JnrJ2T0_.js:759 🔍 Full error details for Error 2: {errorString: 'Failed to process email "test gst" from accounts@m…eturned false. Last error in processEmail method.', errorLength: 131, containsStack: false, containsType: false, splitByPipe: Array(1)}
+index-JnrJ2T0_.js:759 ❌ Error 3: Failed to process email "test gst" from accounts@mjrbuilders.com.au - processing returned false. Last error in processEmail method.
+index-JnrJ2T0_.js:759 🔍 Full error details for Error 3: {errorString: 'Failed to process email "test gst" from accounts@m…eturned false. Last error in processEmail method.', errorLength: 131, containsStack: false, containsType: false, splitByPipe: Array(1)}
+index-JnrJ2T0_.js:759 🔍 Raw errors array: [
+  "Failed to process email \"test gst\" from accounts@mjrbuilders.com.au - processing returned false. Last error in processEmail method.",
+  "Failed to process email \"test gst\" from accounts@mjrbuilders.com.au - processing returned false. Last error in processEmail method.",
+  "Failed to process email \"test gst\" from accounts@mjrbuilders.com.au - processing returned false. Last error in processEmail method."
+]
