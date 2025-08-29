@@ -53,21 +53,9 @@ export function EmailInboxInfo() {
     onSuccess: (data) => {
       console.log('🟢 Frontend: Email processing succeeded:', data);
       
-      // Log detailed error information for debugging
+      // Log error information if any occur
       if (data.errors && data.errors.length > 0) {
         console.log('⚠️ Email processing had errors:', data.errors);
-        console.log('🔍 DETAILED ERROR ANALYSIS:');
-        data.errors.forEach((error: string, index: number) => {
-          console.log(`❌ Error ${index + 1}:`, error);
-          console.log(`🔍 Full error details for Error ${index + 1}:`, {
-            errorString: error,
-            errorLength: error.length,
-            containsStack: error.includes('Stack:'),
-            containsType: error.includes('Type:'),
-            splitByPipe: error.split(' | ')
-          });
-        });
-        console.log('🔍 Raw errors array:', JSON.stringify(data.errors, null, 2));
       }
       
       queryClient.invalidateQueries({ queryKey: ["/api/email-inbox/status"] });
