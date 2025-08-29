@@ -77,13 +77,24 @@ export class EmailInboxService {
   private async processDocumentWithAI(attachment: EmailAttachment): Promise<ProcessedDocument | null> {
     try {
       console.log(`📄 Processing document: ${attachment.filename}`);
+      console.log(`📄 Content type: ${attachment.contentType}`);
+      console.log(`📄 Content size: ${attachment.content.length} bytes`);
       
       // Convert to base64 for AI processing
       const base64Content = attachment.content.toString('base64');
+      console.log(`📄 Base64 content length: ${base64Content.length}`);
       
       // Process document directly using AI service instead of API call
+      console.log(`📄 Importing DocumentProcessor...`);
       const { DocumentProcessor } = await import('./documentProcessor');
+      console.log(`📄 Creating DocumentProcessor instance...`);
       const processor = new DocumentProcessor();
+      
+      console.log(`📄 Calling processDocumentEmail with:`, {
+        fileName: attachment.filename,
+        mimeType: attachment.contentType,
+        dataLength: base64Content.length
+      });
       
       const result = await processor.processDocumentEmail({
         fileData: base64Content,
@@ -91,11 +102,15 @@ export class EmailInboxService {
         mimeType: attachment.contentType
       });
       
+      console.log(`📄 AI processing result:`, result);
+      
       if (!result || result.error) {
-        console.error(`Failed to process document: ${result?.error || 'Unknown error'}`);
+        console.error(`❌ AI processing failed:`, result?.error || 'Unknown error');
+        console.error(`❌ Full result object:`, result);
         return null;
       }
-      return {
+      
+      const processedDoc = {
         filename: attachment.filename,
         vendor: result.vendor || 'Unknown Vendor',
         amount: result.amount || 0,
@@ -104,8 +119,13 @@ export class EmailInboxService {
         category: result.category || 'other_costs',
         confidence: result.confidence || 0.5
       };
+      
+      console.log(`📄 Returning processed document:`, processedDoc);
+      return processedDoc;
     } catch (error) {
-      console.error('Error processing document with AI:', error);
+      console.error('❌ ERROR in processDocumentWithAI:', error);
+      console.error('❌ ERROR STACK:', error.stack);
+      console.error('❌ ERROR TYPE:', typeof error);
       return null;
     }
   }
