@@ -37,7 +37,7 @@ import { UserManagement } from "@/components/user-management";
 import { generateJobListPDF } from "@/lib/pdfGenerator";
 import JobUpdateDialog from "@/components/job-update-form";
 import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor";
-import { EmailProcessingReview } from "@/components/EmailProcessingReview";
+import EmailProcessingReview from "@/components/EmailProcessingReview";
 import { NotificationSettings } from "@/components/NotificationSettings";
 
 // Helper function to format date as "16th Aug" format

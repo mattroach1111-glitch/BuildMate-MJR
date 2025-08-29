@@ -10,12 +10,33 @@ import { useToast } from '@/hooks/use-toast';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import * as fuzzball from 'fuzzball';
 
+// GST calculation function (10% Australian GST)
+function calculateGstAmount(baseAmount: number, gstOption: 'include' | 'exclude', originalGstOption: 'include' | 'exclude' = 'include'): number {
+  // If we want the same option as the original, return the base amount
+  if (gstOption === originalGstOption) {
+    return baseAmount;
+  }
+  
+  // If original was GST-inclusive and we want exclusive
+  if (originalGstOption === 'include' && gstOption === 'exclude') {
+    return baseAmount / 1.1; // Remove 10% GST
+  }
+  
+  // If original was GST-exclusive and we want inclusive  
+  if (originalGstOption === 'exclude' && gstOption === 'include') {
+    return baseAmount * 1.1; // Add 10% GST
+  }
+  
+  return baseAmount;
+}
+
 interface ProcessedDocument {
   id: string;
   filename: string;
   vendor: string;
   amount: string | number;
   category: string;
+  gstOption?: 'include' | 'exclude';
   status: 'pending' | 'approved' | 'rejected';
   created_at: string;
   email_subject?: string;
@@ -132,11 +153,12 @@ function getJobFromSubject(emailSubject: string, jobs: any[]): string {
   return '';
 }
 
-export function EmailProcessingReview() {
+export default function EmailProcessingReview() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [categoryOverrides, setCategoryOverrides] = useState<Record<string, string>>({});
   const [jobOverrides, setJobOverrides] = useState<Record<string, string>>({});
+  const [gstOverrides, setGstOverrides] = useState<Record<string, 'include' | 'exclude'>>({});
   const [previewDoc, setPreviewDoc] = useState<{
     url: string;
     filename: string;
@@ -177,14 +199,14 @@ export function EmailProcessingReview() {
   });
 
   const approveMutation = useMutation({
-    mutationFn: async ({ docId, jobId, category }: { docId: string; jobId?: string; category?: string }) => {
+    mutationFn: async ({ docId, jobId, category, gstOption }: { docId: string; jobId?: string; category?: string; gstOption?: 'include' | 'exclude' }) => {
       const response = await fetch(`/api/email-processing/approve/${docId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ jobId, categoryOverride: category }),
+        body: JSON.stringify({ jobId, categoryOverride: category, gstOption }),
       });
       if (!response.ok) {
         throw new Error('Failed to approve document');
@@ -355,7 +377,7 @@ export function EmailProcessingReview() {
                   </Badge>
                 </div>
 
-                <div className="flex flex-col sm:grid sm:grid-cols-3 gap-3 sm:gap-4 text-sm">
+                <div className="flex flex-col sm:grid sm:grid-cols-4 gap-3 sm:gap-4 text-sm">
                   <div className="flex items-center gap-2 flex-wrap">
                     <Building className="h-3 w-3 text-gray-500 flex-shrink-0" />
                     <span className="text-gray-600">Vendor:</span>
@@ -364,7 +386,32 @@ export function EmailProcessingReview() {
                   <div className="flex items-center gap-2">
                     <DollarSign className="h-3 w-3 text-gray-500 flex-shrink-0" />
                     <span className="text-gray-600">Amount:</span>
-                    <span className="font-medium">${(parseFloat(doc.amount) || 0).toFixed(2)}</span>
+                    <span className="font-medium">
+                      ${calculateGstAmount(
+                        parseFloat(doc.amount) || 0, 
+                        gstOverrides[doc.id] || doc.gstOption || 'include', 
+                        'include'
+                      ).toFixed(2)} {(gstOverrides[doc.id] || doc.gstOption || 'include') === 'include' ? '(inc GST)' : '(exc GST)'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-600 flex-shrink-0">GST:</span>
+                    <Select 
+                      value={gstOverrides[doc.id] || doc.gstOption || 'include'} 
+                      onValueChange={(value: 'include' | 'exclude') => setGstOverrides(prev => ({...prev, [doc.id]: value}))}
+                    >
+                      <SelectTrigger className="w-full sm:w-24 h-8 text-xs mobile-input">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent 
+                        position="popper" 
+                        className="z-[9999]"
+                        sideOffset={4}
+                      >
+                        <SelectItem value="include">Inc GST</SelectItem>
+                        <SelectItem value="exclude">Exc GST</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-gray-600 flex-shrink-0">Category:</span>
@@ -435,6 +482,7 @@ export function EmailProcessingReview() {
                       approveMutation.mutate({ 
                         docId: doc.id, 
                         category: categoryOverrides[doc.id] || doc.category,
+                        gstOption: gstOverrides[doc.id] || doc.gstOption || 'include',
                         jobId: selectedJobId
                       });
                     }}

@@ -455,6 +455,7 @@ export const emailProcessedDocuments = pgTable("email_processed_documents", {
   vendor: varchar("vendor").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   category: varchar("category").notNull(),
+  gstOption: varchar("gst_option", { enum: ["include", "exclude"] }).notNull().default("include"), // GST include/exclude option
   status: varchar("status", { enum: ["pending", "approved", "rejected"] }).notNull().default("pending"),
   emailSubject: varchar("email_subject"),
   emailFrom: varchar("email_from"),

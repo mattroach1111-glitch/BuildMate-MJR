@@ -3776,10 +3776,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GST calculation function (10% Australian GST)
+  function calculateGstAmount(baseAmount: number, gstOption: 'include' | 'exclude', originalGstOption: 'include' | 'exclude' = 'include'): number {
+    // If we want the same option as the original, return the base amount
+    if (gstOption === originalGstOption) {
+      return baseAmount;
+    }
+    
+    // If original was GST-inclusive and we want exclusive
+    if (originalGstOption === 'include' && gstOption === 'exclude') {
+      return baseAmount / 1.1; // Remove 10% GST
+    }
+    
+    // If original was GST-exclusive and we want inclusive  
+    if (originalGstOption === 'exclude' && gstOption === 'include') {
+      return baseAmount * 1.1; // Add 10% GST
+    }
+    
+    return baseAmount;
+  }
+
   app.post('/api/email-processing/approve/:id', isAuthenticated, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const { jobId, categoryOverride } = req.body;
+      const { jobId, categoryOverride, gstOption } = req.body;
       
       // Get the document data before approving
       const documents = await storage.getEmailProcessedDocumentsPending();
@@ -3794,6 +3814,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Use category override if provided
       const finalCategory = categoryOverride || extractedData.category;
+      
+      // Apply GST calculation to the amount
+      const originalAmount = parseFloat(extractedData.amount) || 0;
+      const finalGstOption = gstOption || document.gstOption || 'include';
+      const finalAmount = calculateGstAmount(originalAmount, finalGstOption, 'include');
+      
+      console.log(`💰 GST Calculation: Original: $${originalAmount.toFixed(2)}, GST Option: ${finalGstOption}, Final: $${finalAmount.toFixed(2)}`);
       
       // If no specific job provided, try to extract from email subject or use default
       let targetJobId = jobId;
@@ -3827,7 +3854,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             jobId: targetJobId,
             description: extractedData.description || document.filename,
             supplier: extractedData.vendor || 'Unknown Vendor',
-            amount: extractedData.amount?.toString() || '0',
+            amount: finalAmount.toString(),
             invoiceDate: extractedData.date || new Date().toISOString().split('T')[0]
           });
           console.log(`✅ Material created:`, addedExpense?.id);
@@ -3839,7 +3866,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             jobId: targetJobId,
             trade: extractedData.vendor || 'Unknown Trade',
             contractor: extractedData.vendor || 'Unknown Contractor',
-            amount: extractedData.amount?.toString() || '0',
+            amount: finalAmount.toString(),
             invoiceDate: extractedData.date || new Date().toISOString().split('T')[0]
           });
           console.log(`✅ Sub-trade created:`, addedExpense?.id);
@@ -3850,7 +3877,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           addedExpense = await storage.createTipFee({
             jobId: targetJobId,
             description: extractedData.description || document.filename,
-            amount: extractedData.amount?.toString() || '0'
+            amount: finalAmount.toString()
           });
           console.log(`✅ Tip fee created:`, addedExpense?.id);
           break;
@@ -3861,7 +3888,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           addedExpense = await storage.createOtherCost({
             jobId: targetJobId,
             description: extractedData.description || document.filename,
-            amount: extractedData.amount?.toString() || '0'
+            amount: finalAmount.toString()
           });
           console.log(`✅ Other cost created:`, addedExpense?.id);
           break;
