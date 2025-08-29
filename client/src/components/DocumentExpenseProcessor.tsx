@@ -217,14 +217,11 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", selectedJobId, "files"] });
       
-      // Remove the approved expense from pending list
-      const expenseToRemove = pendingExpenses.find(exp => 
-        exp.vendor === approvedExpense?.vendor && 
-        exp.amount === approvedExpense?.amount
-      );
-      if (expenseToRemove) {
-        setPendingExpenses(current => current.filter(expense => expense.id !== expenseToRemove.id));
-      }
+      // Clear all pending expenses since we've successfully processed the document
+      setPendingExpenses([]);
+      
+      // Also clear uploaded files
+      setUploadedFiles([]);
       onSuccess?.();
     },
     onError: (error: any) => {

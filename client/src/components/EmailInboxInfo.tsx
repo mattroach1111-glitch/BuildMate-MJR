@@ -52,11 +52,29 @@ export function EmailInboxInfo() {
     },
     onSuccess: (data) => {
       console.log('🟢 Frontend: Email processing succeeded:', data);
+      
+      // Log detailed error information for debugging
+      if (data.errors && data.errors.length > 0) {
+        console.log('⚠️ Email processing had errors:', data.errors);
+        data.errors.forEach((error: string, index: number) => {
+          console.log(`❌ Error ${index + 1}:`, error);
+        });
+      }
+      
       queryClient.invalidateQueries({ queryKey: ["/api/email-inbox/status"] });
-      toast({
-        title: "Email Processing Started",
-        description: "Checking for new emails and processing documents...",
-      });
+      
+      if (data.errors && data.errors.length > 0) {
+        toast({
+          title: "Email Processing Complete",
+          description: `Processed ${data.processed} emails. ${data.errors.length} errors (check console for details)`,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Email Processing Complete",
+          description: `Successfully processed ${data.processed} emails`,
+        });
+      }
     },
     onError: (error) => {
       console.error('🔴 Frontend: Email processing failed:', error);
