@@ -489,14 +489,18 @@ export class EmailInboxService {
             // Mark email as read after successful processing
             await emailService.markAsRead(email.id);
             processed++;
-            console.log(`✅ Successfully processed email: ${email.subject}`);
+            console.log(`✅ Successfully processed email: "${email.subject}" from ${email.from}`);
           } else {
-            errors.push(`Failed to process email: ${email.subject}`);
-            console.log(`❌ Failed to process email: ${email.subject}`);
+            const errorMessage = `Failed to process email "${email.subject}" from ${email.from} - processing returned false`;
+            errors.push(errorMessage);
+            console.log(`❌ ${errorMessage}`);
           }
         } catch (error) {
-          console.error(`Error processing email ${email.id}:`, error);
-          errors.push(`Error processing email: ${String(error)}`);
+          console.error(`❌ ERROR processing email "${email.subject}" from ${email.from}:`, error);
+          console.error(`❌ Full error details:`, error);
+          const errorMessage = `Email "${email.subject}" failed: ${String(error)}`;
+          errors.push(errorMessage);
+          console.error(`❌ Error added to array: ${errorMessage}`);
         }
       }
       

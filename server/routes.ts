@@ -3533,6 +3533,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await emailService.processInbox(userId);
       
       console.log('📧 Processing result:', result);
+      console.log('📧 Detailed error list:', result.errors);
+      
       res.json({
         message: "Email processing completed",
         ...result
