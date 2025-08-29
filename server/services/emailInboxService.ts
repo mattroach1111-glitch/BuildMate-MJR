@@ -438,7 +438,10 @@ export class EmailInboxService {
       }
       
       // Import and create IMAP email service
+      console.log('📧 Importing IMAP email service...');
       const { ImapEmailService } = await import('./imapEmailService');
+      
+      console.log('📧 Creating IMAP service with credentials...');
       const emailService = await ImapEmailService.createWithCredentials(
         emailHost,
         emailPort,
@@ -447,6 +450,7 @@ export class EmailInboxService {
         true // Use TLS
       );
       
+      console.log('📧 IMAP service created successfully, fetching unread emails...');
       // Fetch unread emails with attachments
       const unreadEmails = await emailService.getUnreadEmails();
       console.log(`📧 Found ${unreadEmails.length} unread emails with attachments`);

@@ -3522,18 +3522,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Manual email processing trigger
   app.post("/api/email-inbox/process", isAuthenticated, async (req: any, res) => {
     try {
+      console.log('📧 Manual email processing triggered by user');
       const userId = req.user?.claims?.sub;
+      console.log('📧 User ID:', userId);
+      
       const { EmailInboxService } = await import('./services/emailInboxService');
       const emailService = new EmailInboxService();
+      
+      console.log('📧 Starting inbox processing...');
       const result = await emailService.processInbox(userId);
       
+      console.log('📧 Processing result:', result);
       res.json({
         message: "Email processing completed",
         ...result
       });
     } catch (error) {
-      console.error("Error processing emails:", error);
-      res.status(500).json({ error: "Failed to process emails" });
+      console.error("❌ Error processing emails:", error);
+      console.error("❌ Full error details:", error);
+      res.status(500).json({ 
+        error: "Failed to process emails",
+        details: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
