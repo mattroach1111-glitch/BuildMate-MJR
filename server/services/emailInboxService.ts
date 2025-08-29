@@ -425,8 +425,12 @@ export class EmailInboxService {
       console.error('❌ ERROR STACK:', error.stack);
       console.error('❌ ERROR TYPE:', typeof error);
       console.error('❌ ERROR STRING:', String(error));
+      
+      // Store detailed error for API response
+      const detailedError = `ProcessEmail Error: ${error.message || String(error)} | Stack: ${error.stack || 'No stack'} | Type: ${typeof error}`;
+      
       if (logId) {
-        await storage.updateEmailProcessingLogStatus(logId, "failed", String(error));
+        await storage.updateEmailProcessingLogStatus(logId, "failed", detailedError);
       }
       return false;
     }
@@ -521,14 +525,14 @@ export class EmailInboxService {
             processed++;
             console.log(`✅ Successfully processed email: "${email.subject}" from ${email.from}`);
           } else {
-            const errorMessage = `Failed to process email "${email.subject}" from ${email.from} - processing returned false`;
+            const errorMessage = `Failed to process email "${email.subject}" from ${email.from} - processing returned false. Last error in processEmail method.`;
             errors.push(errorMessage);
             console.log(`❌ ${errorMessage}`);
           }
         } catch (error) {
           console.error(`❌ ERROR processing email "${email.subject}" from ${email.from}:`, error);
           console.error(`❌ Full error details:`, error);
-          const errorMessage = `Email "${email.subject}" failed: ${String(error)}`;
+          const errorMessage = `Email "${email.subject}" failed: ${String(error)} | Stack: ${error.stack || 'No stack'}`;
           errors.push(errorMessage);
           console.error(`❌ Error added to array: ${errorMessage}`);
         }
