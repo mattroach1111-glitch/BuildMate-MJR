@@ -4007,13 +4007,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Now approve the document with the job ID
+      console.log(`📋 Approving document ${id} in database...`);
       await storage.approveEmailProcessedDocument(id, targetJobId);
+      console.log(`✅ Document ${id} approved successfully in database`);
       
       res.json({ 
         success: true, 
         addedExpense,
         jobId: targetJobId,
         category: finalCategory,
+        gstOption: finalGstOption,
+        amount: finalAmount,
         fileAttached: !!fileRecord,
         googleDriveUploaded: !!googleDriveResult,
         googleDriveLink: googleDriveResult?.webViewLink,

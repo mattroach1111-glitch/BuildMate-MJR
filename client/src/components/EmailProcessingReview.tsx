@@ -214,7 +214,11 @@ export default function EmailProcessingReview() {
       return response.json();
     },
     onSuccess: (data) => {
+      console.log('🟢 Document approved successfully, refreshing pending list...', data);
+      
+      // Force refresh the pending documents list
       queryClient.invalidateQueries({ queryKey: ['/api/email-processing/pending'] });
+      queryClient.refetchQueries({ queryKey: ['/api/email-processing/pending'] });
       
       // Create enhanced success message with file attachment and Google Drive info
       let description = data.message || `Expense added to job successfully`;
@@ -257,7 +261,12 @@ export default function EmailProcessingReview() {
       return response.json();
     },
     onSuccess: () => {
+      console.log('🟢 Document rejected successfully, refreshing pending list...');
+      
+      // Force refresh the pending documents list
       queryClient.invalidateQueries({ queryKey: ['/api/email-processing/pending'] });
+      queryClient.refetchQueries({ queryKey: ['/api/email-processing/pending'] });
+      
       toast({
         title: "Document Rejected",
         description: "Document has been removed from review queue",
