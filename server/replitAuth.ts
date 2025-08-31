@@ -39,9 +39,11 @@ export function getSession() {
     rolling: true, // Extend session on each request
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Secure in production, flexible in dev
+      secure: false, // Allow cookies to work in both development and production
       maxAge: sessionTtl,
       sameSite: 'lax',
+      domain: undefined, // Let browser determine domain
+      path: '/', // Ensure cookie applies to entire app
     },
   });
 }
@@ -133,20 +135,25 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   try {
     console.log("🔐 Auth check - isAuthenticated():", req.isAuthenticated ? req.isAuthenticated() : "method missing");
     console.log("🔐 Auth check - req.user exists:", !!req.user);
+    console.log("🔐 Auth check - session ID:", req.sessionID ? req.sessionID.substring(0, 8) + "..." : "no session");
+    console.log("🔐 Auth check - cookies:", Object.keys(req.cookies || {}).length > 0 ? "present" : "missing");
     
     const user = req.user as any;
 
     if (!req.isAuthenticated || !req.isAuthenticated()) {
-      console.log("🔐 Auth failed - not authenticated");
+      console.log("🔐 Auth failed - not authenticated - redirecting to login");
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     if (!user || !user.expires_at) {
-      console.log("🔐 Auth failed - no user or expires_at");
+      console.log("🔐 Auth failed - no user or expires_at - user:", !!user, "expires_at:", user?.expires_at);
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     const now = Math.floor(Date.now() / 1000);
+    const timeUntilExpiry = user.expires_at - now;
+    console.log("🔐 Auth check - time until expiry:", timeUntilExpiry, "seconds");
+    
     if (now <= user.expires_at) {
       console.log("🔐 Auth success - token valid");
       return next();
