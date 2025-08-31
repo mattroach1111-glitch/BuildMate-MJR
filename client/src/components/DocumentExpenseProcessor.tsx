@@ -151,12 +151,12 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
 
   // Add approved expense to job sheet
   const addToJobSheetMutation = useMutation({
-    mutationFn: async (expenseData: ProcessedExpense) => {
+    mutationFn: async ({ expenseData, expenseId }: { expenseData: ProcessedExpense; expenseId: string }) => {
       const response = await apiRequest("POST", "/api/documents/add-to-job", { 
         expenseData,
         jobId: selectedJobId 
       });
-      return await response.json();
+      return { ...await response.json(), expenseId };
     },
     onSuccess: async (data: any) => {
       // Save the uploaded files as job file attachments if we have any
@@ -217,8 +217,8 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", selectedJobId, "files"] });
       
-      // Clear all pending expenses since we've successfully processed the document
-      setPendingExpenses([]);
+      // Remove only the specific expense that was approved
+      setPendingExpenses(current => current.filter(expense => expense.id !== data.expenseId));
       
       // Also clear uploaded files
       setUploadedFiles([]);
@@ -349,7 +349,8 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
         amount: finalAmount
       };
       
-      addToJobSheetMutation.mutate(expenseToSubmit);
+      // Pass both the expense data and the expense ID
+      addToJobSheetMutation.mutate({ expenseData: expenseToSubmit, expenseId: expense.id });
     }
   };
 
