@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { db } from "./db";
+import { db, checkDbHealth } from "./db";
 import { 
   timesheetEntries, laborEntries, users, staffNotes, employees, staffMembers, 
   staffNotesEntries, rewardCatalog, rewardSettings, jobs, materials, subTrades, otherCosts, 
@@ -5060,6 +5060,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting prize:", error);
       res.status(500).json({ message: "Failed to delete prize" });
+    }
+  });
+
+  // Health check endpoint
+  app.get("/api/health", async (req, res) => {
+    try {
+      const dbHealthy = await checkDbHealth();
+      const uptime = process.uptime();
+      const memoryUsage = process.memoryUsage();
+      
+      const healthStatus = {
+        status: dbHealthy ? "healthy" : "degraded",
+        timestamp: new Date().toISOString(),
+        uptime: Math.floor(uptime),
+        database: dbHealthy ? "connected" : "disconnected",
+        memory: {
+          used: Math.round(memoryUsage.heapUsed / 1024 / 1024) + " MB",
+          total: Math.round(memoryUsage.heapTotal / 1024 / 1024) + " MB"
+        }
+      };
+      
+      res.status(dbHealthy ? 200 : 503).json(healthStatus);
+    } catch (error) {
+      console.error('🚨 Health check error:', error);
+      res.status(500).json({
+        status: "error",
+        timestamp: new Date().toISOString(),
+        error: "Health check failed"
+      });
     }
   });
 

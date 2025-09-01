@@ -2,9 +2,59 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
+// Global error handlers to prevent server crashes
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🚨 UNHANDLED PROMISE REJECTION:', reason);
+  console.error('🚨 Promise:', promise);
+  // Don't exit the process, just log and continue
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('🚨 UNCAUGHT EXCEPTION:', error);
+  console.error('🚨 Stack:', error.stack);
+  // Log but don't exit - let the app continue running
+});
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('📤 SIGTERM received, shutting down gracefully...');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('📤 SIGINT received, shutting down gracefully...');
+  process.exit(0);
+});
+
 const app = express();
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: false }));
+
+// Enhanced request handling with timeouts and memory protection
+app.use(express.json({ 
+  limit: '50mb',
+  verify: (req, res, buf, encoding) => {
+    // Log large requests for monitoring
+    if (buf.length > 10 * 1024 * 1024) { // 10MB
+      console.log(`⚠️ Large request: ${buf.length} bytes to ${req.path}`);
+    }
+  }
+}));
+app.use(express.urlencoded({ extended: false, limit: '50mb' }));
+
+// Request timeout middleware (30 seconds)
+app.use((req, res, next) => {
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) {
+      console.error(`🚨 Request timeout: ${req.method} ${req.path}`);
+      res.status(408).json({ message: 'Request timeout' });
+    }
+  }, 30000);
+  
+  res.on('finish', () => {
+    clearTimeout(timeout);
+  });
+  
+  next();
+});
 
 // Setup email webhook
 import { setupEmailWebhook } from "./emailWebhook";
@@ -44,14 +94,30 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  // Enhanced error handler with detailed logging
+  app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
     
-    console.error("🚨 Server error:", err);
-    console.error("🚨 Error stack:", err.stack);
-
-    res.status(status).json({ message });
+    // Enhanced error logging
+    console.error("🚨 Server error:", {
+      error: err.message,
+      stack: err.stack,
+      url: req.url,
+      method: req.method,
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+      timestamp: new Date().toISOString()
+    });
+    
+    // Check if response already sent to prevent double responses
+    if (!res.headersSent) {
+      res.status(status).json({ 
+        message,
+        timestamp: new Date().toISOString(),
+        requestId: Math.random().toString(36).substr(2, 9)
+      });
+    }
   });
 
   // importantly only setup vite in development and after
