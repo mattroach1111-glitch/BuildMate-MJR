@@ -1,0 +1,55 @@
+(index):58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+(index):64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-1Opqv4_8.js:759 🔵 Job selection changed: 
+index-1Opqv4_8.js:759 🔵 Job address changed: 
+index-1Opqv4_8.js:759 🔵 Client name changed: 
+index-1Opqv4_8.js:759 🔵 Project manager changed: 
+index-1Opqv4_8.js:759 🔵 Frontend: Check for new emails button clicked
+index-1Opqv4_8.js:759 🔵 Frontend: Starting email processing request...
+index-1Opqv4_8.js:759 🔵 Frontend: API response received: 200
+index-1Opqv4_8.js:759 🔵 Frontend: Response data: Object
+index-1Opqv4_8.js:759 🟢 Frontend: Email processing succeeded: Object
+index-1Opqv4_8.js:759 🔍 Frontend matching email subject: 8 pillinger dr
+index-1Opqv4_8.js:759 🔍 Available jobs for matching: Array(45)
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "1 ryeland"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "80 hampden"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "13 lomandra"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "15 martyn"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "15 nankoor"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "16 haig"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "185 carella"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "19 allambie"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "23 nathan"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "24 willowdene"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "28 stoney point"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "3 barnett"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "30 creed"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "31 charlotte cove"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "4 advocate"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "4 maluka"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "40 parkdale"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "42 clark"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "47 duntroon"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "5 cash"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "58 louisa"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "59 landmere"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "6 alcides"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "72 summerhill"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "842 adventure bay"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "9 arncliffe"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "9 tower"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "966 dolphins sands"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "146 gordons hill"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "19 pintos"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "22 foley"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "37 horizon"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "75 pitcairn"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "8 pillenger"
+index-1Opqv4_8.js:759 🔍 Full address comparison: "8 pillinger" vs "30 corby"
+index-1Opqv4_8.js:759 ❌ No job match found
+index-1Opqv4_8.js:759 🟢 Document approved successfully, refreshing pending list... Object
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully
+/api/deleted-jobs:1   Failed to load resource: the server responded with a status of 401 ()
+/api/auth/user:1   Failed to load resource: the server responded with a status of 401 ()
+/api/employees:1   Failed to load resource: the server responded with a status of 401 ()
+/api/staff-users:1   Failed to load resource: the server responded with a status of 401 ()

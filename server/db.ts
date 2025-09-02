@@ -31,22 +31,45 @@ pool.on('connect', () => {
 
 export const db = drizzle({ client: pool, schema });
 
-// Database health check function
+// Database health check function with auto-recovery
 export const checkDbHealth = async () => {
   try {
     await pool.query('SELECT 1');
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('🚨 Database health check failed:', error);
+    
+    // Handle database suspension gracefully
+    if (error.code === '57P01' || error.message?.includes('admin shutdown')) {
+      console.log('💤 Database was suspended, will auto-reconnect on next query');
+      return false;
+    }
+    
     return false;
   }
 };
 
-// Keep database connection alive
+// Robust database query wrapper that handles suspensions
+export const safeDbQuery = async (queryFn: () => Promise<any>) => {
+  try {
+    return await queryFn();
+  } catch (error: any) {
+    if (error.code === '57P01' || error.message?.includes('admin shutdown')) {
+      console.log('💤 Database suspension detected, retrying query...');
+      // Wait a moment for database to wake up, then retry
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return await queryFn();
+    }
+    throw error;
+  }
+};
+
+// More aggressive keepalive to prevent suspensions  
 setInterval(async () => {
   try {
     await checkDbHealth();
   } catch (error) {
-    console.error('🚨 Database keepalive failed:', error);
+    console.error('🚨 Database keepalive failed, but continuing...', error);
+    // Don't crash on keepalive failures
   }
-}, 240000); // Check every 4 minutes (before 5-minute idle timeout)
+}, 120000); // Check every 2 minutes instead of 4

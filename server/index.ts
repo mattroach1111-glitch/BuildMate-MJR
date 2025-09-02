@@ -3,15 +3,29 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 // Global error handlers to prevent server crashes
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason: any, promise) => {
   console.error('🚨 UNHANDLED PROMISE REJECTION:', reason);
   console.error('🚨 Promise:', promise);
+  
+  // Handle database suspension errors gracefully
+  if (reason?.code === '57P01' || reason?.message?.includes('admin shutdown')) {
+    console.log('💤 Database suspension in unhandled rejection - handled gracefully');
+    return; // Don't crash on database suspensions
+  }
+  
   // Don't exit the process, just log and continue
 });
 
 process.on('uncaughtException', (error) => {
   console.error('🚨 UNCAUGHT EXCEPTION:', error);
   console.error('🚨 Stack:', error.stack);
+  
+  // Handle database suspension errors gracefully  
+  if (error.message?.includes('admin shutdown') || (error as any).code === '57P01') {
+    console.log('💤 Database suspension in uncaught exception - handled gracefully');
+    return; // Don't crash on database suspensions
+  }
+  
   // Log but don't exit - let the app continue running
 });
 
