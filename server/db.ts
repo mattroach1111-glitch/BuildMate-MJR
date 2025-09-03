@@ -55,22 +55,8 @@ pool.on('remove', () => {
   console.log('🔌 Database connection removed from pool');
 });
 
-const rawDb = drizzle({ client: pool, schema });
-
-// Create a resilient database wrapper that automatically handles suspensions
-export const db = new Proxy(rawDb, {
-  get(target, prop) {
-    const originalMethod = target[prop as keyof typeof target];
-    
-    if (typeof originalMethod === 'function') {
-      return async (...args: any[]) => {
-        return await safeDbQuery(() => originalMethod.apply(target, args));
-      };
-    }
-    
-    return originalMethod;
-  }
-});
+// Remove problematic proxy wrapper - it's causing connection cycling
+export const db = drizzle({ client: pool, schema });
 
 // Database health check function with auto-recovery
 export const checkDbHealth = async () => {

@@ -25,17 +25,74 @@ const getOidcConfig = memoize(
 export function getSession() {
   const sessionTtl = 30 * 24 * 60 * 60 * 1000; // 30 days (1 month)
   const pgStore = connectPg(session);
+  
+  // Create resilient session store with timeout handling
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
     createTableIfMissing: false,
     ttl: sessionTtl,
     tableName: "sessions",
-    // Add timeout settings for better reliability
-    pruneSessionInterval: 60, // Clean up expired sessions every minute
-    errorLog: console.error,
-    queryTimeout: 10000, // 10 second timeout for database queries
-    pingInterval: 30000, // Keep connection alive every 30 seconds
+    errorLog: (error: any) => {
+      console.error('🔐 Session store error:', error.message);
+    }
   });
+
+  // Wrap session store methods to handle database suspensions
+  const originalGet = sessionStore.get.bind(sessionStore);
+  const originalSet = sessionStore.set.bind(sessionStore);
+  const originalDestroy = sessionStore.destroy.bind(sessionStore);
+
+  sessionStore.get = function(sid: string, callback: any) {
+    const timeout = setTimeout(() => {
+      console.log('🔐 Session get timeout, returning empty session');
+      callback(null, null);
+    }, 5000);
+
+    originalGet(sid, (err: any, session: any) => {
+      clearTimeout(timeout);
+      if (err && (err.code === '57P01' || err.message?.includes('admin shutdown'))) {
+        console.log('🔐 Session get database suspended, returning empty session');
+        callback(null, null);
+      } else {
+        callback(err, session);
+      }
+    });
+  };
+
+  sessionStore.set = function(sid: string, session: any, callback: any) {
+    const timeout = setTimeout(() => {
+      console.log('🔐 Session set timeout, continuing anyway');
+      callback && callback();
+    }, 5000);
+
+    originalSet(sid, session, (err: any) => {
+      clearTimeout(timeout);
+      if (err && (err.code === '57P01' || err.message?.includes('admin shutdown'))) {
+        console.log('🔐 Session set database suspended, continuing anyway');
+        callback && callback();
+      } else {
+        callback && callback(err);
+      }
+    });
+  };
+
+  sessionStore.destroy = function(sid: string, callback: any) {
+    const timeout = setTimeout(() => {
+      console.log('🔐 Session destroy timeout, continuing anyway');
+      callback && callback();
+    }, 5000);
+
+    originalDestroy(sid, (err: any) => {
+      clearTimeout(timeout);
+      if (err && (err.code === '57P01' || err.message?.includes('admin shutdown'))) {
+        console.log('🔐 Session destroy database suspended, continuing anyway');
+        callback && callback();
+      } else {
+        callback && callback(err);
+      }
+    });
+  };
+
   return session({
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
