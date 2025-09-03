@@ -11,22 +11,48 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Enhanced database configuration with error handling
+// Enhanced database configuration for suspension resilience
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  connectionTimeoutMillis: 10000, // 10 second timeout
-  idleTimeoutMillis: 300000, // 5 minutes idle timeout (matches Replit DB behavior)
-  max: 10, // Maximum 10 connections
-  min: 1, // Keep at least 1 connection alive
+  connectionTimeoutMillis: 15000, // Increased timeout
+  idleTimeoutMillis: 60000,       // Shorter idle timeout to prevent suspensions
+  max: 3,                         // Reduced pool size for stability
+  min: 0,                         // Allow pool to empty when inactive
+  allowExitOnIdle: true           // Clean up idle connections
 });
 
-// Database connection error handling
-pool.on('error', (err) => {
+// Enhanced database connection error handling
+pool.on('error', (err, client) => {
   console.error('🚨 Database pool error:', err);
+  
+  // Handle suspension errors gracefully without crashing
+  if ((err as any).code === '57P01' || err.message?.includes('admin shutdown')) {
+    console.log('💤 Database suspension detected - pool will auto-recover');
+    return; // Don't propagate suspension errors
+  }
+  
+  // Handle WebSocket connection errors
+  if (err.message?.includes('WebSocket') || err.message?.includes('connection')) {
+    console.log('🔌 Connection error detected - will reconnect automatically');
+    return;
+  }
 });
 
-pool.on('connect', () => {
+pool.on('connect', (client) => {
   console.log('🔗 Database pool connection established');
+  
+  // Handle client-level errors to prevent crashes
+  client.on('error', (err) => {
+    if ((err as any).code === '57P01' || err.message?.includes('admin shutdown')) {
+      console.log('💤 Client suspension detected - handled gracefully');
+      return;
+    }
+    console.error('🚨 Client error:', err);
+  });
+});
+
+pool.on('remove', () => {
+  console.log('🔌 Database connection removed from pool');
 });
 
 export const db = drizzle({ client: pool, schema });
@@ -64,12 +90,16 @@ export const safeDbQuery = async (queryFn: () => Promise<any>) => {
   }
 };
 
-// More aggressive keepalive to prevent suspensions  
+// Aggressive keepalive to prevent suspensions
 setInterval(async () => {
   try {
     await checkDbHealth();
-  } catch (error) {
-    console.error('🚨 Database keepalive failed, but continuing...', error);
-    // Don't crash on keepalive failures
+  } catch (error: any) {
+    if (error?.code === '57P01' || error?.message?.includes('admin shutdown')) {
+      console.log('💤 Keepalive detected suspension - normal behavior');
+    } else {
+      console.error('🚨 Database keepalive failed, but continuing...', error);
+    }
+    // Never crash on keepalive failures
   }
-}, 120000); // Check every 2 minutes instead of 4
+}, 90000); // Check every 1.5 minutes for more aggressive prevention
