@@ -55,7 +55,22 @@ pool.on('remove', () => {
   console.log('🔌 Database connection removed from pool');
 });
 
-export const db = drizzle({ client: pool, schema });
+const rawDb = drizzle({ client: pool, schema });
+
+// Create a resilient database wrapper that automatically handles suspensions
+export const db = new Proxy(rawDb, {
+  get(target, prop) {
+    const originalMethod = target[prop as keyof typeof target];
+    
+    if (typeof originalMethod === 'function') {
+      return async (...args: any[]) => {
+        return await safeDbQuery(() => originalMethod.apply(target, args));
+      };
+    }
+    
+    return originalMethod;
+  }
+});
 
 // Database health check function with auto-recovery
 export const checkDbHealth = async () => {
@@ -75,18 +90,33 @@ export const checkDbHealth = async () => {
   }
 };
 
-// Robust database query wrapper that handles suspensions
-export const safeDbQuery = async (queryFn: () => Promise<any>) => {
-  try {
-    return await queryFn();
-  } catch (error: any) {
-    if (error.code === '57P01' || error.message?.includes('admin shutdown')) {
-      console.log('💤 Database suspension detected, retrying query...');
-      // Wait a moment for database to wake up, then retry
-      await new Promise(resolve => setTimeout(resolve, 1000));
+// Robust database query wrapper that handles suspensions with multiple retries
+export const safeDbQuery = async (queryFn: () => Promise<any>, maxRetries = 3) => {
+  let attempts = 0;
+  
+  while (attempts < maxRetries) {
+    try {
       return await queryFn();
+    } catch (error: any) {
+      attempts++;
+      
+      if (error.code === '57P01' || error.message?.includes('admin shutdown')) {
+        console.log(`💤 Database suspension detected (attempt ${attempts}/${maxRetries}), retrying...`);
+        
+        if (attempts >= maxRetries) {
+          console.error('🚨 Max retries exceeded for database suspension');
+          throw new Error('Database temporarily unavailable - please try again in a moment');
+        }
+        
+        // Exponential backoff: wait longer each retry
+        const delay = Math.min(1000 * Math.pow(2, attempts - 1), 5000);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      // Non-suspension errors should be thrown immediately
+      throw error;
     }
-    throw error;
   }
 };
 

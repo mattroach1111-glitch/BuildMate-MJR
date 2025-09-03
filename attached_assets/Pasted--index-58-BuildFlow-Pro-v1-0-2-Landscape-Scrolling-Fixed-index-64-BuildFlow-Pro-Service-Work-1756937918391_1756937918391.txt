@@ -1,0 +1,178 @@
+(index):58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+(index):64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully
+index-1Opqv4_8.js:92  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-1Opqv4_8.js:92
+fb @ index-1Opqv4_8.js:40
+Qp @ index-1Opqv4_8.js:40
+sJ @ index-1Opqv4_8.js:40
+Ih @ index-1Opqv4_8.js:40
+dk @ index-1Opqv4_8.js:40
+dh @ index-1Opqv4_8.js:38
+(anonymous) @ index-1Opqv4_8.js:40
+index-1Opqv4_8.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/11fcbf3e-80a2-4101-bf21-a9b9b8d711bf/files 401 (Unauthorized)
+(anonymous) @ index-1Opqv4_8.js:48
+a @ index-1Opqv4_8.js:48
+N @ index-1Opqv4_8.js:48
+start @ index-1Opqv4_8.js:48
+fetch @ index-1Opqv4_8.js:48
+H0 @ index-1Opqv4_8.js:48
+onSubscribe @ index-1Opqv4_8.js:48
+subscribe @ index-1Opqv4_8.js:48
+(anonymous) @ index-1Opqv4_8.js:48
+k8 @ index-1Opqv4_8.js:38
+fb @ index-1Opqv4_8.js:40
+Qp @ index-1Opqv4_8.js:40
+sJ @ index-1Opqv4_8.js:40
+Ih @ index-1Opqv4_8.js:40
+dk @ index-1Opqv4_8.js:40
+dh @ index-1Opqv4_8.js:38
+(anonymous) @ index-1Opqv4_8.js:40
+employees:1   Failed to load resource: the server responded with a status of 401 ()
+index-1Opqv4_8.js:40  TypeError: Cannot read properties of null (reading 'map')
+    at Soe (index-1Opqv4_8.js:749:39645)
+    at F4 (index-1Opqv4_8.js:38:17018)
+    at vN (index-1Opqv4_8.js:40:3139)
+    at fI (index-1Opqv4_8.js:40:44833)
+    at cI (index-1Opqv4_8.js:40:39790)
+    at nJ (index-1Opqv4_8.js:40:39718)
+    at h2 (index-1Opqv4_8.js:40:39570)
+    at PN (index-1Opqv4_8.js:40:35934)
+    at dk (index-1Opqv4_8.js:40:36738)
+    at dh (index-1Opqv4_8.js:38:3279)
+xN @ index-1Opqv4_8.js:40
+n.callback @ index-1Opqv4_8.js:40
+HC @ index-1Opqv4_8.js:38
+lk @ index-1Opqv4_8.js:40
+iI @ index-1Opqv4_8.js:40
+XQ @ index-1Opqv4_8.js:40
+sJ @ index-1Opqv4_8.js:40
+Ih @ index-1Opqv4_8.js:40
+dk @ index-1Opqv4_8.js:40
+dh @ index-1Opqv4_8.js:38
+(anonymous) @ index-1Opqv4_8.js:40
+setTimeout
+s @ index-1Opqv4_8.js:48
+o @ index-1Opqv4_8.js:48
+batch @ index-1Opqv4_8.js:48
+sd @ index-1Opqv4_8.js:48
+setData @ index-1Opqv4_8.js:48
+onSuccess @ index-1Opqv4_8.js:48
+m @ index-1Opqv4_8.js:48
+Promise.then
+N @ index-1Opqv4_8.js:48
+start @ index-1Opqv4_8.js:48
+fetch @ index-1Opqv4_8.js:48
+H0 @ index-1Opqv4_8.js:48
+onSubscribe @ index-1Opqv4_8.js:48
+subscribe @ index-1Opqv4_8.js:48
+(anonymous) @ index-1Opqv4_8.js:48
+k8 @ index-1Opqv4_8.js:38
+fb @ index-1Opqv4_8.js:40
+Qp @ index-1Opqv4_8.js:40
+sJ @ index-1Opqv4_8.js:40
+Ih @ index-1Opqv4_8.js:40
+dk @ index-1Opqv4_8.js:40
+dh @ index-1Opqv4_8.js:38
+(anonymous) @ index-1Opqv4_8.js:40
+index-1Opqv4_8.js:749  Uncaught TypeError: Cannot read properties of null (reading 'map')
+    at Soe (index-1Opqv4_8.js:749:39645)
+    at F4 (index-1Opqv4_8.js:38:17018)
+    at vN (index-1Opqv4_8.js:40:3139)
+    at fI (index-1Opqv4_8.js:40:44833)
+    at cI (index-1Opqv4_8.js:40:39790)
+    at nJ (index-1Opqv4_8.js:40:39718)
+    at h2 (index-1Opqv4_8.js:40:39570)
+    at PN (index-1Opqv4_8.js:40:35934)
+    at dk (index-1Opqv4_8.js:40:36738)
+    at dh (index-1Opqv4_8.js:38:3279)
+Soe @ index-1Opqv4_8.js:749
+F4 @ index-1Opqv4_8.js:38
+vN @ index-1Opqv4_8.js:40
+fI @ index-1Opqv4_8.js:40
+cI @ index-1Opqv4_8.js:40
+nJ @ index-1Opqv4_8.js:40
+h2 @ index-1Opqv4_8.js:40
+PN @ index-1Opqv4_8.js:40
+dk @ index-1Opqv4_8.js:40
+dh @ index-1Opqv4_8.js:38
+(anonymous) @ index-1Opqv4_8.js:40
+setTimeout
+s @ index-1Opqv4_8.js:48
+o @ index-1Opqv4_8.js:48
+batch @ index-1Opqv4_8.js:48
+sd @ index-1Opqv4_8.js:48
+setData @ index-1Opqv4_8.js:48
+onSuccess @ index-1Opqv4_8.js:48
+m @ index-1Opqv4_8.js:48
+Promise.then
+N @ index-1Opqv4_8.js:48
+start @ index-1Opqv4_8.js:48
+fetch @ index-1Opqv4_8.js:48
+H0 @ index-1Opqv4_8.js:48
+onSubscribe @ index-1Opqv4_8.js:48
+subscribe @ index-1Opqv4_8.js:48
+(anonymous) @ index-1Opqv4_8.js:48
+k8 @ index-1Opqv4_8.js:38
+fb @ index-1Opqv4_8.js:40
+Qp @ index-1Opqv4_8.js:40
+sJ @ index-1Opqv4_8.js:40
+Ih @ index-1Opqv4_8.js:40
+dk @ index-1Opqv4_8.js:40
+dh @ index-1Opqv4_8.js:38
+(anonymous) @ index-1Opqv4_8.js:40
+jobs:1   Failed to load resource: the server responded with a status of 401 ()
+index-1Opqv4_8.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/11fcbf3e-80a2-4101-bf21-a9b9b8d711bf/notes 401 (Unauthorized)
+(anonymous) @ index-1Opqv4_8.js:48
+a @ index-1Opqv4_8.js:48
+N @ index-1Opqv4_8.js:48
+start @ index-1Opqv4_8.js:48
+fetch @ index-1Opqv4_8.js:48
+H0 @ index-1Opqv4_8.js:48
+onSubscribe @ index-1Opqv4_8.js:48
+subscribe @ index-1Opqv4_8.js:48
+(anonymous) @ index-1Opqv4_8.js:48
+k8 @ index-1Opqv4_8.js:38
+fb @ index-1Opqv4_8.js:40
+Qp @ index-1Opqv4_8.js:40
+sJ @ index-1Opqv4_8.js:40
+Ih @ index-1Opqv4_8.js:40
+dk @ index-1Opqv4_8.js:40
+dh @ index-1Opqv4_8.js:38
+(anonymous) @ index-1Opqv4_8.js:40
+index-1Opqv4_8.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/11fcbf3e-80a2-4101-bf21-a9b9b8d711bf/timesheets 401 (Unauthorized)
+(anonymous) @ index-1Opqv4_8.js:48
+a @ index-1Opqv4_8.js:48
+N @ index-1Opqv4_8.js:48
+start @ index-1Opqv4_8.js:48
+fetch @ index-1Opqv4_8.js:48
+H0 @ index-1Opqv4_8.js:48
+onSubscribe @ index-1Opqv4_8.js:48
+subscribe @ index-1Opqv4_8.js:48
+(anonymous) @ index-1Opqv4_8.js:48
+k8 @ index-1Opqv4_8.js:38
+fb @ index-1Opqv4_8.js:40
+Qp @ index-1Opqv4_8.js:40
+sJ @ index-1Opqv4_8.js:40
+Ih @ index-1Opqv4_8.js:40
+dk @ index-1Opqv4_8.js:40
+dh @ index-1Opqv4_8.js:38
+(anonymous) @ index-1Opqv4_8.js:40
+index-1Opqv4_8.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/11fcbf3e-80a2-4101-bf21-a9b9b8d711bf 401 (Unauthorized)
+(anonymous) @ index-1Opqv4_8.js:48
+a @ index-1Opqv4_8.js:48
+N @ index-1Opqv4_8.js:48
+start @ index-1Opqv4_8.js:48
+fetch @ index-1Opqv4_8.js:48
+H0 @ index-1Opqv4_8.js:48
+onSubscribe @ index-1Opqv4_8.js:48
+subscribe @ index-1Opqv4_8.js:48
+(anonymous) @ index-1Opqv4_8.js:48
+k8 @ index-1Opqv4_8.js:38
+fb @ index-1Opqv4_8.js:40
+Qp @ index-1Opqv4_8.js:40
+sJ @ index-1Opqv4_8.js:40
+Ih @ index-1Opqv4_8.js:40
+dk @ index-1Opqv4_8.js:40
+dh @ index-1Opqv4_8.js:38
+(anonymous) @ index-1Opqv4_8.js:40
