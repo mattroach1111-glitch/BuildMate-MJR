@@ -113,6 +113,10 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
+    console.log("🔑 Auth callback received for domain:", req.hostname);
+    console.log("🔑 Session ID:", req.sessionID?.substring(0, 8) + "...");
+    console.log("🔑 Query params:", Object.keys(req.query).join(", "));
+    
     passport.authenticate(`replitauth:${req.hostname}`, {
       successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
