@@ -30,6 +30,11 @@ export function getSession() {
     createTableIfMissing: false,
     ttl: sessionTtl,
     tableName: "sessions",
+    // Add timeout settings for better reliability
+    pruneSessionInterval: 60, // Clean up expired sessions every minute
+    errorLog: console.error,
+    queryTimeout: 10000, // 10 second timeout for database queries
+    pingInterval: 30000, // Keep connection alive every 30 seconds
   });
   return session({
     secret: process.env.SESSION_SECRET!,

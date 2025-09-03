@@ -96,20 +96,26 @@ export const safeDbQuery = async (queryFn: () => Promise<any>, maxRetries = 3) =
   
   while (attempts < maxRetries) {
     try {
-      return await queryFn();
+      // Add timeout to prevent hanging indefinitely
+      return await Promise.race([
+        queryFn(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Database query timeout')), 8000)
+        )
+      ]);
     } catch (error: any) {
       attempts++;
       
-      if (error.code === '57P01' || error.message?.includes('admin shutdown')) {
-        console.log(`💤 Database suspension detected (attempt ${attempts}/${maxRetries}), retrying...`);
+      if (error.code === '57P01' || error.message?.includes('admin shutdown') || error.message?.includes('timeout')) {
+        console.log(`💤 Database issue detected (attempt ${attempts}/${maxRetries}):`, error.message);
         
         if (attempts >= maxRetries) {
-          console.error('🚨 Max retries exceeded for database suspension');
+          console.error('🚨 Max retries exceeded for database issue');
           throw new Error('Database temporarily unavailable - please try again in a moment');
         }
         
-        // Exponential backoff: wait longer each retry
-        const delay = Math.min(1000 * Math.pow(2, attempts - 1), 5000);
+        // Shorter delays for auth flows to prevent request timeouts
+        const delay = Math.min(500 * attempts, 2000);
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
