@@ -44,14 +44,15 @@ export function getSession() {
 
   sessionStore.get = function(sid: string, callback: any) {
     const timeout = setTimeout(() => {
-      console.log('🔐 Session get timeout, returning empty session');
+      console.log('🔐 Session get timeout, continuing with no session');
       callback(null, null);
     }, 5000);
 
     originalGet(sid, (err: any, session: any) => {
       clearTimeout(timeout);
       if (err && (err.code === '57P01' || err.message?.includes('admin shutdown'))) {
-        console.log('🔐 Session get database suspended, returning empty session');
+        console.log('🔐 Session get database suspended, trying to continue gracefully');
+        // Instead of returning null, let's try to continue without session store
         callback(null, null);
       } else {
         callback(err, session);
@@ -176,13 +177,21 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/callback", (req, res, next) => {
     console.log("🔑 Auth callback received for domain:", req.hostname);
-    console.log("🔑 Session ID:", req.sessionID?.substring(0, 8) + "...");
+    console.log("🔑 Session ID before auth:", req.sessionID?.substring(0, 8) + "...");
     console.log("🔑 Query params:", Object.keys(req.query).join(", "));
     
     passport.authenticate(`replitauth:${req.hostname}`, {
       successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
-    })(req, res, next);
+    })(req, res, (err) => {
+      if (err) {
+        console.error("🔑 Auth callback error:", err);
+        return next(err);
+      }
+      console.log("🔑 Auth callback success - session ID after:", req.sessionID?.substring(0, 8) + "...");
+      console.log("🔑 Auth callback success - user exists:", !!req.user);
+      console.log("🔑 Auth callback success - isAuthenticated:", req.isAuthenticated ? req.isAuthenticated() : "method missing");
+    });
   });
 
   app.get("/api/logout", (req, res) => {
@@ -199,10 +208,13 @@ export async function setupAuth(app: Express) {
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   try {
-    console.log("🔐 Auth check - isAuthenticated():", req.isAuthenticated ? req.isAuthenticated() : "method missing");
-    console.log("🔐 Auth check - req.user exists:", !!req.user);
-    console.log("🔐 Auth check - session ID:", req.sessionID ? req.sessionID.substring(0, 8) + "..." : "no session");
-    console.log("🔐 Auth check - cookies:", Object.keys(req.cookies || {}).length > 0 ? "present" : "missing");
+    console.log("🔐 Auth check for:", req.method, req.path);
+    console.log("🔐 isAuthenticated():", req.isAuthenticated ? req.isAuthenticated() : "method missing");
+    console.log("🔐 req.user exists:", !!req.user);
+    console.log("🔐 session ID:", req.sessionID ? req.sessionID.substring(0, 8) + "..." : "no session");
+    console.log("🔐 session data keys:", req.session ? Object.keys(req.session).join(", ") : "no session");
+    console.log("🔐 passport in session:", !!(req.session as any)?.passport);
+    console.log("🔐 cookies count:", Object.keys(req.cookies || {}).length);
     
     const user = req.user as any;
 
