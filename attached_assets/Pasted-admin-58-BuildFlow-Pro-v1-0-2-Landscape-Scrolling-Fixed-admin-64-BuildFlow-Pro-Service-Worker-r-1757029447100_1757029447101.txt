@@ -1,0 +1,39 @@
+admin:58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+admin:64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-1Opqv4_8.js:759 🔵 Job selection changed: 
+index-1Opqv4_8.js:759 🔵 Job address changed: 
+index-1Opqv4_8.js:759 🔵 Client name changed: 
+index-1Opqv4_8.js:759 🔵 Project manager changed: 
+index-1Opqv4_8.js:759 🔵 Job selection changed: 
+index-1Opqv4_8.js:759 🔵 Job address changed: 
+index-1Opqv4_8.js:759 🔵 Client name changed: 
+index-1Opqv4_8.js:759 🔵 Project manager changed: 
+index-1Opqv4_8.js:759 🔵 Frontend: Check for new emails button clicked
+index-1Opqv4_8.js:759 🔵 Frontend: Starting email processing request...
+index-1Opqv4_8.js:759 🔍 Frontend matching email subject: botanica
+index-1Opqv4_8.js:759 🔍 Available jobs for matching: Array(46)
+index-1Opqv4_8.js:759 ✅ Frontend exact substring match by address: Botanica
+index-1Opqv4_8.js:759 🔵 Frontend: API response received: 200
+index-1Opqv4_8.js:759 🔵 Frontend: Response data: Object
+index-1Opqv4_8.js:759 🟢 Frontend: Email processing succeeded: Object
+index-1Opqv4_8.js:759 🔍 Frontend matching email subject: botanica
+index-1Opqv4_8.js:759 🔍 Available jobs for matching: Array(46)
+index-1Opqv4_8.js:759 ✅ Frontend exact substring match by address: Botanica
+index-1Opqv4_8.js:759 🔍 Frontend matching email subject: botanica
+index-1Opqv4_8.js:759 🔍 Available jobs for matching: Array(46)
+index-1Opqv4_8.js:759 ✅ Frontend exact substring match by address: Botanica
+index-1Opqv4_8.js:759 🔍 Frontend matching email subject: botanica
+index-1Opqv4_8.js:759 🔍 Available jobs for matching: Array(46)
+index-1Opqv4_8.js:759 ✅ Frontend exact substring match by address: Botanica
+index-1Opqv4_8.js:759 🔍 Frontend matching email subject: botanica
+index-1Opqv4_8.js:759 🔍 Available jobs for matching: Array(46)
+index-1Opqv4_8.js:759 ✅ Frontend exact substring match by address: Botanica
+index-1Opqv4_8.js:759 🟢 Document approved successfully, refreshing pending list... Object
+index-1Opqv4_8.js:759 🔍 Frontend matching email subject: botanica
+index-1Opqv4_8.js:759 🔍 Available jobs for matching: Array(46)
+index-1Opqv4_8.js:759 ✅ Frontend exact substring match by address: Botanica
+index-1Opqv4_8.js:92  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-1Opqv4_8.js:92
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully
+jobs:1   Failed to load resource: the server responded with a status of 401 ()
+timesheets:1   Failed to load resource: the server responded with a status of 401 ()
