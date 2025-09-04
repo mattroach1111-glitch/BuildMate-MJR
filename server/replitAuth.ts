@@ -43,17 +43,47 @@ export function getSession() {
   const originalDestroy = sessionStore.destroy.bind(sessionStore);
 
   sessionStore.get = function(sid: string, callback: any) {
+    let timeoutHit = false;
     const timeout = setTimeout(() => {
-      console.log('🔐 Session get timeout, continuing with no session');
-      callback(null, null);
-    }, 5000);
+      timeoutHit = true;
+      console.log('🔐 Session get timeout - database may be suspended, retrying once...');
+      
+      // Retry once with shorter timeout
+      const retryTimeout = setTimeout(() => {
+        console.log('🔐 Session get retry timeout, continuing with empty session');
+        callback(null, null);
+      }, 2000);
+      
+      originalGet(sid, (retryErr: any, retrySession: any) => {
+        clearTimeout(retryTimeout);
+        if (retryErr && (retryErr.code === '57P01' || retryErr.message?.includes('admin shutdown'))) {
+          console.log('🔐 Session get retry failed - database suspended, using empty session');
+          callback(null, null);
+        } else {
+          console.log('🔐 Session get retry succeeded');
+          callback(retryErr, retrySession);
+        }
+      });
+    }, 3000); // Reduced from 5000 to 3000
 
     originalGet(sid, (err: any, session: any) => {
+      if (timeoutHit) return; // Don't process if timeout already handled it
       clearTimeout(timeout);
+      
       if (err && (err.code === '57P01' || err.message?.includes('admin shutdown'))) {
-        console.log('🔐 Session get database suspended, trying to continue gracefully');
-        // Instead of returning null, let's try to continue without session store
-        callback(null, null);
+        console.log('🔐 Session get database suspended, retrying...');
+        // Retry once immediately
+        setTimeout(() => {
+          originalGet(sid, (retryErr: any, retrySession: any) => {
+            if (retryErr && (retryErr.code === '57P01' || retryErr.message?.includes('admin shutdown'))) {
+              console.log('🔐 Session get retry failed, using empty session');
+              callback(null, null);
+            } else {
+              console.log('🔐 Session get retry succeeded after suspension');
+              callback(retryErr, retrySession);
+            }
+          });
+        }, 1000);
       } else {
         callback(err, session);
       }
