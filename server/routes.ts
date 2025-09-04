@@ -2950,13 +2950,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/documents/upload-to-drive", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      let user;
+      
+      // Retry user lookup in case of database suspension
+      try {
+        user = await storage.getUser(userId);
+      } catch (dbError: any) {
+        if (dbError.code === '57P01' || dbError.message?.includes('admin shutdown')) {
+          console.log('💤 Database suspended during user lookup for Google Drive, retrying...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          user = await storage.getUser(userId);
+        } else {
+          throw dbError;
+        }
+      }
       
       if (!user || !user.googleDriveTokens) {
+        console.log(`❌ Google Drive tokens missing for user ${userId}`);
         return res.status(400).json({ 
           error: "Google Drive not connected. Please connect your Google Drive account first." 
         });
       }
+      
+      console.log(`🔵 Google Drive tokens found for user ${userId}, attempting upload...`);
 
       const { documentURL, fileName, mimeType, fileSize, jobId } = req.body;
       
@@ -2985,8 +3001,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Upload to Google Drive
       const googleDriveService = new GoogleDriveService();
-      const tokens = JSON.parse(user.googleDriveTokens);
-      googleDriveService.setUserTokens(tokens);
+      let tokens;
+      try {
+        tokens = JSON.parse(user.googleDriveTokens);
+        console.log('🔵 Google Drive tokens parsed successfully');
+      } catch (parseError) {
+        console.error('❌ Failed to parse Google Drive tokens:', parseError);
+        return res.status(400).json({ error: "Invalid Google Drive tokens. Please reconnect your Google Drive account." });
+      }
+      
+      googleDriveService.setUserTokens(tokens, userId);
 
       // Create main BuildFlow Pro folder first
       const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
