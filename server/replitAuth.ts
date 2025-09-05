@@ -64,7 +64,7 @@ export function getSession() {
           callback(retryErr, retrySession);
         }
       });
-    }, 3000); // Reduced from 5000 to 3000
+    }, 5000); // Allow more time for database wake-up
 
     originalGet(sid, (err: any, session: any) => {
       if (timeoutHit) return; // Don't process if timeout already handled it
@@ -154,13 +154,37 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
-  await storage.upsertUser({
-    id: claims["sub"],
-    email: claims["email"],
-    firstName: claims["first_name"],
-    lastName: claims["last_name"],
-    profileImageUrl: claims["profile_image_url"],
-  });
+  try {
+    await storage.upsertUser({
+      id: claims["sub"],
+      email: claims["email"],
+      firstName: claims["first_name"],
+      lastName: claims["last_name"],
+      profileImageUrl: claims["profile_image_url"],
+    });
+    console.log('🔐 User upserted successfully during auth');
+  } catch (error: any) {
+    if (error.code === '57P01' || error.message?.includes('admin shutdown')) {
+      console.log('💤 Database suspended during user upsert, retrying...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      try {
+        await storage.upsertUser({
+          id: claims["sub"],
+          email: claims["email"],
+          firstName: claims["first_name"],
+          lastName: claims["last_name"],
+          profileImageUrl: claims["profile_image_url"],
+        });
+        console.log('🔐 User upsert retry succeeded');
+      } catch (retryError: any) {
+        console.log('🔐 User upsert retry failed, continuing auth anyway:', retryError.message);
+        // Continue authentication even if user upsert fails - session will still work
+      }
+    } else {
+      console.error('🔐 User upsert error:', error.message);
+      // Continue authentication even if user upsert fails - session will still work
+    }
+  }
 }
 
 export async function setupAuth(app: Express) {
