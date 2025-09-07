@@ -744,6 +744,39 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     },
   });
 
+  // Admin approval mutation (different from staff confirmation)
+  const approveFortnightMutation = useMutation({
+    mutationFn: async ({ approved }: { approved: boolean }) => {
+      if (!selectedEmployeeId) {
+        throw new Error("No employee selected");
+      }
+      
+      return await apiRequest("PATCH", "/api/admin/timesheet/approve-fortnight", {
+        staffId: selectedEmployeeId,
+        fortnightStart: format(currentFortnight.start, 'yyyy-MM-dd'),
+        fortnightEnd: format(currentFortnight.end, 'yyyy-MM-dd'),
+        approved
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Timesheet Approved",
+        description: "The timesheet has been successfully approved.",
+        variant: "default",
+      });
+      // Refetch the timesheet data to show updated approval status
+      refetch();
+    },
+    onError: (error: any) => {
+      console.error('Admin approval error:', error);
+      toast({
+        title: "Approval Failed", 
+        description: error.message || "Failed to approve timesheet",
+        variant: "destructive",
+      });
+    }
+  });
+
   const confirmTimesheetMutation = useMutation({
     mutationFn: async () => {
 
@@ -2739,6 +2772,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           e.preventDefault();
                           e.stopPropagation();
                           
+                          // For admin view, use admin approval endpoint
+                          if (isAdminView) {
+                            console.log('🚨 ADMIN APPROVAL - Approving timesheet for employee:', selectedEmployeeId);
+                            approveFortnightMutation.mutate({ approved: true });
+                            return;
+                          }
+                          
+                          // Staff flow continues below
                           // Validate all weekdays are completed before confirming
                           const completionErrors = validateFortnightCompletion();
                           if (completionErrors.length > 0) {
@@ -2752,21 +2793,21 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           
                           // Check for low hours warning
                           const totalHours = getTotalHours();
-                          console.log('🚨 ADMIN SUBMIT - totalHours:', totalHours, 'will show dialog:', totalHours < 76);
+                          console.log('🚨 STAFF SUBMIT - totalHours:', totalHours, 'will show dialog:', totalHours < 76);
                           
                           if (totalHours < 76) {
-                            console.log('🚨 SHOWING LOW HOURS DIALOG (admin)');
+                            console.log('🚨 SHOWING LOW HOURS DIALOG (staff)');
                             setLowHoursTotal(totalHours);
                             setPendingSubmission(() => () => {
-                              console.log('🚨 EXECUTING PENDING SUBMISSION (admin)');
+                              console.log('🚨 EXECUTING PENDING SUBMISSION (staff)');
                               confirmTimesheetMutation.mutate();
                             });
                             setShowLowHoursDialog(true);
-                            console.log('🚨 DIALOG STATE SET TO TRUE (admin)');
+                            console.log('🚨 DIALOG STATE SET TO TRUE (staff)');
                             return;
                           }
 
-                          console.log('🚨 SUBMITTING DIRECTLY - NO DIALOG (admin)');
+                          console.log('🚨 SUBMITTING DIRECTLY - NO DIALOG (staff)');
                           confirmTimesheetMutation.mutate();
                         }}
                         disabled={confirmTimesheetMutation.isPending || getTotalHours() === 0}
