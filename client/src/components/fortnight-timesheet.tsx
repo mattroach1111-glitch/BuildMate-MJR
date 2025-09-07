@@ -2768,18 +2768,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     ) : (
                       <Button
                         onClick={(e) => {
-                          console.log('🔥 BUTTON CLICKED - ADMIN SUBMIT');
+                          console.log('🔥 BUTTON CLICKED - SUBMIT TIMESHEET');
                           e.preventDefault();
                           e.stopPropagation();
                           
-                          // For admin view, use admin approval endpoint
-                          if (isAdminView) {
-                            console.log('🚨 ADMIN APPROVAL - Approving timesheet for employee:', selectedEmployeeId);
-                            approveFortnightMutation.mutate({ approved: true });
-                            return;
-                          }
-                          
-                          // Staff flow continues below
                           // Validate all weekdays are completed before confirming
                           const completionErrors = validateFortnightCompletion();
                           if (completionErrors.length > 0) {
@@ -2793,21 +2785,21 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           
                           // Check for low hours warning
                           const totalHours = getTotalHours();
-                          console.log('🚨 STAFF SUBMIT - totalHours:', totalHours, 'will show dialog:', totalHours < 76);
+                          console.log('🚨 SUBMIT - totalHours:', totalHours, 'will show dialog:', totalHours < 76);
                           
                           if (totalHours < 76) {
-                            console.log('🚨 SHOWING LOW HOURS DIALOG (staff)');
+                            console.log('🚨 SHOWING LOW HOURS DIALOG');
                             setLowHoursTotal(totalHours);
                             setPendingSubmission(() => () => {
-                              console.log('🚨 EXECUTING PENDING SUBMISSION (staff)');
+                              console.log('🚨 EXECUTING PENDING SUBMISSION');
                               confirmTimesheetMutation.mutate();
                             });
                             setShowLowHoursDialog(true);
-                            console.log('🚨 DIALOG STATE SET TO TRUE (staff)');
+                            console.log('🚨 DIALOG STATE SET TO TRUE');
                             return;
                           }
 
-                          console.log('🚨 SUBMITTING DIRECTLY - NO DIALOG (staff)');
+                          console.log('🚨 SUBMITTING DIRECTLY - NO DIALOG');
                           confirmTimesheetMutation.mutate();
                         }}
                         disabled={confirmTimesheetMutation.isPending || getTotalHours() === 0}
