@@ -765,7 +765,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         variant: "default",
       });
       // Refetch the timesheet data to show updated approval status
-      refetch();
+      refetchTimesheetEntries();
     },
     onError: (error: any) => {
       console.error('Admin approval error:', error);
