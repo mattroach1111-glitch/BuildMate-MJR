@@ -2776,7 +2776,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           
                           // Validate all weekdays are completed before confirming
                           const completionErrors = validateFortnightCompletion();
+                          console.log('🔍 VALIDATION RESULT:', completionErrors.length > 0 ? completionErrors : 'No errors');
                           if (completionErrors.length > 0) {
+                            console.log('❌ VALIDATION FAILED - Showing toast:', completionErrors[0]);
                             toast({
                               title: "Incomplete Timesheet",
                               description: completionErrors[0],
@@ -2802,6 +2804,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           }
 
                           console.log('🚨 SUBMITTING DIRECTLY - NO DIALOG');
+                          console.log('🔍 MUTATION CALL - About to call confirmTimesheetMutation.mutate()');
                           confirmTimesheetMutation.mutate();
                         }}
                         disabled={confirmTimesheetMutation.isPending || getTotalHours() === 0}
