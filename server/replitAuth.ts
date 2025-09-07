@@ -94,13 +94,23 @@ export function getSession() {
     const timeout = setTimeout(() => {
       console.log('🔐 Session set timeout, continuing anyway');
       callback && callback();
-    }, 5000);
+    }, 8000); // Increased timeout
 
     originalSet(sid, session, (err: any) => {
       clearTimeout(timeout);
       if (err && (err.code === '57P01' || err.message?.includes('admin shutdown'))) {
-        console.log('🔐 Session set database suspended, continuing anyway');
-        callback && callback();
+        console.log('🔐 Session set database suspended, retrying once...');
+        // Retry set operation
+        setTimeout(() => {
+          originalSet(sid, session, (retryErr: any) => {
+            if (retryErr && (retryErr.code === '57P01' || retryErr.message?.includes('admin shutdown'))) {
+              console.log('🔐 Session set retry failed, continuing anyway');
+            } else {
+              console.log('🔐 Session set retry succeeded');
+            }
+            callback && callback(); // Always succeed to prevent auth failure
+          });
+        }, 1500);
       } else {
         callback && callback(err);
       }
