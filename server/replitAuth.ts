@@ -137,7 +137,7 @@ export function getSession() {
   return session({
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
-    resave: false,
+    resave: true, // Changed to true to force session saves during auth
     saveUninitialized: false,
     rolling: true, // Extend session on each request
     cookie: {
