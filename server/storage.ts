@@ -212,26 +212,70 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   // User operations
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, id));
+      return user;
+    } catch (error: any) {
+      if (error.code === '57P01' || error.message?.includes('admin shutdown')) {
+        console.log('💤 Database suspended during getUser, retrying...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        try {
+          const [user] = await db.select().from(users).where(eq(users.id, id));
+          console.log('🔐 getUser retry succeeded');
+          return user;
+        } catch (retryError: any) {
+          console.log('🔐 getUser retry failed:', retryError.message);
+          return undefined;
+        }
+      } else {
+        console.error('🔐 getUser error:', error.message);
+        throw error;
+      }
+    }
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values({
-        ...userData,
-        isAssigned: false, // New users start unassigned
-      })
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
+    try {
+      const [user] = await db
+        .insert(users)
+        .values({
           ...userData,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return user;
+          isAssigned: false, // New users start unassigned
+        })
+        .onConflictDoUpdate({
+          target: users.id,
+          set: {
+            ...userData,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
+      return user;
+    } catch (error: any) {
+      if (error.code === '57P01' || error.message?.includes('admin shutdown')) {
+        console.log('💤 Database suspended during upsertUser, retrying...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const [user] = await db
+          .insert(users)
+          .values({
+            ...userData,
+            isAssigned: false,
+          })
+          .onConflictDoUpdate({
+            target: users.id,
+            set: {
+              ...userData,
+              updatedAt: new Date(),
+            },
+          })
+          .returning();
+        console.log('🔐 upsertUser retry succeeded');
+        return user;
+      } else {
+        console.error('🔐 upsertUser error:', error.message);
+        throw error;
+      }
+    }
   }
 
   async updateUserGoogleDriveTokens(id: string, tokens: string | null): Promise<void> {
