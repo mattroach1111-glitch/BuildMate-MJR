@@ -790,7 +790,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       try {
         const response = await apiRequest("POST", "/api/timesheet/confirm", {
           fortnightStart: format(currentFortnight.start, 'yyyy-MM-dd'),
-          fortnightEnd: format(currentFortnight.end, 'yyyy-MM-dd')
+          fortnightEnd: format(currentFortnight.end, 'yyyy-MM-dd'),
+          // For admin view, specify which employee's timesheet to submit
+          ...(isAdminView && selectedEmployeeId && { staffId: selectedEmployeeId })
         }, {
           signal: controller.signal
         });

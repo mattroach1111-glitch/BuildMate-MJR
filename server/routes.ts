@@ -1941,7 +1941,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/timesheet/confirm", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { fortnightStart, fortnightEnd } = req.body;
+      const { fortnightStart, fortnightEnd, staffId: requestedStaffId } = req.body;
       
       // Get the authenticated user to find corresponding employee
       const user = await storage.getUser(userId);
@@ -1982,14 +1982,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Get timesheet entries for the fortnight using the correct user ID (not employee ID)
-      const entries = await storage.getTimesheetEntriesByPeriod(userId, fortnightStart, fortnightEnd);
+      // For admin view submitting staff timesheet, use the requested staff ID
+      // For staff submitting their own timesheet, use their user ID
+      const targetStaffId = requestedStaffId || userId;
       
-      console.log(`PDF Generation - Fetching entries for userId: ${userId}, period: ${fortnightStart} to ${fortnightEnd}`);
+      // Get timesheet entries for the fortnight using the correct staff ID
+      const entries = await storage.getTimesheetEntriesByPeriod(targetStaffId, fortnightStart, fortnightEnd);
+      
+      console.log(`PDF Generation - Fetching entries for staffId: ${targetStaffId}, period: ${fortnightStart} to ${fortnightEnd}`);
       console.log(`PDF Generation - Found ${entries.length} entries for PDF generation`);
       
       // Mark all entries as submitted when confirming timesheet
-      await storage.markTimesheetEntriesAsSubmitted(userId, fortnightStart, fortnightEnd);
+      await storage.markTimesheetEntriesAsSubmitted(targetStaffId, fortnightStart, fortnightEnd);
       
       let driveLink = null;
       let googleDriveConnected = false;
