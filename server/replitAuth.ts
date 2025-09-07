@@ -209,10 +209,21 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
-    updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
-    verified(null, user);
+    try {
+      console.log('🔑 Auth verify starting for user:', tokens.claims()?.sub);
+      const user = {};
+      updateUserSession(user, tokens);
+      console.log('🔑 User session updated:', Object.keys(user).join(', '));
+      
+      await upsertUser(tokens.claims());
+      console.log('🔑 User upsert completed');
+      
+      verified(null, user);
+      console.log('🔑 Auth verify completed successfully');
+    } catch (error) {
+      console.error('🔑 Auth verify error:', error);
+      verified(error, null);
+    }
   };
 
   for (const domain of process.env
@@ -229,8 +240,15 @@ export async function setupAuth(app: Express) {
     passport.use(strategy);
   }
 
-  passport.serializeUser((user: Express.User, cb) => cb(null, user));
-  passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+  passport.serializeUser((user: Express.User, cb) => {
+    console.log('🔑 Serializing user:', Object.keys(user || {}).join(', '));
+    cb(null, user);
+  });
+  
+  passport.deserializeUser((user: Express.User, cb) => {
+    console.log('🔑 Deserializing user:', Object.keys(user || {}).join(', '));
+    cb(null, user);
+  });
 
   app.get("/api/login", (req, res, next) => {
     passport.authenticate(`replitauth:${req.hostname}`, {
