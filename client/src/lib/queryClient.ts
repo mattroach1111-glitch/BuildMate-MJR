@@ -1,7 +1,14 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { SessionBackup } from "./sessionBackup";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
+    // For 401 errors, log backup availability for debugging
+    if (res.status === 401) {
+      const hasBackup = SessionBackup.hasValidBackup();
+      console.log('🔄 API call failed with 401, backup available:', hasBackup);
+    }
+    
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }
@@ -50,11 +57,27 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: true, // Refresh when returning to app
       refetchOnReconnect: true, // Refresh when network reconnects
-      staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
-      retry: false,
+      staleTime: 30 * 1000, // Shorter stale time for quicker session recovery
+      retry: (failureCount, error) => {
+        // Allow retry for 401 errors to give backup system time to work
+        if (error.message.includes('401')) {
+          return failureCount < 2; // Up to 2 retries for auth errors
+        }
+        return failureCount < 1; // Only 1 retry for other errors
+      },
+      retryDelay: (attemptIndex) => {
+        // Longer delay for auth retries to allow session restoration
+        return Math.min(1000 * (attemptIndex + 1), 3000);
+      },
     },
     mutations: {
-      retry: false,
+      retry: (failureCount, error) => {
+        // Don't retry mutations on 401 - user needs to re-authenticate
+        if (error.message.includes('401')) {
+          return false;
+        }
+        return failureCount < 1;
+      },
     },
   },
 });
