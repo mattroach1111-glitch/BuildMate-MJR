@@ -1,0 +1,20 @@
+timesheet?employee=46556918&admin=true:58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+timesheet?employee=46556918&admin=true:64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-BeEj1Soz.js:900 ✅ API SUCCESS: /api/admin/timesheets/46556918 (25) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BeEj1Soz.js:900 🔍 RDO DEBUG: entry.jobId is null, description: TAFE uppercase: TAFE
+index-BeEj1Soz.js:900 🔍 RDO DEBUG: entry.jobId is null, description: TAFE uppercase: TAFE
+index-BeEj1Soz.js:900 🔍 BUTTON STATE - Total hours: 79 isPending: false disabled: false
+index-BeEj1Soz.js:900 🔥 SUBMIT BUTTON CLICKED
+index-BeEj1Soz.js:900 🔍 VALIDATION DEBUG Aug 25: {jobId: null, description: null, materials: 'rdo', hours: '0.00', date: '2025-08-25'}
+index-BeEj1Soz.js:900 🔍 VALIDATION RESULT Aug 25: {materials: 'rdo', isLeaveEntry: true, isValid: true, hours: 0}
+index-BeEj1Soz.js:900 🔍 Validation errors: []
+index-BeEj1Soz.js:900 📊 Total hours: 79
+index-BeEj1Soz.js:900 ✅ CALLING MUTATION
+index-BeEj1Soz.js:900 🔍 RDO DEBUG: entry.jobId is null, description: TAFE uppercase: TAFE
+index-BeEj1Soz.js:900 🔍 RDO DEBUG: entry.jobId is null, description: TAFE uppercase: TAFE
+index-BeEj1Soz.js:900 ✅ Confirmation response received
+index-BeEj1Soz.js:900 🎉 Confirmation successful: {message: "Timesheet approved successfully. PDF generated and…oogle Drive in 'BuildFlow Pro/Timesheets' folder.", fortnightStart: '2025-08-25', fortnightEnd: '2025-09-07', confirmedAt: '2025-09-08T00:30:01.654Z', driveLink: 'https://drive.google.com/file/d/1uGRJuV23UHUnQ3nLR2kxQsuLg79Ydd4H/view?usp=drivesdk', …}
+index-BeEj1Soz.js:900 🔄 Refreshing timesheet data...
+index-BeEj1Soz.js:900 🔍 RDO DEBUG: entry.jobId is null, description: TAFE uppercase: TAFE
+index-BeEj1Soz.js:900 🔍 RDO DEBUG: entry.jobId is null, description: TAFE uppercase: TAFE
+index-BeEj1Soz.js:900 ✅ API SUCCESS: /api/admin/timesheets/46556918 (25) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]

@@ -1001,17 +1001,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               const isCorrectDate = format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey;
               if (!isCorrectDate) return false;
               
-              // Debug for Aug 25th specifically
-              if (dateKey === '2025-08-25') {
-                console.log('🔍 VALIDATION DEBUG Aug 25:', {
-                  jobId: entry.jobId,
-                  description: entry.description,
-                  materials: entry.materials,
-                  hours: entry.hours,
-                  date: entry.date
-                });
-              }
-              
               // RDO and leave entries are valid even with 0 hours
               // IMPORTANT: Leave types are stored in the materials field, not description
               const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'];
@@ -1020,18 +1009,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                  (entry.jobId === null && (entry.description || '').toUpperCase().includes('TAFE'));
               
               // Either has hours > 0 OR is a leave/RDO entry
-              const isValid = parseFloat(entry.hours || '0') > 0 || isLeaveEntry;
-              
-              if (dateKey === '2025-08-25') {
-                console.log('🔍 VALIDATION RESULT Aug 25:', {
-                  materials: entry.materials,
-                  isLeaveEntry,
-                  isValid,
-                  hours: parseFloat(entry.hours || '0')
-                });
-              }
-              
-              return isValid;
+              return parseFloat(entry.hours || '0') > 0 || isLeaveEntry;
             })
           : [];
         
@@ -2812,15 +2790,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     ) : (
                       <Button
                         onClick={(e) => {
-                          console.log('🔥 SUBMIT BUTTON CLICKED');
                           e.preventDefault();
                           e.stopPropagation();
                           
                           // Validate all weekdays are completed before confirming
                           const completionErrors = validateFortnightCompletion();
-                          console.log('🔍 Validation errors:', completionErrors);
                           if (completionErrors.length > 0) {
-                            console.log('❌ VALIDATION FAILED:', completionErrors[0]);
                             toast({
                               title: "Incomplete Timesheet",
                               description: completionErrors[0],
@@ -2831,10 +2806,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           
                           // Check for low hours warning
                           const totalHours = getTotalHours();
-                          console.log('📊 Total hours:', totalHours);
                           
                           if (totalHours < 76) {
-                            console.log('⚠️ SHOWING LOW HOURS DIALOG');
                             setLowHoursTotal(totalHours);
                             setPendingSubmission(() => () => {
                               confirmTimesheetMutation.mutate();
@@ -2843,15 +2816,9 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             return;
                           }
 
-                          console.log('✅ CALLING MUTATION');
                           confirmTimesheetMutation.mutate();
                         }}
                         disabled={confirmTimesheetMutation.isPending || getTotalHours() === 0}
-                        onMouseEnter={() => {
-                          const totalHours = getTotalHours();
-                          const isPending = confirmTimesheetMutation.isPending;
-                          console.log('🔍 BUTTON STATE - Total hours:', totalHours, 'isPending:', isPending, 'disabled:', isPending || totalHours === 0);
-                        }}
                         className="bg-green-600 hover:bg-green-700"
                       >
                         {confirmTimesheetMutation.isPending ? "Confirming..." : "Confirm Timesheet"}
