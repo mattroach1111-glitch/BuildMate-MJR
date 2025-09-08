@@ -1006,14 +1006,17 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                 console.log('🔍 VALIDATION DEBUG Aug 25:', {
                   jobId: entry.jobId,
                   description: entry.description,
+                  materials: entry.materials,
                   hours: entry.hours,
                   date: entry.date
                 });
               }
               
               // RDO and leave entries are valid even with 0 hours
+              // IMPORTANT: Leave types are stored in the materials field, not description
               const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'];
               const isLeaveEntry = leaveTypes.includes(entry.jobId) || 
+                                 leaveTypes.includes(entry.materials) ||
                                  (entry.jobId === null && (entry.description || '').toUpperCase().includes('TAFE'));
               
               // Either has hours > 0 OR is a leave/RDO entry
@@ -1021,6 +1024,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               
               if (dateKey === '2025-08-25') {
                 console.log('🔍 VALIDATION RESULT Aug 25:', {
+                  materials: entry.materials,
                   isLeaveEntry,
                   isValid,
                   hours: parseFloat(entry.hours || '0')
@@ -1036,8 +1040,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         const localValidEntries = Array.isArray(localEntries) 
           ? localEntries.filter(entry => {
               // RDO and leave entries are valid even with 0 hours
+              // IMPORTANT: Leave types are stored in the materials field, not description
               const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'];
               const isLeaveEntry = leaveTypes.includes(entry.jobId) || 
+                                 leaveTypes.includes(entry.materials) ||
                                  (entry.jobId === null && (entry.description || '').toUpperCase().includes('TAFE'));
               
               // Either has hours > 0 OR is a leave/RDO entry
