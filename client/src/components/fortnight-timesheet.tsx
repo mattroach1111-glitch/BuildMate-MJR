@@ -1001,13 +1001,33 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               const isCorrectDate = format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey;
               if (!isCorrectDate) return false;
               
+              // Debug for Aug 25th specifically
+              if (dateKey === '2025-08-25') {
+                console.log('🔍 VALIDATION DEBUG Aug 25:', {
+                  jobId: entry.jobId,
+                  description: entry.description,
+                  hours: entry.hours,
+                  date: entry.date
+                });
+              }
+              
               // RDO and leave entries are valid even with 0 hours
               const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'];
               const isLeaveEntry = leaveTypes.includes(entry.jobId) || 
                                  (entry.jobId === null && (entry.description || '').toUpperCase().includes('TAFE'));
               
               // Either has hours > 0 OR is a leave/RDO entry
-              return parseFloat(entry.hours || '0') > 0 || isLeaveEntry;
+              const isValid = parseFloat(entry.hours || '0') > 0 || isLeaveEntry;
+              
+              if (dateKey === '2025-08-25') {
+                console.log('🔍 VALIDATION RESULT Aug 25:', {
+                  isLeaveEntry,
+                  isValid,
+                  hours: parseFloat(entry.hours || '0')
+                });
+              }
+              
+              return isValid;
             })
           : [];
         
