@@ -2786,12 +2786,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     ) : (
                       <Button
                         onClick={(e) => {
+                          console.log('🔥 SUBMIT BUTTON CLICKED');
                           e.preventDefault();
                           e.stopPropagation();
                           
                           // Validate all weekdays are completed before confirming
                           const completionErrors = validateFortnightCompletion();
+                          console.log('🔍 Validation errors:', completionErrors);
                           if (completionErrors.length > 0) {
+                            console.log('❌ VALIDATION FAILED:', completionErrors[0]);
                             toast({
                               title: "Incomplete Timesheet",
                               description: completionErrors[0],
@@ -2802,8 +2805,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           
                           // Check for low hours warning
                           const totalHours = getTotalHours();
+                          console.log('📊 Total hours:', totalHours);
                           
                           if (totalHours < 76) {
+                            console.log('⚠️ SHOWING LOW HOURS DIALOG');
                             setLowHoursTotal(totalHours);
                             setPendingSubmission(() => () => {
                               confirmTimesheetMutation.mutate();
@@ -2812,9 +2817,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             return;
                           }
 
+                          console.log('✅ CALLING MUTATION');
                           confirmTimesheetMutation.mutate();
                         }}
                         disabled={confirmTimesheetMutation.isPending || getTotalHours() === 0}
+                        onMouseEnter={() => {
+                          const totalHours = getTotalHours();
+                          const isPending = confirmTimesheetMutation.isPending;
+                          console.log('🔍 BUTTON STATE - Total hours:', totalHours, 'isPending:', isPending, 'disabled:', isPending || totalHours === 0);
+                        }}
                         className="bg-green-600 hover:bg-green-700"
                       >
                         {confirmTimesheetMutation.isPending ? "Confirming..." : "Confirm Timesheet"}
