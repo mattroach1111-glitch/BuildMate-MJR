@@ -997,16 +997,32 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         
         // Check saved entries from database
         const savedEntries = Array.isArray(currentFortnightEntries) 
-          ? currentFortnightEntries.filter((entry: any) => 
-              format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey && 
-              parseFloat(entry.hours || '0') > 0
-            )
+          ? currentFortnightEntries.filter((entry: any) => {
+              const isCorrectDate = format(parseISO(entry.date), 'yyyy-MM-dd') === dateKey;
+              if (!isCorrectDate) return false;
+              
+              // RDO and leave entries are valid even with 0 hours
+              const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'];
+              const isLeaveEntry = leaveTypes.includes(entry.jobId) || 
+                                 (entry.jobId === null && (entry.description || '').toUpperCase().includes('TAFE'));
+              
+              // Either has hours > 0 OR is a leave/RDO entry
+              return parseFloat(entry.hours || '0') > 0 || isLeaveEntry;
+            })
           : [];
         
         // Check local unsaved entries
         const localEntries = timesheetData[dateKey] || [];
         const localValidEntries = Array.isArray(localEntries) 
-          ? localEntries.filter(entry => parseFloat(entry.hours || '0') > 0)
+          ? localEntries.filter(entry => {
+              // RDO and leave entries are valid even with 0 hours
+              const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'];
+              const isLeaveEntry = leaveTypes.includes(entry.jobId) || 
+                                 (entry.jobId === null && (entry.description || '').toUpperCase().includes('TAFE'));
+              
+              // Either has hours > 0 OR is a leave/RDO entry
+              return parseFloat(entry.hours || '0') > 0 || isLeaveEntry;
+            })
           : [];
         
         hasValidEntry = savedEntries.length > 0 || localValidEntries.length > 0;
@@ -2770,15 +2786,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                     ) : (
                       <Button
                         onClick={(e) => {
-                          console.log('🔥 BUTTON CLICKED - SUBMIT TIMESHEET');
                           e.preventDefault();
                           e.stopPropagation();
                           
                           // Validate all weekdays are completed before confirming
                           const completionErrors = validateFortnightCompletion();
-                          console.log('🔍 VALIDATION RESULT:', completionErrors.length > 0 ? completionErrors : 'No errors');
                           if (completionErrors.length > 0) {
-                            console.log('❌ VALIDATION FAILED - Showing toast:', completionErrors[0]);
                             toast({
                               title: "Incomplete Timesheet",
                               description: completionErrors[0],
@@ -2789,22 +2802,16 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                           
                           // Check for low hours warning
                           const totalHours = getTotalHours();
-                          console.log('🚨 SUBMIT - totalHours:', totalHours, 'will show dialog:', totalHours < 76);
                           
                           if (totalHours < 76) {
-                            console.log('🚨 SHOWING LOW HOURS DIALOG');
                             setLowHoursTotal(totalHours);
                             setPendingSubmission(() => () => {
-                              console.log('🚨 EXECUTING PENDING SUBMISSION');
                               confirmTimesheetMutation.mutate();
                             });
                             setShowLowHoursDialog(true);
-                            console.log('🚨 DIALOG STATE SET TO TRUE');
                             return;
                           }
 
-                          console.log('🚨 SUBMITTING DIRECTLY - NO DIALOG');
-                          console.log('🔍 MUTATION CALL - About to call confirmTimesheetMutation.mutate()');
                           confirmTimesheetMutation.mutate();
                         }}
                         disabled={confirmTimesheetMutation.isPending || getTotalHours() === 0}
