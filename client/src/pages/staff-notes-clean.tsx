@@ -4,7 +4,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -739,6 +739,9 @@ export default function StaffNotesClean() {
           <DialogContent className="max-w-md mx-4 sm:mx-auto">
             <DialogHeader>
               <DialogTitle className="text-lg">Add Staff Member</DialogTitle>
+              <DialogDescription>
+                Create a new staff member profile with their name and hourly rate for job tracking.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -792,6 +795,9 @@ export default function StaffNotesClean() {
           <DialogContent className="max-w-md mx-4 sm:mx-auto">
             <DialogHeader>
               <DialogTitle className="text-lg">Edit Hourly Rate - {editingStaff?.name}</DialogTitle>
+              <DialogDescription>
+                Update the hourly rate for this staff member. This will affect future job cost calculations.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -1047,6 +1053,9 @@ export default function StaffNotesClean() {
             <DialogTitle className="text-lg">
               {editingNote ? 'Edit Note' : 'Add Note'}
             </DialogTitle>
+            <DialogDescription>
+              {editingNote ? 'Update the note details and tracking information.' : 'Create a new note to track important information about this staff member.'}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
