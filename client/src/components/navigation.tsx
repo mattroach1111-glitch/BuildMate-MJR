@@ -53,6 +53,14 @@ export default function Navigation({ title, subtitle }: NavigationProps) {
   ];
 
   const handleLogout = () => {
+    // Clear session backup on explicit logout
+    try {
+      localStorage.removeItem('buildflow_session_backup');
+      console.log('🔄 Session backup cleared on logout');
+    } catch (error) {
+      console.warn('⚠️ Failed to clear session backup:', error);
+    }
+    
     window.location.href = "/api/logout";
   };
 

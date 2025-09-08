@@ -286,6 +286,36 @@ export async function setupAuth(app: Express) {
       );
     });
   });
+
+  // Session restore endpoint for backup system
+  app.post("/api/auth/restore-session", (req, res) => {
+    console.log('🔄 Session restore attempt - authenticated:', !!req.user);
+    
+    // If user is already authenticated, session is working
+    if (req.user && req.isAuthenticated && req.isAuthenticated()) {
+      console.log('🔄 Session restore: already authenticated');
+      return res.json({ success: true, message: 'Session already active' });
+    }
+
+    // Check if there's a valid session in the store that we can restore
+    if (req.sessionID && req.session) {
+      console.log('🔄 Session restore: session exists, attempting refresh');
+      
+      // Force session regeneration to refresh from store
+      req.session.regenerate((err) => {
+        if (err) {
+          console.log('🔄 Session restore failed:', err.message);
+          return res.status(401).json({ success: false, message: 'Session restore failed' });
+        }
+        
+        console.log('🔄 Session restore: regeneration successful');
+        res.json({ success: true, message: 'Session restored' });
+      });
+    } else {
+      console.log('🔄 Session restore: no session to restore');
+      res.status(401).json({ success: false, message: 'No session to restore' });
+    }
+  });
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
