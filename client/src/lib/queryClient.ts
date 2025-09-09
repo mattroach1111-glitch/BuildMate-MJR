@@ -42,8 +42,14 @@ export const getQueryFn: <T>(options: {
       credentials: "include",
     });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+    if (res.status === 401) {
+      console.log('🔄 Query failed with 401 for:', queryKey.join("/"));
+      const hasBackup = SessionBackup.hasValidBackup();
+      console.log('🔄 Backup session available:', hasBackup);
+      
+      if (unauthorizedBehavior === "returnNull") {
+        return null;
+      }
     }
 
     await throwIfResNotOk(res);

@@ -28,22 +28,22 @@ export function useAuth() {
     if (error && !user && !isLoading && !isRestoringSession) {
       const backup = SessionBackup.retrieve();
       if (backup) {
-        console.log('🔄 Server auth failed, attempting session restore...');
-        setIsRestoringSession(true);
+        console.log('🔄 Server auth failed, using backup session immediately');
+        setBackupUser(backup.user);
         
+        // Still attempt restore in background, but don't block user experience
+        setIsRestoringSession(true);
         SessionBackup.attemptRestore().then((restored) => {
           if (restored) {
-            // Server session restored, refetch user data
+            console.log('🔄 Server session restored, switching back to server auth');
+            setBackupUser(null); // Clear backup, server session is working
             refetch();
           } else {
-            // Use backup session as fallback
-            console.log('🔄 Using backup session');
-            setBackupUser(backup.user);
+            console.log('🔄 Server restore failed, continuing with backup');
           }
           setIsRestoringSession(false);
-        }).catch(() => {
-          // Restore failed, use backup
-          setBackupUser(backup.user);
+        }).catch((err) => {
+          console.warn('🔄 Session restore error:', err);
           setIsRestoringSession(false);
         });
       }

@@ -1,0 +1,58 @@
+(index):58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+(index):64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-B-e9cehd.js:48 🔄 Session backup stored successfully
+index-B-e9cehd.js:48 🔄 Session backup stored successfully
+index-B-e9cehd.js:48 🔄 Session backup stored successfully
+index-B-e9cehd.js:48 🔄 Session backup stored successfully
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully
+timesheets:1   Failed to load resource: the server responded with a status of 401 ()
+staff-users:1   Failed to load resource: the server responded with a status of 401 ()
+total-costs:1   Failed to load resource: the server responded with a status of 401 ()
+index-B-e9cehd.js:48 🔄 Session backup stored successfully
+index-B-e9cehd.js:48 🔄 Session backup stored successfully
+index-B-e9cehd.js:48 🔄 Session backup stored successfully
+index-B-e9cehd.js:48 🔄 Session backup stored successfully
+employees:1   Failed to load resource: the server responded with a status of 401 ()
+index-B-e9cehd.js:40  TypeError: Cannot read properties of null (reading 'map')
+    at Coe (index-B-e9cehd.js:749:39645)
+    at R4 (index-B-e9cehd.js:38:17018)
+    at mI (index-B-e9cehd.js:40:44058)
+    at dI (index-B-e9cehd.js:40:39790)
+    at sJ (index-B-e9cehd.js:40:39718)
+    at p2 (index-B-e9cehd.js:40:39570)
+    at TN (index-B-e9cehd.js:40:35934)
+    at hk (index-B-e9cehd.js:40:36738)
+    at dh (index-B-e9cehd.js:38:3279)
+    at index-B-e9cehd.js:40:34263
+yN @ index-B-e9cehd.js:40
+H8.n.callback @ index-B-e9cehd.js:40
+KC @ index-B-e9cehd.js:38
+uk @ index-B-e9cehd.js:40
+oI @ index-B-e9cehd.js:40
+tJ @ index-B-e9cehd.js:40
+aJ @ index-B-e9cehd.js:40
+Ih @ index-B-e9cehd.js:40
+hk @ index-B-e9cehd.js:40
+dh @ index-B-e9cehd.js:38
+(anonymous) @ index-B-e9cehd.js:40
+index-B-e9cehd.js:749  Uncaught TypeError: Cannot read properties of null (reading 'map')
+    at Coe (index-B-e9cehd.js:749:39645)
+    at R4 (index-B-e9cehd.js:38:17018)
+    at mI (index-B-e9cehd.js:40:44058)
+    at dI (index-B-e9cehd.js:40:39790)
+    at sJ (index-B-e9cehd.js:40:39718)
+    at p2 (index-B-e9cehd.js:40:39570)
+    at TN (index-B-e9cehd.js:40:35934)
+    at hk (index-B-e9cehd.js:40:36738)
+    at dh (index-B-e9cehd.js:38:3279)
+    at index-B-e9cehd.js:40:34263
+Coe @ index-B-e9cehd.js:749
+R4 @ index-B-e9cehd.js:38
+mI @ index-B-e9cehd.js:40
+dI @ index-B-e9cehd.js:40
+sJ @ index-B-e9cehd.js:40
+p2 @ index-B-e9cehd.js:40
+TN @ index-B-e9cehd.js:40
+hk @ index-B-e9cehd.js:40
+dh @ index-B-e9cehd.js:38
+(anonymous) @ index-B-e9cehd.js:40
