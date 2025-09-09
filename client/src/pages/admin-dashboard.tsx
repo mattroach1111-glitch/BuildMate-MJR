@@ -282,7 +282,7 @@ export default function AdminDashboard() {
 
   // Get available fortnights from timesheet data
   const availableFortnights = useMemo(() => {
-    if (!allTimesheets) return [];
+    if (!Array.isArray(allTimesheets) || allTimesheets.length === 0) return [];
     
     const fortnightSet = new Set<string>();
     allTimesheets.forEach((entry: any) => {
@@ -308,7 +308,7 @@ export default function AdminDashboard() {
 
   // Group timesheets by staff and fortnight
   const groupedTimesheets = useMemo(() => {
-    const filtered = allTimesheets?.filter((entry: any) => {
+    const filtered = (Array.isArray(allTimesheets) ? allTimesheets : []).filter((entry: any) => {
       const employeeMatch = selectedEmployeeFilter === "all" || entry.staffId === selectedEmployeeFilter;
       
       // Fortnight filter
@@ -1977,7 +1977,7 @@ export default function AdminDashboard() {
             </div>
           ) : filteredJobs && filteredJobs.length > 0 ? (
             <div className="space-y-4">
-              {Object.entries(groupedJobs).map(([groupName, groupJobs]) => {
+              {Object.entries(groupedJobs || {}).map(([groupName, groupJobs]) => {
                 const isExpanded = isReadyForBillingGroup(groupName) ? readyForBillingExpanded :
                                  groupBy === 'client' ? expandedClients.has(groupName) : 
                                  groupBy === 'manager' ? expandedManagers.has(groupName) : true;
@@ -1986,10 +1986,10 @@ export default function AdminDashboard() {
                                      groupBy === 'manager' ? () => toggleManagerExpanded(groupName) : () => {};
                 
                 // Show individual jobs if no grouping or only one group
-                if (groupBy === 'none' || Object.keys(groupedJobs).length === 1) {
+                if (groupBy === 'none' || Object.keys(groupedJobs || {}).length === 1) {
                   return (
                     <div key={groupName} className="space-y-2">
-                      {groupJobs.map((job) => (
+                      {(Array.isArray(groupJobs) ? groupJobs : []).map((job) => (
                         <Card 
                             key={job.id} 
                             className={`cursor-pointer transition-shadow relative ${

@@ -46,8 +46,8 @@ export function JobsList() {
     queryKey: ["/api/jobs"],
   });
 
-  // Type the jobs data properly
-  const typedJobs = jobs as Job[];
+  // Type the jobs data properly with safety check
+  const typedJobs = (Array.isArray(jobs) ? jobs : []) as Job[];
 
   // Filter and search jobs
   const filteredJobs = typedJobs.filter((job: Job) => {
@@ -62,8 +62,8 @@ export function JobsList() {
     return matchesSearch && matchesStatus && matchesProjectManager;
   });
 
-  // Get unique values for filters
-  const uniqueStatuses = Array.from(new Set(typedJobs.map((job: Job) => job.status)));
+  // Get unique values for filters with safety checks
+  const uniqueStatuses = Array.from(new Set(typedJobs.map((job: Job) => job.status).filter(Boolean)));
   const uniqueProjectManagers = Array.from(new Set(typedJobs.map((job: Job) => job.projectManager).filter(Boolean)));
 
   const getStatusColor = (status: string) => {
