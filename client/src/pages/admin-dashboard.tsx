@@ -75,7 +75,7 @@ const adminTimesheetFormSchema = insertTimesheetEntrySchema.extend({
 });
 
 export default function AdminDashboard() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, isUsingBackup } = useAuth();
   const { toast } = useToast();
   const [location] = useLocation();
   const { 
@@ -204,6 +204,7 @@ export default function AdminDashboard() {
   const { data: jobs, isLoading: jobsLoading } = useQuery<Job[]>({
     queryKey: ["/api/jobs"],
     retry: false,
+    enabled: !isUsingBackup, // Don't query if using backup auth
   });
 
   const { data: totalCostsData, isLoading: totalCostsLoading } = useQuery<{
@@ -219,27 +220,32 @@ export default function AdminDashboard() {
   }>({
     queryKey: ["/api/jobs/total-costs"],
     retry: false,
+    enabled: !isUsingBackup, // Don't query if using backup auth
   });
 
   const { data: deletedJobs, isLoading: deletedJobsLoading } = useQuery<Job[]>({
     queryKey: ["/api/deleted-jobs"],
     retry: false,
+    enabled: !isUsingBackup, // Don't query if using backup auth
   });
 
   const { data: employees, isLoading: employeesLoading } = useQuery<Employee[]>({
     queryKey: ["/api/employees"],
     retry: false,
+    enabled: !isUsingBackup, // Don't query if using backup auth
   });
 
   const { data: allTimesheets, isLoading: timesheetsLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/timesheets"],
     retry: false,
+    enabled: !isUsingBackup, // Don't query if using backup auth
   });
 
   // Get all staff (users and employees) for timesheet assignment
   const { data: staffForTimesheets, isLoading: staffUsersLoading } = useQuery<any[]>({
     queryKey: ["/api/staff-users"],
     retry: false,
+    enabled: !isUsingBackup, // Don't query if using backup auth
   });
 
   // Safely filter valid staff members
@@ -1548,6 +1554,23 @@ export default function AdminDashboard() {
       title="Job Management" 
       subtitle={`Welcome back, ${(user as any)?.firstName || 'Admin'}`}
     >
+      {/* Backup Mode Notification */}
+      {isUsingBackup && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-amber-600" />
+            <div>
+              <h4 className="font-semibold text-amber-800">
+                🔄 Backup Mode Active
+              </h4>
+              <p className="text-sm text-amber-700 mt-1">
+                You're viewing cached data while the server reconnects. Some features may be limited.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="space-y-6">
         {/* Compact Navigation - Enhanced with Colors */}
         <div className="flex items-center justify-between mb-6">
