@@ -1,0 +1,262 @@
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully
+(index):58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+(index):64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-DxpY_FPC.js:48 🔄 Session backup stored successfully
+index-DxpY_FPC.js:48 🔄 Session backup stored successfully
+index-DxpY_FPC.js:48 🔄 Session backup stored successfully
+index-DxpY_FPC.js:48 🔄 Session backup stored successfully
+index-DxpY_FPC.js:48 🔄 Session backup stored successfully
+index-DxpY_FPC.js:92  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-DxpY_FPC.js:92
+hb @ index-DxpY_FPC.js:40
+Zp @ index-DxpY_FPC.js:40
+aJ @ index-DxpY_FPC.js:40
+Rh @ index-DxpY_FPC.js:40
+hk @ index-DxpY_FPC.js:40
+dh @ index-DxpY_FPC.js:38
+(anonymous) @ index-DxpY_FPC.js:40
+index-DxpY_FPC.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs 401 (Unauthorized)
+(anonymous) @ index-DxpY_FPC.js:48
+a @ index-DxpY_FPC.js:48
+N @ index-DxpY_FPC.js:48
+start @ index-DxpY_FPC.js:48
+fetch @ index-DxpY_FPC.js:48
+K0 @ index-DxpY_FPC.js:48
+fetch @ index-DxpY_FPC.js:48
+refetch @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+batch @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+await in (anonymous)
+(anonymous) @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+n @ index-DxpY_FPC.js:48
+index-DxpY_FPC.js:48 🔄 Query failed with 401 for: /api/jobs
+index-DxpY_FPC.js:48 🔄 Session backup retrieved successfully
+index-DxpY_FPC.js:48 🔄 Backup session available: true
+index-DxpY_FPC.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 401 (Unauthorized)
+(anonymous) @ index-DxpY_FPC.js:48
+a @ index-DxpY_FPC.js:48
+N @ index-DxpY_FPC.js:48
+start @ index-DxpY_FPC.js:48
+fetch @ index-DxpY_FPC.js:48
+K0 @ index-DxpY_FPC.js:48
+fetch @ index-DxpY_FPC.js:48
+refetch @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+batch @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+await in (anonymous)
+(anonymous) @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+n @ index-DxpY_FPC.js:48
+index-DxpY_FPC.js:48 🔄 Query failed with 401 for: /api/auth/user
+index-DxpY_FPC.js:48 🔄 Session backup retrieved successfully
+index-DxpY_FPC.js:48 🔄 Backup session available: true
+index-DxpY_FPC.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/11fcbf3e-80a2-4101-bf21-a9b9b8d711bf 401 (Unauthorized)
+(anonymous) @ index-DxpY_FPC.js:48
+a @ index-DxpY_FPC.js:48
+N @ index-DxpY_FPC.js:48
+start @ index-DxpY_FPC.js:48
+fetch @ index-DxpY_FPC.js:48
+K0 @ index-DxpY_FPC.js:48
+onSubscribe @ index-DxpY_FPC.js:48
+subscribe @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+E8 @ index-DxpY_FPC.js:38
+hb @ index-DxpY_FPC.js:40
+Zp @ index-DxpY_FPC.js:40
+aJ @ index-DxpY_FPC.js:40
+Rh @ index-DxpY_FPC.js:40
+hk @ index-DxpY_FPC.js:40
+dh @ index-DxpY_FPC.js:38
+(anonymous) @ index-DxpY_FPC.js:40
+index-DxpY_FPC.js:48 🔄 Query failed with 401 for: /api/jobs/11fcbf3e-80a2-4101-bf21-a9b9b8d711bf
+index-DxpY_FPC.js:48 🔄 Session backup retrieved successfully
+index-DxpY_FPC.js:48 🔄 Backup session available: true
+index-DxpY_FPC.js:48   GET https://build-mate-mattroach1111.replit.app/api/deleted-jobs 401 (Unauthorized)
+(anonymous) @ index-DxpY_FPC.js:48
+a @ index-DxpY_FPC.js:48
+N @ index-DxpY_FPC.js:48
+start @ index-DxpY_FPC.js:48
+fetch @ index-DxpY_FPC.js:48
+K0 @ index-DxpY_FPC.js:48
+fetch @ index-DxpY_FPC.js:48
+refetch @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+batch @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+await in (anonymous)
+(anonymous) @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+n @ index-DxpY_FPC.js:48
+index-DxpY_FPC.js:48 🔄 Query failed with 401 for: /api/deleted-jobs
+index-DxpY_FPC.js:48 🔄 Session backup retrieved successfully
+index-DxpY_FPC.js:48 🔄 Backup session available: true
+index-DxpY_FPC.js:48   GET https://build-mate-mattroach1111.replit.app/api/employees 401 (Unauthorized)
+(anonymous) @ index-DxpY_FPC.js:48
+a @ index-DxpY_FPC.js:48
+N @ index-DxpY_FPC.js:48
+start @ index-DxpY_FPC.js:48
+fetch @ index-DxpY_FPC.js:48
+K0 @ index-DxpY_FPC.js:48
+fetch @ index-DxpY_FPC.js:48
+refetch @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+batch @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+await in (anonymous)
+(anonymous) @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+n @ index-DxpY_FPC.js:48
+index-DxpY_FPC.js:48 🔄 Query failed with 401 for: /api/employees
+index-DxpY_FPC.js:48 🔄 Session backup retrieved successfully
+index-DxpY_FPC.js:48 🔄 Backup session available: true
+index-DxpY_FPC.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/11fcbf3e-80a2-4101-bf21-a9b9b8d711bf/timesheets 401 (Unauthorized)
+(anonymous) @ index-DxpY_FPC.js:48
+a @ index-DxpY_FPC.js:48
+N @ index-DxpY_FPC.js:48
+start @ index-DxpY_FPC.js:48
+fetch @ index-DxpY_FPC.js:48
+K0 @ index-DxpY_FPC.js:48
+onSubscribe @ index-DxpY_FPC.js:48
+subscribe @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+E8 @ index-DxpY_FPC.js:38
+hb @ index-DxpY_FPC.js:40
+Zp @ index-DxpY_FPC.js:40
+aJ @ index-DxpY_FPC.js:40
+Rh @ index-DxpY_FPC.js:40
+hk @ index-DxpY_FPC.js:40
+dh @ index-DxpY_FPC.js:38
+(anonymous) @ index-DxpY_FPC.js:40
+index-DxpY_FPC.js:48 🔄 Query failed with 401 for: /api/jobs/11fcbf3e-80a2-4101-bf21-a9b9b8d711bf/timesheets
+index-DxpY_FPC.js:48 🔄 Session backup retrieved successfully
+index-DxpY_FPC.js:48 🔄 Backup session available: true
+index-DxpY_FPC.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/11fcbf3e-80a2-4101-bf21-a9b9b8d711bf/files 401 (Unauthorized)
+(anonymous) @ index-DxpY_FPC.js:48
+a @ index-DxpY_FPC.js:48
+N @ index-DxpY_FPC.js:48
+start @ index-DxpY_FPC.js:48
+fetch @ index-DxpY_FPC.js:48
+K0 @ index-DxpY_FPC.js:48
+onSubscribe @ index-DxpY_FPC.js:48
+subscribe @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+E8 @ index-DxpY_FPC.js:38
+hb @ index-DxpY_FPC.js:40
+Zp @ index-DxpY_FPC.js:40
+aJ @ index-DxpY_FPC.js:40
+Rh @ index-DxpY_FPC.js:40
+hk @ index-DxpY_FPC.js:40
+dh @ index-DxpY_FPC.js:38
+(anonymous) @ index-DxpY_FPC.js:40
+index-DxpY_FPC.js:48 🔄 Query failed with 401 for: /api/jobs/11fcbf3e-80a2-4101-bf21-a9b9b8d711bf/files
+index-DxpY_FPC.js:48 🔄 Session backup retrieved successfully
+index-DxpY_FPC.js:48 🔄 Backup session available: true
+index-DxpY_FPC.js:48   GET https://build-mate-mattroach1111.replit.app/api/staff-users 401 (Unauthorized)
+(anonymous) @ index-DxpY_FPC.js:48
+a @ index-DxpY_FPC.js:48
+N @ index-DxpY_FPC.js:48
+start @ index-DxpY_FPC.js:48
+fetch @ index-DxpY_FPC.js:48
+K0 @ index-DxpY_FPC.js:48
+fetch @ index-DxpY_FPC.js:48
+refetch @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+batch @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+await in (anonymous)
+(anonymous) @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+n @ index-DxpY_FPC.js:48
+index-DxpY_FPC.js:48 🔄 Query failed with 401 for: /api/staff-users
+index-DxpY_FPC.js:48 🔄 Session backup retrieved successfully
+index-DxpY_FPC.js:48 🔄 Backup session available: true
+index-DxpY_FPC.js:48   GET https://build-mate-mattroach1111.replit.app/api/admin/timesheets 401 (Unauthorized)
+(anonymous) @ index-DxpY_FPC.js:48
+a @ index-DxpY_FPC.js:48
+N @ index-DxpY_FPC.js:48
+start @ index-DxpY_FPC.js:48
+fetch @ index-DxpY_FPC.js:48
+K0 @ index-DxpY_FPC.js:48
+fetch @ index-DxpY_FPC.js:48
+refetch @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+batch @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+await in (anonymous)
+(anonymous) @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+n @ index-DxpY_FPC.js:48
+index-DxpY_FPC.js:48 🔄 Query failed with 401 for: /api/admin/timesheets
+index-DxpY_FPC.js:48 🔄 Session backup retrieved successfully
+index-DxpY_FPC.js:48 🔄 Backup session available: true
+index-DxpY_FPC.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/11fcbf3e-80a2-4101-bf21-a9b9b8d711bf/notes 401 (Unauthorized)
+(anonymous) @ index-DxpY_FPC.js:48
+a @ index-DxpY_FPC.js:48
+N @ index-DxpY_FPC.js:48
+start @ index-DxpY_FPC.js:48
+fetch @ index-DxpY_FPC.js:48
+K0 @ index-DxpY_FPC.js:48
+onSubscribe @ index-DxpY_FPC.js:48
+subscribe @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+E8 @ index-DxpY_FPC.js:38
+hb @ index-DxpY_FPC.js:40
+Zp @ index-DxpY_FPC.js:40
+aJ @ index-DxpY_FPC.js:40
+Rh @ index-DxpY_FPC.js:40
+hk @ index-DxpY_FPC.js:40
+dh @ index-DxpY_FPC.js:38
+(anonymous) @ index-DxpY_FPC.js:40
+index-DxpY_FPC.js:48 🔄 Query failed with 401 for: /api/jobs/11fcbf3e-80a2-4101-bf21-a9b9b8d711bf/notes
+index-DxpY_FPC.js:48 🔄 Session backup retrieved successfully
+index-DxpY_FPC.js:48 🔄 Backup session available: true
+index-DxpY_FPC.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/total-costs 401 (Unauthorized)
+(anonymous) @ index-DxpY_FPC.js:48
+a @ index-DxpY_FPC.js:48
+N @ index-DxpY_FPC.js:48
+start @ index-DxpY_FPC.js:48
+fetch @ index-DxpY_FPC.js:48
+K0 @ index-DxpY_FPC.js:48
+fetch @ index-DxpY_FPC.js:48
+refetch @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+batch @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+await in (anonymous)
+(anonymous) @ index-DxpY_FPC.js:48
+onFocus @ index-DxpY_FPC.js:48
+(anonymous) @ index-DxpY_FPC.js:48
+n @ index-DxpY_FPC.js:48
+index-DxpY_FPC.js:48 🔄 Query failed with 401 for: /api/jobs/total-costs
+index-DxpY_FPC.js:48 🔄 Session backup retrieved successfully
+index-DxpY_FPC.js:48 🔄 Backup session available: true
