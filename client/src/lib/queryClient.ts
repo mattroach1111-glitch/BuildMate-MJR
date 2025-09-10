@@ -38,6 +38,12 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // Don't make API calls if we're in backup mode
+    if (globalBackupModeActive) {
+      console.log('🔄 Skipping API call in backup mode for:', queryKey.join("/"));
+      return null;
+    }
+
     const res = await fetch(queryKey.join("/") as string, {
       credentials: "include",
     });
@@ -56,15 +62,28 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
+// Global backup mode state that query client can check
+let globalBackupModeActive = false;
+
+export const setGlobalBackupMode = (isActive: boolean) => {
+  globalBackupModeActive = isActive;
+};
+
+export const isGlobalBackupModeActive = () => globalBackupModeActive;
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "returnNull" }),
       refetchInterval: false,
-      refetchOnWindowFocus: true, // Refresh when returning to app
-      refetchOnReconnect: true, // Refresh when network reconnects
+      refetchOnWindowFocus: false, // Disable to prevent unwanted API calls in backup mode
+      refetchOnReconnect: false, // Disable to prevent unwanted API calls in backup mode
       staleTime: 30 * 1000, // Shorter stale time for quicker session recovery
       retry: (failureCount, error) => {
+        // Don't retry if we're in backup mode
+        if (globalBackupModeActive) {
+          return false;
+        }
         // Allow retry for 401 errors to give backup system time to work
         if (error.message.includes('401')) {
           return failureCount < 2; // Up to 2 retries for auth errors

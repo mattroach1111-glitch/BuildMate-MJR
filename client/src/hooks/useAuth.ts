@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { SessionBackup } from "@/lib/sessionBackup";
+import { setGlobalBackupMode } from "@/lib/queryClient";
 
 export function useAuth() {
   const [backupUser, setBackupUser] = useState<any>(null);
@@ -14,6 +15,7 @@ export function useAuth() {
       if (backup && backup.user) {
         console.log('🔄 Initial backup check - using backup session immediately');
         setBackupUser(backup.user);
+        setGlobalBackupMode(true); // Signal query client to stop API calls
       }
       setInitialBackupCheck(true);
     }
@@ -35,6 +37,7 @@ export function useAuth() {
     if (user && !error) {
       SessionBackup.store(user);
       setBackupUser(null); // Clear backup since we have server session
+      setGlobalBackupMode(false); // Re-enable API calls
     }
   }, [user, error]);
 
@@ -45,6 +48,7 @@ export function useAuth() {
       if (backup) {
         console.log('🔄 Server auth failed, using backup session immediately');
         setBackupUser(backup.user);
+        setGlobalBackupMode(true); // Signal query client to stop API calls
         
         // Still attempt restore in background, but don't block user experience
         setIsRestoringSession(true);
@@ -52,6 +56,7 @@ export function useAuth() {
           if (restored) {
             console.log('🔄 Server session restored, switching back to server auth');
             setBackupUser(null); // Clear backup, server session is working
+            setGlobalBackupMode(false); // Re-enable API calls
             refetch();
           } else {
             console.log('🔄 Server restore failed, continuing with backup');
