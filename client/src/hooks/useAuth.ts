@@ -6,20 +6,6 @@ import { setGlobalBackupMode } from "@/lib/queryClient";
 export function useAuth() {
   const [backupUser, setBackupUser] = useState<any>(null);
   const [isRestoringSession, setIsRestoringSession] = useState(false);
-  const [initialBackupCheck, setInitialBackupCheck] = useState(false);
-
-  // Check for backup session immediately on mount
-  useEffect(() => {
-    if (!initialBackupCheck) {
-      const backup = SessionBackup.retrieve();
-      if (backup && backup.user) {
-        console.log('🔄 Initial backup check - using backup session immediately');
-        setBackupUser(backup.user);
-        setGlobalBackupMode(true); // Signal query client to stop API calls
-      }
-      setInitialBackupCheck(true);
-    }
-  }, [initialBackupCheck]);
 
   const { data: user, isLoading, refetch, error } = useQuery({
     queryKey: ["/api/auth/user"],
@@ -28,8 +14,8 @@ export function useAuth() {
     staleTime: 30000, // 30 seconds instead of Infinity
     // Handle errors gracefully
     throwOnError: false,
-    // Don't make the query if we're already using backup
-    enabled: !backupUser,
+    // Always try server authentication first
+    enabled: true,
   });
 
   // Handle successful authentication - store backup
