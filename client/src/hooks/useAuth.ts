@@ -5,6 +5,19 @@ import { SessionBackup } from "@/lib/sessionBackup";
 export function useAuth() {
   const [backupUser, setBackupUser] = useState<any>(null);
   const [isRestoringSession, setIsRestoringSession] = useState(false);
+  const [initialBackupCheck, setInitialBackupCheck] = useState(false);
+
+  // Check for backup session immediately on mount
+  useEffect(() => {
+    if (!initialBackupCheck) {
+      const backup = SessionBackup.retrieve();
+      if (backup && backup.user) {
+        console.log('🔄 Initial backup check - using backup session immediately');
+        setBackupUser(backup.user);
+      }
+      setInitialBackupCheck(true);
+    }
+  }, [initialBackupCheck]);
 
   const { data: user, isLoading, refetch, error } = useQuery({
     queryKey: ["/api/auth/user"],
@@ -13,6 +26,8 @@ export function useAuth() {
     staleTime: 30000, // 30 seconds instead of Infinity
     // Handle errors gracefully
     throwOnError: false,
+    // Don't make the query if we're already using backup
+    enabled: !backupUser,
   });
 
   // Handle successful authentication - store backup
@@ -25,7 +40,7 @@ export function useAuth() {
 
   // Handle authentication failure - check for backup
   useEffect(() => {
-    if (error && !user && !isLoading && !isRestoringSession) {
+    if (error && !user && !isLoading && !isRestoringSession && !backupUser) {
       const backup = SessionBackup.retrieve();
       if (backup) {
         console.log('🔄 Server auth failed, using backup session immediately');
@@ -48,15 +63,21 @@ export function useAuth() {
         });
       }
     }
-  }, [error, user, isLoading, isRestoringSession, refetch]);
+  }, [error, user, isLoading, isRestoringSession, refetch, backupUser]);
 
   // Determine current user (server or backup)
   const currentUser = user || backupUser;
-  const currentIsAuthenticated = !!currentUser && (!error || !!backupUser);
+  // If we have backup user, we're authenticated regardless of server error
+  const currentIsAuthenticated = !!backupUser || (!!user && !error);
+  
+  // Log current authentication state for debugging
+  if (backupUser && !user) {
+    console.log('🔄 Using backup authentication for user:', backupUser.firstName || backupUser.email);
+  }
   
   return {
     user: currentUser,
-    isLoading: isLoading || isRestoringSession,
+    isLoading: isLoading && !backupUser, // Don't show loading if backup is available
     isAuthenticated: currentIsAuthenticated,
     refetch, // Expose refetch for manual role updates
     isUsingBackup: !!backupUser && !user, // Indicates fallback mode
