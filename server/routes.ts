@@ -5115,7 +5115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         weeks.push({
           weekStartDate: weekStart.toISOString().split('T')[0],
-          label: `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`,
+          label: `${weekStart.toLocaleDateString('en-AU')} - ${weekEnd.toLocaleDateString('en-AU')}`,
           isCurrent: i === 0
         });
       }
@@ -5127,14 +5127,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/organiser/:weekStartDate", isAuthenticated, async (req: any, res) => {
+  app.get("/api/organiser", isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);
-      const { weekStartDate } = req.params;
+      const { week: weekStartDate } = req.query;
 
       // Validate date format
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStartDate)) {
-        return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD" });
+      if (!weekStartDate || !/^\d{4}-\d{2}-\d{2}$/.test(weekStartDate as string)) {
+        return res.status(400).json({ message: "Invalid date format. Use ?week=YYYY-MM-DD" });
       }
 
       // Admin can view all organiser data, staff can only view their own

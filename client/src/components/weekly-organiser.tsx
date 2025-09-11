@@ -83,6 +83,15 @@ export default function WeeklyOrganiser() {
     refetch: refetchOrganiser 
   } = useQuery<OrganiserEntry[]>({
     queryKey: ["/api/organiser", selectedWeek],
+    queryFn: async () => {
+      const response = await fetch(`/api/organiser?week=${selectedWeek}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch organiser data');
+      }
+      return response.json();
+    },
     enabled: !!selectedWeek,
   });
 

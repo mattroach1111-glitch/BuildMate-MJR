@@ -1,0 +1,122 @@
+(index):58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+(index):64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-CYqrHUrT.js:48 🔄 Session backup stored successfully
+index-CYqrHUrT.js:48 🔄 Session backup stored successfully
+index-CYqrHUrT.js:48 🔄 Session backup stored successfully
+index-CYqrHUrT.js:48 🔄 Session backup stored successfully
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully
+index-CYqrHUrT.js:48   GET https://build-mate-mattroach1111.replit.app/api/organiser/2025-09-08 500 (Internal Server Error)
+(anonymous) @ index-CYqrHUrT.js:48
+a @ index-CYqrHUrT.js:48
+N @ index-CYqrHUrT.js:48
+start @ index-CYqrHUrT.js:48
+fetch @ index-CYqrHUrT.js:48
+Z0 @ index-CYqrHUrT.js:48
+setOptions @ index-CYqrHUrT.js:48
+(anonymous) @ index-CYqrHUrT.js:48
+pb @ index-CYqrHUrT.js:40
+Xp @ index-CYqrHUrT.js:40
+pk @ index-CYqrHUrT.js:40
+fh @ index-CYqrHUrT.js:38
+oJ @ index-CYqrHUrT.js:40
+Oh @ index-CYqrHUrT.js:40
+cI @ index-CYqrHUrT.js:40
+I @ index-CYqrHUrT.js:25
+$ @ index-CYqrHUrT.js:25
+index-CYqrHUrT.js:48   GET https://build-mate-mattroach1111.replit.app/api/organiser/2025-09-08 500 (Internal Server Error)
+(anonymous) @ index-CYqrHUrT.js:48
+a @ index-CYqrHUrT.js:48
+N @ index-CYqrHUrT.js:48
+(anonymous) @ index-CYqrHUrT.js:48
+Promise.then
+(anonymous) @ index-CYqrHUrT.js:48
+Promise.catch
+N @ index-CYqrHUrT.js:48
+start @ index-CYqrHUrT.js:48
+fetch @ index-CYqrHUrT.js:48
+Z0 @ index-CYqrHUrT.js:48
+setOptions @ index-CYqrHUrT.js:48
+(anonymous) @ index-CYqrHUrT.js:48
+pb @ index-CYqrHUrT.js:40
+Xp @ index-CYqrHUrT.js:40
+pk @ index-CYqrHUrT.js:40
+fh @ index-CYqrHUrT.js:38
+oJ @ index-CYqrHUrT.js:40
+Oh @ index-CYqrHUrT.js:40
+cI @ index-CYqrHUrT.js:40
+I @ index-CYqrHUrT.js:25
+$ @ index-CYqrHUrT.js:25
+index-CYqrHUrT.js:48   GET https://build-mate-mattroach1111.replit.app/api/organiser/2025-09-15 500 (Internal Server Error)
+(anonymous) @ index-CYqrHUrT.js:48
+a @ index-CYqrHUrT.js:48
+N @ index-CYqrHUrT.js:48
+start @ index-CYqrHUrT.js:48
+fetch @ index-CYqrHUrT.js:48
+Z0 @ index-CYqrHUrT.js:48
+setOptions @ index-CYqrHUrT.js:48
+(anonymous) @ index-CYqrHUrT.js:48
+pb @ index-CYqrHUrT.js:40
+Xp @ index-CYqrHUrT.js:40
+oJ @ index-CYqrHUrT.js:40
+Oh @ index-CYqrHUrT.js:40
+pk @ index-CYqrHUrT.js:40
+fh @ index-CYqrHUrT.js:38
+(anonymous) @ index-CYqrHUrT.js:40
+index-CYqrHUrT.js:48   GET https://build-mate-mattroach1111.replit.app/api/organiser/2025-09-15 500 (Internal Server Error)
+(anonymous) @ index-CYqrHUrT.js:48
+a @ index-CYqrHUrT.js:48
+N @ index-CYqrHUrT.js:48
+(anonymous) @ index-CYqrHUrT.js:48
+Promise.then
+(anonymous) @ index-CYqrHUrT.js:48
+Promise.catch
+N @ index-CYqrHUrT.js:48
+start @ index-CYqrHUrT.js:48
+fetch @ index-CYqrHUrT.js:48
+Z0 @ index-CYqrHUrT.js:48
+setOptions @ index-CYqrHUrT.js:48
+(anonymous) @ index-CYqrHUrT.js:48
+pb @ index-CYqrHUrT.js:40
+Xp @ index-CYqrHUrT.js:40
+oJ @ index-CYqrHUrT.js:40
+Oh @ index-CYqrHUrT.js:40
+pk @ index-CYqrHUrT.js:40
+fh @ index-CYqrHUrT.js:38
+(anonymous) @ index-CYqrHUrT.js:40
+index-CYqrHUrT.js:48   GET https://build-mate-mattroach1111.replit.app/api/organiser/2025-09-08 500 (Internal Server Error)
+(anonymous) @ index-CYqrHUrT.js:48
+a @ index-CYqrHUrT.js:48
+N @ index-CYqrHUrT.js:48
+start @ index-CYqrHUrT.js:48
+fetch @ index-CYqrHUrT.js:48
+Z0 @ index-CYqrHUrT.js:48
+setOptions @ index-CYqrHUrT.js:48
+(anonymous) @ index-CYqrHUrT.js:48
+pb @ index-CYqrHUrT.js:40
+Xp @ index-CYqrHUrT.js:40
+oJ @ index-CYqrHUrT.js:40
+Oh @ index-CYqrHUrT.js:40
+pk @ index-CYqrHUrT.js:40
+fh @ index-CYqrHUrT.js:38
+(anonymous) @ index-CYqrHUrT.js:40
+index-CYqrHUrT.js:48   GET https://build-mate-mattroach1111.replit.app/api/organiser/2025-09-08 500 (Internal Server Error)
+(anonymous) @ index-CYqrHUrT.js:48
+a @ index-CYqrHUrT.js:48
+N @ index-CYqrHUrT.js:48
+(anonymous) @ index-CYqrHUrT.js:48
+Promise.then
+(anonymous) @ index-CYqrHUrT.js:48
+Promise.catch
+N @ index-CYqrHUrT.js:48
+start @ index-CYqrHUrT.js:48
+fetch @ index-CYqrHUrT.js:48
+Z0 @ index-CYqrHUrT.js:48
+setOptions @ index-CYqrHUrT.js:48
+(anonymous) @ index-CYqrHUrT.js:48
+pb @ index-CYqrHUrT.js:40
+Xp @ index-CYqrHUrT.js:40
+oJ @ index-CYqrHUrT.js:40
+Oh @ index-CYqrHUrT.js:40
+pk @ index-CYqrHUrT.js:40
+fh @ index-CYqrHUrT.js:38
+(anonymous) @ index-CYqrHUrT.js:40
