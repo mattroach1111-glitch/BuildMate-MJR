@@ -25,6 +25,13 @@ import {
   X 
 } from "lucide-react";
 
+interface Staff {
+  id: string;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
 interface WeekOption {
   weekStartDate: string;
   label: string;
@@ -61,10 +68,22 @@ export default function WeeklyOrganiser() {
   const [selectedWeek, setSelectedWeek] = useState<string>("");
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
   const [tempValue, setTempValue] = useState("");
+  const [showAddStaffDialog, setShowAddStaffDialog] = useState(false);
+  const [newStaffName, setNewStaffName] = useState("");
 
   // Fetch available weeks
   const { data: weeks = [], isLoading: weeksLoading } = useQuery<WeekOption[]>({
     queryKey: ["/api/organiser/weeks"],
+    enabled: true,
+  });
+
+  // Fetch organiser staff
+  const { 
+    data: staff = [], 
+    isLoading: staffLoading,
+    refetch: refetchStaff 
+  } = useQuery<Staff[]>({
+    queryKey: ["/api/organiser/staff"],
     enabled: true,
   });
 
@@ -93,6 +112,57 @@ export default function WeeklyOrganiser() {
       return response.json();
     },
     enabled: !!selectedWeek,
+  });
+
+  // Add staff mutation
+  const addStaffMutation = useMutation({
+    mutationFn: async (name: string) => {
+      return apiRequest("/api/organiser/staff", "POST", { 
+        name: name.trim(),
+        sortOrder: staff.length 
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/organiser/staff"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organiser"] });
+      setShowAddStaffDialog(false);
+      setNewStaffName("");
+      toast({
+        title: "Success",
+        description: "Staff member added successfully",
+      });
+    },
+    onError: (error: any) => {
+      console.error("Error adding staff:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add staff member",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete staff mutation
+  const deleteStaffMutation = useMutation({
+    mutationFn: async (staffId: string) => {
+      return apiRequest(`/api/organiser/staff/${staffId}`, "DELETE");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/organiser/staff"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organiser"] });
+      toast({
+        title: "Success",
+        description: "Staff member removed successfully",
+      });
+    },
+    onError: (error: any) => {
+      console.error("Error deleting staff:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove staff member",
+        variant: "destructive",
+      });
+    },
   });
 
   // Create/Update organiser entry mutation
@@ -212,6 +282,13 @@ export default function WeeklyOrganiser() {
         <h2 className="text-xl font-semibold">Weekly Organiser</h2>
         <div className="flex gap-2">
           <Button 
+            onClick={() => setShowAddStaffDialog(true)}
+            data-testid="button-add-staff"
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Add Staff
+          </Button>
+          <Button 
             variant="outline" 
             size="sm"
             onClick={handleExport}
@@ -292,6 +369,7 @@ export default function WeeklyOrganiser() {
                       </th>
                     ))}
                     <th className="border border-gray-300 p-3 text-center font-semibold">Notes</th>
+                    <th className="border border-gray-300 p-3 text-center font-semibold w-16">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -357,6 +435,17 @@ export default function WeeklyOrganiser() {
                           {entry.notes || "No notes"}
                         </div>
                       </td>
+                      <td className="border border-gray-300 p-2 text-center">
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => deleteStaffMutation.mutate(entry.staffId)}
+                          disabled={deleteStaffMutation.isPending}
+                          data-testid={`button-delete-staff-${entry.staffId}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -408,6 +497,50 @@ export default function WeeklyOrganiser() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Add Staff Dialog */}
+      <Dialog open={showAddStaffDialog} onOpenChange={setShowAddStaffDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Staff Member</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="staff-name">Staff Name</Label>
+              <Input
+                id="staff-name"
+                value={newStaffName}
+                onChange={(e) => setNewStaffName(e.target.value)}
+                placeholder="Enter staff member name..."
+                data-testid="input-staff-name"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowAddStaffDialog(false);
+                  setNewStaffName("");
+                }}
+                data-testid="button-cancel-staff"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (newStaffName.trim()) {
+                    addStaffMutation.mutate(newStaffName);
+                  }
+                }}
+                disabled={!newStaffName.trim() || addStaffMutation.isPending}
+                data-testid="button-confirm-add-staff"
+              >
+                {addStaffMutation.isPending ? "Adding..." : "Add Staff"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

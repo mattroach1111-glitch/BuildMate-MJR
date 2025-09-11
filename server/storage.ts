@@ -53,6 +53,12 @@ import {
   weeklyOrganiser,
   type WeeklyOrganiser,
   type InsertWeeklyOrganiser,
+  organiserStaff,
+  organiserAssignments,
+  type OrganiserStaff,
+  type InsertOrganiserStaff,
+  type OrganiserAssignment,
+  type InsertOrganiserAssignment,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sum, ne, gte, lte, lt, sql, isNull, or, ilike, inArray } from "drizzle-orm";
@@ -218,6 +224,15 @@ export interface IStorage {
   updateWeeklyOrganiserEntry(id: string, entry: Partial<InsertWeeklyOrganiser>): Promise<WeeklyOrganiser>;
   deleteWeeklyOrganiserEntry(id: string): Promise<void>;
   upsertWeeklyOrganiserEntry(entry: InsertWeeklyOrganiser): Promise<WeeklyOrganiser>;
+
+  // Manual Organiser operations
+  getOrganiserStaff(): Promise<OrganiserStaff[]>;
+  createOrganiserStaff(staff: InsertOrganiserStaff): Promise<OrganiserStaff>;
+  updateOrganiserStaff(id: string, staff: Partial<InsertOrganiserStaff>): Promise<OrganiserStaff>;
+  deleteOrganiserStaff(id: string): Promise<void>;
+  getOrganiserAssignments(weekStartDate: string): Promise<(OrganiserAssignment & { staff: OrganiserStaff })[]>;
+  upsertOrganiserAssignment(assignment: InsertOrganiserAssignment): Promise<OrganiserAssignment>;
+  updateOrganiserAssignment(id: string, assignment: Partial<InsertOrganiserAssignment>): Promise<OrganiserAssignment>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2425,6 +2440,148 @@ export class DatabaseStorage implements IStorage {
       }
     } catch (error) {
       console.error("Error upserting weekly organiser entry:", error);
+      throw error;
+    }
+  }
+
+  // Manual Organiser Staff operations
+  async getOrganiserStaff(): Promise<OrganiserStaff[]> {
+    try {
+      const staff = await db
+        .select()
+        .from(organiserStaff)
+        .where(eq(organiserStaff.isActive, true))
+        .orderBy(organiserStaff.sortOrder, organiserStaff.name);
+      return staff;
+    } catch (error) {
+      console.error("Error getting organiser staff:", error);
+      throw error;
+    }
+  }
+
+  async createOrganiserStaff(staff: InsertOrganiserStaff): Promise<OrganiserStaff> {
+    try {
+      const [newStaff] = await db
+        .insert(organiserStaff)
+        .values(staff)
+        .returning();
+      return newStaff;
+    } catch (error) {
+      console.error("Error creating organiser staff:", error);
+      throw error;
+    }
+  }
+
+  async updateOrganiserStaff(id: string, staff: Partial<InsertOrganiserStaff>): Promise<OrganiserStaff> {
+    try {
+      const [updatedStaff] = await db
+        .update(organiserStaff)
+        .set({
+          ...staff,
+          updatedAt: new Date(),
+        })
+        .where(eq(organiserStaff.id, id))
+        .returning();
+      
+      if (!updatedStaff) {
+        throw new Error("Organiser staff not found");
+      }
+      
+      return updatedStaff;
+    } catch (error) {
+      console.error("Error updating organiser staff:", error);
+      throw error;
+    }
+  }
+
+  async deleteOrganiserStaff(id: string): Promise<void> {
+    try {
+      // Soft delete by setting isActive to false
+      await db
+        .update(organiserStaff)
+        .set({
+          isActive: false,
+          updatedAt: new Date(),
+        })
+        .where(eq(organiserStaff.id, id));
+    } catch (error) {
+      console.error("Error deleting organiser staff:", error);
+      throw error;
+    }
+  }
+
+  async getOrganiserAssignments(weekStartDate: string): Promise<(OrganiserAssignment & { staff: OrganiserStaff })[]> {
+    try {
+      const assignments = await db
+        .select()
+        .from(organiserAssignments)
+        .leftJoin(organiserStaff, eq(organiserAssignments.staffId, organiserStaff.id))
+        .where(
+          and(
+            eq(organiserAssignments.weekStartDate, weekStartDate),
+            eq(organiserStaff.isActive, true)
+          )
+        )
+        .orderBy(organiserStaff.sortOrder, organiserStaff.name);
+
+      return assignments.map(row => ({
+        ...row.organiser_assignments,
+        staff: row.organiser_staff!,
+      }));
+    } catch (error) {
+      console.error("Error getting organiser assignments:", error);
+      throw error;
+    }
+  }
+
+  async upsertOrganiserAssignment(assignment: InsertOrganiserAssignment): Promise<OrganiserAssignment> {
+    try {
+      // Check if assignment exists for this staff and week
+      const [existingAssignment] = await db
+        .select()
+        .from(organiserAssignments)
+        .where(
+          and(
+            eq(organiserAssignments.staffId, assignment.staffId),
+            eq(organiserAssignments.weekStartDate, assignment.weekStartDate)
+          )
+        );
+      
+      if (existingAssignment) {
+        // Update existing assignment
+        return await this.updateOrganiserAssignment(existingAssignment.id, assignment);
+      } else {
+        // Create new assignment
+        const [newAssignment] = await db
+          .insert(organiserAssignments)
+          .values(assignment)
+          .returning();
+        return newAssignment;
+      }
+    } catch (error) {
+      console.error("Error upserting organiser assignment:", error);
+      throw error;
+    }
+  }
+
+  async updateOrganiserAssignment(id: string, assignment: Partial<InsertOrganiserAssignment>): Promise<OrganiserAssignment> {
+    try {
+      const [updatedAssignment] = await db
+        .update(organiserAssignments)
+        .set({
+          ...assignment,
+          updatedAt: new Date(),
+        })
+        .where(eq(organiserAssignments.id, id))
+        .returning();
+      
+      if (!updatedAssignment) {
+        throw new Error("Organiser assignment not found");
+      }
+      
+      return updatedAssignment;
+    } catch (error) {
+      console.error("Error updating organiser assignment:", error);
       throw error;
     }
   }

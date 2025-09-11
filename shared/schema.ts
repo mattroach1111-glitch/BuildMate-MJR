@@ -734,3 +734,65 @@ export type RewardSettings = typeof rewardSettings.$inferSelect;
 export type InsertRewardSettings = z.infer<typeof insertRewardSettingsSchema>;
 export type JobUpdateNote = typeof jobUpdateNotes.$inferSelect;
 export type InsertJobUpdateNote = z.infer<typeof insertJobUpdateNoteSchema>;
+
+// =============================================================================
+// MANUAL WEEKLY ORGANISER SYSTEM (Independent of Employee System)
+// =============================================================================
+
+// Manual staff entries for the organiser (completely independent)
+export const organiserStaff = pgTable("organiser_staff", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0), // For maintaining display order
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Weekly assignments for each staff member
+export const organiserAssignments = pgTable("organiser_assignments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  staffId: varchar("staff_id").notNull().references(() => organiserStaff.id, { onDelete: "cascade" }),
+  weekStartDate: date("week_start_date").notNull(), // Monday of the week
+  monday: text("monday").default(""),
+  tuesday: text("tuesday").default(""),
+  wednesday: text("wednesday").default(""),
+  thursday: text("thursday").default(""),
+  friday: text("friday").default(""),
+  saturday: text("saturday").default(""),
+  sunday: text("sunday").default(""),
+  notes: text("notes").default(""),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Relations for manual organiser system
+export const organiserStaffRelations = relations(organiserStaff, ({ many }) => ({
+  assignments: many(organiserAssignments),
+}));
+
+export const organiserAssignmentsRelations = relations(organiserAssignments, ({ one }) => ({
+  staff: one(organiserStaff, {
+    fields: [organiserAssignments.staffId],
+    references: [organiserStaff.id],
+  }),
+}));
+
+// Insert schemas for manual organiser system
+export const insertOrganiserStaffSchema = createInsertSchema(organiserStaff).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertOrganiserAssignmentSchema = createInsertSchema(organiserAssignments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types for manual organiser system
+export type OrganiserStaff = typeof organiserStaff.$inferSelect;
+export type InsertOrganiserStaff = z.infer<typeof insertOrganiserStaffSchema>;
+export type OrganiserAssignment = typeof organiserAssignments.$inferSelect;
+export type InsertOrganiserAssignment = z.infer<typeof insertOrganiserAssignmentSchema>;
