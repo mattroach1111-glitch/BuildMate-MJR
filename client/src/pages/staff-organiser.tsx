@@ -1,0 +1,321 @@
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar, ArrowLeft, User, Clock, MapPin } from "lucide-react";
+import { useLocation } from "wouter";
+import PageLayout from "@/components/page-layout";
+import { format, parseISO, addDays, startOfWeek } from "date-fns";
+
+interface WeekOption {
+  weekStartDate: string;
+  label: string;
+  isCurrent: boolean;
+}
+
+interface Assignment {
+  monday: string;
+  tuesday: string;
+  wednesday: string;
+  thursday: string;
+  friday: string;
+  saturday: string;
+  sunday: string;
+}
+
+interface OrganiserEntry {
+  id?: string;
+  staffId: string;
+  staffName: string;
+  weekStartDate: string;
+  assignments: Assignment;
+  notes: string;
+}
+
+export default function StaffOrganiser() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const [location, navigate] = useLocation();
+  const [selectedWeek, setSelectedWeek] = useState<string>("");
+
+  const handleBackClick = () => {
+    navigate('/');
+  };
+
+  // Fetch available weeks
+  const { data: weeks = [], isLoading: weeksLoading } = useQuery({
+    queryKey: ["/api/organiser/weeks"],
+    enabled: isAuthenticated,
+  });
+
+  // Set initial week selection
+  useEffect(() => {
+    if (weeks.length > 0 && !selectedWeek) {
+      const currentWeek = weeks.find((w: WeekOption) => w.isCurrent);
+      setSelectedWeek(currentWeek?.weekStartDate || weeks[0]?.weekStartDate);
+    }
+  }, [weeks, selectedWeek]);
+
+  // Fetch organiser data for selected week
+  const { 
+    data: organiserData = [], 
+    isLoading: organiserLoading 
+  } = useQuery({
+    queryKey: ["/api/organiser", selectedWeek],
+    enabled: !!selectedWeek && isAuthenticated,
+  });
+
+  if (isLoading || weeksLoading) {
+    return (
+      <PageLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading schedule...</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <PageLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <p className="text-gray-600 mb-4">You need to be logged in to view your schedule.</p>
+            <Button onClick={() => window.location.href = "/api/login"}>
+              Log In
+            </Button>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  const userAssignment = organiserData[0] as OrganiserEntry | undefined;
+
+  // Convert assignments to daily schedule format
+  const generateWeeklySchedule = () => {
+    if (!userAssignment || !selectedWeek) return [];
+
+    const weekStart = parseISO(selectedWeek);
+    const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+    const dayLabels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    return dayLabels.map((dayLabel, index) => {
+      const date = addDays(weekStart, index);
+      const dayKey = dayNames[index];
+      const assignment = userAssignment.assignments[dayKey] || "";
+
+      return {
+        day: dayLabel,
+        date: format(date, 'dd MMM'),
+        jobs: assignment ? [{ 
+          site: assignment, 
+          time: "8:00 AM - 4:00 PM", // Default time - could be customized
+          status: "scheduled" 
+        }] : []
+      };
+    });
+  };
+
+  const weeklySchedule = generateWeeklySchedule();
+  const scheduledDays = weeklySchedule.filter(day => day.jobs.length > 0).length;
+  const totalJobs = weeklySchedule.reduce((sum, day) => sum + day.jobs.length, 0);
+
+  // Format week display
+  const formatWeekDisplay = () => {
+    if (!selectedWeek) return "Select a week";
+    const weekStart = parseISO(selectedWeek);
+    const weekEnd = addDays(weekStart, 6);
+    return `${format(weekStart, 'EEE, dd MMM')} - ${format(weekEnd, 'EEE, dd MMM yyyy')}`;
+  };
+
+  return (
+    <PageLayout>
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <Button 
+              variant="outline" 
+              onClick={handleBackClick}
+              className="flex items-center gap-2"
+              data-testid="button-back-dashboard"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-gray-900">Weekly Schedule</h1>
+              <p className="text-gray-600">{formatWeekDisplay()}</p>
+            </div>
+            <div className="hidden sm:block w-[140px]"></div> {/* Spacer for flexbox alignment */}
+          </div>
+
+          {/* Week Selection */}
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <div className="flex gap-4 items-center justify-center">
+                <label htmlFor="week-select" className="text-sm font-medium">Select Week:</label>
+                <Select 
+                  value={selectedWeek} 
+                  onValueChange={setSelectedWeek}
+                  data-testid="select-staff-week"
+                >
+                  <SelectTrigger className="w-[250px]">
+                    <SelectValue placeholder="Choose week..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {weeks.map((week: WeekOption) => (
+                      <SelectItem key={week.weekStartDate} value={week.weekStartDate}>
+                        {week.label} {week.isCurrent && "(Current)"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {organiserLoading ? (
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <Card key={i}>
+                  <CardContent className="p-6">
+                    <div className="animate-pulse space-y-3">
+                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                      <div className="h-20 bg-gray-200 rounded"></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <>
+              {/* Week Overview Card */}
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-orange-600" />
+                    This Week's Schedule
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="bg-blue-50 p-4 rounded-lg" data-testid="stat-days-scheduled">
+                      <div className="text-2xl font-bold text-blue-700">{scheduledDays}</div>
+                      <div className="text-sm text-blue-600">Days Scheduled</div>
+                    </div>
+                    <div className="bg-green-50 p-4 rounded-lg" data-testid="stat-total-hours">
+                      <div className="text-2xl font-bold text-green-700">{scheduledDays * 8}</div>
+                      <div className="text-sm text-green-600">Total Hours</div>
+                    </div>
+                    <div className="bg-orange-50 p-4 rounded-lg" data-testid="stat-job-sites">
+                      <div className="text-2xl font-bold text-orange-700">{totalJobs}</div>
+                      <div className="text-sm text-orange-600">Job Sites</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Daily Schedule */}
+              <div className="grid gap-4">
+                {weeklySchedule.map((day) => (
+                  <Card 
+                    key={day.day} 
+                    className={`${day.jobs.length === 0 ? 'opacity-60' : ''}`}
+                    data-testid={`card-day-${day.day.toLowerCase()}`}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">
+                          {day.day}
+                        </CardTitle>
+                        <Badge variant="secondary" className="text-sm">
+                          {day.date}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {day.jobs.length > 0 ? (
+                        <div className="space-y-3">
+                          {day.jobs.map((job, index) => (
+                            <div 
+                              key={index} 
+                              className="bg-orange-50 border border-orange-200 rounded-lg p-4"
+                              data-testid={`job-assignment-${day.day.toLowerCase()}-${index}`}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <MapPin className="h-4 w-4 text-orange-600" />
+                                    <span className="font-semibold text-gray-900">{job.site}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-gray-600">
+                                    <Clock className="h-4 w-4" />
+                                    <span>{job.time}</span>
+                                  </div>
+                                </div>
+                                <Badge 
+                                  variant={job.status === 'scheduled' ? 'default' : 'secondary'}
+                                  className="bg-orange-100 text-orange-800 border-orange-300"
+                                >
+                                  {job.status}
+                                </Badge>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p>No jobs scheduled</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Notes Section */}
+              {userAssignment?.notes && (
+                <Card className="mt-6 border-green-200 bg-green-50">
+                  <CardHeader>
+                    <CardTitle className="text-green-900">Notes for this week</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-green-800" data-testid="text-week-notes">
+                      {userAssignment.notes}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Notice */}
+              <Card className="mt-6 border-blue-200 bg-blue-50">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-blue-600 rounded-full p-1">
+                      <User className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-blue-900 mb-1">Schedule Updates</h3>
+                      <p className="text-blue-700 text-sm">
+                        Your schedule is managed by the admin team. If you have any questions about your assignments 
+                        or need to request changes, please contact your supervisor.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </div>
+      </div>
+    </PageLayout>
+  );
+}

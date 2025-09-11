@@ -23,7 +23,7 @@ import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, Settings, UserPlus, Download, Edit, DollarSign, TrendingUp, Building2, Bell, RotateCcw, Shield, Lock, RefreshCw, Trophy, Upload } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, Settings, UserPlus, Download, Edit, DollarSign, TrendingUp, Building2, Bell, RotateCcw, Shield, Lock, RefreshCw, Trophy, Upload, User, Copy } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
@@ -39,6 +39,7 @@ import JobUpdateDialog from "@/components/job-update-form";
 import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor";
 import EmailProcessingReview from "@/components/EmailProcessingReview";
 import { NotificationSettings } from "@/components/NotificationSettings";
+import WeeklyOrganiser from "@/components/weekly-organiser";
 
 // Helper function to format date as "16th Aug" format
 const formatJobDate = (dateStr: string | Date) => {
@@ -1631,6 +1632,20 @@ export default function AdminDashboard() {
             >
               <Search className="h-4 w-4" />
               <span className="hidden sm:inline font-medium">Search</span>
+            </Button>
+            <Button
+              variant={activeTab === "organiser" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveTab("organiser")}
+              className={`flex items-center gap-2 transition-all duration-200 ${
+                activeTab === "organiser" 
+                  ? "bg-orange-600 hover:bg-orange-700 text-white shadow-lg" 
+                  : "border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 hover:shadow-md"
+              }`}
+              data-testid="tab-organiser"
+            >
+              <Calendar className="h-4 w-4" />
+              <span className="hidden sm:inline font-medium">Organiser</span>
             </Button>
           </div>
 
@@ -3383,6 +3398,10 @@ export default function AdminDashboard() {
               </p>
             </Card>
           )}
+          </TabsContent>
+
+          <TabsContent value="organiser" className="space-y-6">
+            <WeeklyOrganiser />
           </TabsContent>
 
           <TabsContent value="employees" className="space-y-6">

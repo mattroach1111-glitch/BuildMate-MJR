@@ -510,6 +510,36 @@ export type StaffNote = typeof staffNotes.$inferSelect;
 export type InsertStaffNote = z.infer<typeof insertStaffNoteSchema>;
 
 // =============================================================================
+// WEEKLY ORGANISER SYSTEM
+// =============================================================================
+
+export const weeklyOrganiser = pgTable("weekly_organiser", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  weekStartDate: date("week_start_date").notNull(), // Monday of the week
+  staffId: varchar("staff_id").notNull().references(() => employees.id, { onDelete: "cascade" }),
+  assignedJobs: text("assigned_jobs").notNull().default(""), // Job assignments for the week
+  notes: text("notes").default(""), // Optional notes for the staff member's week
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const weeklyOrganiserRelations = relations(weeklyOrganiser, ({ one }) => ({
+  staff: one(employees, {
+    fields: [weeklyOrganiser.staffId],
+    references: [employees.id],
+  }),
+}));
+
+export const insertWeeklyOrganiserSchema = createInsertSchema(weeklyOrganiser).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type WeeklyOrganiser = typeof weeklyOrganiser.$inferSelect;
+export type InsertWeeklyOrganiser = z.infer<typeof insertWeeklyOrganiserSchema>;
+
+// =============================================================================
 // REWARDS SYSTEM TABLES
 // =============================================================================
 

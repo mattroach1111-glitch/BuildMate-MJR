@@ -122,6 +122,7 @@ import {
   insertRewardTransactionSchema,
   insertRewardRedemptionSchema,
   insertRewardCatalogSchema,
+  insertWeeklyOrganiserSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -5088,6 +5089,263 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting prize:", error);
       res.status(500).json({ message: "Failed to delete prize" });
+    }
+  });
+
+  // Weekly Organiser routes
+  app.get("/api/organiser/weeks", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // Generate list of weeks (current week + next 4 weeks)
+      const weeks = [];
+      const today = new Date();
+      const currentMonday = new Date(today);
+      currentMonday.setDate(today.getDate() - today.getDay() + 1); // Get Monday of current week
+
+      for (let i = 0; i < 5; i++) {
+        const weekStart = new Date(currentMonday);
+        weekStart.setDate(currentMonday.getDate() + (i * 7));
+        
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        
+        weeks.push({
+          weekStartDate: weekStart.toISOString().split('T')[0],
+          label: `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`,
+          isCurrent: i === 0
+        });
+      }
+
+      res.json(weeks);
+    } catch (error) {
+      console.error("Error fetching organiser weeks:", error);
+      res.status(500).json({ message: "Failed to fetch weeks" });
+    }
+  });
+
+  app.get("/api/organiser/:weekStartDate", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      const { weekStartDate } = req.params;
+
+      // Validate date format
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStartDate)) {
+        return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD" });
+      }
+
+      // Admin can view all organiser data, staff can only view their own
+      if (user?.role === "admin") {
+        // Get all employees and their organiser entries for the week
+        const employees = await storage.getEmployees();
+        const organiserEntries = await storage.getWeeklyOrganiserByWeek(weekStartDate);
+        
+        // Create a map for quick lookup
+        const organiserMap = new Map();
+        organiserEntries.forEach(entry => {
+          organiserMap.set(entry.staffId, entry);
+        });
+
+        // Return all staff with their assignments (or empty if none exist)
+        const assignments = employees.map(employee => {
+          const organiserEntry = organiserMap.get(employee.id);
+          let assignments = {
+            monday: "",
+            tuesday: "",
+            wednesday: "",
+            thursday: "",
+            friday: "",
+            saturday: "",
+            sunday: ""
+          };
+
+          if (organiserEntry && organiserEntry.assignedJobs) {
+            try {
+              // Parse the JSON assignments
+              assignments = JSON.parse(organiserEntry.assignedJobs);
+            } catch (parseError) {
+              console.error("Error parsing assignedJobs JSON:", parseError);
+            }
+          }
+
+          return {
+            id: organiserEntry?.id,
+            staffId: employee.id,
+            staffName: employee.name,
+            weekStartDate,
+            assignments,
+            notes: organiserEntry?.notes || ""
+          };
+        });
+        
+        res.json(assignments);
+      } else {
+        // Staff can only view their own assignments
+        if (!user?.employeeId) {
+          return res.status(400).json({ message: "User is not assigned to an employee" });
+        }
+
+        const organiserEntry = await storage.getWeeklyOrganiserForStaff(user.employeeId, weekStartDate);
+        
+        let assignments = {
+          monday: "",
+          tuesday: "",
+          wednesday: "",
+          thursday: "",
+          friday: "",
+          saturday: "",
+          sunday: ""
+        };
+
+        if (organiserEntry && organiserEntry.assignedJobs) {
+          try {
+            assignments = JSON.parse(organiserEntry.assignedJobs);
+          } catch (parseError) {
+            console.error("Error parsing assignedJobs JSON:", parseError);
+          }
+        }
+
+        const response = {
+          id: organiserEntry?.id,
+          staffId: user.employeeId,
+          staffName: (user.firstName || "") + " " + (user.lastName || ""),
+          weekStartDate,
+          assignments,
+          notes: organiserEntry?.notes || ""
+        };
+        
+        res.json([response]);
+      }
+    } catch (error) {
+      console.error("Error fetching organiser data:", error);
+      res.status(500).json({ message: "Failed to fetch organiser data" });
+    }
+  });
+
+  app.post("/api/organiser", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // Validate request body with Zod
+      const organiserData = insertWeeklyOrganiserSchema.extend({
+        assignments: z.object({
+          monday: z.string().optional(),
+          tuesday: z.string().optional(),
+          wednesday: z.string().optional(),
+          thursday: z.string().optional(),
+          friday: z.string().optional(),
+          saturday: z.string().optional(),
+          sunday: z.string().optional(),
+        })
+      }).parse({
+        ...req.body,
+        assignedJobs: JSON.stringify(req.body.assignments || {})
+      });
+
+      // Validate that the staff member exists
+      const staff = await storage.getEmployee(organiserData.staffId);
+      if (!staff) {
+        return res.status(400).json({ message: "Staff member not found" });
+      }
+
+      // Use upsert to create or update existing entry
+      const organiserEntry = await storage.upsertWeeklyOrganiserEntry({
+        weekStartDate: organiserData.weekStartDate,
+        staffId: organiserData.staffId,
+        assignedJobs: organiserData.assignedJobs,
+        notes: organiserData.notes || "",
+      });
+
+      res.status(201).json(organiserEntry);
+    } catch (error) {
+      console.error("Error creating organiser entry:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: fromZodError(error).toString() 
+        });
+      }
+      res.status(500).json({ message: "Failed to create organiser entry" });
+    }
+  });
+
+  app.put("/api/organiser/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { id } = req.params;
+      
+      // Validate request body with Zod
+      const updateData = z.object({
+        assignments: z.object({
+          monday: z.string().optional(),
+          tuesday: z.string().optional(),
+          wednesday: z.string().optional(),
+          thursday: z.string().optional(),
+          friday: z.string().optional(),
+          saturday: z.string().optional(),
+          sunday: z.string().optional(),
+        }).optional(),
+        notes: z.string().optional(),
+      }).parse(req.body);
+
+      // Build update object
+      const updateFields: any = {};
+      if (updateData.assignments) {
+        updateFields.assignedJobs = JSON.stringify(updateData.assignments);
+      }
+      if (updateData.notes !== undefined) {
+        updateFields.notes = updateData.notes;
+      }
+
+      // Update the entry in the database
+      const updatedEntry = await storage.updateWeeklyOrganiserEntry(id, updateFields);
+
+      res.json(updatedEntry);
+    } catch (error) {
+      console.error("Error updating organiser entry:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: fromZodError(error).toString() 
+        });
+      }
+      if (error.message === "Weekly organiser entry not found") {
+        return res.status(404).json({ message: "Organiser entry not found" });
+      }
+      res.status(500).json({ message: "Failed to update organiser entry" });
+    }
+  });
+
+  app.delete("/api/organiser/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { id } = req.params;
+      
+      // Validate that the entry exists before deleting
+      try {
+        await storage.deleteWeeklyOrganiserEntry(id);
+        res.json({ message: "Organiser entry deleted successfully" });
+      } catch (deleteError) {
+        console.error("Error in delete operation:", deleteError);
+        return res.status(404).json({ message: "Organiser entry not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting organiser entry:", error);
+      res.status(500).json({ message: "Failed to delete organiser entry" });
     }
   });
 

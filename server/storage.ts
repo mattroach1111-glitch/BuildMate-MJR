@@ -50,6 +50,9 @@ import {
   jobUpdateNotes,
   type JobUpdateNote,
   type InsertJobUpdateNote,
+  weeklyOrganiser,
+  type WeeklyOrganiser,
+  type InsertWeeklyOrganiser,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sum, ne, gte, lte, lt, sql, isNull, or, ilike, inArray } from "drizzle-orm";
@@ -207,6 +210,14 @@ export interface IStorage {
   getJobUpdateNotes(): Promise<JobUpdateNote[]>;
   saveJobUpdateNote(note: InsertJobUpdateNote): Promise<JobUpdateNote>;
   deleteJobUpdateNote(jobId: string): Promise<void>;
+
+  // Weekly Organiser operations
+  getWeeklyOrganiserByWeek(weekStartDate: string): Promise<WeeklyOrganiser[]>;
+  getWeeklyOrganiserForStaff(staffId: string, weekStartDate: string): Promise<WeeklyOrganiser | undefined>;
+  createWeeklyOrganiserEntry(entry: InsertWeeklyOrganiser): Promise<WeeklyOrganiser>;
+  updateWeeklyOrganiserEntry(id: string, entry: Partial<InsertWeeklyOrganiser>): Promise<WeeklyOrganiser>;
+  deleteWeeklyOrganiserEntry(id: string): Promise<void>;
+  upsertWeeklyOrganiserEntry(entry: InsertWeeklyOrganiser): Promise<WeeklyOrganiser>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2299,6 +2310,122 @@ export class DatabaseStorage implements IStorage {
       console.log("✅ Labor entry migration completed successfully");
     } catch (error) {
       console.error("❌ Failed to migrate labor entry hours:", error);
+    }
+  }
+
+  // Weekly Organiser operations
+  async getWeeklyOrganiserByWeek(weekStartDate: string): Promise<WeeklyOrganiser[]> {
+    try {
+      const entries = await db
+        .select({
+          id: weeklyOrganiser.id,
+          weekStartDate: weeklyOrganiser.weekStartDate,
+          staffId: weeklyOrganiser.staffId,
+          assignedJobs: weeklyOrganiser.assignedJobs,
+          notes: weeklyOrganiser.notes,
+          createdAt: weeklyOrganiser.createdAt,
+          updatedAt: weeklyOrganiser.updatedAt,
+          staffName: employees.name,
+        })
+        .from(weeklyOrganiser)
+        .leftJoin(employees, eq(weeklyOrganiser.staffId, employees.id))
+        .where(eq(weeklyOrganiser.weekStartDate, weekStartDate))
+        .orderBy(employees.name);
+      
+      return entries.map(entry => ({
+        id: entry.id,
+        weekStartDate: entry.weekStartDate,
+        staffId: entry.staffId,
+        assignedJobs: entry.assignedJobs,
+        notes: entry.notes,
+        createdAt: entry.createdAt,
+        updatedAt: entry.updatedAt,
+      }));
+    } catch (error) {
+      console.error("Error fetching weekly organiser entries:", error);
+      throw error;
+    }
+  }
+
+  async getWeeklyOrganiserForStaff(staffId: string, weekStartDate: string): Promise<WeeklyOrganiser | undefined> {
+    try {
+      const [entry] = await db
+        .select()
+        .from(weeklyOrganiser)
+        .where(and(
+          eq(weeklyOrganiser.staffId, staffId),
+          eq(weeklyOrganiser.weekStartDate, weekStartDate)
+        ));
+      
+      return entry;
+    } catch (error) {
+      console.error("Error fetching weekly organiser entry for staff:", error);
+      throw error;
+    }
+  }
+
+  async createWeeklyOrganiserEntry(entry: InsertWeeklyOrganiser): Promise<WeeklyOrganiser> {
+    try {
+      const [newEntry] = await db
+        .insert(weeklyOrganiser)
+        .values(entry)
+        .returning();
+      
+      return newEntry;
+    } catch (error) {
+      console.error("Error creating weekly organiser entry:", error);
+      throw error;
+    }
+  }
+
+  async updateWeeklyOrganiserEntry(id: string, entry: Partial<InsertWeeklyOrganiser>): Promise<WeeklyOrganiser> {
+    try {
+      const [updatedEntry] = await db
+        .update(weeklyOrganiser)
+        .set({
+          ...entry,
+          updatedAt: new Date(),
+        })
+        .where(eq(weeklyOrganiser.id, id))
+        .returning();
+      
+      if (!updatedEntry) {
+        throw new Error("Weekly organiser entry not found");
+      }
+      
+      return updatedEntry;
+    } catch (error) {
+      console.error("Error updating weekly organiser entry:", error);
+      throw error;
+    }
+  }
+
+  async deleteWeeklyOrganiserEntry(id: string): Promise<void> {
+    try {
+      await db
+        .delete(weeklyOrganiser)
+        .where(eq(weeklyOrganiser.id, id));
+    } catch (error) {
+      console.error("Error deleting weekly organiser entry:", error);
+      throw error;
+    }
+  }
+
+  async upsertWeeklyOrganiserEntry(entry: InsertWeeklyOrganiser): Promise<WeeklyOrganiser> {
+    try {
+      // Check if entry exists for this staff and week
+      const existingEntry = await this.getWeeklyOrganiserForStaff(entry.staffId, entry.weekStartDate);
+      
+      if (existingEntry) {
+        // Update existing entry
+        return await this.updateWeeklyOrganiserEntry(existingEntry.id, entry);
+      } else {
+        // Create new entry
+        return await this.createWeeklyOrganiserEntry(entry);
+      }
+    } catch (error) {
+      console.error("Error upserting weekly organiser entry:", error);
+      throw error;
     }
   }
 }

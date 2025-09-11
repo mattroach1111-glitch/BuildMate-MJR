@@ -20,7 +20,7 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
   };
 
   const handleOrganiserClick = () => {
-    // Coming soon - no action yet
+    navigate('/organiser');
   };
 
   if (isLoading) {
@@ -94,29 +94,27 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
 
             {/* Organiser Card */}
             <Card 
-              className="cursor-not-allowed opacity-75 border-2 border-gray-200 relative"
+              className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 border-2 border-orange-200 hover:border-orange-400"
               onClick={handleOrganiserClick}
               data-testid="button-organiser"
             >
               <CardHeader className="text-center pb-4">
-                <div className="mx-auto mb-4 p-4 bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center">
-                  <Calendar className="h-8 w-8 text-gray-500" />
+                <div className="mx-auto mb-4 p-4 bg-orange-100 rounded-full w-16 h-16 flex items-center justify-center">
+                  <Calendar className="h-8 w-8 text-orange-600" />
                 </div>
-                <CardTitle className="text-xl font-semibold text-gray-700">
+                <CardTitle className="text-xl font-semibold text-gray-900">
                   Organiser
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-center">
-                <p className="text-gray-500 mb-4">
-                  Schedule management and job planning tools
+                <p className="text-gray-600 mb-4">
+                  View your weekly schedule and job assignments
                 </p>
-                <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-200">
-                  Coming Soon
-                </Badge>
+                <div className="flex items-center justify-center text-orange-600 font-medium">
+                  <span>View Schedule</span>
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </div>
               </CardContent>
-              
-              {/* Coming Soon Overlay */}
-              <div className="absolute inset-0 bg-white bg-opacity-50 rounded-lg pointer-events-none"></div>
             </Card>
 
             {/* Rewards Card */}
