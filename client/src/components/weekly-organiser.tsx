@@ -117,7 +117,7 @@ export default function WeeklyOrganiser() {
   // Add staff mutation
   const addStaffMutation = useMutation({
     mutationFn: async (name: string) => {
-      return apiRequest("/api/organiser/staff", "POST", { 
+      return apiRequest("POST", "/api/organiser/staff", { 
         name: name.trim(),
         sortOrder: staff.length 
       });
@@ -145,7 +145,7 @@ export default function WeeklyOrganiser() {
   // Delete staff mutation
   const deleteStaffMutation = useMutation({
     mutationFn: async (staffId: string) => {
-      return apiRequest(`/api/organiser/staff/${staffId}`, "DELETE");
+      return apiRequest("DELETE", `/api/organiser/staff/${staffId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/organiser/staff"] });
@@ -172,10 +172,10 @@ export default function WeeklyOrganiser() {
       
       if (entry?.id) {
         // Update existing entry
-        return apiRequest(`/api/organiser/${entry.id}`, "PUT", { assignments, notes });
+        return apiRequest("PUT", `/api/organiser/${entry.id}`, { assignments, notes });
       } else {
         // Create new entry
-        return apiRequest("/api/organiser", "POST", {
+        return apiRequest("POST", "/api/organiser", {
           weekStartDate: selectedWeek,
           staffId,
           assignments,
@@ -373,81 +373,97 @@ export default function WeeklyOrganiser() {
                   </tr>
                 </thead>
                 <tbody>
-                  {organiserData.map((entry) => (
-                    <tr key={entry.staffId} className="hover:bg-gray-50">
-                      <td className="border border-gray-300 p-3 font-medium">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-gray-500" />
-                          {entry.staffName}
-                        </div>
-                      </td>
-                      {dayNames.map((day) => (
-                        <td key={day} className="border border-gray-300 p-2">
-                          {editingCell?.staffId === entry.staffId && editingCell?.day === day ? (
-                            <div className="flex flex-col gap-2">
-                              <Input
-                                value={tempValue}
-                                onChange={(e) => setTempValue(e.target.value)}
-                                placeholder="Enter job site..."
-                                className="text-sm"
-                                data-testid={`input-assignment-${entry.staffId}-${day}`}
-                              />
-                              <div className="flex gap-1">
-                                <Button
-                                  size="sm"
-                                  onClick={handleSaveCell}
-                                  disabled={updateOrganiserMutation.isPending}
-                                  data-testid={`button-save-${entry.staffId}-${day}`}
-                                >
-                                  <Save className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={handleCancelEdit}
-                                  data-testid={`button-cancel-${entry.staffId}-${day}`}
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div
-                              className="min-h-[60px] p-2 bg-gray-50 rounded border-dashed border-2 border-gray-300 hover:border-orange-300 hover:bg-orange-50 cursor-pointer transition-colors"
-                              onClick={() => handleCellClick(entry.staffId, day)}
-                              data-testid={`cell-assignment-${entry.staffId}-${day}`}
-                            >
-                              {entry.assignments[day] ? (
-                                <div className="text-sm text-gray-900">
-                                  {entry.assignments[day]}
-                                </div>
-                              ) : (
-                                <div className="text-xs text-gray-500 flex items-center justify-center h-full">
-                                  Click to assign
-                                </div>
-                              )}
-                            </div>
-                          )}
+                  {staff.map((staffMember) => {
+                    // Find the corresponding organiser entry for this staff member
+                    const entry = organiserData.find((item) => item.staffId === staffMember.id);
+                    
+                    // Create empty assignments if no entry exists
+                    const assignments = entry?.assignments || {
+                      monday: "",
+                      tuesday: "",
+                      wednesday: "",
+                      thursday: "",
+                      friday: "",
+                      saturday: "",
+                      sunday: "",
+                    };
+
+                    return (
+                      <tr key={staffMember.id} className="hover:bg-gray-50">
+                        <td className="border border-gray-300 p-3 font-medium">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-gray-500" />
+                            {staffMember.name}
+                          </div>
                         </td>
-                      ))}
-                      <td className="border border-gray-300 p-2">
-                        <div className="text-sm text-gray-600 max-w-[100px] truncate">
-                          {entry.notes || "No notes"}
-                        </div>
-                      </td>
-                      <td className="border border-gray-300 p-2 text-center">
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => deleteStaffMutation.mutate(entry.staffId)}
-                          disabled={deleteStaffMutation.isPending}
-                          data-testid={`button-delete-staff-${entry.staffId}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
+                        {dayNames.map((day) => (
+                          <td key={day} className="border border-gray-300 p-2">
+                            {editingCell?.staffId === staffMember.id && editingCell?.day === day ? (
+                              <div className="flex flex-col gap-2">
+                                <Input
+                                  value={tempValue}
+                                  onChange={(e) => setTempValue(e.target.value)}
+                                  placeholder="Enter job site..."
+                                  className="text-sm"
+                                  data-testid={`input-assignment-${staffMember.id}-${day}`}
+                                />
+                                <div className="flex gap-1">
+                                  <Button
+                                    size="sm"
+                                    onClick={handleSaveCell}
+                                    disabled={updateOrganiserMutation.isPending}
+                                    data-testid={`button-save-${staffMember.id}-${day}`}
+                                  >
+                                    <Save className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={handleCancelEdit}
+                                    data-testid={`button-cancel-${staffMember.id}-${day}`}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div
+                                className="min-h-[60px] p-2 bg-gray-50 rounded border-dashed border-2 border-gray-300 hover:border-orange-300 hover:bg-orange-50 cursor-pointer transition-colors"
+                                onClick={() => handleCellClick(staffMember.id, day)}
+                                data-testid={`cell-assignment-${staffMember.id}-${day}`}
+                              >
+                                {assignments[day] ? (
+                                  <div className="text-sm text-gray-900">
+                                    {assignments[day]}
+                                  </div>
+                                ) : (
+                                  <div className="text-xs text-gray-500 flex items-center justify-center h-full">
+                                    Click to assign
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                        ))}
+                        <td className="border border-gray-300 p-2">
+                          <div className="text-sm text-gray-600 max-w-[100px] truncate">
+                            {entry?.notes || "No notes"}
+                          </div>
+                        </td>
+                        <td className="border border-gray-300 p-2 text-center">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => deleteStaffMutation.mutate(staffMember.id)}
+                            disabled={deleteStaffMutation.isPending}
+                            data-testid={`button-delete-staff-${staffMember.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -500,9 +516,12 @@ export default function WeeklyOrganiser() {
 
       {/* Add Staff Dialog */}
       <Dialog open={showAddStaffDialog} onOpenChange={setShowAddStaffDialog}>
-        <DialogContent>
+        <DialogContent aria-describedby="add-staff-description">
           <DialogHeader>
             <DialogTitle>Add New Staff Member</DialogTitle>
+            <p id="add-staff-description" className="text-sm text-muted-foreground">
+              Enter the name of the staff member you want to add to the weekly organiser.
+            </p>
           </DialogHeader>
           <div className="space-y-4">
             <div>
