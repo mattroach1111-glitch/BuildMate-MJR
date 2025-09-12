@@ -305,7 +305,7 @@ export default function StaffOrganiser() {
                       )}
                     </CardContent>
                   </Card>
-                });
+                );
                 })}
               </div>
 
