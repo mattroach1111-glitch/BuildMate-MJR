@@ -305,22 +305,9 @@ export default function StaffOrganiser() {
                       )}
                     </CardContent>
                   </Card>
-                ))}
+                });
+                })}
               </div>
-
-              {/* Notes Section */}
-              {userAssignment?.notes && (
-                <Card className="mt-6 border-green-200 bg-green-50">
-                  <CardHeader>
-                    <CardTitle className="text-green-900">Notes for this week</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-green-800" data-testid="text-week-notes">
-                      {userAssignment.notes}
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
 
               {/* Notice */}
               <Card className="mt-6 border-blue-200 bg-blue-50">
