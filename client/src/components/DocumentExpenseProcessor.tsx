@@ -3,6 +3,7 @@ import { DocumentUploader } from "./DocumentUploader";
 import { DocumentPreviewModal } from "./DocumentPreviewModal";
 import { EmailInboxInfo } from "./EmailInboxInfo";
 import { JobAddressSearch } from "./job-address-search";
+import { GoogleDriveReconnectDialog } from "./GoogleDriveReconnectDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -55,6 +56,8 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     mimeType?: string;
     fileSize?: number;
   } | null>(null);
+  const [showGoogleDriveReconnect, setShowGoogleDriveReconnect] = useState(false);
+  const [pendingGoogleDriveRetry, setPendingGoogleDriveRetry] = useState<{jobId: string; fileInfo: any} | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -189,13 +192,8 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
             console.log("✅ Automatically uploaded all files to Google Drive");
           } catch (driveError: any) {
             console.log("ℹ️ Google Drive upload not available:", driveError.message);
-            // Show helpful message about Google Drive connection
-            if (driveError.message?.includes('Google Drive not connected')) {
-              toast({
-                title: "Document Saved", 
-                description: "Document saved to job. Connect Google Drive in Settings for clickable PDF links.",
-              });
-            }
+            // Use the new structured error handling
+            handleGoogleDriveError(driveError, selectedJobId, uploadedFiles[0]);
           }
 
           setUploadedFiles([]); // Clear after saving
@@ -264,6 +262,75 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     }
   });
 
+  // Helper function to handle Google Drive errors
+  const handleGoogleDriveError = (error: any, jobId: string, fileInfo: any) => {
+    console.error('Google Drive error details:', error);
+    
+    let errorData: any = {};
+    
+    try {
+      // The apiRequest function returns errors in format: "status: jsonResponse"
+      // Extract the JSON part after the status code
+      const errorMessage = error.message || '';
+      const colonIndex = errorMessage.indexOf(': ');
+      
+      if (colonIndex !== -1) {
+        const jsonPart = errorMessage.substring(colonIndex + 2);
+        errorData = JSON.parse(jsonPart);
+        console.log('📄 Parsed structured error:', errorData);
+      }
+    } catch (parseError) {
+      console.warn('Could not parse structured error, checking for legacy patterns:', parseError);
+      
+      // Fallback to check for legacy error patterns
+      const errorMessage = error.message || '';
+      if (errorMessage.includes('Google Drive not connected') || errorMessage.includes('401')) {
+        errorData = { code: 'AUTH_REQUIRED', requiresReconnect: true };
+      }
+    }
+    
+    // Handle structured error responses
+    if (errorData.code === 'AUTH_REQUIRED' || errorData.requiresReconnect) {
+      // Store the retry data and show reconnection dialog
+      setPendingGoogleDriveRetry({ jobId, fileInfo });
+      setShowGoogleDriveReconnect(true);
+      
+      toast({
+        title: "Google Drive Connection Expired",
+        description: "Please reconnect your Google Drive account to continue uploading documents.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (errorData.code === 'RATE_LIMITED') {
+      toast({
+        title: "Google Drive Rate Limited",
+        description: "Too many requests. Please try again in a few minutes.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (errorData.retryable) {
+      toast({
+        title: "Temporary Google Drive Issue",
+        description: "There was a temporary issue with Google Drive. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Default error handling
+    toast({
+      title: "Google Drive Upload Failed",
+      description: errorData.message || error.message?.includes('Google Drive not connected') 
+        ? "Please connect your Google Drive account first"
+        : "Failed to upload to Google Drive",
+      variant: "destructive",
+    });
+  };
+
   // Upload file to Google Drive after processing
   const uploadToGoogleDriveMutation = useMutation({
     mutationFn: async (data: { jobId: string; fileInfo: any }) => {
@@ -283,15 +350,8 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
         description: "Document uploaded to Google Drive and linked to job",
       });
     },
-    onError: (error: any) => {
-      console.error('Error uploading to Google Drive:', error);
-      toast({
-        title: "Google Drive Upload Failed",
-        description: error.message?.includes('Google Drive not connected') 
-          ? "Please connect your Google Drive account first"
-          : "Failed to upload to Google Drive",
-        variant: "destructive",
-      });
+    onError: (error: any, variables) => {
+      handleGoogleDriveError(error, variables.jobId, variables.fileInfo);
     },
   });
 
@@ -507,6 +567,7 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
               anyGoogleDriveUploaded = true;
             } catch (driveError) {
               console.log("ℹ️ Google Drive upload skipped (not connected or failed):", driveError);
+              // Error handling is done in the mutation's onError callback
               // Don't fail the process if Google Drive upload fails
             }
           } catch (fileError) {
@@ -989,6 +1050,28 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
           fileSize={previewDoc.fileSize}
         />
       )}
+
+      {/* Google Drive Reconnection Dialog */}
+      <GoogleDriveReconnectDialog
+        open={showGoogleDriveReconnect}
+        onOpenChange={setShowGoogleDriveReconnect}
+        onReconnectSuccess={() => {
+          // Automatically retry the pending upload after reconnection
+          if (pendingGoogleDriveRetry) {
+            setTimeout(() => {
+              uploadToGoogleDriveMutation.mutate(pendingGoogleDriveRetry);
+              setPendingGoogleDriveRetry(null);
+            }, 2000); // Give some time for the new tokens to be saved
+          }
+          
+          toast({
+            title: "Google Drive Reconnected",
+            description: "Your documents will now upload automatically to Google Drive.",
+          });
+        }}
+        title="Google Drive Connection Expired"
+        description="Your Google Drive connection has expired. Reconnect to continue uploading documents automatically with clickable links in job sheet PDFs."
+      />
     </div>
   );
 }

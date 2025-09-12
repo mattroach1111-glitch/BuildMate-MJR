@@ -11,7 +11,7 @@ import {
 import { eq, sql, desc } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { TimesheetPDFGenerator } from "./pdfGenerator";
-import { GoogleDriveService } from "./googleDriveService";
+import { GoogleDriveService, GoogleDriveError } from "./googleDriveService";
 import { GoogleDriveAuth } from "./googleAuth";
 import { DocumentProcessor } from "./services/documentProcessor";
 import { rewardsService } from "./services/rewardsService";
@@ -3017,7 +3017,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid Google Drive tokens. Please reconnect your Google Drive account." });
       }
       
-      googleDriveService.setUserTokens(tokens, userId);
+      // Setup token refresh callback to save updated tokens
+      const tokenRefreshCallback = async (newTokens: any) => {
+        await storage.updateUserGoogleDriveTokens(userId, JSON.stringify(newTokens));
+      };
+      
+      googleDriveService.setUserTokens(tokens, userId, tokenRefreshCallback);
 
       // Create main BuildFlow Pro folder first
       const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
@@ -3026,11 +3031,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId);
       
       // Upload file to Google Drive
-      const uploadResult = await googleDriveService.uploadFile(fileName, fileBuffer, mimeType || 'application/octet-stream', jobFolderId || undefined);
-      
-      if (!uploadResult) {
-        return res.status(500).json({ error: "Failed to upload to Google Drive" });
-      }
+      const uploadResult = await googleDriveService.uploadFile(fileName, fileBuffer, mimeType || 'application/octet-stream', jobFolderId);
 
       // Find existing file record and update it with Google Drive info
       const existingFile = await storage.findExistingJobFile(jobId, fileName, documentURL);
@@ -3068,7 +3069,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error("Error uploading to Google Drive:", error);
-      res.status(500).json({ error: "Failed to upload document to Google Drive" });
+      
+      // Handle GoogleDriveError with specific error codes for frontend
+      if (error instanceof GoogleDriveError) {
+        switch (error.code) {
+          case 'AUTH_REQUIRED':
+            return res.status(401).json({ 
+              error: error.message,
+              code: 'AUTH_REQUIRED',
+              requiresReconnect: true,
+              message: "Google Drive connection expired. Please reconnect your Google Drive account."
+            });
+          
+          case 'RATE_LIMITED':
+            return res.status(429).json({ 
+              error: error.message,
+              code: 'RATE_LIMITED',
+              retryable: error.retryable,
+              message: "Google Drive rate limit exceeded. Please try again in a few minutes."
+            });
+          
+          case 'SERVER_ERROR':
+          case 'NETWORK_ERROR':
+            return res.status(503).json({ 
+              error: error.message,
+              code: error.code,
+              retryable: error.retryable,
+              message: "Temporary Google Drive issue. Please try again later."
+            });
+          
+          default:
+            return res.status(500).json({ 
+              error: error.message,
+              code: 'UNKNOWN_ERROR',
+              retryable: false,
+              message: "An unexpected error occurred with Google Drive upload."
+            });
+        }
+      }
+      
+      // Handle other types of errors
+      res.status(500).json({ 
+        error: "Failed to upload document to Google Drive",
+        code: 'UNKNOWN_ERROR',
+        retryable: false
+      });
     }
   });
 
