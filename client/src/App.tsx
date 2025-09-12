@@ -65,9 +65,15 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <div id="app-container">
-        <Router />
-      </div>
+      <TooltipProvider>
+        <div id="app-container">
+          <Router />
+          <Toaster />
+          <NotificationPopup />
+          <PWAInstallPrompt />
+          <OrientationToggle />
+        </div>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
