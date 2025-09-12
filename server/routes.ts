@@ -5417,6 +5417,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Staff-specific organiser endpoints
+  app.get("/api/organiser/staff/weeks", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      // Staff can access this endpoint - generate list of weeks (current week + next 4 weeks)
+      const weeks = [];
+      const today = new Date();
+      const currentMonday = new Date(today);
+      currentMonday.setDate(today.getDate() - (today.getDay() + 6) % 7);
+
+      for (let i = 0; i < 5; i++) {
+        const weekStart = new Date(currentMonday);
+        weekStart.setDate(currentMonday.getDate() + (i * 7));
+        
+        weeks.push({
+          weekStartDate: weekStart.toISOString().split('T')[0],
+          label: `Week of ${weekStart.getDate()}/${weekStart.getMonth() + 1}/${weekStart.getFullYear()}`,
+          isCurrent: i === 0
+        });
+      }
+
+      res.json(weeks);
+    } catch (error) {
+      console.error("Error fetching staff organiser weeks:", error);
+      res.status(500).json({ message: "Failed to fetch weeks" });
+    }
+  });
+
+  // Get staff member's own schedule only
+  app.get("/api/organiser/my-schedule", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const { week: weekStartDate } = req.query;
+
+      // Validate date format
+      if (!weekStartDate || !/^\d{4}-\d{2}-\d{2}$/.test(weekStartDate as string)) {
+        return res.status(400).json({ message: "Valid week start date required (YYYY-MM-DD format)" });
+      }
+
+      // SECURITY: Since the organiser system is manual and independent, 
+      // we need exact matches to prevent data leakage
+      const assignments = await storage.getOrganiserAssignments(weekStartDate as string);
+      
+      // Use exact matching only for security
+      const userEmail = user.email?.toLowerCase();
+      const userName = user.username?.toLowerCase();
+      
+      const myAssignment = assignments.find(assignment => {
+        const staffNameLower = assignment.staffName.toLowerCase().trim();
+        
+        // Exact matches only - no substring matching to prevent data leakage
+        return staffNameLower === userEmail || 
+               staffNameLower === userName ||
+               staffNameLower === userEmail?.split('@')[0]?.toLowerCase();
+      });
+
+      // Return only this user's assignment or empty data for security
+      const result = myAssignment ? [myAssignment] : [];
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching my organiser schedule:", error);
+      res.status(500).json({ message: "Failed to fetch my schedule" });
+    }
+  });
+
   // Health check endpoint
   app.get("/api/health", async (req, res) => {
     try {

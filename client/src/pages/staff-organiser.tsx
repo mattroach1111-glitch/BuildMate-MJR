@@ -46,7 +46,7 @@ export default function StaffOrganiser() {
 
   // Fetch available weeks
   const { data: weeks = [], isLoading: weeksLoading } = useQuery<WeekOption[]>({
-    queryKey: ["/api/organiser/weeks"],
+    queryKey: ["/api/organiser/staff/weeks"],
     enabled: isAuthenticated,
   });
 
@@ -63,7 +63,18 @@ export default function StaffOrganiser() {
     data: organiserData = [], 
     isLoading: organiserLoading 
   } = useQuery<OrganiserEntry[]>({
-    queryKey: ["/api/organiser/my-schedule", selectedWeek],
+    queryKey: ["/api/organiser/my-schedule", { week: selectedWeek }],
+    queryFn: async () => {
+      if (!selectedWeek) return [];
+      const response = await fetch(`/api/organiser/my-schedule?week=${selectedWeek}`);
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Not authenticated');
+        }
+        throw new Error('Failed to fetch schedule');
+      }
+      return response.json();
+    },
     enabled: !!selectedWeek && isAuthenticated,
   });
 
