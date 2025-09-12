@@ -5449,12 +5449,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get staff member's own schedule only
+  // Get staff view of all organiser assignments (read-only)
   app.get("/api/organiser/my-schedule", isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);
       if (!user) {
         return res.status(401).json({ message: "User not found" });
+      }
+
+      // Staff users can see all organiser assignments (same as admin view but read-only)
+      if (user.role === "admin") {
+        return res.status(403).json({ message: "This endpoint is for staff users only. Admins should use /api/organiser" });
       }
 
       const { week: weekStartDate } = req.query;
@@ -5464,30 +5469,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Valid week start date required (YYYY-MM-DD format)" });
       }
 
-      // SECURITY: Since the organiser system is manual and independent, 
-      // we need exact matches to prevent data leakage
+      // Get all organiser assignments for the week (same data admin sees)
       const assignments = await storage.getOrganiserAssignments(weekStartDate as string);
       
-      // Use exact matching only for security
-      const userEmail = user.email?.toLowerCase();
-      const userName = user.username?.toLowerCase();
-      
-      const myAssignment = assignments.find(assignment => {
-        const staffNameLower = assignment.staffName.toLowerCase().trim();
-        
-        // Exact matches only - no substring matching to prevent data leakage
-        return staffNameLower === userEmail || 
-               staffNameLower === userName ||
-               staffNameLower === userEmail?.split('@')[0]?.toLowerCase();
-      });
-
-      // Return only this user's assignment or empty data for security
-      const result = myAssignment ? [myAssignment] : [];
+      // Transform to match expected format for staff view
+      const result = assignments.map(assignment => ({
+        id: assignment.id,
+        staffId: assignment.staffId,
+        staffName: assignment.staff.name,
+        weekStartDate: assignment.weekStartDate,
+        assignments: {
+          monday: assignment.monday || "",
+          tuesday: assignment.tuesday || "",
+          wednesday: assignment.wednesday || "",
+          thursday: assignment.thursday || "",
+          friday: assignment.friday || "",
+          saturday: assignment.saturday || "",
+          sunday: assignment.sunday || ""
+        },
+        notes: assignment.notes || ""
+      }));
       
       res.json(result);
     } catch (error) {
-      console.error("Error fetching my organiser schedule:", error);
-      res.status(500).json({ message: "Failed to fetch my schedule" });
+      console.error("Error fetching organiser schedule:", error);
+      res.status(500).json({ message: "Failed to fetch schedule" });
     }
   });
 

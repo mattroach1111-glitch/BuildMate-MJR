@@ -106,36 +106,34 @@ export default function StaffOrganiser() {
     );
   }
 
-  const userAssignment = organiserData[0] as OrganiserEntry | undefined;
+  // Convert all organiser assignments to display format
+  const generateAllAssignments = () => {
+    if (!organiserData || organiserData.length === 0 || !selectedWeek) return [];
 
-  // Convert assignments to daily schedule format
-  const generateWeeklySchedule = () => {
-    if (!userAssignment || !selectedWeek) return [];
-
-    const weekStart = parseISO(selectedWeek);
-    const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
-    const dayLabels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-    return dayLabels.map((dayLabel, index) => {
-      const date = addDays(weekStart, index);
-      const dayKey = dayNames[index];
-      const assignment = userAssignment.assignments[dayKey] || "";
-
-      return {
-        day: dayLabel,
-        date: format(date, 'dd MMM'),
-        jobs: assignment ? [{ 
-          site: assignment, 
-          time: "8:00 AM - 4:00 PM", // Default time - could be customized
-          status: "scheduled" 
-        }] : []
-      };
-    });
+    return organiserData.map((assignment: OrganiserEntry) => ({
+      staffName: assignment.staffName,
+      assignments: assignment.assignments,
+      notes: assignment.notes
+    }));
   };
 
-  const weeklySchedule = generateWeeklySchedule();
-  const scheduledDays = weeklySchedule.filter(day => day.jobs.length > 0).length;
-  const totalJobs = weeklySchedule.reduce((sum, day) => sum + day.jobs.length, 0);
+  const allAssignments = generateAllAssignments();
+  const totalStaff = allAssignments.length;
+  const totalAssignments = allAssignments.reduce((sum, staff) => {
+    const dayAssignments = Object.values(staff.assignments).filter(job => job.trim() !== '');
+    return sum + dayAssignments.length;
+  }, 0);
+
+  // Calculate unique job sites
+  const uniqueJobSites = new Set();
+  allAssignments.forEach(staff => {
+    Object.values(staff.assignments).forEach(job => {
+      if (job.trim()) uniqueJobSites.add(job.trim());
+    });
+  });
+
+  const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+  const dayLabels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   // Format week display
   const formatWeekDisplay = () => {
@@ -212,70 +210,88 @@ export default function StaffOrganiser() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-orange-600" />
-                    This Week's Schedule
+                    Team Schedule Overview
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="bg-blue-50 p-4 rounded-lg" data-testid="stat-days-scheduled">
-                      <div className="text-2xl font-bold text-blue-700">{scheduledDays}</div>
-                      <div className="text-sm text-blue-600">Days Scheduled</div>
+                    <div className="bg-blue-50 p-4 rounded-lg" data-testid="stat-staff-members">
+                      <div className="text-2xl font-bold text-blue-700">{totalStaff}</div>
+                      <div className="text-sm text-blue-600">Staff Members</div>
                     </div>
-                    <div className="bg-green-50 p-4 rounded-lg" data-testid="stat-total-hours">
-                      <div className="text-2xl font-bold text-green-700">{scheduledDays * 8}</div>
-                      <div className="text-sm text-green-600">Total Hours</div>
+                    <div className="bg-green-50 p-4 rounded-lg" data-testid="stat-total-assignments">
+                      <div className="text-2xl font-bold text-green-700">{totalAssignments}</div>
+                      <div className="text-sm text-green-600">Total Assignments</div>
                     </div>
                     <div className="bg-orange-50 p-4 rounded-lg" data-testid="stat-job-sites">
-                      <div className="text-2xl font-bold text-orange-700">{totalJobs}</div>
+                      <div className="text-2xl font-bold text-orange-700">{uniqueJobSites.size}</div>
                       <div className="text-sm text-orange-600">Job Sites</div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Daily Schedule */}
+              {/* Daily Schedule by Day */}
               <div className="grid gap-4">
-                {weeklySchedule.map((day) => (
-                  <Card 
-                    key={day.day} 
-                    className={`${day.jobs.length === 0 ? 'opacity-60' : ''}`}
-                    data-testid={`card-day-${day.day.toLowerCase()}`}
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">
-                          {day.day}
-                        </CardTitle>
-                        <Badge variant="secondary" className="text-sm">
-                          {day.date}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {day.jobs.length > 0 ? (
-                        <div className="space-y-3">
-                          {day.jobs.map((job, index) => (
-                            <div 
-                              key={index} 
-                              className="bg-orange-50 border border-orange-200 rounded-lg p-4"
-                              data-testid={`job-assignment-${day.day.toLowerCase()}-${index}`}
-                            >
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <MapPin className="h-4 w-4 text-orange-600" />
-                                    <span className="font-semibold text-gray-900">{job.site}</span>
+                {dayLabels.map((dayLabel, dayIndex) => {
+                  const dayKey = dayNames[dayIndex];
+                  const weekStart = selectedWeek ? parseISO(selectedWeek) : new Date();
+                  const dayDate = addDays(weekStart, dayIndex);
+                  
+                  // Get all assignments for this day
+                  const dayAssignments = allAssignments
+                    .map(staff => ({
+                      staffName: staff.staffName,
+                      job: staff.assignments[dayKey] || "",
+                      notes: staff.notes
+                    }))
+                    .filter(assignment => assignment.job.trim() !== "");
+
+                  return (
+                    <Card 
+                      key={dayLabel} 
+                      className={`${dayAssignments.length === 0 ? 'opacity-60' : ''}`}
+                      data-testid={`card-day-${dayLabel.toLowerCase()}`}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg">
+                            {dayLabel}
+                          </CardTitle>
+                          <Badge variant="secondary" className="text-sm">
+                            {format(dayDate, 'dd MMM')}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        {dayAssignments.length > 0 ? (
+                          <div className="space-y-3">
+                            {dayAssignments.map((assignment, index) => (
+                              <div 
+                                key={index} 
+                                className="bg-orange-50 border border-orange-200 rounded-lg p-4"
+                                data-testid={`job-assignment-${dayLabel.toLowerCase()}-${index}`}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <User className="h-4 w-4 text-blue-600" />
+                                      <span className="font-medium text-blue-900">{assignment.staffName}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <MapPin className="h-4 w-4 text-orange-600" />
+                                      <span className="font-semibold text-gray-900">{assignment.job}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-gray-600">
+                                      <Clock className="h-4 w-4" />
+                                      <span>8:00 AM - 4:00 PM</span>
+                                    </div>
                                   </div>
-                                  <div className="flex items-center gap-2 text-gray-600">
-                                    <Clock className="h-4 w-4" />
-                                    <span>{job.time}</span>
-                                  </div>
-                                </div>
-                                <Badge 
-                                  variant={job.status === 'scheduled' ? 'default' : 'secondary'}
-                                  className="bg-orange-100 text-orange-800 border-orange-300"
-                                >
-                                  {job.status}
+                                  <Badge 
+                                    variant="default"
+                                    className="bg-orange-100 text-orange-800 border-orange-300"
+                                  >
+                                    Scheduled
                                 </Badge>
                               </div>
                             </div>
