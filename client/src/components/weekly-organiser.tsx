@@ -481,14 +481,6 @@ export default function WeeklyOrganiser() {
             <Button 
               variant="outline" 
               className="justify-start"
-              data-testid="button-copy-previous"
-            >
-              <Copy className="h-4 w-4 mr-2" />
-              Copy Previous Week
-            </Button>
-            <Button 
-              variant="outline" 
-              className="justify-start"
               data-testid="button-clear-assignments"
             >
               <Trash2 className="h-4 w-4 mr-2" />

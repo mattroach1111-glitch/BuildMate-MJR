@@ -45,7 +45,7 @@ export default function StaffOrganiser() {
   };
 
   // Fetch available weeks
-  const { data: weeks = [], isLoading: weeksLoading } = useQuery({
+  const { data: weeks = [], isLoading: weeksLoading } = useQuery<WeekOption[]>({
     queryKey: ["/api/organiser/weeks"],
     enabled: isAuthenticated,
   });
@@ -58,12 +58,12 @@ export default function StaffOrganiser() {
     }
   }, [weeks, selectedWeek]);
 
-  // Fetch organiser data for selected week
+  // Fetch organiser data for selected week - secure staff-only endpoint
   const { 
     data: organiserData = [], 
     isLoading: organiserLoading 
-  } = useQuery({
-    queryKey: ["/api/organiser", selectedWeek],
+  } = useQuery<OrganiserEntry[]>({
+    queryKey: ["/api/organiser/my-schedule", selectedWeek],
     enabled: !!selectedWeek && isAuthenticated,
   });
 

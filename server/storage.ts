@@ -233,6 +233,7 @@ export interface IStorage {
   getOrganiserAssignments(weekStartDate: string): Promise<(OrganiserAssignment & { staff: OrganiserStaff })[]>;
   upsertOrganiserAssignment(assignment: InsertOrganiserAssignment): Promise<OrganiserAssignment>;
   updateOrganiserAssignment(id: string, assignment: Partial<InsertOrganiserAssignment>): Promise<OrganiserAssignment>;
+  getStaffOrganiserData(staffName: string, weekStartDate: string): Promise<{ id?: string; staffId: string; staffName: string; weekStartDate: string; assignments: { monday: string; tuesday: string; wednesday: string; thursday: string; friday: string; saturday: string; sunday: string; }; notes: string; } | null>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2582,6 +2583,58 @@ export class DatabaseStorage implements IStorage {
       return updatedAssignment;
     } catch (error) {
       console.error("Error updating organiser assignment:", error);
+      throw error;
+    }
+  }
+
+  async getStaffOrganiserData(staffName: string, weekStartDate: string): Promise<{ id?: string; staffId: string; staffName: string; weekStartDate: string; assignments: { monday: string; tuesday: string; wednesday: string; thursday: string; friday: string; saturday: string; sunday: string; }; notes: string; } | null> {
+    try {
+      // Find the staff member by name
+      const [staffMember] = await db
+        .select()
+        .from(organiserStaff)
+        .where(
+          and(
+            eq(organiserStaff.name, staffName),
+            eq(organiserStaff.isActive, true)
+          )
+        );
+
+      if (!staffMember) {
+        console.log(`🔍 No organiser staff found with name: ${staffName}`);
+        return null;
+      }
+
+      // Get their assignment for the specific week
+      const [assignment] = await db
+        .select()
+        .from(organiserAssignments)
+        .where(
+          and(
+            eq(organiserAssignments.staffId, staffMember.id),
+            eq(organiserAssignments.weekStartDate, weekStartDate)
+          )
+        );
+
+      // Return the organiser data in the expected format
+      return {
+        id: assignment?.id,
+        staffId: staffMember.id,
+        staffName: staffMember.name,
+        weekStartDate,
+        assignments: {
+          monday: assignment?.monday || "",
+          tuesday: assignment?.tuesday || "",
+          wednesday: assignment?.wednesday || "",
+          thursday: assignment?.thursday || "",
+          friday: assignment?.friday || "",
+          saturday: assignment?.saturday || "",
+          sunday: assignment?.sunday || ""
+        },
+        notes: assignment?.notes || ""
+      };
+    } catch (error) {
+      console.error("Error getting staff organiser data:", error);
       throw error;
     }
   }
