@@ -2,6 +2,19 @@ import { google } from 'googleapis';
 import { Readable } from 'stream';
 import { GoogleDriveAuth } from './googleAuth';
 
+// Custom error types for better error handling
+export class GoogleDriveError extends Error {
+  constructor(
+    message: string,
+    public readonly code: 'AUTH_REQUIRED' | 'RATE_LIMITED' | 'SERVER_ERROR' | 'NETWORK_ERROR' | 'UNKNOWN_ERROR',
+    public readonly retryable: boolean = false,
+    public readonly originalError?: any
+  ) {
+    super(message);
+    this.name = 'GoogleDriveError';
+  }
+}
+
 export class GoogleDriveService {
   private drive: any;
   private googleAuth: GoogleDriveAuth;
@@ -35,11 +48,16 @@ export class GoogleDriveService {
     return await this.googleAuth.getTokens(code);
   }
 
-  // Execute an operation with automatic token refresh on auth errors
-  private async executeWithTokenRefresh<T>(operation: () => Promise<T>): Promise<T | null> {
+  // Execute an operation with automatic token refresh and retry logic
+  private async executeWithTokenRefresh<T>(operation: () => Promise<T>): Promise<T> {
+    let lastError: any;
+    
+    // First attempt - try the operation
     try {
       return await operation();
     } catch (error: any) {
+      lastError = error;
+      
       // Check if it's an authentication error
       if (this.isAuthError(error)) {
         console.log('🔄 Google Drive token expired, attempting refresh...');
@@ -55,17 +73,28 @@ export class GoogleDriveService {
             console.log('💾 Updated tokens saved to database');
           }
           
-          // Retry the original operation
+          // Retry the original operation after token refresh
           return await operation();
           
         } catch (refreshError) {
           console.error('❌ Failed to refresh Google Drive tokens:', refreshError);
-          return null;
+          throw new GoogleDriveError(
+            'Google Drive connection expired. Please reconnect your Google Drive account.',
+            'AUTH_REQUIRED',
+            false,
+            refreshError
+          );
         }
-      } else {
-        console.error('❌ Google Drive operation failed:', error);
-        return null;
       }
+      
+      // Check if it's a retryable error (rate limits, server errors)
+      if (this.isRetryableError(error)) {
+        console.log('🔄 Retryable Google Drive error detected, attempting with exponential backoff...');
+        return await this.executeWithRetry(operation, 3);
+      }
+      
+      // Non-retryable error - throw appropriate GoogleDriveError
+      throw this.classifyError(error);
     }
   }
 
@@ -78,15 +107,113 @@ export class GoogleDriveService {
            error.message?.includes('invalid_token');
   }
 
-  async uploadPDF(fileName: string, pdfBuffer: Buffer, folderId?: string): Promise<string | null> {
-    const result = await this.uploadFile(fileName, pdfBuffer, 'application/pdf', folderId);
-    return result?.webViewLink || null;
+  // Check if error is retryable (rate limits, server errors)
+  private isRetryableError(error: any): boolean {
+    const statusCode = error.response?.status || error.status || error.code;
+    return statusCode === 429 || // Too Many Requests
+           statusCode === 500 || // Internal Server Error
+           statusCode === 502 || // Bad Gateway
+           statusCode === 503 || // Service Unavailable
+           statusCode === 504 || // Gateway Timeout
+           error.code === 'ENOTFOUND' || // DNS issues
+           error.code === 'ECONNRESET' || // Connection reset
+           error.code === 'ETIMEDOUT'; // Timeout
   }
 
-  async uploadFile(fileName: string, fileBuffer: Buffer, mimeType: string, folderId?: string): Promise<{ webViewLink: string; fileId: string } | null> {
+  // Execute operation with exponential backoff retry
+  private async executeWithRetry<T>(operation: () => Promise<T>, maxRetries: number): Promise<T> {
+    let lastError: any;
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error: any) {
+        lastError = error;
+        
+        // Don't retry on the last attempt
+        if (attempt === maxRetries - 1) {
+          break;
+        }
+        
+        // Only retry if it's still a retryable error
+        if (!this.isRetryableError(error)) {
+          throw this.classifyError(error);
+        }
+        
+        // Calculate wait time with exponential backoff + jitter
+        const baseDelay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+        const jitter = Math.random() * 1000; // 0-1s random jitter
+        const waitTime = baseDelay + jitter;
+        
+        console.log(`🔄 Google Drive retry attempt ${attempt + 1}/${maxRetries} in ${Math.round(waitTime)}ms`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      }
+    }
+    
+    // All retries exhausted
+    throw this.classifyError(lastError);
+  }
+
+  // Classify errors into appropriate GoogleDriveError types
+  private classifyError(error: any): GoogleDriveError {
+    const statusCode = error.response?.status || error.status || error.code;
+    
+    if (this.isAuthError(error)) {
+      return new GoogleDriveError(
+        'Google Drive connection expired. Please reconnect your Google Drive account.',
+        'AUTH_REQUIRED',
+        false,
+        error
+      );
+    }
+    
+    if (statusCode === 429) {
+      return new GoogleDriveError(
+        'Google Drive rate limit exceeded. Please try again later.',
+        'RATE_LIMITED',
+        true,
+        error
+      );
+    }
+    
+    if (statusCode >= 500 && statusCode <= 504) {
+      return new GoogleDriveError(
+        'Google Drive server error. Please try again later.',
+        'SERVER_ERROR',
+        true,
+        error
+      );
+    }
+    
+    if (error.code === 'ENOTFOUND' || error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
+      return new GoogleDriveError(
+        'Network connection issue. Please check your internet connection and try again.',
+        'NETWORK_ERROR',
+        true,
+        error
+      );
+    }
+    
+    return new GoogleDriveError(
+      error.message || 'Unknown Google Drive error occurred',
+      'UNKNOWN_ERROR',
+      false,
+      error
+    );
+  }
+
+  async uploadPDF(fileName: string, pdfBuffer: Buffer, folderId?: string): Promise<string> {
+    const result = await this.uploadFile(fileName, pdfBuffer, 'application/pdf', folderId);
+    return result.webViewLink;
+  }
+
+  async uploadFile(fileName: string, fileBuffer: Buffer, mimeType: string, folderId?: string): Promise<{ webViewLink: string; fileId: string }> {
     if (!this.isReady()) {
-      console.error('Google Drive not authenticated. User needs to connect their Google Drive account.');
-      return null;
+      throw new GoogleDriveError(
+        'Google Drive not connected. Please connect your Google Drive account.',
+        'AUTH_REQUIRED',
+        false
+      );
     }
 
     return await this.executeWithTokenRefresh(async () => {
@@ -115,7 +242,12 @@ export class GoogleDriveService {
       console.log(`File uploaded to Google Drive: ${response.data.name} (ID: ${fileId})`);
       
       // Make the file publicly readable so others can view the job sheet PDFs and attachments
-      await this.makeFilePublic(fileId);
+      try {
+        await this.makeFilePublic(fileId);
+      } catch (publicError) {
+        console.warn('Warning: Could not make file public, but upload succeeded:', publicError);
+        // Don't fail the upload if we can't make it public
+      }
       
       return {
         webViewLink: response.data.webViewLink,
@@ -126,29 +258,39 @@ export class GoogleDriveService {
 
   async makeFilePublic(fileId: string): Promise<boolean> {
     if (!this.isReady()) {
-      return false;
+      throw new GoogleDriveError(
+        'Google Drive not connected. Please connect your Google Drive account.',
+        'AUTH_REQUIRED',
+        false
+      );
     }
 
     try {
-      await this.drive.permissions.create({
-        fileId: fileId,
-        resource: {
-          role: 'reader',
-          type: 'anyone',
-        },
+      await this.executeWithTokenRefresh(async () => {
+        return await this.drive.permissions.create({
+          fileId: fileId,
+          resource: {
+            role: 'reader',
+            type: 'anyone',
+          },
+        });
       });
       console.log(`File ${fileId} made publicly readable`);
       return true;
     } catch (error) {
+      // For making files public, we'll be more lenient and just log the error
       console.error('Error making file public:', error);
       return false;
     }
   }
 
-  async createFolder(folderName: string, parentFolderId?: string): Promise<string | null> {
+  async createFolder(folderName: string, parentFolderId?: string): Promise<string> {
     if (!this.isReady()) {
-      console.error('Google Drive not authenticated. User needs to connect their Google Drive account.');
-      return null;
+      throw new GoogleDriveError(
+        'Google Drive not connected. Please connect your Google Drive account.',
+        'AUTH_REQUIRED',
+        false
+      );
     }
 
     return await this.executeWithTokenRefresh(async () => {
@@ -167,18 +309,27 @@ export class GoogleDriveService {
       console.log(`Folder created: ${response.data.name} (ID: ${folderId})`);
       
       // Make the folder publicly readable so others can access job documents
-      await this.makeFilePublic(folderId);
+      try {
+        await this.makeFilePublic(folderId);
+      } catch (publicError) {
+        console.warn('Warning: Could not make folder public, but creation succeeded:', publicError);
+        // Don't fail the folder creation if we can't make it public
+      }
       
       return folderId;
     });
   }
 
-  async findOrCreateFolder(folderName: string, parentFolderId?: string): Promise<string | null> {
+  async findOrCreateFolder(folderName: string, parentFolderId?: string): Promise<string> {
     if (!this.isReady()) {
-      return null;
+      throw new GoogleDriveError(
+        'Google Drive not connected. Please connect your Google Drive account.',
+        'AUTH_REQUIRED',
+        false
+      );
     }
 
-    try {
+    return await this.executeWithTokenRefresh(async () => {
       // Search for existing folder
       const query = parentFolderId 
         ? `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and '${parentFolderId}' in parents and trashed=false`
@@ -195,50 +346,28 @@ export class GoogleDriveService {
 
       // Folder doesn't exist, create it
       return await this.createFolder(folderName, parentFolderId);
-    } catch (error) {
-      console.error('Error finding/creating folder:', error);
-      return null;
-    }
+    });
   }
 
   // Upload file attachment to Google Drive in job folder
-  async uploadJobAttachment(fileName: string, fileBuffer: Buffer, mimeType: string, jobAddress: string): Promise<{ webViewLink: string; fileId: string } | null> {
+  async uploadJobAttachment(fileName: string, fileBuffer: Buffer, mimeType: string, jobAddress: string): Promise<{ webViewLink: string; fileId: string }> {
     if (!this.isReady()) {
-      console.error('Google Drive not authenticated for job attachment upload');
-      return null;
+      throw new GoogleDriveError(
+        'Google Drive not connected. Please connect your Google Drive account.',
+        'AUTH_REQUIRED',
+        false
+      );
     }
 
-    try {
-      // Create the folder structure: BuildFlow Pro -> Job - [Address] -> Attachments
-      const mainFolderId = await this.findOrCreateFolder('BuildFlow Pro');
-      if (!mainFolderId) {
-        console.error('Failed to create main BuildFlow Pro folder');
-        return null;
-      }
+    // Create the folder structure: BuildFlow Pro -> Job - [Address] -> Attachments
+    const mainFolderId = await this.findOrCreateFolder('BuildFlow Pro');
+    const jobFolderId = await this.findOrCreateFolder(`Job - ${jobAddress}`, mainFolderId);
+    const attachmentsFolderId = await this.findOrCreateFolder('Attachments', jobFolderId);
 
-      const jobFolderId = await this.findOrCreateFolder(`Job - ${jobAddress}`, mainFolderId);
-      if (!jobFolderId) {
-        console.error('Failed to create job folder');
-        return null;
-      }
-
-      const attachmentsFolderId = await this.findOrCreateFolder('Attachments', jobFolderId);
-      if (!attachmentsFolderId) {
-        console.error('Failed to create attachments folder');
-        return null;
-      }
-
-      // Upload file to the attachments folder
-      const result = await this.uploadFile(fileName, fileBuffer, mimeType, attachmentsFolderId);
-      
-      if (result) {
-        console.log(`✅ Job attachment uploaded to Google Drive: ${fileName} (${jobAddress})`);
-      }
-
-      return result;
-    } catch (error) {
-      console.error('Error uploading job attachment to Google Drive:', error);
-      return null;
-    }
+    // Upload file to the attachments folder
+    const result = await this.uploadFile(fileName, fileBuffer, mimeType, attachmentsFolderId);
+    
+    console.log(`✅ Job attachment uploaded to Google Drive: ${fileName} (${jobAddress})`);
+    return result;
   }
 }
