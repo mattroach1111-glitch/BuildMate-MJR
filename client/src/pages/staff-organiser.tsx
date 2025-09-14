@@ -205,109 +205,60 @@ export default function StaffOrganiser() {
             </div>
           ) : (
             <>
-              {/* Week Overview Card */}
+              {/* Staff Weekly Assignments */}
               <Card className="mb-6">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-orange-600" />
-                    Team Schedule Overview
-                  </CardTitle>
+                  <CardTitle>Staff Weekly Assignments</CardTitle>
+                  <div className="text-sm text-gray-600">
+                    View your team's schedule for the selected week.
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="bg-blue-50 p-4 rounded-lg" data-testid="stat-staff-members">
-                      <div className="text-2xl font-bold text-blue-700">{totalStaff}</div>
-                      <div className="text-sm text-blue-600">Staff Members</div>
-                    </div>
-                    <div className="bg-green-50 p-4 rounded-lg" data-testid="stat-total-assignments">
-                      <div className="text-2xl font-bold text-green-700">{totalAssignments}</div>
-                      <div className="text-sm text-green-600">Total Assignments</div>
-                    </div>
-                    <div className="bg-orange-50 p-4 rounded-lg" data-testid="stat-job-sites">
-                      <div className="text-2xl font-bold text-orange-700">{uniqueJobSites.size}</div>
-                      <div className="text-sm text-orange-600">Job Sites</div>
-                    </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-gray-300" data-testid="table-staff-schedule">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="border border-gray-300 p-3 text-left font-semibold">Staff Member</th>
+                          {dayLabels.map((day) => (
+                            <th key={day} className="border border-gray-300 p-3 text-center font-semibold min-w-[120px]" data-testid={`th-${day.toLowerCase()}`}>
+                              {day}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allAssignments.map((staffEntry, rIdx) => {
+                          return (
+                            <tr key={staffEntry.staffName} className="hover:bg-gray-50" data-testid={`row-staff-${rIdx}`}>
+                              <td className="border border-gray-300 p-3 font-medium" data-testid={`text-staff-${rIdx}`}>
+                                <div className="flex items-center gap-2">
+                                  <User className="h-4 w-4 text-gray-500" />
+                                  {staffEntry.staffName}
+                                </div>
+                              </td>
+                              {dayNames.map((dayKey) => (
+                                <td key={dayKey} className="border border-gray-300 p-2 text-center" data-testid={`cell-${rIdx}-${dayKey}`}>
+                                  <div className="min-h-[60px] flex items-center justify-center p-2">
+                                    {staffEntry.assignments[dayKey]?.trim() ? (
+                                      <div className="bg-orange-50 border border-orange-200 rounded px-3 py-2 text-sm w-full">
+                                        {staffEntry.assignments[dayKey]}
+                                      </div>
+                                    ) : (
+                                      <div className="text-gray-400 text-sm border border-dashed border-gray-300 rounded px-3 py-2 w-full">
+                                        -
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                              ))}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Daily Schedule by Day */}
-              <div className="grid gap-4">
-                {dayLabels.map((dayLabel, dayIndex) => {
-                  const dayKey = dayNames[dayIndex];
-                  const weekStart = selectedWeek ? parseISO(selectedWeek) : new Date();
-                  const dayDate = addDays(weekStart, dayIndex);
-                  
-                  // Get all assignments for this day
-                  const dayAssignments = allAssignments
-                    .map(staff => ({
-                      staffName: staff.staffName,
-                      job: staff.assignments[dayKey] || "",
-                      notes: staff.notes
-                    }))
-                    .filter(assignment => assignment.job.trim() !== "");
-
-                  return (
-                    <Card 
-                      key={dayLabel} 
-                      className={`${dayAssignments.length === 0 ? 'opacity-60' : ''}`}
-                      data-testid={`card-day-${dayLabel.toLowerCase()}`}
-                    >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg">
-                            {dayLabel}
-                          </CardTitle>
-                          <Badge variant="secondary" className="text-sm">
-                            {format(dayDate, 'dd MMM')}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        {dayAssignments.length > 0 ? (
-                          <div className="space-y-3">
-                            {dayAssignments.map((assignment, index) => (
-                              <div 
-                                key={index} 
-                                className="bg-orange-50 border border-orange-200 rounded-lg p-4"
-                                data-testid={`job-assignment-${dayLabel.toLowerCase()}-${index}`}
-                              >
-                                <div className="flex items-start justify-between">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <User className="h-4 w-4 text-blue-600" />
-                                      <span className="font-medium text-blue-900">{assignment.staffName}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <MapPin className="h-4 w-4 text-orange-600" />
-                                      <span className="font-semibold text-gray-900">{assignment.job}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-gray-600">
-                                      <Clock className="h-4 w-4" />
-                                      <span>8:00 AM - 4:00 PM</span>
-                                    </div>
-                                  </div>
-                                  <Badge 
-                                    variant="default"
-                                    className="bg-orange-100 text-orange-800 border-orange-300"
-                                  >
-                                    Scheduled
-                                </Badge>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-8 text-gray-500">
-                          <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                          <p>No jobs scheduled</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-                })}
-              </div>
 
               {/* Notice */}
               <Card className="mt-6 border-blue-200 bg-blue-50">
