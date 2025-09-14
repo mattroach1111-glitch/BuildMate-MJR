@@ -2664,7 +2664,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(timesheetEntries.staffId, employeeId));
       
       // Also update labor hours for all jobs this employee worked on
-      const jobIds = [...new Set(entries.map(entry => entry.jobId).filter(Boolean))];
+      const jobIds = Array.from(new Set(entries.map(entry => entry.jobId).filter(Boolean)));
       for (const jobId of jobIds) {
         if (jobId) {
           await storage.updateLaborHoursFromTimesheet(employeeId, jobId);
@@ -3487,7 +3487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 jobId: newJob.id,
                 fileName: fileName,
                 originalName: fileName,
-                fileSize: parseInt(fileMetadata.size || '0'),
+                fileSize: parseInt(String(fileMetadata.size || 0)),
                 mimeType: metadata.contentType || 'application/pdf',
                 objectPath: normalizedPath,
                 googleDriveLink: null,
@@ -3503,7 +3503,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               jobId: newJob.id,
               fileName: fileName,
               originalName: fileName,
-              fileSize: parseInt(fileMetadata.size || '0'),
+              fileSize: parseInt(String(fileMetadata.size || 0)),
               mimeType: metadata.contentType || 'application/pdf',
               objectPath: normalizedPath,
               googleDriveLink: null,
@@ -3758,7 +3758,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         status: "active",
         emailAddress,
-        lastChecked: new Date(lastChecked).toISOString(),
+        lastChecked: lastChecked ? new Date(lastChecked).toISOString() : new Date().toISOString(),
         recentProcessed: recentActivity,
         totalProcessed
       });
@@ -3901,6 +3901,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Parse the extracted data
+      if (!document.extractedData) {
+        return res.status(400).json({ error: 'No extracted data found' });
+      }
       const extractedData = JSON.parse(document.extractedData);
       
       // Use category override if provided
@@ -3917,7 +3920,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let targetJobId = jobId;
       if (!targetJobId) {
         // Try to extract job information from email subject
-        targetJobId = await extractJobFromEmailSubject(document.emailSubject, storage);
+        targetJobId = await extractJobFromEmailSubject(document.emailSubject || undefined, storage);
         
         // If still no job, use the first active job as default
         if (!targetJobId) {
@@ -4014,7 +4017,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           console.log(`📎 Job file record created: ${fileRecord.id}`);
         } catch (fileError) {
-          console.log(`⚠️ Could not create job file record: ${fileError.message}`);
+          console.log(`⚠️ Could not create job file record: ${fileError instanceof Error ? fileError.message : String(fileError)}`);
         }
 
         // Try to upload to Google Drive if user has it connected
@@ -4045,9 +4048,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Set up token refresh callback to save updated tokens
             const tokenRefreshCallback = async (newTokens: any) => {
-              await storage.updateUser(userId, {
-                googleDriveTokens: JSON.stringify(newTokens)
-              });
+              await storage.updateUserGoogleDriveTokens(userId, JSON.stringify(newTokens));
             };
             
             googleDriveService.setUserTokens(tokens, userId, tokenRefreshCallback);
@@ -4056,7 +4057,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
             
             // Create/find job folder
-            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId);
+            const jobFolderId = job ? await googleDriveService.findOrCreateFolder(`Job - ${job.jobAddress}`, mainFolderId) : undefined;
             
             // Upload file to Google Drive
             const uploadResult = await googleDriveService.uploadFile(
@@ -4076,13 +4077,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.log(`☁️ File uploaded to Google Drive: ${uploadResult.webViewLink}`);
             }
           } catch (driveError) {
-            console.log(`⚠️ Google Drive upload failed: ${driveError.message}`);
+            console.log(`⚠️ Google Drive upload failed: ${driveError instanceof Error ? driveError.message : String(driveError)}`);
           }
         } else {
           console.log(`ℹ️ Google Drive not connected for user ${userId}`);
         }
       } catch (attachmentError) {
-        console.log(`⚠️ File attachment processing failed: ${attachmentError.message}`);
+        console.log(`⚠️ File attachment processing failed: ${attachmentError instanceof Error ? attachmentError.message : String(attachmentError)}`);
       }
 
       // Now approve the document with the job ID
@@ -4442,7 +4443,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           FROM reward_transactions 
           WHERE type IN ('earned', 'bonus')
         `);
-        totalPointsAwarded = Number(pointsResult[0]?.total || 0);
+        totalPointsAwarded = Number(pointsResult.rows[0]?.total || 0);
       } catch (e) {
         console.log("reward_transactions table not found, using default value");
       }
@@ -4452,7 +4453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           SELECT COUNT(DISTINCT user_id) as total 
           FROM reward_transactions
         `);
-        activeUsers = Number(activeUsersResult[0]?.total || 0);
+        activeUsers = Number(activeUsersResult.rows[0]?.total || 0);
       } catch (e) {
         console.log("reward_transactions table not found for active users, using default value");
       }
@@ -4471,7 +4472,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ORDER BY rp.total_points DESC
           LIMIT 10
         `);
-        topPerformers = topPerformersResult.map((p: any) => ({
+        topPerformers = topPerformersResult.rows.map((p: any) => ({
           userId: p.user_id,
           firstName: p.first_name || 'Unknown',
           lastName: p.last_name || '',
@@ -4491,7 +4492,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             WHERE role = 'staff'
             LIMIT 10
           `);
-          topPerformers = staffResult.map((p: any) => ({
+          topPerformers = staffResult.rows.map((p: any) => ({
             userId: p.user_id,
             firstName: p.first_name || 'Unknown',
             lastName: p.last_name || '',
@@ -4719,7 +4720,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error("Error exporting data:", error);
-      res.status(500).json({ message: "Failed to export data", error: error.message });
+      res.status(500).json({ message: "Failed to export data", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -5022,10 +5023,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     jobId: entry.jobId,
                     date: entry.date,
                     hours: entry.hours,
-                    materials: entry.materials,
-                    status: entry.status,
-                    customAddress: entry.customAddress,
-                    leaveType: entry.leaveType
+                    materials: entry.materials
                   }
                 });
               } else {
@@ -5147,13 +5145,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      // Generate list of weeks (current week + next 4 weeks)
+      // Generate list of weeks (8 weeks back + current week + 4 weeks forward)
       const weeks = [];
       const today = new Date();
       const currentMonday = new Date(today);
       currentMonday.setDate(today.getDate() - today.getDay() + 1); // Get Monday of current week
 
-      for (let i = 0; i < 5; i++) {
+      for (let i = -8; i <= 4; i++) {
         const weekStart = new Date(currentMonday);
         weekStart.setDate(currentMonday.getDate() + (i * 7));
         
@@ -5455,7 +5453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           errors: fromZodError(error).toString() 
         });
       }
-      if (error.message === "Organiser assignment not found") {
+      if (error instanceof Error && error.message === "Organiser assignment not found") {
         return res.status(404).json({ message: "Organiser assignment not found" });
       }
       res.status(500).json({ message: "Failed to update organiser assignment" });
@@ -5470,19 +5468,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "User not found" });
       }
 
-      // Staff can access this endpoint - generate list of weeks (current week + next 4 weeks)
+      // Staff can access this endpoint - generate list of weeks (8 weeks back + current week + 4 weeks forward)
       const weeks = [];
       const today = new Date();
       const currentMonday = new Date(today);
-      currentMonday.setDate(today.getDate() - (today.getDay() + 6) % 7);
+      currentMonday.setDate(today.getDate() - today.getDay() + 1); // Get Monday of current week
 
-      for (let i = 0; i < 5; i++) {
+      for (let i = -8; i <= 4; i++) {
         const weekStart = new Date(currentMonday);
         weekStart.setDate(currentMonday.getDate() + (i * 7));
         
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        
         weeks.push({
           weekStartDate: weekStart.toISOString().split('T')[0],
-          label: `Week of ${weekStart.getDate()}/${weekStart.getMonth() + 1}/${weekStart.getFullYear()}`,
+          label: `${weekStart.toLocaleDateString('en-AU')} - ${weekEnd.toLocaleDateString('en-AU')}`,
           isCurrent: i === 0
         });
       }
