@@ -1,0 +1,212 @@
+staff-organiser:182 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+client:495 [vite] connecting...
+client:536 WebSocket connection to 'wss://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/?token=uhmzSYnIw5UI' failed: 
+setupWebSocket @ client:536
+(anonymous) @ client:531
+client:536 Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=uhmzSYnIw5UI' is invalid.
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+setupWebSocket @ client:536
+fallback @ client:509
+(anonymous) @ client:555
+chunk-RPCDYKBN.js?v=6fc18c43:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+chunk-RPCDYKBN.js?v=88813e65:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+chunk-QCHXOAYK.js?v=88813e65:136 Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=88813e65:136
+error @ chunk-QCHXOAYK.js?v=88813e65:120
+resolveDispatcher @ chunk-QCHXOAYK.js?v=88813e65:1045
+useRef @ chunk-QCHXOAYK.js?v=88813e65:1073
+TooltipProvider @ @radix-ui_react-tooltip.js?v=b291f7a4:67
+renderWithHooks @ chunk-RPCDYKBN.js?v=6fc18c43:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=6fc18c43:14926
+beginWork @ chunk-RPCDYKBN.js?v=6fc18c43:15914
+beginWork$1 @ chunk-RPCDYKBN.js?v=6fc18c43:19753
+performUnitOfWork @ chunk-RPCDYKBN.js?v=6fc18c43:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=6fc18c43:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=6fc18c43:19116
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=6fc18c43:18678
+workLoop @ chunk-RPCDYKBN.js?v=6fc18c43:197
+flushWork @ chunk-RPCDYKBN.js?v=6fc18c43:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=6fc18c43:384
+chunk-QCHXOAYK.js?v=88813e65:136 Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=88813e65:136
+error @ chunk-QCHXOAYK.js?v=88813e65:120
+resolveDispatcher @ chunk-QCHXOAYK.js?v=88813e65:1045
+useRef @ chunk-QCHXOAYK.js?v=88813e65:1073
+TooltipProvider @ @radix-ui_react-tooltip.js?v=b291f7a4:67
+renderWithHooks @ chunk-RPCDYKBN.js?v=6fc18c43:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=6fc18c43:14926
+beginWork @ chunk-RPCDYKBN.js?v=6fc18c43:15914
+callCallback2 @ chunk-RPCDYKBN.js?v=6fc18c43:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=6fc18c43:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=6fc18c43:3733
+beginWork$1 @ chunk-RPCDYKBN.js?v=6fc18c43:19765
+performUnitOfWork @ chunk-RPCDYKBN.js?v=6fc18c43:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=6fc18c43:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=6fc18c43:19116
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=6fc18c43:18678
+workLoop @ chunk-RPCDYKBN.js?v=6fc18c43:197
+flushWork @ chunk-RPCDYKBN.js?v=6fc18c43:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=6fc18c43:384
+chunk-QCHXOAYK.js?v=88813e65:1074 Uncaught TypeError: Cannot read properties of null (reading 'useRef')
+    at Object.useRef (chunk-QCHXOAYK.js?v=88813e65:1074:29)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=b291f7a4:67:34)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=6fc18c43:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=6fc18c43:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=6fc18c43:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=6fc18c43:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=6fc18c43:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=6fc18c43:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=6fc18c43:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=6fc18c43:19198:20)
+useRef @ chunk-QCHXOAYK.js?v=88813e65:1074
+TooltipProvider @ @radix-ui_react-tooltip.js?v=b291f7a4:67
+renderWithHooks @ chunk-RPCDYKBN.js?v=6fc18c43:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=6fc18c43:14926
+beginWork @ chunk-RPCDYKBN.js?v=6fc18c43:15914
+callCallback2 @ chunk-RPCDYKBN.js?v=6fc18c43:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=6fc18c43:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=6fc18c43:3733
+beginWork$1 @ chunk-RPCDYKBN.js?v=6fc18c43:19765
+performUnitOfWork @ chunk-RPCDYKBN.js?v=6fc18c43:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=6fc18c43:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=6fc18c43:19116
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=6fc18c43:18678
+workLoop @ chunk-RPCDYKBN.js?v=6fc18c43:197
+flushWork @ chunk-RPCDYKBN.js?v=6fc18c43:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=6fc18c43:384
+chunk-QCHXOAYK.js?v=88813e65:136 Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=88813e65:136
+error @ chunk-QCHXOAYK.js?v=88813e65:120
+resolveDispatcher @ chunk-QCHXOAYK.js?v=88813e65:1045
+useRef @ chunk-QCHXOAYK.js?v=88813e65:1073
+TooltipProvider @ @radix-ui_react-tooltip.js?v=b291f7a4:67
+renderWithHooks @ chunk-RPCDYKBN.js?v=6fc18c43:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=6fc18c43:14926
+beginWork @ chunk-RPCDYKBN.js?v=6fc18c43:15914
+beginWork$1 @ chunk-RPCDYKBN.js?v=6fc18c43:19753
+performUnitOfWork @ chunk-RPCDYKBN.js?v=6fc18c43:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=6fc18c43:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=6fc18c43:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js?v=6fc18c43:18736
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=6fc18c43:18684
+workLoop @ chunk-RPCDYKBN.js?v=6fc18c43:197
+flushWork @ chunk-RPCDYKBN.js?v=6fc18c43:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=6fc18c43:384
+chunk-QCHXOAYK.js?v=88813e65:136 Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=88813e65:136
+error @ chunk-QCHXOAYK.js?v=88813e65:120
+resolveDispatcher @ chunk-QCHXOAYK.js?v=88813e65:1045
+useRef @ chunk-QCHXOAYK.js?v=88813e65:1073
+TooltipProvider @ @radix-ui_react-tooltip.js?v=b291f7a4:67
+renderWithHooks @ chunk-RPCDYKBN.js?v=6fc18c43:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=6fc18c43:14926
+beginWork @ chunk-RPCDYKBN.js?v=6fc18c43:15914
+callCallback2 @ chunk-RPCDYKBN.js?v=6fc18c43:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=6fc18c43:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=6fc18c43:3733
+beginWork$1 @ chunk-RPCDYKBN.js?v=6fc18c43:19765
+performUnitOfWork @ chunk-RPCDYKBN.js?v=6fc18c43:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=6fc18c43:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=6fc18c43:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js?v=6fc18c43:18736
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=6fc18c43:18684
+workLoop @ chunk-RPCDYKBN.js?v=6fc18c43:197
+flushWork @ chunk-RPCDYKBN.js?v=6fc18c43:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=6fc18c43:384
+chunk-QCHXOAYK.js?v=88813e65:1074 Uncaught TypeError: Cannot read properties of null (reading 'useRef')
+    at Object.useRef (chunk-QCHXOAYK.js?v=88813e65:1074:29)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=b291f7a4:67:34)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=6fc18c43:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=6fc18c43:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=6fc18c43:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=6fc18c43:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=6fc18c43:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=6fc18c43:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=6fc18c43:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=6fc18c43:19198:20)
+useRef @ chunk-QCHXOAYK.js?v=88813e65:1074
+TooltipProvider @ @radix-ui_react-tooltip.js?v=b291f7a4:67
+renderWithHooks @ chunk-RPCDYKBN.js?v=6fc18c43:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=6fc18c43:14926
+beginWork @ chunk-RPCDYKBN.js?v=6fc18c43:15914
+callCallback2 @ chunk-RPCDYKBN.js?v=6fc18c43:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=6fc18c43:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=6fc18c43:3733
+beginWork$1 @ chunk-RPCDYKBN.js?v=6fc18c43:19765
+performUnitOfWork @ chunk-RPCDYKBN.js?v=6fc18c43:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=6fc18c43:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=6fc18c43:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js?v=6fc18c43:18736
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=6fc18c43:18684
+workLoop @ chunk-RPCDYKBN.js?v=6fc18c43:197
+flushWork @ chunk-RPCDYKBN.js?v=6fc18c43:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=6fc18c43:384
+chunk-RPCDYKBN.js?v=6fc18c43:14032 The above error occurred in the <TooltipProvider> component:
+
+    at TooltipProvider (https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=b291f7a4:61:5)
+    at QueryClientProvider (https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=6fc18c43:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-RPCDYKBN.js?v=6fc18c43:14032
+update.callback @ chunk-RPCDYKBN.js?v=6fc18c43:14052
+callCallback @ chunk-RPCDYKBN.js?v=6fc18c43:11248
+commitUpdateQueue @ chunk-RPCDYKBN.js?v=6fc18c43:11265
+commitLayoutEffectOnFiber @ chunk-RPCDYKBN.js?v=6fc18c43:17093
+commitLayoutMountEffects_complete @ chunk-RPCDYKBN.js?v=6fc18c43:17980
+commitLayoutEffects_begin @ chunk-RPCDYKBN.js?v=6fc18c43:17969
+commitLayoutEffects @ chunk-RPCDYKBN.js?v=6fc18c43:17920
+commitRootImpl @ chunk-RPCDYKBN.js?v=6fc18c43:19353
+commitRoot @ chunk-RPCDYKBN.js?v=6fc18c43:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=6fc18c43:18760
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=6fc18c43:18718
+workLoop @ chunk-RPCDYKBN.js?v=6fc18c43:197
+flushWork @ chunk-RPCDYKBN.js?v=6fc18c43:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=6fc18c43:384
+chunk-RPCDYKBN.js?v=6fc18c43:19413 Uncaught TypeError: Cannot read properties of null (reading 'useRef')
+    at Object.useRef (chunk-QCHXOAYK.js?v=88813e65:1074:29)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=b291f7a4:67:34)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=6fc18c43:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=6fc18c43:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=6fc18c43:15914:22)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=6fc18c43:19753:22)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=6fc18c43:19198:20)
+    at workLoopSync (chunk-RPCDYKBN.js?v=6fc18c43:19137:13)
+    at renderRootSync (chunk-RPCDYKBN.js?v=6fc18c43:19116:15)
+    at recoverFromConcurrentError (chunk-RPCDYKBN.js?v=6fc18c43:18736:28)
+useRef @ chunk-QCHXOAYK.js?v=88813e65:1074
+TooltipProvider @ @radix-ui_react-tooltip.js?v=b291f7a4:67
+renderWithHooks @ chunk-RPCDYKBN.js?v=6fc18c43:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=6fc18c43:14926
+beginWork @ chunk-RPCDYKBN.js?v=6fc18c43:15914
+beginWork$1 @ chunk-RPCDYKBN.js?v=6fc18c43:19753
+performUnitOfWork @ chunk-RPCDYKBN.js?v=6fc18c43:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=6fc18c43:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=6fc18c43:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js?v=6fc18c43:18736
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=6fc18c43:18684
+workLoop @ chunk-RPCDYKBN.js?v=6fc18c43:197
+flushWork @ chunk-RPCDYKBN.js?v=6fc18c43:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=6fc18c43:384
+staff-organiser:188 ✅ BuildFlow Pro Service Worker registered: https://002d9a91-7cf2-4585-8a06-1d3444a86ebf-00-1abo52ukq2hk8.spock.replit.dev/
+staff-organiser:199 📱 Install prompt available
+staff-organiser:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
