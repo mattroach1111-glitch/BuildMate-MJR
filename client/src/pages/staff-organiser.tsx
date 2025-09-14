@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, ArrowLeft, User, Clock, MapPin } from "lucide-react";
+import { Calendar, ArrowLeft, User } from "lucide-react";
 import { useLocation } from "wouter";
 import PageLayout from "@/components/page-layout";
 import { format, parseISO, addDays, startOfWeek } from "date-fns";
@@ -118,19 +118,6 @@ export default function StaffOrganiser() {
   };
 
   const allAssignments = generateAllAssignments();
-  const totalStaff = allAssignments.length;
-  const totalAssignments = allAssignments.reduce((sum, staff) => {
-    const dayAssignments = Object.values(staff.assignments).filter(job => job.trim() !== '');
-    return sum + dayAssignments.length;
-  }, 0);
-
-  // Calculate unique job sites
-  const uniqueJobSites = new Set();
-  allAssignments.forEach(staff => {
-    Object.values(staff.assignments).forEach(job => {
-      if (job.trim()) uniqueJobSites.add(job.trim());
-    });
-  });
 
   const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
   const dayLabels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
