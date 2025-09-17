@@ -45,7 +45,7 @@ const app = express();
 // Enhanced request handling with timeouts and memory protection
 app.use(express.json({ 
   limit: '50mb',
-  verify: (req, res, buf, encoding) => {
+  verify: (req: any, res, buf, encoding) => {
     // Log large requests for monitoring
     if (buf.length > 10 * 1024 * 1024) { // 10MB
       console.log(`⚠️ Large request: ${buf.length} bytes to ${req.path}`);
@@ -54,14 +54,20 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
-// Request timeout middleware (30 seconds)
-app.use((req, res, next) => {
+// Request timeout middleware with special handling for email processing
+app.use((req: any, res, next) => {
+  // Email processing needs longer timeout due to AI document processing
+  const isEmailProcessing = req.path === '/api/email-inbox/process';
+  const timeoutDuration = isEmailProcessing ? 300000 : 30000; // 5 minutes for email processing, 30 seconds for others
+  
+  console.log(`⏰ Setting timeout: ${timeoutDuration/1000}s for ${req.method} ${req.path}`);
+  
   const timeout = setTimeout(() => {
     if (!res.headersSent) {
-      console.error(`🚨 Request timeout: ${req.method} ${req.path}`);
+      console.error(`🚨 Request timeout: ${req.method} ${req.path} after ${timeoutDuration/1000}s`);
       res.status(408).json({ message: 'Request timeout' });
     }
-  }, 30000);
+  }, timeoutDuration);
   
   res.on('finish', () => {
     clearTimeout(timeout);

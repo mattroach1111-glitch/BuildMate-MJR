@@ -37,6 +37,7 @@ export function EmailInboxInfo() {
 
   // Manual email processing trigger
   const processEmailsMutation = useMutation({
+    retry: false, // Disable automatic retries to prevent duplicate processing
     mutationFn: async () => {
       console.log('🔵 Frontend: Starting email processing request...');
       try {
