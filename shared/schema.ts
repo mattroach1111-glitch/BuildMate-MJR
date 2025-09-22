@@ -137,6 +137,18 @@ export const timesheetEntries = pgTable("timesheet_entries", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const manualHourEntries = pgTable("manual_hour_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  laborEntryId: varchar("labor_entry_id").notNull().references(() => laborEntries.id, { onDelete: "cascade" }),
+  jobId: varchar("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
+  staffId: varchar("staff_id").notNull().references(() => employees.id), // Staff who the hours are for
+  enteredById: varchar("entered_by_id").notNull().references(() => users.id), // Admin who entered the hours
+  hours: decimal("hours", { precision: 5, scale: 2 }).notNull(),
+  description: text("description").notNull().default("Manually entered hours"),
+  entryType: varchar("entry_type", { enum: ["direct_edit", "extra_hours"] }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const jobFiles = pgTable("job_files", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   jobId: varchar("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
@@ -397,6 +409,13 @@ export const insertTimesheetEntrySchema = createInsertSchema(timesheetEntries).o
   jobId: z.string().optional().nullable(), // Make jobId optional for RDO entries
 });
 
+export const insertManualHourEntrySchema = createInsertSchema(manualHourEntries).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  hours: z.string().or(z.number()).transform(val => String(val)),
+});
+
 export const insertJobFileSchema = createInsertSchema(jobFiles).omit({
   id: true,
   createdAt: true,
@@ -494,6 +513,8 @@ export type TipFee = typeof tipFees.$inferSelect;
 export type InsertTipFee = z.infer<typeof insertTipFeeSchema>;
 export type TimesheetEntry = typeof timesheetEntries.$inferSelect;
 export type InsertTimesheetEntry = z.infer<typeof insertTimesheetEntrySchema>;
+export type ManualHourEntry = typeof manualHourEntries.$inferSelect;
+export type InsertManualHourEntry = z.infer<typeof insertManualHourEntrySchema>;
 export type JobFile = typeof jobFiles.$inferSelect;
 export type InsertJobFile = z.infer<typeof insertJobFileSchema>;
 export type Notification = typeof notifications.$inferSelect;
