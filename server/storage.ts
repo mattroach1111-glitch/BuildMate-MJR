@@ -1377,7 +1377,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getJobTimesheets(jobId: string): Promise<any[]> {
-    return await db
+    // Get regular timesheet entries
+    const timesheetEntriesQuery = db
       .select({
         id: timesheetEntries.id,
         staffId: timesheetEntries.staffId,
@@ -1392,12 +1393,53 @@ export class DatabaseStorage implements IStorage {
         updatedAt: timesheetEntries.updatedAt,
         staffName: sql`COALESCE(${employees.name}, ${users.firstName}, CASE WHEN ${users.email} IS NOT NULL THEN SPLIT_PART(${users.email}, '@', 1) ELSE 'Unknown Staff' END, 'Unknown Staff')`.as('staffName'),
         staffEmail: users.email,
+        entryType: sql`'timesheet'`.as('entryType'),
+        enteredById: sql`NULL`.as('enteredById'),
+        enteredByName: sql`NULL`.as('enteredByName'),
       })
       .from(timesheetEntries)
       .leftJoin(users, eq(timesheetEntries.staffId, users.id))
       .leftJoin(employees, eq(users.employeeId, employees.id))
-      .where(eq(timesheetEntries.jobId, jobId))
-      .orderBy(desc(timesheetEntries.date));
+      .where(eq(timesheetEntries.jobId, jobId));
+
+    // Get manual hour entries  
+    const manualEntriesQuery = db
+      .select({
+        id: manualHourEntries.id,
+        staffId: manualHourEntries.staffId,
+        jobId: manualHourEntries.jobId,
+        date: sql`DATE(${manualHourEntries.createdAt})`.as('date'),
+        hours: manualHourEntries.hours,
+        materials: sql`NULL`.as('materials'),
+        description: manualHourEntries.description,
+        approved: sql`true`.as('approved'), // Manual entries are always "approved"
+        submitted: sql`true`.as('submitted'),
+        createdAt: manualHourEntries.createdAt,
+        updatedAt: manualHourEntries.createdAt,
+        staffName: employees.name,
+        staffEmail: sql`NULL`.as('staffEmail'),
+        entryType: sql`'manual'`.as('entryType'),
+        enteredById: manualHourEntries.enteredById,
+        enteredByName: sql`COALESCE(${users.firstName}, 'Admin')`.as('enteredByName'),
+      })
+      .from(manualHourEntries)
+      .leftJoin(employees, eq(manualHourEntries.staffId, employees.id))
+      .leftJoin(users, eq(manualHourEntries.enteredById, users.id)) // Join to get admin name
+      .where(eq(manualHourEntries.jobId, jobId));
+
+    // Execute both queries and combine results
+    const [timesheetResults, manualResults] = await Promise.all([
+      timesheetEntriesQuery,
+      manualEntriesQuery
+    ]);
+
+    // Combine and sort by date (most recent first)
+    const allEntries = [...timesheetResults, ...manualResults];
+    return allEntries.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
   }
 
   // Admin timesheet methods
