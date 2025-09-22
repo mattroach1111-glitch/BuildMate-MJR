@@ -45,6 +45,7 @@ export const employees = pgTable("employees", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull(),
   defaultHourlyRate: decimal("default_hourly_rate", { precision: 10, scale: 2 }).notNull().default("50"),
+  isActive: boolean("is_active").notNull().default(true), // Toggle for including in job sheets
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -346,6 +347,7 @@ export const insertEmployeeSchema = createInsertSchema(employees).omit({
   id: true,
   createdAt: true,
   defaultHourlyRate: true,
+  isActive: true, // Handle activation separately
 });
 
 export const insertOtherCostSchema = createInsertSchema(otherCosts).omit({

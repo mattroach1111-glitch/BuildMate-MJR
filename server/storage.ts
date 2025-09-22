@@ -75,11 +75,13 @@ export interface IStorage {
   
   // Employee operations
   getEmployees(): Promise<Employee[]>;
+  getAllEmployees(): Promise<Employee[]>; // Get all employees regardless of active status
   getEmployee(id: string): Promise<Employee | undefined>;
   createEmployee(employee: InsertEmployee): Promise<Employee>;
   createEmployeeForJob(employee: InsertEmployee, jobId: string, hourlyRate: number): Promise<Employee>;
   createEmployeeWithAllJobs(employee: InsertEmployee): Promise<Employee>;
   updateEmployee(id: string, employee: Partial<InsertEmployee>): Promise<Employee>;
+  toggleEmployeeStatus(id: string, isActive: boolean): Promise<Employee>;
   deleteEmployee(id: string): Promise<void>;
   
   // Job operations
@@ -365,45 +367,12 @@ export class DatabaseStorage implements IStorage {
 
   // Employee operations
   async getEmployees(): Promise<Employee[]> {
-    // Only return employees who are either:
-    // 1. Not linked to any user account (unlinked employees)
-    // 2. Linked to an active user account (isAssigned = true)
-    // This excludes employees whose user accounts have been delinked (isAssigned = false)
-    console.log("🔍 Getting employees with delinked filtering...");
-    
-    const employeesWithUsers = await db
-      .select({
-        id: employees.id,
-        name: employees.name,
-        defaultHourlyRate: employees.defaultHourlyRate,
-        createdAt: employees.createdAt,
-        isAssigned: users.isAssigned,
-      })
+    // Only return employees who are marked as active (for job assignments)
+    return await db
+      .select()
       .from(employees)
-      .leftJoin(users, eq(users.employeeId, employees.id))
-      .where(
-        or(
-          isNull(users.isAssigned), // No linked user account
-          eq(users.isAssigned, true) // Linked and active user account
-        )
-      )
+      .where(eq(employees.isActive, true))
       .orderBy(desc(employees.createdAt));
-
-    console.log("📊 Raw employee query results:", employeesWithUsers.map(emp => ({ 
-      name: emp.name, 
-      isAssigned: emp.isAssigned 
-    })));
-
-    // Convert back to Employee type
-    const filteredEmployees = employeesWithUsers.map(emp => ({
-      id: emp.id,
-      name: emp.name,
-      defaultHourlyRate: emp.defaultHourlyRate,
-      createdAt: emp.createdAt,
-    }));
-
-    console.log("✅ Filtered employees for jobs:", filteredEmployees.map(emp => emp.name));
-    return filteredEmployees;
   }
 
   async getEmployee(id: string): Promise<Employee | undefined> {
@@ -452,10 +421,24 @@ export class DatabaseStorage implements IStorage {
     return createdEmployee;
   }
 
+  async getAllEmployees(): Promise<Employee[]> {
+    // Get all employees regardless of active status (for admin management)
+    return await db.select().from(employees).orderBy(desc(employees.createdAt));
+  }
+
   async updateEmployee(id: string, employee: Partial<InsertEmployee>): Promise<Employee> {
     const [updatedEmployee] = await db
       .update(employees)
       .set(employee)
+      .where(eq(employees.id, id))
+      .returning();
+    return updatedEmployee;
+  }
+
+  async toggleEmployeeStatus(id: string, isActive: boolean): Promise<Employee> {
+    const [updatedEmployee] = await db
+      .update(employees)
+      .set({ isActive })
       .where(eq(employees.id, id))
       .returning();
     return updatedEmployee;
@@ -582,16 +565,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createJob(job: InsertJob): Promise<Job> {
-    console.log("🏗️ Creating new job:", job.jobAddress);
     const [createdJob] = await db.insert(jobs).values(job).returning();
     
-    // Automatically add all employees to the job with the job's default hourly rate
-    console.log("👥 Getting employees for new job...");
+    // Automatically add all active employees to the job with the job's default hourly rate
     const employees = await this.getEmployees();
-    console.log("📝 Adding employees to job:", employees.map(emp => emp.name));
-    
     for (const employee of employees) {
-      console.log(`➕ Adding employee ${employee.name} to job ${createdJob.id}`);
       await this.createLaborEntry({
         jobId: createdJob.id,
         staffId: employee.id,
@@ -609,7 +587,6 @@ export class DatabaseStorage implements IStorage {
       invoiceDate: new Date().toISOString().split('T')[0], // Today's date
     });
     
-    console.log("✅ Job creation completed with", employees.length, "employees added");
     return createdJob;
   }
 
@@ -2244,6 +2221,7 @@ export class DatabaseStorage implements IStorage {
           id: employees.id,
           name: employees.name,
           defaultHourlyRate: employees.defaultHourlyRate,
+          isActive: employees.isActive,
           createdAt: employees.createdAt,
         },
       })
@@ -2263,7 +2241,10 @@ export class DatabaseStorage implements IStorage {
       updatedAt: row.updatedAt,
       user: {
         ...row.user,
-        employee: row.employee || undefined,
+        employee: row.employee ? {
+          ...row.employee,
+          isActive: row.employee.isActive ?? true, // Default to true for backwards compatibility
+        } : undefined,
       },
     }));
   }

@@ -490,7 +490,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const employees = await storage.getEmployees();
+      const employees = await storage.getAllEmployees(); // Get all employees for admin management
       res.json(employees);
     } catch (error) {
       console.error("Error fetching employees:", error);
@@ -533,6 +533,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error("Error updating employee:", error);
       res.status(500).json({ message: "Failed to update employee" });
+    }
+  });
+
+  app.post("/api/employees/:id/toggle", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { isActive } = req.body;
+      if (typeof isActive !== "boolean") {
+        return res.status(400).json({ message: "isActive must be a boolean" });
+      }
+
+      const employee = await storage.toggleEmployeeStatus(req.params.id, isActive);
+      res.json(employee);
+    } catch (error) {
+      console.error("Error toggling employee status:", error);
+      res.status(500).json({ message: "Failed to toggle employee status" });
     }
   });
 

@@ -25,6 +25,7 @@ import JobSheetModal from "@/components/job-sheet-modal";
 import StaffDashboard from "@/pages/staff-dashboard";
 import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, Settings, UserPlus, Download, Edit, DollarSign, TrendingUp, Building2, Bell, RotateCcw, Shield, Lock, RefreshCw, Trophy, Upload, User, Copy } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from "date-fns";
 import PageLayout from "@/components/page-layout";
@@ -788,6 +789,39 @@ export default function AdminDashboard() {
       toast({
         title: "Error",
         description: "Failed to update employee",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Toggle employee status mutation
+  const toggleEmployeeStatusMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const response = await apiRequest("POST", `/api/employees/${id}/toggle`, { isActive });
+      return response.json();
+    },
+    onSuccess: (_, { isActive }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
+      toast({
+        title: "Success",
+        description: `Employee ${isActive ? 'activated' : 'deactivated'} successfully. ${isActive ? 'They will now appear in new job sheets.' : 'They will no longer appear in new job sheets.'}`,
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to toggle employee status",
         variant: "destructive",
       });
     },
@@ -3504,27 +3538,51 @@ export default function AdminDashboard() {
                         </Form>
                       ) : (
                         <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="font-medium">{employee.name}</h3>
+                          <div className="flex items-center gap-3">
+                            <div>
+                              <h3 className="font-medium">{employee.name}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {employee.isActive ? 'Active - appears in job sheets' : 'Inactive - hidden from job sheets'}
+                              </p>
+                            </div>
                           </div>
-                          <div className="flex gap-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleEditEmployee(employee)}
-                              data-testid={`button-edit-employee-${employee.id}`}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => deleteEmployeeMutation.mutate(employee.id)}
-                              disabled={deleteEmployeeMutation.isPending}
-                              data-testid={`button-delete-employee-${employee.id}`}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                              <Label htmlFor={`employee-toggle-${employee.id}`} className="text-sm font-medium">
+                                {employee.isActive ? 'Active' : 'Inactive'}
+                              </Label>
+                              <Switch
+                                id={`employee-toggle-${employee.id}`}
+                                checked={employee.isActive}
+                                onCheckedChange={(checked) => {
+                                  toggleEmployeeStatusMutation.mutate({
+                                    id: employee.id,
+                                    isActive: checked
+                                  });
+                                }}
+                                disabled={toggleEmployeeStatusMutation.isPending}
+                                data-testid={`toggle-employee-${employee.id}`}
+                              />
+                            </div>
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleEditEmployee(employee)}
+                                data-testid={`button-edit-employee-${employee.id}`}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => deleteEmployeeMutation.mutate(employee.id)}
+                                disabled={deleteEmployeeMutation.isPending}
+                                data-testid={`button-delete-employee-${employee.id}`}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       )}
