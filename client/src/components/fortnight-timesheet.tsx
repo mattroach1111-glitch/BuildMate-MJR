@@ -970,7 +970,11 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           // Validation 2: If hours > 0, must have a job selected (not "no-job") 
           // Exception: Special leave types (RDO, sick leave, etc.) and Tafe are allowed even with no actual job
           const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'];
-          if (hours > 0 && (!jobId || jobId === 'no-job') && !leaveTypes.includes(jobId)) {
+          const isLeaveEntry = leaveTypes.includes(jobId) || 
+                              leaveTypes.includes(entry.materials) ||
+                              (jobId === null && (entry.description || '').toUpperCase().includes('TAFE'));
+          
+          if (hours > 0 && (!jobId || jobId === 'no-job') && !isLeaveEntry) {
             errors.push(`${format(parseISO(dateKey), 'MMM dd')}: Cannot have hours without selecting a job`);
           }
         });

@@ -1,0 +1,32 @@
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully
+timesheet?employee=46402233&admin=true:58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+timesheet?employee=46402233&admin=true:64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-sPCp0VtY.js:48 🔄 Session backup stored successfully
+index-sPCp0VtY.js:48 🔄 Session backup stored successfully
+index-sPCp0VtY.js:48 🔄 Session backup stored successfully
+index-sPCp0VtY.js:48 🔄 Session backup stored successfully
+index-sPCp0VtY.js:909 ✅ API SUCCESS: /api/admin/timesheets/46402233 Array(46)
+index-sPCp0VtY.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-sPCp0VtY.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-sPCp0VtY.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-sPCp0VtY.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-sPCp0VtY.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-sPCp0VtY.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-sPCp0VtY.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-sPCp0VtY.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-sPCp0VtY.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-sPCp0VtY.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-sPCp0VtY.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-sPCp0VtY.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-sPCp0VtY.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-sPCp0VtY.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-sPCp0VtY.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-sPCp0VtY.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-sPCp0VtY.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-sPCp0VtY.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-sPCp0VtY.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-sPCp0VtY.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-sPCp0VtY.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-sPCp0VtY.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-sPCp0VtY.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-sPCp0VtY.js:909 ✅ RDO MATCH FOUND - displaying RDO
