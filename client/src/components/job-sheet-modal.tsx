@@ -2687,15 +2687,29 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                           {jobTimesheets
                             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                             .map((entry) => (
-                            <tr key={entry.id} className="border-b">
+                            <tr key={entry.id} className={`border-b ${entry.entryType === 'manual' ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                               <td className="py-2" data-testid={`timesheet-date-${entry.id}`}>
                                 {new Date(entry.date).toLocaleDateString()}
                               </td>
                               <td className="py-2" data-testid={`timesheet-staff-${entry.id}`}>
-                                {entry.staffName || entry.staffEmail || 'Unknown Staff'}
+                                <div className="flex flex-col">
+                                  <span>{entry.staffName || entry.staffEmail || 'Unknown Staff'}</span>
+                                  {entry.entryType === 'manual' && (
+                                    <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                                      Manually entered by {entry.enteredByName || 'Admin'}
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                               <td className="py-2 font-medium" data-testid={`timesheet-hours-${entry.id}`}>
-                                {parseFloat(entry.hours).toFixed(1)}h
+                                <div className="flex items-center gap-2">
+                                  <span>{parseFloat(entry.hours).toFixed(1)}h</span>
+                                  {entry.entryType === 'manual' && (
+                                    <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full">
+                                      Manual
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                               <td className="py-2" data-testid={`timesheet-materials-${entry.id}`}>
                                 {entry.materials || entry.description || '-'}
@@ -2706,7 +2720,8 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                                     ? 'bg-green-100 text-green-800' 
                                     : 'bg-yellow-100 text-yellow-800'
                                 }`}>
-                                  {entry.approved ? 'Approved' : 'Pending'}
+                                  {entry.entryType === 'manual' ? 'Applied' : 
+                                   entry.approved ? 'Approved' : 'Pending'}
                                 </span>
                               </td>
                             </tr>
