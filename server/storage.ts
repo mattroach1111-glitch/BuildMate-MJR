@@ -508,7 +508,6 @@ export class DatabaseStorage implements IStorage {
         id: laborEntries.id,
         date: laborEntries.createdAt,
         hours: laborEntries.hoursLogged,
-        description: laborEntries.description,
         hourlyRate: laborEntries.hourlyRate,
         employeeId: laborEntries.staffId,
         employeeName: employees.name
@@ -547,7 +546,6 @@ export class DatabaseStorage implements IStorage {
         id: entry.id,
         date: entry.date?.toISOString() || new Date().toISOString(),
         hours: parseFloat(entry.hours),
-        description: entry.description || '',
         hourlyRate: parseFloat(entry.hourlyRate),
         employee: { name: entry.employeeName || 'Unknown Employee' }
       })),
@@ -560,15 +558,15 @@ export class DatabaseStorage implements IStorage {
       })),
       subTrades: subTradesData.map(subTrade => ({
         id: subTrade.id,
-        name: subTrade.description,
+        name: subTrade.trade,
         cost: parseFloat(subTrade.amount),
-        description: subTrade.supplier
+        description: subTrade.contractor
       })),
       otherCosts: otherCostsData.map(otherCost => ({
         id: otherCost.id,
         name: otherCost.description,
         cost: parseFloat(otherCost.amount),
-        description: otherCost.supplier
+        description: ''
       }))
     };
   }
