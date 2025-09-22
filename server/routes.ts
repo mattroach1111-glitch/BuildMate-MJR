@@ -1045,7 +1045,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Valid extra hours amount required" });
       }
 
-      const laborEntry = await storage.addExtraHoursToLaborEntry(req.params.id, extraHours);
+      const laborEntry = await storage.addExtraHoursToLaborEntry(req.params.id, extraHours, req.user.claims.sub);
       res.json(laborEntry);
     } catch (error) {
       console.error("Error adding extra hours:", error);

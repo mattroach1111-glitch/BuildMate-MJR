@@ -113,6 +113,7 @@ export interface IStorage {
   deleteLaborEntry(id: string): Promise<void>;
   updateLaborHoursFromTimesheet(staffId: string, jobId: string): Promise<void>;
   updateAllLaborRatesForJob(jobId: string, newHourlyRate: string): Promise<void>;
+  addExtraHoursToLaborEntry(laborEntryId: string, extraHours: string, adminUserId: string): Promise<LaborEntry>;
   
   // Material operations
   getMaterialsForJob(jobId: string): Promise<Material[]>;
@@ -994,7 +995,7 @@ export class DatabaseStorage implements IStorage {
       );
   }
 
-  async addExtraHoursToLaborEntry(laborEntryId: string, extraHours: string): Promise<LaborEntry> {
+  async addExtraHoursToLaborEntry(laborEntryId: string, extraHours: string, adminUserId: string): Promise<LaborEntry> {
     // Get current labor entry
     const [currentEntry] = await db
       .select()
@@ -1019,6 +1020,17 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(laborEntries.id, laborEntryId))
       .returning();
+
+    // Create a manual hour entry to track this addition
+    await db.insert(manualHourEntries).values({
+      laborEntryId: laborEntryId,
+      staffId: currentEntry.staffId,
+      jobId: currentEntry.jobId,
+      hours: additionalHours.toString(),
+      description: `Added ${additionalHours} extra hours to existing ${currentHours} hours (total: ${newTotalHours})`,
+      enteredById: adminUserId,
+      entryType: "extra_hours"
+    });
 
     return updatedEntry;
   }
