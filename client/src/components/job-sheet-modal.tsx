@@ -1619,6 +1619,24 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       return;
     }
 
+    // Find the current labor entry to show current hours in confirmation
+    const currentEntry = jobDetails?.laborEntries.find(entry => entry.id === editingLaborEntry);
+    const currentHours = currentEntry ? parseFloat(currentEntry.hoursLogged) : 0;
+    const newHours = hours;
+    const staffName = (currentEntry as any)?.staff?.name || currentEntry?.staffId || 'Unknown Staff';
+
+    // Show confirmation dialog to prevent accidental edits
+    const confirmChange = confirm(
+      `Are you sure you want to change ${staffName}'s hours?\n\n` +
+      `Current hours: ${currentHours} hrs\n` +
+      `New hours: ${newHours} hrs\n\n` +
+      `This will update the job sheet and affect the total cost.`
+    );
+
+    if (!confirmChange) {
+      return; // User cancelled, don't save
+    }
+
     updateLaborHoursMutation.mutate({
       laborEntryId: editingLaborEntry,
       hoursLogged: editLaborHours
