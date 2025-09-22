@@ -369,6 +369,8 @@ export class DatabaseStorage implements IStorage {
     // 1. Not linked to any user account (unlinked employees)
     // 2. Linked to an active user account (isAssigned = true)
     // This excludes employees whose user accounts have been delinked (isAssigned = false)
+    console.log("🔍 Getting employees with delinked filtering...");
+    
     const employeesWithUsers = await db
       .select({
         id: employees.id,
@@ -387,13 +389,21 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(desc(employees.createdAt));
 
+    console.log("📊 Raw employee query results:", employeesWithUsers.map(emp => ({ 
+      name: emp.name, 
+      isAssigned: emp.isAssigned 
+    })));
+
     // Convert back to Employee type
-    return employeesWithUsers.map(emp => ({
+    const filteredEmployees = employeesWithUsers.map(emp => ({
       id: emp.id,
       name: emp.name,
       defaultHourlyRate: emp.defaultHourlyRate,
       createdAt: emp.createdAt,
     }));
+
+    console.log("✅ Filtered employees for jobs:", filteredEmployees.map(emp => emp.name));
+    return filteredEmployees;
   }
 
   async getEmployee(id: string): Promise<Employee | undefined> {
@@ -572,11 +582,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createJob(job: InsertJob): Promise<Job> {
+    console.log("🏗️ Creating new job:", job.jobAddress);
     const [createdJob] = await db.insert(jobs).values(job).returning();
     
     // Automatically add all employees to the job with the job's default hourly rate
+    console.log("👥 Getting employees for new job...");
     const employees = await this.getEmployees();
+    console.log("📝 Adding employees to job:", employees.map(emp => emp.name));
+    
     for (const employee of employees) {
+      console.log(`➕ Adding employee ${employee.name} to job ${createdJob.id}`);
       await this.createLaborEntry({
         jobId: createdJob.id,
         staffId: employee.id,
@@ -594,6 +609,7 @@ export class DatabaseStorage implements IStorage {
       invoiceDate: new Date().toISOString().split('T')[0], // Today's date
     });
     
+    console.log("✅ Job creation completed with", employees.length, "employees added");
     return createdJob;
   }
 
