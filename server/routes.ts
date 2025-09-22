@@ -1068,7 +1068,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const laborEntry = await storage.updateLaborEntry(req.params.id, { 
         hoursLogged: parseFloat(hoursLogged).toString() 
-      });
+      }, user.id);
       res.json(laborEntry);
     } catch (error) {
       console.error("Error updating labor hours:", error);

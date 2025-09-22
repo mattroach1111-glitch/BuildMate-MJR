@@ -8,6 +8,7 @@ import {
   otherCosts,
   tipFees,
   timesheetEntries,
+  manualHourEntries,
   jobFiles,
   jobNotes,
   notifications,
@@ -33,6 +34,8 @@ import {
   type InsertTipFee,
   type TimesheetEntry,
   type InsertTimesheetEntry,
+  type ManualHourEntry,
+  type InsertManualHourEntry,
   type JobFile,
   type InsertJobFile,
   type JobNote,
@@ -858,7 +861,7 @@ export class DatabaseStorage implements IStorage {
     return createdEntry;
   }
 
-  async updateLaborEntry(id: string, entry: Partial<InsertLaborEntry>): Promise<LaborEntry> {
+  async updateLaborEntry(id: string, entry: Partial<InsertLaborEntry>, enteredByUserId?: string): Promise<LaborEntry> {
     // If hours are being updated, properly calculate manual hours adjustment
     if (entry.hoursLogged !== undefined) {
       const currentEntry = await db.select().from(laborEntries).where(eq(laborEntries.id, id)).limit(1);
@@ -891,6 +894,22 @@ export class DatabaseStorage implements IStorage {
           })
           .where(eq(laborEntries.id, id))
           .returning();
+
+        // Create manual hour entry record if hours changed and we have admin info
+        if (hoursDifference !== 0 && enteredByUserId) {
+          await db.insert(manualHourEntries).values({
+            laborEntryId: id,
+            jobId: current.jobId,
+            staffId: current.staffId,
+            enteredById: enteredByUserId,
+            hours: Math.abs(hoursDifference).toString(), // Store absolute value of change
+            description: hoursDifference > 0 
+              ? `Admin added ${hoursDifference} hours manually`
+              : `Admin reduced hours by ${Math.abs(hoursDifference)} manually`,
+            entryType: "direct_edit"
+          });
+        }
+        
         return updatedEntry;
       }
     }
