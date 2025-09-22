@@ -1712,7 +1712,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         <td className="p-3">
                           <Input
                             type="number"
-                            step="0.5"
+                            step={entry?.jobId && ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'].includes(entry.jobId) ? "0.01" : "0.5"}
                             placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "0"}
                             value={entry?.hours || ''}
                             onChange={(e) => {
@@ -2541,7 +2541,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             <td className="p-3">
                               <Input
                                 type="number"
-                                step="0.5"
+                                step={entry?.jobId && ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'].includes(entry.jobId) ? "0.01" : "0.5"}
                                 placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "0"}
                                 value={entry?.hours || ''}
                                 onChange={(e) => {

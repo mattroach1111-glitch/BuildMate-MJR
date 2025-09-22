@@ -1,0 +1,42 @@
+timesheet?employee=46402233&admin=true:58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+timesheet?employee=46402233&admin=true:64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-C8yzW-ls.js:48 🔄 Session backup stored successfully
+index-C8yzW-ls.js:48 🔄 Session backup stored successfully
+index-C8yzW-ls.js:48 🔄 Session backup stored successfully
+index-C8yzW-ls.js:48 🔄 Session backup stored successfully
+index-C8yzW-ls.js:909 ✅ API SUCCESS: /api/admin/timesheets/46402233 (46) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-C8yzW-ls.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-C8yzW-ls.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-C8yzW-ls.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-C8yzW-ls.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-C8yzW-ls.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-C8yzW-ls.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-C8yzW-ls.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-C8yzW-ls.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-C8yzW-ls.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-C8yzW-ls.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-C8yzW-ls.js:909 Deleting timesheet entry: 74dd8227-37cf-4ccd-a283-d160621c4253
+index-C8yzW-ls.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-C8yzW-ls.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-C8yzW-ls.js:909 ✅ API SUCCESS: /api/admin/timesheets/46402233 (45) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-C8yzW-ls.js:909 💾 SAVE ALL: Starting save process... {entriesToSave: 1, entriesToUpdate: 0}
+index-C8yzW-ls.js:909 💾 Saving entry: {date: '2025-09-08', hours: 0.01, materials: '', jobId: 'rdo', staffId: '46402233', …}
+index-C8yzW-ls.js:909 ✅ Entry saved successfully: Response {type: 'basic', url: 'https://build-mate-mattroach1111.replit.app/api/admin/timesheet', redirected: false, status: 201, ok: true, …}
+index-C8yzW-ls.js:909 📊 SAVE RESULTS: {successCount: 1, failureCount: 0}
+index-C8yzW-ls.js:909 🎉 SHOWING SUCCESS ANIMATION
+index-C8yzW-ls.js:909 ⏰ SUCCESS ANIMATION ENDED
+index-C8yzW-ls.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-C8yzW-ls.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-C8yzW-ls.js:909 ✅ API SUCCESS: /api/admin/timesheets/46402233 (46) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-C8yzW-ls.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-C8yzW-ls.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-C8yzW-ls.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-C8yzW-ls.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-C8yzW-ls.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-C8yzW-ls.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-C8yzW-ls.js:909 ✅ Confirmation response received
+index-C8yzW-ls.js:909 🎉 Confirmation successful: {message: "Timesheet approved successfully. PDF generated and…oogle Drive in 'BuildFlow Pro/Timesheets' folder.", fortnightStart: '2025-09-08', fortnightEnd: '2025-09-21', confirmedAt: '2025-09-22T00:18:19.000Z', driveLink: 'https://drive.google.com/file/d/1noZV_-7BL41NCCk8emCBSy3r4Kuq_6ds/view?usp=drivesdk', …}
+index-C8yzW-ls.js:909 🔄 Refreshing timesheet data...
+index-C8yzW-ls.js:909 🔍 RDO DEBUG: entry.jobId is null, description: RDO uppercase: RDO
+index-C8yzW-ls.js:909 ✅ RDO MATCH FOUND - displaying RDO
+index-C8yzW-ls.js:909 ✅ API SUCCESS: /api/admin/timesheets/46402233 (46) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
