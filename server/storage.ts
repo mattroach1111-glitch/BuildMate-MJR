@@ -365,7 +365,35 @@ export class DatabaseStorage implements IStorage {
 
   // Employee operations
   async getEmployees(): Promise<Employee[]> {
-    return await db.select().from(employees).orderBy(desc(employees.createdAt));
+    // Only return employees who are either:
+    // 1. Not linked to any user account (unlinked employees)
+    // 2. Linked to an active user account (isAssigned = true)
+    // This excludes employees whose user accounts have been delinked (isAssigned = false)
+    const employeesWithUsers = await db
+      .select({
+        id: employees.id,
+        name: employees.name,
+        defaultHourlyRate: employees.defaultHourlyRate,
+        createdAt: employees.createdAt,
+        isAssigned: users.isAssigned,
+      })
+      .from(employees)
+      .leftJoin(users, eq(users.employeeId, employees.id))
+      .where(
+        or(
+          isNull(users.isAssigned), // No linked user account
+          eq(users.isAssigned, true) // Linked and active user account
+        )
+      )
+      .orderBy(desc(employees.createdAt));
+
+    // Convert back to Employee type
+    return employeesWithUsers.map(emp => ({
+      id: emp.id,
+      name: emp.name,
+      defaultHourlyRate: emp.defaultHourlyRate,
+      createdAt: emp.createdAt,
+    }));
   }
 
   async getEmployee(id: string): Promise<Employee | undefined> {
