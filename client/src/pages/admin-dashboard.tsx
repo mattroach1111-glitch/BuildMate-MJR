@@ -2082,6 +2082,9 @@ export default function AdminDashboard() {
                                   <p className="text-xs text-muted-foreground mt-0.5">
                                     {job.createdAt ? `Added ${formatJobDate(job.createdAt)}` : 'Date not available'}
                                   </p>
+                                  <div className="text-xs font-medium text-green-700 dark:text-green-400 mt-1" data-testid={`text-total-exgst-${job.id}`}>
+                                    Total ex GST: ${((job as any).subtotalExGst || 0).toFixed(2)}
+                                  </div>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
                                   <div onClick={(e) => e.stopPropagation()}>
@@ -2291,6 +2294,9 @@ export default function AdminDashboard() {
                                         <p className="text-xs text-muted-foreground mt-0.5">
                                           {job.createdAt ? `Added ${formatJobDate(job.createdAt)}` : 'Date not available'}
                                         </p>
+                                        <div className="text-xs font-medium text-green-700 dark:text-green-400 mt-1" data-testid={`text-total-exgst-${job.id}`}>
+                                          Total ex GST: ${((job as any).subtotalExGst || 0).toFixed(2)}
+                                        </div>
                                       </div>
                                     </div>
                                   </div>

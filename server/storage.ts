@@ -88,7 +88,7 @@ export interface IStorage {
   deleteEmployee(id: string): Promise<void>;
   
   // Job operations
-  getJobs(): Promise<Job[]>;
+  getJobs(): Promise<(Job & { subtotalExGst?: number })[]>;
   getJob(id: string): Promise<Job | undefined>;
   createJob(job: InsertJob): Promise<Job>;
   updateJob(id: string, job: Partial<InsertJob>): Promise<Job>;
@@ -473,11 +473,62 @@ export class DatabaseStorage implements IStorage {
     await db.delete(employees).where(eq(employees.id, id));
   }
 
+  // Helper function to calculate per-job totals (excluding GST)
+  async calculateJobSubtotalExGst(jobId: string): Promise<number> {
+    // Calculate labor total: SUM(hourlyRate * hoursLogged)
+    const [laborResult] = await db.select({ 
+      total: sql<string>`COALESCE(SUM(${laborEntries.hourlyRate} * ${laborEntries.hoursLogged}), 0)` 
+    })
+      .from(laborEntries)
+      .where(eq(laborEntries.jobId, jobId));
+
+    // Calculate materials total: SUM(amount)
+    const [materialsResult] = await db.select({ 
+      total: sql<string>`COALESCE(SUM(${materials.amount}), 0)` 
+    })
+      .from(materials)
+      .where(eq(materials.jobId, jobId));
+
+    // Calculate sub-trades total: SUM(amount)
+    const [subTradesResult] = await db.select({ 
+      total: sql<string>`COALESCE(SUM(${subTrades.amount}), 0)` 
+    })
+      .from(subTrades)
+      .where(eq(subTrades.jobId, jobId));
+
+    // Calculate other costs total: SUM(amount)
+    const [otherCostsResult] = await db.select({ 
+      total: sql<string>`COALESCE(SUM(${otherCosts.amount}), 0)` 
+    })
+      .from(otherCosts)
+      .where(eq(otherCosts.jobId, jobId));
+
+    const laborTotal = Number(laborResult?.total || 0);
+    const materialsTotal = Number(materialsResult?.total || 0);
+    const subTradesTotal = Number(subTradesResult?.total || 0);
+    const otherCostsTotal = Number(otherCostsResult?.total || 0);
+
+    // Calculate subtotal excluding GST
+    const subtotalExGst = laborTotal + materialsTotal + subTradesTotal + otherCostsTotal;
+    
+    return subtotalExGst;
+  }
+
   // Job operations
-  async getJobs(): Promise<Job[]> {
-    return await db.select().from(jobs)
+  async getJobs(): Promise<(Job & { subtotalExGst?: number })[]> {
+    const jobsData = await db.select().from(jobs)
       .where(or(eq(jobs.isDeleted, false), isNull(jobs.isDeleted)))
       .orderBy(desc(jobs.createdAt));
+
+    // Calculate subtotal for each job
+    const jobsWithSubtotals = await Promise.all(
+      jobsData.map(async (job: Job) => {
+        const subtotalExGst = await this.calculateJobSubtotalExGst(job.id);
+        return { ...job, subtotalExGst };
+      })
+    );
+
+    return jobsWithSubtotals;
   }
 
   async getJobsByIds(jobIds: string[]): Promise<Job[]> {
