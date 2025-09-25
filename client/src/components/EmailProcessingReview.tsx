@@ -8,6 +8,7 @@ import { CheckCircle, XCircle, Clock, FileText, DollarSign, Building, Edit, Eye 
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
+import { JobAddressSearch } from './job-address-search';
 import * as fuzzball from 'fuzzball';
 
 // GST calculation function (10% Australian GST)
@@ -342,43 +343,26 @@ export default function EmailProcessingReview() {
                     </div>
                     <div className="text-xs text-gray-600 mt-1">
                       <span className="font-medium">Job assignment:</span>
-                      <Select 
-                        value={jobOverrides[doc.id] || (() => {
-                          if (doc.email_subject && jobs && jobs.length > 0) {
-                            const match = getJobFromSubject(doc.email_subject, jobs);
-                            if (match) {
-                              // Extract job address from match result
-                              const jobAddress = match.split(' (')[0];
-                              const matchedJob = jobs.find((j: any) => j.jobAddress === jobAddress);
-                              return matchedJob?.id || '';
+                      <div className="mt-1">
+                        <JobAddressSearch
+                          value={jobOverrides[doc.id] || (() => {
+                            if (doc.email_subject && jobs && jobs.length > 0) {
+                              const match = getJobFromSubject(doc.email_subject, jobs);
+                              if (match) {
+                                // Extract job address from match result
+                                const jobAddress = match.split(' (')[0];
+                                const matchedJob = jobs.find((j: any) => j.jobAddress === jobAddress);
+                                return matchedJob?.id || '';
+                              }
                             }
-                          }
-                          return '';
-                        })()} 
-                        onValueChange={(value) => setJobOverrides(prev => ({...prev, [doc.id]: value}))}
-                      >
-                        <SelectTrigger className="w-full h-8 text-xs mt-1 mobile-input">
-                          <SelectValue placeholder="Select job..." />
-                        </SelectTrigger>
-                        <SelectContent 
-                          position="popper" 
-                          className="max-h-[200px] overflow-y-auto z-[9999]"
-                          sideOffset={4}
-                        >
-                          {jobs?.map((job: any) => (
-                            <SelectItem 
-                              key={job.id} 
-                              value={job.id}
-                              className="text-xs py-2"
-                            >
-                              <div className="flex flex-col">
-                                <span className="font-medium">{job.jobAddress}</span>
-                                <span className="text-xs text-muted-foreground">({job.clientName})</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                            return '';
+                          })()}
+                          onValueChange={(value) => setJobOverrides(prev => ({...prev, [doc.id]: value}))}
+                          jobs={jobs || []}
+                          placeholder="Search and select job..."
+                          className="w-full text-xs"
+                        />
+                      </div>
                     </div>
                   </div>
                   <Badge variant="outline" className="text-orange-600 border-orange-200">

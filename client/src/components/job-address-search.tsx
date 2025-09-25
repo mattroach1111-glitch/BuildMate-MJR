@@ -44,8 +44,14 @@ export function JobAddressSearch({
       );
     }
     
-    // Sort alphabetically by job address
-    filtered = filtered.sort((a, b) => a.jobAddress.localeCompare(b.jobAddress));
+    // Sort numerically/naturally by job address (handles mixed alphanumeric)
+    filtered = filtered.sort((a, b) => {
+      // Use natural sorting with numeric comparison
+      return a.jobAddress.localeCompare(b.jobAddress, undefined, {
+        numeric: true,
+        sensitivity: 'base'
+      });
+    });
     
     setFilteredJobs(filtered);
   }, [searchText, jobs]);
