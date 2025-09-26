@@ -812,21 +812,18 @@ export class DatabaseStorage implements IStorage {
     const otherCostsTotal = Number(otherCostsResult[0]?.total || 0);
     const tipFeesTotal = Number(tipFeesResult[0]?.total || 0);
 
-    // Calculate total including GST
-    const totalIncludingGST = materialsTotal + laborTotal + subTradesTotal + otherCostsTotal + tipFeesTotal;
-    
-    // Convert to excluding GST (divide by 1.1 for Australian GST)
-    const totalCosts = totalIncludingGST / 1.1;
+    // Calculate total excluding GST (all amounts are already excluding GST)
+    const totalCosts = materialsTotal + laborTotal + subTradesTotal + otherCostsTotal + tipFeesTotal;
 
     return {
       totalCosts,
       jobCount: jobIds.length,
       costBreakdown: {
-        materials: materialsTotal / 1.1,
-        labor: laborTotal / 1.1,
-        subTrades: subTradesTotal / 1.1,
-        otherCosts: otherCostsTotal / 1.1,
-        tipFees: tipFeesTotal / 1.1,
+        materials: materialsTotal,
+        labor: laborTotal,
+        subTrades: subTradesTotal,
+        otherCosts: otherCostsTotal,
+        tipFees: tipFeesTotal,
       },
     };
   }
