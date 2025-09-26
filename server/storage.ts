@@ -503,13 +503,21 @@ export class DatabaseStorage implements IStorage {
       .from(otherCosts)
       .where(eq(otherCosts.jobId, jobId));
 
+    // Calculate tip fees total: SUM(totalAmount) - includes cartage
+    const [tipFeesResult] = await db.select({ 
+      total: sql<string>`COALESCE(SUM(${tipFees.totalAmount}), 0)` 
+    })
+      .from(tipFees)
+      .where(eq(tipFees.jobId, jobId));
+
     const laborTotal = Number(laborResult?.total || 0);
     const materialsTotal = Number(materialsResult?.total || 0);
     const subTradesTotal = Number(subTradesResult?.total || 0);
     const otherCostsTotal = Number(otherCostsResult?.total || 0);
+    const tipFeesTotal = Number(tipFeesResult?.total || 0);
 
-    // Calculate subtotal excluding GST
-    const subtotalExGst = laborTotal + materialsTotal + subTradesTotal + otherCostsTotal;
+    // Calculate subtotal excluding GST (includes all cost categories)
+    const subtotalExGst = laborTotal + materialsTotal + subTradesTotal + otherCostsTotal + tipFeesTotal;
     
     return subtotalExGst;
   }
