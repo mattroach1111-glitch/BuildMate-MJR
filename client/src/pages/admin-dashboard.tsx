@@ -2156,116 +2156,119 @@ export default function AdminDashboard() {
                     className={`border rounded-lg p-3 sm:p-4 transition-colors ${colors.bg} mb-3 sm:mb-4`}
                   >
                     <div 
-                      className={`flex items-center gap-2 p-2 sm:p-3 rounded transition-colors ${colors.folderBg}`}
+                      className={`p-2 sm:p-3 rounded transition-colors ${colors.folderBg}`}
                     >
-                      <div 
-                        className="flex items-center gap-2 flex-1 cursor-pointer"
-                        onClick={toggleExpanded}
-                        data-testid={`folder-${groupName}`}
-                      >
-                        {isExpanded ? (
-                          <ChevronDown className="h-4 w-4 shrink-0" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 shrink-0" />
-                        )}
-                        {isExpanded ? (
-                          <FolderOpen className={`h-5 w-5 shrink-0 ${colors.folderIcon}`} />
-                        ) : (
-                          <Folder className={`h-5 w-5 shrink-0 ${colors.folderIcon}`} />
-                        )}
-                        <span className={`font-medium ${colors.folderText} truncate`}>{groupName}</span>
-                        <Badge 
-                          variant="secondary" 
-                          className={`ml-2 shrink-0 ${colors.badge} text-xs px-2 py-1`}
+                      {/* Top row: Folder info and action buttons */}
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="flex items-center gap-2 flex-1 cursor-pointer"
+                          onClick={toggleExpanded}
+                          data-testid={`folder-${groupName}`}
                         >
-                          {groupJobs.length}
-                        </Badge>
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4 shrink-0" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 shrink-0" />
+                          )}
+                          {isExpanded ? (
+                            <FolderOpen className={`h-5 w-5 shrink-0 ${colors.folderIcon}`} />
+                          ) : (
+                            <Folder className={`h-5 w-5 shrink-0 ${colors.folderIcon}`} />
+                          )}
+                          <span className={`font-medium ${colors.folderText} truncate`}>{groupName}</span>
+                          <Badge 
+                            variant="secondary" 
+                            className={`ml-2 shrink-0 ${colors.badge} text-xs px-2 py-1`}
+                          >
+                            {groupJobs.length}
+                          </Badge>
+                        </div>
+                        
+                        {/* PDF Download Button for Project Managers */}
+                        {groupBy === 'manager' && !isReadyForBillingGroup(groupName) && (
+                          <div className="flex gap-1 shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 hover:bg-white/20"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                try {
+                                  await generateJobListPDF(groupJobs, groupName);
+                                  toast({
+                                    title: "PDF Downloaded",
+                                    description: `Job list for ${groupName} has been downloaded.`,
+                                  });
+                                } catch (error) {
+                                  toast({
+                                    title: "Download Failed",
+                                    description: "Failed to generate PDF. Please try again.",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }}
+                              title={`Download PDF job list for ${groupName}`}
+                              data-testid={`download-pdf-${groupName}`}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            <JobUpdateDialog projectManager={groupName} />
+                          </div>
+                        )}
+                        
+                        {/* Color Picker Button */}
+                        <DropdownMenu 
+                          open={colorPickerOpen === groupName} 
+                          onOpenChange={(open) => setColorPickerOpen(open ? groupName : null)}
+                        >
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 hover:bg-white/20"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setColorPickerOpen(colorPickerOpen === groupName ? null : groupName);
+                              }}
+                              data-testid={`color-picker-${groupName}`}
+                            >
+                              <Palette className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent 
+                            align="end" 
+                            className="w-56 p-2"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="text-sm font-medium mb-2 px-2">Choose Folder Color</div>
+                            <div className="grid grid-cols-4 gap-2">
+                              {allColorThemes.map((theme, index) => (
+                                <button
+                                  key={theme.name}
+                                  className={`w-10 h-10 rounded-lg border-2 transition-all hover:scale-110 ${theme.preview} ${
+                                    folderColors[groupName] === index 
+                                      ? 'ring-2 ring-offset-2 ring-blue-500' 
+                                      : 'border-gray-200 hover:border-gray-300'
+                                  }`}
+                                  onClick={() => handleColorChange(groupName, index)}
+                                  title={theme.name}
+                                  data-testid={`color-option-${theme.name.toLowerCase()}`}
+                                />
+                              ))}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-2 px-2">
+                              Click a color to customize this folder
+                            </div>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                       
-                      {/* Folder Total Excluding GST */}
-                      <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 shrink-0" data-testid={`text-folder-total-${groupName}`}>
+                      {/* Folder Total Excluding GST - Below folder name */}
+                      <div className="mt-2 pl-9 text-base font-semibold text-gray-800 dark:text-gray-200" data-testid={`text-folder-total-${groupName}`}>
                         {new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(
                           groupJobs.reduce((sum, job) => sum + ((job as any).subtotalExGst || 0), 0)
                         )}
                       </div>
-                      
-                      {/* PDF Download Button for Project Managers */}
-                      {groupBy === 'manager' && !isReadyForBillingGroup(groupName) && (
-                        <div className="flex gap-1 shrink-0">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 hover:bg-white/20"
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              try {
-                                await generateJobListPDF(groupJobs, groupName);
-                                toast({
-                                  title: "PDF Downloaded",
-                                  description: `Job list for ${groupName} has been downloaded.`,
-                                });
-                              } catch (error) {
-                                toast({
-                                  title: "Download Failed",
-                                  description: "Failed to generate PDF. Please try again.",
-                                  variant: "destructive",
-                                });
-                              }
-                            }}
-                            title={`Download PDF job list for ${groupName}`}
-                            data-testid={`download-pdf-${groupName}`}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                          <JobUpdateDialog projectManager={groupName} />
-                        </div>
-                      )}
-                      
-                      {/* Color Picker Button */}
-                      <DropdownMenu 
-                        open={colorPickerOpen === groupName} 
-                        onOpenChange={(open) => setColorPickerOpen(open ? groupName : null)}
-                      >
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 hover:bg-white/20"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setColorPickerOpen(colorPickerOpen === groupName ? null : groupName);
-                            }}
-                            data-testid={`color-picker-${groupName}`}
-                          >
-                            <Palette className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent 
-                          align="end" 
-                          className="w-56 p-2"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="text-sm font-medium mb-2 px-2">Choose Folder Color</div>
-                          <div className="grid grid-cols-4 gap-2">
-                            {allColorThemes.map((theme, index) => (
-                              <button
-                                key={theme.name}
-                                className={`w-10 h-10 rounded-lg border-2 transition-all hover:scale-110 ${theme.preview} ${
-                                  folderColors[groupName] === index 
-                                    ? 'ring-2 ring-offset-2 ring-blue-500' 
-                                    : 'border-gray-200 hover:border-gray-300'
-                                }`}
-                                onClick={() => handleColorChange(groupName, index)}
-                                title={theme.name}
-                                data-testid={`color-option-${theme.name.toLowerCase()}`}
-                              />
-                            ))}
-                          </div>
-                          <div className="text-xs text-muted-foreground mt-2 px-2">
-                            Click a color to customize this folder
-                          </div>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </div>
                     
                     {isExpanded && (
