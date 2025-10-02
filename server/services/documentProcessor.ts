@@ -41,11 +41,20 @@ export class DocumentProcessor {
         
         Return a JSON object with these fields:
         - vendor: The company/vendor name
-        - amount: The total amount as a number (extract from any currency format)
+        - amount: The FINAL TOTAL amount from the invoice (see instructions below)
         - description: Brief description of the goods/services
         - date: Invoice/document date in YYYY-MM-DD format
         - category: One of: "materials", "sub_trades", "other_costs", "tip_fees"
         - confidence: Your confidence level (0.0 to 1.0)
+        
+        CRITICAL INSTRUCTIONS FOR AMOUNT EXTRACTION:
+        - Extract the FINAL INVOICE TOTAL only - the grand total that the customer must pay
+        - Look for labels like: "TOTAL INC TAX", "TOTAL INCLUDING GST", "GRAND TOTAL", "AMOUNT DUE", "TOTAL PAID", "BALANCE DUE"
+        - DO NOT extract individual line item amounts
+        - DO NOT extract subtotals before tax
+        - DO NOT add up items yourself - find the final total on the document
+        - If multiple totals exist, choose the largest final amount (usually includes tax)
+        - Return the amount as a number without currency symbols or commas
         
         For category classification:
         - "materials": Building supplies, hardware, lumber, concrete, etc.
