@@ -2184,7 +2184,9 @@ export default function AdminDashboard() {
                       
                       {/* Folder Total Excluding GST */}
                       <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 shrink-0" data-testid={`text-folder-total-${groupName}`}>
-                        ${groupJobs.reduce((sum, job) => sum + ((job as any).subtotalExGst || 0), 0).toFixed(2)}
+                        {new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(
+                          groupJobs.reduce((sum, job) => sum + ((job as any).subtotalExGst || 0), 0)
+                        )}
                       </div>
                       
                       {/* PDF Download Button for Project Managers */}
