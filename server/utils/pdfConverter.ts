@@ -12,14 +12,16 @@ export async function convertPdfToImage(pdfBuffer: Buffer): Promise<Buffer> {
     await writeFile(tempPdfPath, pdfBuffer);
 
     // Convert ALL pages of PDF to a single vertical image using ImageMagick
+    // Using higher density (300 DPI) for better text clarity
     return new Promise((resolve, reject) => {
       const convert = spawn('convert', [
-        '-density', '150',
+        '-density', '300',
         tempPdfPath, // Convert ALL pages (removed [0])
         '-append', // Vertically append all pages
-        '-quality', '90',
+        '-quality', '95',
         '-background', 'white',
         '-alpha', 'remove',
+        '-colorspace', 'sRGB',
         tempImagePath
       ]);
 
