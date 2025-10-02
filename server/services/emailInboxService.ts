@@ -290,16 +290,34 @@ export class EmailInboxService {
       console.log(`📧 Processing email from ${emailMessage.from} with ${emailMessage.attachments.length} attachments`);
       console.log(`📧 Email subject: ${emailMessage.subject}`);
       
-      // Check for unique message ID only (more reliable than subject matching)
-      const existingLogs = await storage.getEmailProcessingLogs();
-      const alreadyProcessed = existingLogs.find(log => 
-        log.messageId === emailMessage.id && log.status === "completed"
+      // Check if there are any PENDING documents from this email
+      // Allow reprocessing if all previous documents were approved/rejected
+      const allPendingDocs = await storage.getEmailProcessedDocumentsPending();
+      const hasPendingFromThisEmail = allPendingDocs.some(doc => 
+        doc.emailSubject === emailMessage.subject && 
+        doc.emailFrom === emailMessage.from
       );
       
-      if (alreadyProcessed) {
-        console.log(`📧 Email already processed (ID: ${emailMessage.id}), skipping`);
+      if (hasPendingFromThisEmail) {
+        console.log(`📧 Email has pending documents for review, skipping duplicate: "${emailMessage.subject}"`);
         return true;
       }
+      
+      // Check if this exact message was already processed in the last hour to prevent rapid duplicates
+      const existingLogs = await storage.getEmailProcessingLogs();
+      const recentDuplicate = existingLogs.find(log => 
+        log.messageId === emailMessage.id && 
+        log.status === "completed" &&
+        new Date(log.createdAt).getTime() > Date.now() - (60 * 60 * 1000) // Within last hour
+      );
+      
+      if (recentDuplicate) {
+        console.log(`📧 Email was just processed recently (ID: ${emailMessage.id}), skipping to prevent duplicate`);
+        return true;
+      }
+      
+      console.log(`📧 Email is new or was previously reviewed - proceeding with processing`);
+
       
       // Create processing log entry
       const logEntry = await storage.createEmailProcessingLog({
