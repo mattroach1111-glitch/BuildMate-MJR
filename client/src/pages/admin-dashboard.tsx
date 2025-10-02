@@ -2182,6 +2182,11 @@ export default function AdminDashboard() {
                         </Badge>
                       </div>
                       
+                      {/* Folder Total Excluding GST */}
+                      <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 shrink-0" data-testid={`text-folder-total-${groupName}`}>
+                        ${groupJobs.reduce((sum, job) => sum + ((job as any).subtotalExGst || 0), 0).toFixed(2)}
+                      </div>
+                      
                       {/* PDF Download Button for Project Managers */}
                       {groupBy === 'manager' && !isReadyForBillingGroup(groupName) && (
                         <div className="flex gap-1 shrink-0">
