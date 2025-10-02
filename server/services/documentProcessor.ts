@@ -37,27 +37,44 @@ export class DocumentProcessor {
       }
 
       const prompt = `
-        Analyze this document image and extract expense/invoice information.
+        Analyze this invoice/receipt image and extract the information with EXTREME ACCURACY.
         
         Return a JSON object with these fields:
-        - vendor: The company/vendor name
-        - amount: The FINAL TOTAL amount from the invoice (see instructions below)
+        - vendor: The company/vendor name (from header or letterhead)
+        - amount: The FINAL TOTAL AMOUNT (see critical instructions below)
         - description: Brief description of the goods/services
         - date: Invoice/document date in YYYY-MM-DD format
         - category: One of: "materials", "sub_trades", "other_costs", "tip_fees"
         - confidence: Your confidence level (0.0 to 1.0)
         
-        CRITICAL INSTRUCTIONS FOR AMOUNT EXTRACTION:
-        - Extract the FINAL INVOICE TOTAL only - the grand total that the customer must pay
-        - Look for labels like: "TOTAL INC TAX", "TOTAL INCLUDING GST", "GRAND TOTAL", "AMOUNT DUE", "TOTAL PAID", "BALANCE DUE"
-        - DO NOT extract individual line item amounts
-        - DO NOT extract subtotals before tax
-        - DO NOT add up items yourself - find the final total on the document
-        - If multiple totals exist, choose the largest final amount (usually includes tax)
-        - Return the amount as a number without currency symbols or commas
+        ⚠️ CRITICAL INSTRUCTIONS FOR AMOUNT EXTRACTION - READ CAREFULLY:
+        
+        1. Look at the BOTTOM of the invoice for the FINAL TOTAL section
+        2. Find the absolute LAST amount listed - this is what the customer must pay
+        3. Common labels for the correct total:
+           - "Total amount (incl GST)" or "Total amount incl GST"
+           - "TOTAL INC TAX" or "TOTAL INCLUDING GST"
+           - "GRAND TOTAL" or "TOTAL DUE" or "AMOUNT DUE"
+           - "BALANCE DUE" or "TOTAL PAID"
+           - The LARGEST number near the bottom of the document
+        
+        4. DO NOT extract these (they are WRONG):
+           - "Total amount (exc GST)" or "excluding GST" - this is NOT the final total
+           - "Subtotal" - this is BEFORE tax
+           - Individual line item amounts
+           - GST amount by itself
+           - Any amount that has another amount below it
+        
+        5. DOUBLE CHECK: Look for an amount BELOW your selected amount
+           - If there's a larger amount below, use that instead
+           - The final total is ALWAYS at or near the bottom
+           - When in doubt, choose the LARGEST amount in the totals section
+        
+        6. Return ONLY the numeric value (no $ signs, no commas)
+           Example: For "$91.63" return: 91.63
         
         For category classification:
-        - "materials": Building supplies, hardware, lumber, concrete, etc.
+        - "materials": Building supplies, hardware, lumber, concrete, plaster, paint, etc.
         - "sub_trades": Subcontractor services, electrician, plumber, etc.
         - "other_costs": General expenses, equipment rental, permits, etc.
         - "tip_fees": Waste disposal, dump fees, rubbish removal

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CheckCircle, XCircle, Clock, FileText, DollarSign, Building, Edit, Eye } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
@@ -160,6 +161,7 @@ export default function EmailProcessingReview() {
   const [categoryOverrides, setCategoryOverrides] = useState<Record<string, string>>({});
   const [jobOverrides, setJobOverrides] = useState<Record<string, string>>({});
   const [gstOverrides, setGstOverrides] = useState<Record<string, 'include' | 'exclude'>>({});
+  const [amountOverrides, setAmountOverrides] = useState<Record<string, string>>({});
   const [previewDoc, setPreviewDoc] = useState<{
     url: string;
     filename: string;
@@ -200,14 +202,14 @@ export default function EmailProcessingReview() {
   });
 
   const approveMutation = useMutation({
-    mutationFn: async ({ docId, jobId, category, gstOption }: { docId: string; jobId?: string; category?: string; gstOption?: 'include' | 'exclude' }) => {
+    mutationFn: async ({ docId, jobId, category, gstOption, amount }: { docId: string; jobId?: string; category?: string; gstOption?: 'include' | 'exclude'; amount?: string }) => {
       const response = await fetch(`/api/email-processing/approve/${docId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ jobId, categoryOverride: category, gstOption }),
+        body: JSON.stringify({ jobId, categoryOverride: category, gstOption, amountOverride: amount }),
       });
       if (!response.ok) {
         throw new Error('Failed to approve document');
@@ -379,13 +381,21 @@ export default function EmailProcessingReview() {
                   <div className="flex items-center gap-2">
                     <DollarSign className="h-3 w-3 text-gray-500 flex-shrink-0" />
                     <span className="text-gray-600">Amount:</span>
-                    <span className="font-medium">
-                      ${calculateGstAmount(
-                        parseFloat(doc.amount) || 0, 
-                        gstOverrides[doc.id] || doc.gstOption || 'include', 
-                        'include'
-                      ).toFixed(2)} {(gstOverrides[doc.id] || doc.gstOption || 'include') === 'include' ? '(inc GST)' : '(exc GST)'}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm">$</span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={amountOverrides[doc.id] ?? doc.amount ?? ''}
+                        onChange={(e) => setAmountOverrides(prev => ({...prev, [doc.id]: e.target.value}))}
+                        className="w-24 h-8 text-sm mobile-input"
+                        placeholder="0.00"
+                        data-testid={`input-amount-${doc.id}`}
+                      />
+                      <span className="text-xs text-gray-500 whitespace-nowrap">
+                        {(gstOverrides[doc.id] || doc.gstOption || 'include') === 'include' ? '(inc GST)' : '(exc GST)'}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-gray-600 flex-shrink-0">GST:</span>
@@ -476,6 +486,7 @@ export default function EmailProcessingReview() {
                         docId: doc.id, 
                         category: categoryOverrides[doc.id] || doc.category,
                         gstOption: gstOverrides[doc.id] || doc.gstOption || 'include',
+                        amount: amountOverrides[doc.id] || doc.amount,
                         jobId: selectedJobId
                       });
                     }}
