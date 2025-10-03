@@ -3015,8 +3015,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const systemTokens = await storage.getSystemGoogleDriveTokens();
       if (!systemTokens) {
         console.log(`❌ System Google Drive tokens missing`);
-        return res.status(400).json({ 
-          error: "Google Drive not connected. Please connect Google Drive in system settings first." 
+        return res.status(401).json({ 
+          error: "Google Drive not connected. Please connect Google Drive in system settings first.",
+          code: 'AUTH_REQUIRED',
+          requiresReconnect: true,
+          message: "Google Drive connection required. Please connect your Google Drive account."
         });
       }
       
@@ -4863,9 +4866,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (!systemTokens) {
           console.log("❌ System doesn't have Google Drive connected");
-          return res.status(400).json({
+          return res.status(401).json({
             success: false,
-            message: "Google Drive not connected. Please connect Google Drive in system settings first.",
+            error: "Google Drive not connected. Please connect Google Drive in system settings first.",
+            code: 'AUTH_REQUIRED',
+            requiresReconnect: true,
+            message: "Google Drive connection required. Please connect your Google Drive account.",
             suggestion: "Go to Settings and connect your Google Drive account"
           });
         }
@@ -4888,8 +4894,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Check if service is ready
         if (!googleDriveService.isReady()) {
           console.log("❌ Google Drive service not ready");
-          return res.status(400).json({
+          return res.status(401).json({
             success: false,
+            error: "Google Drive authentication expired. Please reconnect your Google Drive account.",
+            code: 'AUTH_REQUIRED',
+            requiresReconnect: true,
             message: "Google Drive authentication expired. Please reconnect your Google Drive account.",
             suggestion: "Go to Settings and reconnect your Google Drive account"
           });
