@@ -172,9 +172,54 @@ export class ImapEmailService {
 
   // Mark email as read
   async markAsRead(messageId: string): Promise<void> {
-    // This would require additional IMAP operations
-    // For now, we'll handle this in the main processing loop
-    console.log(`📧 Would mark email ${messageId} as read`);
+    return new Promise((resolve, reject) => {
+      this.imap.once('ready', () => {
+        this.imap.openBox('INBOX', false, (err: any) => {
+          if (err) {
+            console.error('Error opening inbox for mark as read:', err);
+            reject(err);
+            return;
+          }
+
+          // Search for this specific message ID
+          this.imap.search([['HEADER', 'MESSAGE-ID', messageId]], (err: any, results: any) => {
+            if (err) {
+              console.error('Error searching for message to mark as read:', err);
+              reject(err);
+              return;
+            }
+
+            if (!results || results.length === 0) {
+              console.log(`📧 Email ${messageId} not found - may already be marked read`);
+              this.imap.end();
+              resolve();
+              return;
+            }
+
+            // Mark the message as seen/read
+            this.imap.addFlags(results, ['\\Seen'], (err: any) => {
+              if (err) {
+                console.error('Error marking email as read:', err);
+                this.imap.end();
+                reject(err);
+                return;
+              }
+
+              console.log(`✅ Marked email ${messageId} as read`);
+              this.imap.end();
+              resolve();
+            });
+          });
+        });
+      });
+
+      this.imap.once('error', (err: any) => {
+        console.error('IMAP connection error during mark as read:', err);
+        reject(err);
+      });
+
+      this.imap.connect();
+    });
   }
 
   // Check if document type can be processed
