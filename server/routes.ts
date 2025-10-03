@@ -332,11 +332,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tokens = await googleAuth.getTokens(code as string);
       console.log("🔵 Google Drive tokens received:", { hasAccessToken: !!tokens.access_token, hasRefreshToken: !!tokens.refresh_token });
       
-      // Store tokens in user's database record using the authenticated user ID
+      // Store tokens in system settings (system-wide, not per-user)
       const userId = req.user.claims.sub;
-      await storage.updateUserGoogleDriveTokens(userId, JSON.stringify(tokens));
+      await storage.setSystemGoogleDriveTokens(JSON.stringify(tokens), userId);
       
-      console.log(`✅ Google Drive tokens saved for user ${userId}`);
+      console.log(`✅ System-wide Google Drive tokens saved by user ${userId}`);
       
       // Redirect back to the admin dashboard settings tab
       res.redirect('/?tab=settings&google_drive_connected=true');
@@ -354,8 +354,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const googleDriveService = new GoogleDriveService();
       const tokens = await googleDriveService.authorize(code);
       
-      // Store tokens in user record
-      await storage.updateUserGoogleDriveTokens(userId, JSON.stringify(tokens));
+      // Store tokens in system settings (system-wide, not per-user)
+      await storage.setSystemGoogleDriveTokens(JSON.stringify(tokens), userId);
       
       res.json({ message: "Google Drive connected successfully" });
     } catch (error) {
@@ -367,9 +367,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/google-drive/status', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      const isConnected = !!(user?.googleDriveTokens);
-      console.log(`Google Drive status check for user ${userId}: connected=${isConnected}, has tokens=${!!user?.googleDriveTokens}`);
+      const tokens = await storage.getSystemGoogleDriveTokens();
+      const isConnected = !!tokens;
+      console.log(`System-wide Google Drive status check by user ${userId}: connected=${isConnected}`);
       res.json({ connected: isConnected });
     } catch (error) {
       console.error("Error checking Google Drive status:", error);
@@ -474,7 +474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/google-drive/disconnect', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      await storage.updateUserGoogleDriveTokens(userId, null);
+      await storage.setSystemGoogleDriveTokens(null, userId);
       res.json({ message: "Google Drive disconnected successfully" });
     } catch (error) {
       console.error("Error disconnecting Google Drive:", error);
@@ -789,16 +789,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pdfGenerator = new TimesheetPDFGenerator();
       const pdfBuffer = pdfGenerator.generateJobSheetPDF(jobData);
 
-      // Try to upload to Google Drive if user has connected their account
+      // Try to upload to Google Drive if system has connected Google Drive
       let driveUploadSuccess = false;
-      if (user.googleDriveTokens) {
+      const systemTokens = await storage.getSystemGoogleDriveTokens();
+      if (systemTokens) {
         try {
           const { GoogleDriveService } = await import('./googleDriveService');
           const driveService = new GoogleDriveService();
           
-          // Parse tokens from stored JSON
-          const tokens = JSON.parse(user.googleDriveTokens);
-          driveService.setUserTokens(tokens);
+          // Parse tokens from system settings
+          const tokens = JSON.parse(systemTokens);
+          
+          // Set up token refresh callback to save updated tokens to system settings
+          const tokenRefreshCallback = async (newTokens: any) => {
+            await storage.setSystemGoogleDriveTokens(JSON.stringify(newTokens), req.user.claims.sub);
+          };
+          
+          driveService.setUserTokens(tokens, req.user.claims.sub, tokenRefreshCallback);
 
           if (driveService.isReady()) {
             console.log(`☁️ Uploading PDF to Google Drive for job: ${jobData.jobAddress}`);
@@ -2047,12 +2054,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             fortnightEnd
           );
           
-          // Try to upload to Google Drive if admin has connected their account
-          if (user.googleDriveTokens) {
+          // Try to upload to Google Drive if system has connected Google Drive
+          const systemTokens = await storage.getSystemGoogleDriveTokens();
+          if (systemTokens) {
             try {
               const googleDriveService = new GoogleDriveService();
-              const tokens = JSON.parse(user.googleDriveTokens);
-              googleDriveService.setUserTokens(tokens);
+              const tokens = JSON.parse(systemTokens);
+              
+              // Set up token refresh callback to save updated tokens to system settings
+              const tokenRefreshCallback = async (newTokens: any) => {
+                await storage.setSystemGoogleDriveTokens(JSON.stringify(newTokens), user.id);
+              };
+              
+              googleDriveService.setUserTokens(tokens, user.id, tokenRefreshCallback);
               
               const fileName = `timesheet-${userEmployee.name}-${fortnightStart}-${fortnightEnd}.pdf`;
               
@@ -2735,11 +2749,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (job) {
         try {
-          // Get Google Drive service with user tokens
-          const user = await storage.getUser(userId);
-          if (user?.googleDriveTokens) {
+          // Get Google Drive service with system tokens
+          const systemTokens = await storage.getSystemGoogleDriveTokens();
+          if (systemTokens) {
             const googleDriveService = new GoogleDriveService();
-            googleDriveService.setUserTokens(JSON.parse(user.googleDriveTokens));
+            
+            // Set up token refresh callback to save updated tokens to system settings
+            const tokenRefreshCallback = async (newTokens: any) => {
+              await storage.setSystemGoogleDriveTokens(JSON.stringify(newTokens), userId);
+            };
+            
+            googleDriveService.setUserTokens(JSON.parse(systemTokens), userId, tokenRefreshCallback);
 
             // Download file from object storage
             const objectFile = await objectStorageService.getObjectEntityFile(normalizedPath);
@@ -2992,14 +3012,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      if (!user || !user.googleDriveTokens) {
-        console.log(`❌ Google Drive tokens missing for user ${userId}`);
+      const systemTokens = await storage.getSystemGoogleDriveTokens();
+      if (!systemTokens) {
+        console.log(`❌ System Google Drive tokens missing`);
         return res.status(400).json({ 
-          error: "Google Drive not connected. Please connect your Google Drive account first." 
+          error: "Google Drive not connected. Please connect Google Drive in system settings first." 
         });
       }
       
-      console.log(`🔵 Google Drive tokens found for user ${userId}, attempting upload...`);
+      console.log(`🔵 System Google Drive tokens found, attempting upload...`);
 
       const { documentURL, fileName, mimeType, fileSize, jobId } = req.body;
       
@@ -3030,16 +3051,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const googleDriveService = new GoogleDriveService();
       let tokens;
       try {
-        tokens = JSON.parse(user.googleDriveTokens);
-        console.log('🔵 Google Drive tokens parsed successfully');
+        tokens = JSON.parse(systemTokens);
+        console.log('🔵 System Google Drive tokens parsed successfully');
       } catch (parseError) {
-        console.error('❌ Failed to parse Google Drive tokens:', parseError);
-        return res.status(400).json({ error: "Invalid Google Drive tokens. Please reconnect your Google Drive account." });
+        console.error('❌ Failed to parse system Google Drive tokens:', parseError);
+        return res.status(400).json({ error: "Invalid Google Drive tokens. Please reconnect Google Drive account." });
       }
       
-      // Setup token refresh callback to save updated tokens
+      // Setup token refresh callback to save updated system tokens
       const tokenRefreshCallback = async (newTokens: any) => {
-        await storage.updateUserGoogleDriveTokens(userId, JSON.stringify(newTokens));
+        await storage.setSystemGoogleDriveTokens(JSON.stringify(newTokens), userId);
       };
       
       googleDriveService.setUserTokens(tokens, userId, tokenRefreshCallback);
@@ -3400,8 +3421,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (existingFile) {
           console.log('🔵 File record already exists, updating with job ID:', existingFile.id);
           // File already exists, just update the Google Drive info if needed
-          const currentUser = await storage.getUser(req.user.claims.sub);
-          if (currentUser?.googleDriveTokens && !existingFile.googleDriveLink) {
+          const systemTokens = await storage.getSystemGoogleDriveTokens();
+          if (systemTokens && !existingFile.googleDriveLink) {
             // Need to upload to Google Drive and update the existing record
             const stream = objectFile.createReadStream();
             const chunks: Buffer[] = [];
@@ -3411,8 +3432,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const fileBuffer = Buffer.concat(chunks);
 
             const googleDriveService = new GoogleDriveService();
-            const tokens = JSON.parse(currentUser.googleDriveTokens);
-            googleDriveService.setUserTokens(tokens);
+            const tokens = JSON.parse(systemTokens);
+            
+            // Set up token refresh callback to save updated tokens to system settings
+            const tokenRefreshCallback = async (newTokens: any) => {
+              await storage.setSystemGoogleDriveTokens(JSON.stringify(newTokens), req.user.claims.sub);
+            };
+            
+            googleDriveService.setUserTokens(tokens, req.user.claims.sub, tokenRefreshCallback);
 
             // Create main BuildFlow Pro folder first
             const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
@@ -3449,13 +3476,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           console.log('🔵 No existing file record found, creating new one');
           // No existing file record, create a new one
-          const currentUser = await storage.getUser(req.user.claims.sub);
           
           // Get file metadata first
           const [fileMetadata] = await objectFile.getMetadata();
           
-          if (currentUser?.googleDriveTokens) {
-            console.log('🔵 Google Drive connected, uploading job sheet PDF...');
+          const systemTokens = await storage.getSystemGoogleDriveTokens();
+          if (systemTokens) {
+            console.log('🔵 System Google Drive connected, uploading job sheet PDF...');
             
             const stream = objectFile.createReadStream();
             const chunks: Buffer[] = [];
@@ -3465,8 +3492,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const fileBuffer = Buffer.concat(chunks);
 
             const googleDriveService = new GoogleDriveService();
-            const tokens = JSON.parse(currentUser.googleDriveTokens);
-            googleDriveService.setUserTokens(tokens);
+            const tokens = JSON.parse(systemTokens);
+            
+            // Set up token refresh callback to save updated tokens to system settings
+            const tokenRefreshCallback = async (newTokens: any) => {
+              await storage.setSystemGoogleDriveTokens(JSON.stringify(newTokens), req.user.claims.sub);
+            };
+            
+            googleDriveService.setUserTokens(tokens, req.user.claims.sub, tokenRefreshCallback);
 
             // Create main BuildFlow Pro folder first
             const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
@@ -3700,10 +3733,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Upload PDF to Google Drive for public access (optional)
       let googleDrivePdfLink = null;
       try {
-        const user = await storage.getUser(req.user.claims.sub);
-        if (user?.googleDriveTokens) {
+        const systemTokens = await storage.getSystemGoogleDriveTokens();
+        if (systemTokens) {
           const googleDriveService = new GoogleDriveService();
-          googleDriveService.setUserTokens(JSON.parse(user.googleDriveTokens));
+          
+          // Set up token refresh callback to save updated tokens to system settings
+          const tokenRefreshCallback = async (newTokens: any) => {
+            await storage.setSystemGoogleDriveTokens(JSON.stringify(newTokens), req.user.claims.sub);
+          };
+          
+          googleDriveService.setUserTokens(JSON.parse(systemTokens), req.user.claims.sub, tokenRefreshCallback);
 
           // Upload PDF to Google Drive job folder
           const pdfFileName = `JobSheet_${jobDetails.jobAddress.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
@@ -4040,11 +4079,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`⚠️ Could not create job file record: ${fileError instanceof Error ? fileError.message : String(fileError)}`);
         }
 
-        // Try to upload to Google Drive if user has it connected
+        // Try to upload to Google Drive if system has it connected
         const userId = req.user.claims.sub;
-        const user = await storage.getUser(userId);
+        const systemTokens = await storage.getSystemGoogleDriveTokens();
         
-        if (user && user.googleDriveTokens) {
+        if (systemTokens) {
           try {
             console.log(`☁️ Uploading to Google Drive: ${fileName}`);
             
@@ -4064,11 +4103,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             
             const googleDriveService = new GoogleDriveService();
-            const tokens = JSON.parse(user.googleDriveTokens);
+            const tokens = JSON.parse(systemTokens);
             
-            // Set up token refresh callback to save updated tokens
+            // Set up token refresh callback to save updated system tokens
             const tokenRefreshCallback = async (newTokens: any) => {
-              await storage.updateUserGoogleDriveTokens(userId, JSON.stringify(newTokens));
+              await storage.setSystemGoogleDriveTokens(JSON.stringify(newTokens), userId);
             };
             
             googleDriveService.setUserTokens(tokens, userId, tokenRefreshCallback);
@@ -4816,30 +4855,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Upload to Google Drive
       try {
-        console.log("🔍 Checking user's Google Drive connection...");
+        console.log("🔍 Checking system Google Drive connection...");
         
-        // Get the current user
+        // Get system Google Drive tokens
         const userId = req.user.claims.sub;
-        const user = await storage.getUser(userId);
+        const systemTokens = await storage.getSystemGoogleDriveTokens();
         
-        if (!user || !user.googleDriveTokens) {
-          console.log("❌ User hasn't connected Google Drive");
+        if (!systemTokens) {
+          console.log("❌ System doesn't have Google Drive connected");
           return res.status(400).json({
             success: false,
-            message: "Google Drive not connected. Please connect your Google Drive account first.",
+            message: "Google Drive not connected. Please connect Google Drive in system settings first.",
             suggestion: "Go to Settings and connect your Google Drive account"
           });
         }
 
-        console.log("✅ User has Google Drive tokens, setting up service...");
+        console.log("✅ System has Google Drive tokens, setting up service...");
 
         // Use the GoogleDriveService
         const GoogleDriveService = (await import('./googleDriveService')).GoogleDriveService;
         const googleDriveService = new GoogleDriveService();
         
-        // Set user tokens
-        const tokens = JSON.parse(user.googleDriveTokens);
-        googleDriveService.setUserTokens(tokens);
+        // Set up token refresh callback to save updated system tokens
+        const tokenRefreshCallback = async (newTokens: any) => {
+          await storage.setSystemGoogleDriveTokens(JSON.stringify(newTokens), userId);
+        };
+        
+        // Set system tokens
+        const tokens = JSON.parse(systemTokens);
+        googleDriveService.setUserTokens(tokens, userId, tokenRefreshCallback);
 
         // Check if service is ready
         if (!googleDriveService.isReady()) {
