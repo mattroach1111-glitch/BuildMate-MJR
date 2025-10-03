@@ -16,8 +16,11 @@ import {
   emailProcessedDocuments,
   staffMembers,
   staffNotesEntries,
+  systemSettings,
   type User,
   type UpsertUser,
+  type SystemSetting,
+  type InsertSystemSetting,
   type Employee,
   type InsertEmployee,
   type Job,
@@ -75,6 +78,12 @@ export interface IStorage {
   updateUserRole(id: string, role: "admin" | "staff"): Promise<void>;
   assignUserToEmployee(userId: string, employeeId: string): Promise<void>;
   getUnassignedUsers(): Promise<User[]>;
+  
+  // System settings operations
+  getSystemSetting(key: string): Promise<SystemSetting | undefined>;
+  setSystemSetting(key: string, value: string | null, updatedBy?: string): Promise<void>;
+  getSystemGoogleDriveTokens(): Promise<string | null>;
+  setSystemGoogleDriveTokens(tokens: string | null, updatedBy?: string): Promise<void>;
   
   // Employee operations
   getEmployees(): Promise<Employee[]>;
@@ -367,6 +376,44 @@ export class DatabaseStorage implements IStorage {
         ne(users.updatedAt, users.createdAt)
       )
     ).orderBy(desc(users.updatedAt));
+  }
+
+  // System settings operations
+  async getSystemSetting(key: string): Promise<SystemSetting | undefined> {
+    const [setting] = await db
+      .select()
+      .from(systemSettings)
+      .where(eq(systemSettings.settingKey, key))
+      .limit(1);
+    return setting;
+  }
+
+  async setSystemSetting(key: string, value: string | null, updatedBy?: string): Promise<void> {
+    await db
+      .insert(systemSettings)
+      .values({
+        settingKey: key,
+        settingValue: value,
+        updatedBy,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: systemSettings.settingKey,
+        set: {
+          settingValue: value,
+          updatedBy,
+          updatedAt: new Date(),
+        },
+      });
+  }
+
+  async getSystemGoogleDriveTokens(): Promise<string | null> {
+    const setting = await this.getSystemSetting('google_drive_tokens');
+    return setting?.settingValue || null;
+  }
+
+  async setSystemGoogleDriveTokens(tokens: string | null, updatedBy?: string): Promise<void> {
+    await this.setSystemSetting('google_drive_tokens', tokens, updatedBy);
   }
 
   // Employee operations
