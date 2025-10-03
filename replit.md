@@ -13,6 +13,7 @@ BuildFlow Pro is a mobile-first construction management system designed to strea
 - ✅ **Hour Tracking Fix** (August 25, 2025): Resolved critical bug where manual labor hours were being erased when timesheets were approved instead of being preserved and added to timesheet hours. Implemented separate database tracking for manual hours vs timesheet hours with inline migration logic to handle existing labor entries. Fixed `updateLaborEntry()` and `updateLaborHoursFromTimesheet()` functions to preserve manual hours during all operations. Hour calculation now properly additive: total = manual + timesheet hours.
 - ✅ **RDO Zero Hours Fix** (September 22, 2025): Fixed issue preventing 0-hour RDO entries in admin timesheet submissions. Updated hours input fields to use `step="0.01"` for leave types (RDO, sick leave, etc.) allowing precise zero values, while maintaining `step="0.5"` for regular work entries. Combined with previous RDO validation fixes to fully support 0-hour leave entries.
 - ✅ **Delinked Employee Filtering** (September 22, 2025): Modified employee selection to exclude delinked employees from new job creation forms. Updated `getEmployees()` function to filter out employees whose user accounts have been delinked (`isAssigned = false`) while preserving their historical data. This prevents quit employees from appearing in job assignment dropdowns while maintaining all past timesheet and labor records for reporting compliance.
+- ✅ **System-Wide Google Drive Integration** (October 3, 2025): Converted Google Drive from per-user to system-wide (company-wide) integration. Created `systemSettings` table to store Google Drive OAuth tokens centrally. All admins now share access to the same company Google Drive account instead of each having separate connections. Implemented automatic migration on server startup to transfer existing user tokens to system storage. Updated all 20+ route handlers to use `getSystemGoogleDriveTokens()` and `setSystemGoogleDriveTokens()` with proper token refresh callbacks. Frontend updated to reflect company-wide connection status. Migration successfully moved tokens from user records to centralized system settings and cleared individual user tokens.
 
 # User Preferences
 Preferred communication style: Simple, everyday language.
@@ -98,7 +99,7 @@ Data backup strategy: Comprehensive multi-location backup approach with automate
 - **Ghostscript**: PDF conversion (used by pdf2pic).
 
 ## Cloud Integrations
-- **Google Drive Integration**: OAuth flow for personal Google Drive connections.
+- **Google Drive Integration**: System-wide OAuth flow for company Google Drive connections (all admins share access).
 - **Replit Object Storage**: For job document management.
 - **Anthropic AI**: For AI-powered document processing.
 - **Uppy**: Document upload library.
