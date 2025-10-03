@@ -114,6 +114,41 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
+  // Migrate existing user Google Drive tokens to system-wide storage
+  try {
+    const { storage } = await import('./storage');
+    
+    // Check if system already has tokens
+    const systemTokens = await storage.getSystemGoogleDriveTokens();
+    
+    if (!systemTokens) {
+      // No system tokens yet, check if any user has tokens
+      const allUsers = await storage.getAllUsers();
+      const userWithTokens = allUsers.find(u => u.googleDriveTokens);
+      
+      if (userWithTokens) {
+        console.log(`🔄 Migrating Google Drive tokens from user ${userWithTokens.id} to system-wide storage...`);
+        await storage.setSystemGoogleDriveTokens(userWithTokens.googleDriveTokens, userWithTokens.id);
+        console.log(`✅ Google Drive tokens migrated to system-wide storage`);
+        
+        // Clear user tokens as they're no longer needed
+        for (const user of allUsers) {
+          if (user.googleDriveTokens) {
+            await storage.updateUserGoogleDriveTokens(user.id, null);
+          }
+        }
+        console.log(`🧹 Cleared user Google Drive tokens (now using system-wide tokens)`);
+      } else {
+        console.log(`ℹ️ No existing Google Drive tokens to migrate`);
+      }
+    } else {
+      console.log(`✅ System-wide Google Drive tokens already configured`);
+    }
+  } catch (migrationError) {
+    console.error('⚠️ Error during Google Drive token migration:', migrationError);
+    // Don't crash the server on migration errors
+  }
+
   // Enhanced error handler with detailed logging
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
