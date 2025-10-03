@@ -282,7 +282,7 @@ export class EmailInboxService {
   }
 
   // Main email processing function
-  async processEmail(emailMessage: EmailMessage, skipDuplicateCheck = false): Promise<boolean> {
+  async processEmail(emailMessage: EmailMessage): Promise<boolean> {
     let logId: string | null = null;
     
     try {
@@ -290,28 +290,16 @@ export class EmailInboxService {
       console.log(`📧 Processing email from ${emailMessage.from} with ${emailMessage.attachments.length} attachments`);
       console.log(`📧 Email subject: ${emailMessage.subject}`);
       
-      // Only check for duplicates if this is from a webhook (not IMAP)
-      // IMAP already handles duplicates via unread/read status
-      if (!skipDuplicateCheck) {
-        console.log(`📧 Checking for duplicate webhooks...`);
-        
-        // Check if this exact message was already processed to prevent webhook duplicates
-        const existingLogs = await storage.getEmailProcessingLogs();
-        const alreadyProcessed = existingLogs.find(log => 
-          log.messageId === emailMessage.id && 
-          log.status === "completed"
-        );
-        
-        if (alreadyProcessed) {
-          console.log(`📧 Webhook email already processed (ID: ${emailMessage.id}), skipping duplicate`);
-          return true;
-        }
-      } else {
-        console.log(`📧 IMAP email - skipping duplicate check (handled by unread/read status)`);
-      }
+      // Check for unique message ID only (more reliable than subject matching)
+      const existingLogs = await storage.getEmailProcessingLogs();
+      const alreadyProcessed = existingLogs.find(log => 
+        log.messageId === emailMessage.id && log.status === "completed"
+      );
       
-      console.log(`📧 Processing new email`);
-
+      if (alreadyProcessed) {
+        console.log(`📧 Email already processed (ID: ${emailMessage.id}), skipping`);
+        return true;
+      }
       
       // Create processing log entry
       const logEntry = await storage.createEmailProcessingLog({
@@ -529,11 +517,11 @@ export class EmailInboxService {
       for (const email of unreadEmails) {
         try {
           console.log(`📧 Processing email: ${email.subject}`);
-          // Pass true to skip duplicate check - IMAP already handles this via unread/read
-          const success = await this.processEmail(email, true);
+          const success = await this.processEmail(email);
           
           if (success) {
-            // Email is automatically marked as read when fetched (markSeen: true in IMAP fetch)
+            // Mark email as read after successful processing
+            await emailService.markAsRead(email.id);
             processed++;
             console.log(`✅ Successfully processed email: "${email.subject}" from ${email.from}`);
           } else {
