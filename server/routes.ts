@@ -3910,7 +3910,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/email-processing/approve/:id', isAuthenticated, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const { jobId, categoryOverride, gstOption = 'include', amountOverride } = req.body;
+      const { jobId, categoryOverride, gstOption = 'include' } = req.body;
       
       // Get the document data before approving
       const documents = await storage.getEmailProcessedDocumentsPending();
@@ -3929,13 +3929,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use category override if provided
       const finalCategory = categoryOverride || extractedData.category;
       
-      // Use amount override if provided, otherwise use extracted amount
-      const baseAmount = amountOverride ? parseFloat(amountOverride) : parseFloat(extractedData.amount);
-      const originalAmount = baseAmount || 0;
+      // Apply GST calculation to the amount
+      const originalAmount = parseFloat(extractedData.amount) || 0;
       const finalGstOption = gstOption || document.gstOption || 'include';
       const finalAmount = calculateGstAmount(originalAmount, finalGstOption, 'include');
       
-      console.log(`💰 Amount Processing: ${amountOverride ? 'User Override' : 'AI Extracted'}: $${originalAmount.toFixed(2)}, GST Option: ${finalGstOption}, Final: $${finalAmount.toFixed(2)}`);
+      console.log(`💰 GST Calculation: Original: $${originalAmount.toFixed(2)}, GST Option: ${finalGstOption}, Final: $${finalAmount.toFixed(2)}`);
       
       // If no specific job provided, try to extract from email subject or use default
       let targetJobId = jobId;
