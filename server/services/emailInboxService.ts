@@ -533,8 +533,7 @@ export class EmailInboxService {
           const success = await this.processEmail(email, true);
           
           if (success) {
-            // Mark email as read after successful processing
-            await emailService.markAsRead(email.id);
+            // Email is automatically marked as read when fetched (markSeen: true in IMAP fetch)
             processed++;
             console.log(`✅ Successfully processed email: "${email.subject}" from ${email.from}`);
           } else {

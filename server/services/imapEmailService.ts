@@ -89,7 +89,7 @@ export class ImapEmailService {
 
             const fetch = this.imap.fetch(results, {
               bodies: '',
-              markSeen: false,
+              markSeen: true, // Mark as read immediately when fetching
               struct: true
             });
 
