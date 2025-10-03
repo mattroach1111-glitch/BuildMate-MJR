@@ -282,7 +282,7 @@ export class EmailInboxService {
   }
 
   // Main email processing function
-  async processEmail(emailMessage: EmailMessage): Promise<boolean> {
+  async processEmail(emailMessage: EmailMessage, skipDuplicateCheck = false): Promise<boolean> {
     let logId: string | null = null;
     
     try {
@@ -290,33 +290,27 @@ export class EmailInboxService {
       console.log(`📧 Processing email from ${emailMessage.from} with ${emailMessage.attachments.length} attachments`);
       console.log(`📧 Email subject: ${emailMessage.subject}`);
       
-      // Check if there are any PENDING documents from this email
-      // Allow reprocessing if all previous documents were approved/rejected
-      const allPendingDocs = await storage.getEmailProcessedDocumentsPending();
-      const hasPendingFromThisEmail = allPendingDocs.some(doc => 
-        doc.emailSubject === emailMessage.subject && 
-        doc.emailFrom === emailMessage.from
-      );
-      
-      if (hasPendingFromThisEmail) {
-        console.log(`📧 Email has pending documents for review, skipping duplicate: "${emailMessage.subject}"`);
-        return true;
+      // Only check for duplicates if this is from a webhook (not IMAP)
+      // IMAP already handles duplicates via unread/read status
+      if (!skipDuplicateCheck) {
+        console.log(`📧 Checking for duplicate webhooks...`);
+        
+        // Check if this exact message was already processed to prevent webhook duplicates
+        const existingLogs = await storage.getEmailProcessingLogs();
+        const alreadyProcessed = existingLogs.find(log => 
+          log.messageId === emailMessage.id && 
+          log.status === "completed"
+        );
+        
+        if (alreadyProcessed) {
+          console.log(`📧 Webhook email already processed (ID: ${emailMessage.id}), skipping duplicate`);
+          return true;
+        }
+      } else {
+        console.log(`📧 IMAP email - skipping duplicate check (handled by unread/read status)`);
       }
       
-      // Check if this exact message was already processed in the last hour to prevent rapid duplicates
-      const existingLogs = await storage.getEmailProcessingLogs();
-      const recentDuplicate = existingLogs.find(log => 
-        log.messageId === emailMessage.id && 
-        log.status === "completed" &&
-        new Date(log.createdAt).getTime() > Date.now() - (60 * 60 * 1000) // Within last hour
-      );
-      
-      if (recentDuplicate) {
-        console.log(`📧 Email was just processed recently (ID: ${emailMessage.id}), skipping to prevent duplicate`);
-        return true;
-      }
-      
-      console.log(`📧 Email is new or was previously reviewed - proceeding with processing`);
+      console.log(`📧 Processing new email`);
 
       
       // Create processing log entry
@@ -535,7 +529,8 @@ export class EmailInboxService {
       for (const email of unreadEmails) {
         try {
           console.log(`📧 Processing email: ${email.subject}`);
-          const success = await this.processEmail(email);
+          // Pass true to skip duplicate check - IMAP already handles this via unread/read
+          const success = await this.processEmail(email, true);
           
           if (success) {
             // Mark email as read after successful processing
