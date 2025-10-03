@@ -127,7 +127,7 @@ export function GoogleDriveIntegration() {
           Google Drive Integration
         </CardTitle>
         <CardDescription>
-          Connect your Google Drive to automatically save job documents and timesheets with clickable links in PDF emails
+          Connect a Google Drive account for the company to automatically save job documents and timesheets with clickable links in PDF emails
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -143,8 +143,8 @@ export function GoogleDriveIntegration() {
         {status?.connected ? (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Your Google Drive is connected. Job documents and timesheet PDFs will be automatically saved to the
-              "BuildFlow Pro" folder with organized subfolders, and emailed PDFs will include clickable Google Drive links.
+              Google Drive is connected for the company. Job documents and timesheet PDFs will be automatically saved to the
+              "BuildFlow Pro" folder with organized subfolders, and emailed PDFs will include clickable Google Drive links. All admins share access to the same company Drive.
             </p>
             <div className="flex gap-2">
               <Button
@@ -172,7 +172,7 @@ export function GoogleDriveIntegration() {
           <div className="space-y-4">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">
-                Connect your Google Drive account to unlock these features:
+                Connect a Google Drive account for the company to unlock these features:
               </p>
               <ul className="text-sm text-muted-foreground space-y-1 ml-4">
                 <li>• Automatic job document uploads to organized folders</li>
