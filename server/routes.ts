@@ -280,8 +280,24 @@ const findBestJobMatch = async (timesheetJobDescription: string, threshold: numb
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize reward settings and migrate labor entries on startup
-  await initializeRewardSettings();
-  await storage.migrateLaborEntryHours();
+  try {
+    await initializeRewardSettings();
+  } catch (error: any) {
+    console.error("⚠️ Failed to initialize reward settings:", error?.message || error);
+    if (error?.code === '42P01') {
+      console.error("🚨 DATABASE SCHEMA OUTDATED: rewardSettings table missing");
+      console.error("🚨 Please run: npm run db:push");
+    }
+    // Don't crash - allow server to continue running
+  }
+  
+  try {
+    await storage.migrateLaborEntryHours();
+  } catch (error: any) {
+    console.error("⚠️ Failed to migrate labor entry hours:", error?.message || error);
+    // Don't crash - allow server to continue running
+  }
+  
   // Auth middleware
   await setupAuth(app);
 
