@@ -3141,7 +3141,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             </DialogHeader>
             
             <div className="py-4">
-              {jobs && jobs.length > 0 ? (
+              {jobs && Array.isArray(jobs) && jobs.length > 0 ? (
                 <JobAddressSearch
                   value={selectedJobForMatch}
                   onValueChange={setSelectedJobForMatch}
