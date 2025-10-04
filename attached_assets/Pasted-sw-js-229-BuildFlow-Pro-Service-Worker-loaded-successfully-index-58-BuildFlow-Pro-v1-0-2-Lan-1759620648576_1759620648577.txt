@@ -1,0 +1,1319 @@
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully
+(index):58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+(index):64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+Dk @ index-lhVp2oj0.js:40
+mh @ index-lhVp2oj0.js:38
+uZ @ index-lhVp2oj0.js:40
+zh @ index-lhVp2oj0.js:40
+ER @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Server auth failed, using backup session immediately
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:48 🔄 Server session restored successfully
+index-lhVp2oj0.js:473 🔄 Server session restored, switching back to server auth
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/admin/timesheets 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/total-costs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/employees 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/deleted-jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/staff-users 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Server auth failed, using backup session immediately
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:48 🔄 Server session restored successfully
+index-lhVp2oj0.js:473 🔄 Server session restored, switching back to server auth
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/employees 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/admin/timesheets 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/total-costs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Server auth failed, using backup session immediately
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/staff-users 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/deleted-jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Server session restored successfully
+index-lhVp2oj0.js:473 🔄 Server session restored, switching back to server auth
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Server auth failed, using backup session immediately
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/total-costs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/employees 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/admin/timesheets 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Server session restored successfully
+index-lhVp2oj0.js:473 🔄 Server session restored, switching back to server auth
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Server auth failed, using backup session immediately
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/staff-users 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/deleted-jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Server session restored successfully
+index-lhVp2oj0.js:473 🔄 Server session restored, switching back to server auth
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/admin/timesheets 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/total-costs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Server auth failed, using backup session immediately
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/employees 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Server session restored successfully
+index-lhVp2oj0.js:473 🔄 Server session restored, switching back to server auth
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/deleted-jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/admin/timesheets 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/staff-users 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/total-costs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Server auth failed, using backup session immediately
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:48 🔄 Server session restored successfully
+index-lhVp2oj0.js:473 🔄 Server session restored, switching back to server auth
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Server auth failed, using backup session immediately
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/deleted-jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/employees 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/admin/timesheets 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/total-costs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/staff-users 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Server session restored successfully
+index-lhVp2oj0.js:473 🔄 Server session restored, switching back to server auth
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Server auth failed, using backup session immediately
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:48 🔄 Server session restored successfully
+index-lhVp2oj0.js:473 🔄 Server session restored, switching back to server auth
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/total-costs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/deleted-jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/employees 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Server auth failed, using backup session immediately
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/admin/timesheets 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/staff-users 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Server session restored successfully
+index-lhVp2oj0.js:473 🔄 Server session restored, switching back to server auth
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Server auth failed, using backup session immediately
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/total-costs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/deleted-jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Server session restored successfully
+index-lhVp2oj0.js:473 🔄 Server session restored, switching back to server auth
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/staff-users 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Server auth failed, using backup session immediately
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/admin/timesheets 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/employees 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Server session restored successfully
+index-lhVp2oj0.js:473 🔄 Server session restored, switching back to server auth
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Server auth failed, using backup session immediately
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/staff-users 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/total-costs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/deleted-jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Server session restored successfully
+index-lhVp2oj0.js:473 🔄 Server session restored, switching back to server auth
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Server auth failed, using backup session immediately
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/admin/timesheets 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/employees 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Server session restored successfully
+index-lhVp2oj0.js:473 🔄 Server session restored, switching back to server auth
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/deleted-jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/staff-users 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Server auth failed, using backup session immediately
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/total-costs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Server session restored successfully
+index-lhVp2oj0.js:473 🔄 Server session restored, switching back to server auth
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/deleted-jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/staff-users 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Server auth failed, using backup session immediately
+index-lhVp2oj0.js:48 🔄 Session backup retrieved successfully
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:473 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/employees 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48   GET https://build-mate-mattroach1111.replit.app/api/admin/timesheets 500 (Internal Server Error)
+(anonymous) @ index-lhVp2oj0.js:48
+a @ index-lhVp2oj0.js:48
+_ @ index-lhVp2oj0.js:48
+start @ index-lhVp2oj0.js:48
+fetch @ index-lhVp2oj0.js:48
+ix @ index-lhVp2oj0.js:48
+onSubscribe @ index-lhVp2oj0.js:48
+subscribe @ index-lhVp2oj0.js:48
+(anonymous) @ index-lhVp2oj0.js:48
+ZI @ index-lhVp2oj0.js:38
+jb @ index-lhVp2oj0.js:40
+sg @ index-lhVp2oj0.js:40
+(anonymous) @ index-lhVp2oj0.js:40
+R @ index-lhVp2oj0.js:25
+$ @ index-lhVp2oj0.js:25
+index-lhVp2oj0.js:48 🔄 Server session restored successfully
+index-lhVp2oj0.js:473 🔄 Server session restored, switching back to server auth
