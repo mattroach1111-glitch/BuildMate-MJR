@@ -1,0 +1,152 @@
+25-10-05 10:46:48.74
+dfc2d345
+User
+position: '79',
+2025-10-05 10:46:48.74
+dfc2d345
+User
+internalPosition: undefined,
+2025-10-05 10:46:48.74
+dfc2d345
+User
+internalQuery: undefined,
+2025-10-05 10:46:48.74
+dfc2d345
+User
+where: undefined,
+2025-10-05 10:46:48.74
+dfc2d345
+User
+schema: undefined,
+2025-10-05 10:46:48.74
+dfc2d345
+User
+table: undefined,
+2025-10-05 10:46:48.74
+dfc2d345
+User
+column: undefined,
+2025-10-05 10:46:48.74
+dfc2d345
+User
+dataType: undefined,
+2025-10-05 10:46:48.74
+dfc2d345
+User
+constraint: undefined,
+2025-10-05 10:46:48.74
+dfc2d345
+User
+file: 'parse_relation.c',
+2025-10-05 10:46:48.74
+dfc2d345
+User
+line: '3722',
+2025-10-05 10:46:48.74
+dfc2d345
+User
+routine: 'errorMissingColumn'
+2025-10-05 10:46:48.74
+dfc2d345
+User
+}
+2025-10-05 10:46:48.75
+dfc2d345
+User
+11:46:48 PM [express] GET /api/employees 500 in 227ms :: {"message":"Failed to fetch employees"}
+2025-10-05 10:46:48.76
+dfc2d345
+User
+11:46:48 PM [express] GET /api/staff-users 500 in 236ms :: {"message":"Failed to fetch staff"}
+2025-10-05 10:46:48.77
+dfc2d345
+User
+11:46:48 PM [express] GET /api/admin/timesheets 500 in 240ms :: {"message":"Failed to fetch timesheet…
+2025-10-05 10:46:48.94
+dfc2d345
+User
+⏰ Setting timeout: 30s for POST /api/auth/restore-session
+2025-10-05 10:46:48.95
+dfc2d345
+User
+⏰ Setting timeout: 30s for GET /api/auth/user
+2025-10-05 10:46:48.95
+dfc2d345
+User
+⏰ Setting timeout: 30s for GET /api/jobs/total-costs
+2025-10-05 10:46:48.98
+dfc2d345
+User
+🔑 Deserializing user: claims, expires_at, access_token, refresh_token
+2025-10-05 10:46:48.98
+dfc2d345
+User
+🔐 isAuthenticated(): true
+2025-10-05 10:46:48.98
+dfc2d345
+User
+🔐 req.user exists: true
+2025-10-05 10:46:48.98
+dfc2d345
+User
+🔐 session data keys: cookie, passport
+2025-10-05 10:46:53.69
+dfc2d345
+User
+severity: 'ERROR',
+2025-10-05 10:46:53.69
+dfc2d345
+User
+code: '42703',
+2025-10-05 10:46:53.69
+dfc2d345
+User
+detail: undefined,
+2025-10-05 10:46:53.69
+dfc2d345
+User
+hint: undefined,
+2025-10-05 10:46:53.69
+dfc2d345
+User
+position: '79',
+2025-10-05 10:46:53.69
+dfc2d345
+User
+internalPosition: undefined,
+2025-10-05 10:46:53.69
+dfc2d345
+User
+internalQuery: undefined,
+2025-10-05 10:46:53.69
+dfc2d345
+User
+where: undefined,
+2025-10-05 10:46:53.69
+dfc2d345
+User
+schema: undefined,
+2025-10-05 10:46:53.69
+dfc2d345
+User
+table: undefined,
+2025-10-05 10:46:53.69
+dfc2d345
+User
+column: undefined,
+2025-10-05 10:46:53.69
+dfc2d345
+User
+dataType: undefined,
+2025-10-05 10:46:53.69
+dfc2d345
+User
+constraint: undefined,
+2025-10-05 10:46:53.69
+dfc2d345
+User
+file: 'parse_relation.c',
+2025-10-05 10:46:53.69
+dfc2d345
+User
+line: '3722',

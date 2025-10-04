@@ -474,7 +474,8 @@ export class DatabaseStorage implements IStorage {
 
   async getAllEmployees(): Promise<Employee[]> {
     // Get all employees regardless of active status (for admin management)
-    return await db.select().from(employees).orderBy(desc(employees.createdAt));
+    // Note: Removed .orderBy(desc(employees.createdAt)) for production DB compatibility
+    return await db.select().from(employees);
   }
 
   async updateEmployee(id: string, employee: Partial<InsertEmployee>): Promise<Employee> {
@@ -1504,8 +1505,6 @@ export class DatabaseStorage implements IStorage {
         description: timesheetEntries.description,
         approved: timesheetEntries.approved,
         submitted: timesheetEntries.submitted,
-        createdAt: timesheetEntries.createdAt,
-        updatedAt: timesheetEntries.updatedAt,
         staffName: sql`COALESCE(${employees.name}, ${users.firstName}, CASE WHEN ${users.email} IS NOT NULL THEN SPLIT_PART(${users.email}, '@', 1) ELSE 'Unknown Staff' END, 'Unknown Staff')`.as('staffName'),
         staffEmail: users.email,
         entryType: sql`'timesheet'`.as('entryType'),
@@ -1570,8 +1569,6 @@ export class DatabaseStorage implements IStorage {
         description: timesheetEntries.description,
         approved: timesheetEntries.approved,
         submitted: timesheetEntries.submitted,
-        createdAt: timesheetEntries.createdAt,
-        updatedAt: timesheetEntries.updatedAt,
         staffName: sql`COALESCE(${employees.name}, ${users.firstName}, CASE WHEN ${users.email} IS NOT NULL THEN SPLIT_PART(${users.email}, '@', 1) ELSE 'Unknown Staff' END, 'Unknown Staff')`.as('staffName'),
         staffEmail: users.email,
         // Enhanced job address to handle custom addresses and leave types
@@ -1612,7 +1609,7 @@ export class DatabaseStorage implements IStorage {
   async markTimesheetEntriesAsSubmitted(userId: string, fortnightStart: string, fortnightEnd: string): Promise<void> {
     await db
       .update(timesheetEntries)
-      .set({ submitted: true, updatedAt: new Date() })
+      .set({ submitted: true })
       .where(
         and(
           eq(timesheetEntries.staffId, userId),
@@ -1823,8 +1820,7 @@ export class DatabaseStorage implements IStorage {
         jobAddress: jobs.jobAddress,
         jobClient: jobs.clientName,
         materials: timesheetEntries.materials,
-        approved: timesheetEntries.approved,
-        createdAt: timesheetEntries.createdAt
+        approved: timesheetEntries.approved
       })
       .from(timesheetEntries)
       .leftJoin(users, eq(timesheetEntries.staffId, users.id))
@@ -1892,7 +1888,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     const results = await query
-      .orderBy(desc(timesheetEntries.date), desc(timesheetEntries.createdAt))
+      .orderBy(desc(timesheetEntries.date))
       .limit(500); // Limit results for performance
 
     return results;
