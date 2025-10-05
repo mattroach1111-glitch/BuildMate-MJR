@@ -69,6 +69,20 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
     }
     return false;
   };
+
+  // Helper function to add wrapped text
+  const addWrappedText = (text: string, x: number, maxWidth: number): number => {
+    const lines = doc.splitTextToSize(text, maxWidth);
+    let currentY = yPos;
+    lines.forEach((line: string, index: number) => {
+      if (index > 0) {
+        currentY += 6; // Line spacing for wrapped text
+        checkPageBreak(10);
+      }
+      doc.text(line, x, currentY);
+    });
+    return lines.length; // Return number of lines for yPos adjustment
+  };
   
   // Header - centered like Excel
   doc.setFontSize(16);
@@ -150,16 +164,17 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
     doc.setFont('helvetica', 'normal');
     let materialsTotal = 0;
     job.materials.forEach((material) => {
-      checkPageBreak(10);
+      checkPageBreak(15);
       
       const amount = parseFloat(material.amount);
       materialsTotal += amount;
       
-      doc.text(material.description || 'Material Item', 25, yPos);
+      // Use wrapped text for description (max width ~70 units to fit before supplier column)
+      const numLines = addWrappedText(material.description || 'Material Item', 25, 70);
       doc.text(material.supplier || '-', 100, yPos);
       doc.text(material.invoiceDate || '-', 130, yPos);
       doc.text(`$${amount.toFixed(2)}`, 160, yPos);
-      yPos += 8;
+      yPos += Math.max(8, numLines * 6); // Adjust based on wrapped lines
     });
 
     yPos += 3;
