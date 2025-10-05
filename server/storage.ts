@@ -1754,6 +1754,7 @@ export class DatabaseStorage implements IStorage {
         isAssigned: users.isAssigned,
         employeeId: users.employeeId,
         employeeName: employees.name,
+        isActive: employees.isActive,
       })
       .from(users)
       .leftJoin(employees, eq(users.employeeId, employees.id))
@@ -1767,17 +1768,24 @@ export class DatabaseStorage implements IStorage {
       })
       .from(employees)
       .leftJoin(users, eq(users.employeeId, employees.id))
-      .where(isNull(users.id)); // Only employees without linked users
+      .where(and(
+        isNull(users.id), // Only employees without linked users
+        eq(employees.isActive, true) // Only active employees
+      ));
 
     const staffList: Array<{ id: string; name: string; type: 'user' | 'employee' }> = [];
 
     // Add linked users (using employee names when available, but user IDs for queries)
+    // Filter to only show users linked to active employees (or users without employees)
     usersWithEmployees.forEach(userWithEmployee => {
-      staffList.push({
-        id: userWithEmployee.userId, // CRITICAL: Always use user ID for timesheet queries
-        name: userWithEmployee.employeeName || userWithEmployee.userFirstName || userWithEmployee.userEmail || 'Unknown',
-        type: userWithEmployee.employeeId ? 'employee' : 'user' // Show as 'employee' if linked
-      });
+      // Only include if: no linked employee OR linked employee is active
+      if (!userWithEmployee.employeeId || userWithEmployee.isActive) {
+        staffList.push({
+          id: userWithEmployee.userId, // CRITICAL: Always use user ID for timesheet queries
+          name: userWithEmployee.employeeName || userWithEmployee.userFirstName || userWithEmployee.userEmail || 'Unknown',
+          type: userWithEmployee.employeeId ? 'employee' : 'user' // Show as 'employee' if linked
+        });
+      }
     });
 
     // Add unlinked employees (these can't submit timesheets but may be used for admin entry creation)
