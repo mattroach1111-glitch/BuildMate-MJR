@@ -1588,7 +1588,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "staffId, fortnightStart, and fortnightEnd are required" });
       }
 
-      // If approving, check for custom addresses without job sheet matches
+      // If approving, try to auto-match custom addresses to jobs
       if (approved) {
         const fortnightEntries = await storage.getTimesheetEntriesByPeriod(staffId, fortnightStart, fortnightEnd);
         const unmatchedCustomAddresses = [];
@@ -1599,7 +1599,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const jobMatch = await findBestJobMatch(customAddress, 80);
             
             if (!jobMatch) {
-              unmatchedCustomAddresses.push(customAddress);
+              unmatchedCustomAddresses.push({
+                address: customAddress,
+                entryId: entry.id,
+                date: entry.date,
+                hours: entry.hours
+              });
             } else {
               // Auto-match and update the entry
               console.log(`✅ Auto-matching custom address "${customAddress}" to job: ${jobMatch.job.jobAddress} (${jobMatch.score}% match)`);
@@ -1611,13 +1616,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
-        // If there are unmatched custom addresses, prevent approval
+        // Log unmatched custom addresses for admin to handle (but don't block approval)
         if (unmatchedCustomAddresses.length > 0) {
-          return res.status(400).json({ 
-            message: `Cannot approve fortnight - the following custom addresses have no matching job sheets: ${unmatchedCustomAddresses.join(', ')}. Please create job sheets that closely match these addresses first.`,
-            requiresJobSheets: true,
-            unmatchedAddresses: unmatchedCustomAddresses
-          });
+          console.log(`⚠️ ${unmatchedCustomAddresses.length} custom address(es) approved without job assignment. Admin can assign later:`, unmatchedCustomAddresses);
         }
       }
 
@@ -1746,6 +1747,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating custom address:", error);
       res.status(500).json({ message: "Failed to update custom address", error: (error as Error).message });
+    }
+  });
+
+  // Admin endpoint to assign a job to a custom address timesheet entry
+  app.post("/api/admin/timesheet/assign-job", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { entryId, jobId } = req.body;
+      
+      if (!entryId || !jobId) {
+        return res.status(400).json({ message: "Entry ID and Job ID are required" });
+      }
+
+      // Get the timesheet entry
+      const entry = await storage.getTimesheetEntry(entryId);
+      if (!entry) {
+        return res.status(404).json({ message: "Timesheet entry not found" });
+      }
+
+      // Verify it's a custom address entry
+      if (!entry.description || !entry.description.startsWith('CUSTOM_ADDRESS:')) {
+        return res.status(400).json({ message: "This entry is not a custom address" });
+      }
+
+      // Verify the job exists
+      const job = await storage.getJob(jobId);
+      if (!job) {
+        return res.status(404).json({ message: "Job not found" });
+      }
+
+      // Update the timesheet entry to assign it to the job
+      await storage.updateTimesheetEntry(entryId, { 
+        jobId: jobId,
+        description: null  // Clear the custom address description
+      });
+
+      console.log(`✅ Admin assigned custom address entry ${entryId} to job ${job.jobAddress}`);
+
+      res.status(200).json({ 
+        message: "Job assigned successfully",
+        entryId,
+        jobId,
+        jobAddress: job.jobAddress
+      });
+    } catch (error) {
+      console.error("Error assigning job to custom address:", error);
+      res.status(500).json({ message: "Failed to assign job", error: (error as Error).message });
     }
   });
 

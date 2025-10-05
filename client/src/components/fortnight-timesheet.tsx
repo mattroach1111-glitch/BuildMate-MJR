@@ -1994,19 +1994,116 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 </Button>
                                 {/* Edit button for custom addresses - admin only */}
                                 {isAdminView && entry?.description && entry.description.startsWith('CUSTOM_ADDRESS:') && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      const address = entry.description.replace('CUSTOM_ADDRESS: ', '');
-                                      editCustomAddress(entry.id, address);
-                                    }}
-                                    className="ml-1"
-                                    data-testid={`button-edit-address-${entry.id}`}
-                                    title="Edit custom address"
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        const address = entry.description.replace('CUSTOM_ADDRESS: ', '');
+                                        editCustomAddress(entry.id, address);
+                                      }}
+                                      className="ml-1"
+                                      data-testid={`button-edit-address-${entry.id}`}
+                                      title="Edit custom address"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="default"
+                                      onClick={() => {
+                                        // Show job assignment dialog
+                                        const dialog = document.createElement('div');
+                                        dialog.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
+                                        dialog.innerHTML = `
+                                          <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                                            <h3 class="text-lg font-semibold mb-4">Assign to Job</h3>
+                                            <p class="text-sm text-gray-600 mb-4">Custom address: ${entry.description.replace('CUSTOM_ADDRESS: ', '')}</p>
+                                            <select id="job-select" class="w-full border rounded-md p-2 mb-4">
+                                              <option value="">Select a job...</option>
+                                            </select>
+                                            <div class="flex gap-2 justify-end">
+                                              <button id="cancel-btn" class="px-4 py-2 border rounded-md hover:bg-gray-50">Cancel</button>
+                                              <button id="assign-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Assign</button>
+                                            </div>
+                                          </div>
+                                        `;
+                                        document.body.appendChild(dialog);
+
+                                        // Fetch jobs and populate dropdown
+                                        fetch('/api/jobs')
+                                          .then(res => res.json())
+                                          .then(jobs => {
+                                            const select = dialog.querySelector('#job-select') as HTMLSelectElement;
+                                            jobs.forEach((job: any) => {
+                                              const option = document.createElement('option');
+                                              option.value = job.id;
+                                              option.textContent = job.jobAddress;
+                                              select.appendChild(option);
+                                            });
+                                          });
+
+                                        // Cancel button
+                                        dialog.querySelector('#cancel-btn')?.addEventListener('click', () => {
+                                          dialog.remove();
+                                        });
+
+                                        // Assign button
+                                        dialog.querySelector('#assign-btn')?.addEventListener('click', async () => {
+                                          const select = dialog.querySelector('#job-select') as HTMLSelectElement;
+                                          const jobId = select.value;
+                                          
+                                          if (!jobId) {
+                                            alert('Please select a job');
+                                            return;
+                                          }
+
+                                          try {
+                                            const response = await fetch('/api/admin/timesheet/assign-job', {
+                                              method: 'POST',
+                                              headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify({ entryId: entry.id, jobId })
+                                            });
+
+                                            if (response.ok) {
+                                              const result = await response.json();
+                                              toast({
+                                                title: "Job Assigned",
+                                                description: `Custom address assigned to ${result.jobAddress}`,
+                                              });
+                                              queryClient.invalidateQueries({ queryKey: ['/api/timesheet/fortnight'] });
+                                              dialog.remove();
+                                            } else {
+                                              const error = await response.json();
+                                              toast({
+                                                title: "Error",
+                                                description: error.message || 'Failed to assign job',
+                                                variant: "destructive",
+                                              });
+                                            }
+                                          } catch (error) {
+                                            toast({
+                                              title: "Error",
+                                              description: 'Failed to assign job',
+                                              variant: "destructive",
+                                            });
+                                          }
+                                        });
+
+                                        // Close on background click
+                                        dialog.addEventListener('click', (e) => {
+                                          if (e.target === dialog) {
+                                            dialog.remove();
+                                          }
+                                        });
+                                      }}
+                                      className="ml-1 bg-blue-600 hover:bg-blue-700"
+                                      data-testid={`button-assign-job-${entry.id}`}
+                                      title="Assign to job"
+                                    >
+                                      <Link className="h-4 w-4" />
+                                    </Button>
+                                  </>
                                 )}
                               </>
                             )}
