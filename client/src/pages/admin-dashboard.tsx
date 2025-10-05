@@ -3218,6 +3218,14 @@ export default function AdminDashboard() {
                                           try {
                                             const response = await fetch('/api/jobs');
                                             const jobs = await response.json();
+                                            
+                                            // Sort jobs by numeric order (extract leading number from address)
+                                            jobs.sort((a: any, b: any) => {
+                                              const numA = parseInt(a.jobAddress?.match(/^\d+/)?.[0] || '999999');
+                                              const numB = parseInt(b.jobAddress?.match(/^\d+/)?.[0] || '999999');
+                                              return numA - numB;
+                                            });
+                                            
                                             const select = dialog.querySelector('#job-select-' + entry.id) as HTMLSelectElement;
                                             jobs.forEach((job: any) => {
                                               const option = document.createElement('option');
