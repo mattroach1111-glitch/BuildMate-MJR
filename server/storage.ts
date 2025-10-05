@@ -1528,8 +1528,6 @@ export class DatabaseStorage implements IStorage {
         description: manualHourEntries.description,
         approved: sql`true`.as('approved'), // Manual entries are always "approved"
         submitted: sql`true`.as('submitted'),
-        createdAt: manualHourEntries.createdAt,
-        updatedAt: manualHourEntries.createdAt,
         staffName: employees.name,
         staffEmail: sql`NULL`.as('staffEmail'),
         entryType: sql`'manual'`.as('entryType'),
@@ -1550,8 +1548,8 @@ export class DatabaseStorage implements IStorage {
     // Combine and sort by date (most recent first)
     const allEntries = [...timesheetResults, ...manualResults];
     return allEntries.sort((a, b) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
       return dateB - dateA;
     });
   }
