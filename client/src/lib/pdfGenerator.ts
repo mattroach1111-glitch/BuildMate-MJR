@@ -752,12 +752,64 @@ export async function generateJobPDFBase64(job: JobWithRelations, attachedFiles?
     yPos += 20;
   }
 
+  // TIP FEES SECTION
+  checkPageBreak(50);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('TIP FEES (inc. 20% cartage)', 20, yPos);
+  yPos += 15;
+
+  if (job.tipFees && job.tipFees.length > 0) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Description', 25, yPos);
+    doc.text('Base', 110, yPos);
+    doc.text('Cartage', 140, yPos);
+    doc.text('Total', 160, yPos);
+    yPos += 3;
+    doc.line(20, yPos, 190, yPos);
+    yPos += 8;
+
+    doc.setFont('helvetica', 'normal');
+    let tipFeesTotal = 0;
+    
+    job.tipFees.forEach((tipFee) => {
+      checkPageBreak();
+      
+      const baseAmount = parseFloat(tipFee.amount);
+      const cartageAmount = parseFloat(tipFee.cartageAmount);
+      const totalAmount = parseFloat(tipFee.totalAmount);
+      tipFeesTotal += totalAmount;
+
+      const description = tipFee.description.length > 35 ? tipFee.description.substring(0, 32) + '...' : tipFee.description;
+
+      doc.text(description, 25, yPos);
+      doc.text(`$${baseAmount.toFixed(2)}`, 110, yPos);
+      doc.text(`$${cartageAmount.toFixed(2)}`, 140, yPos);
+      doc.text(`$${totalAmount.toFixed(2)}`, 160, yPos);
+      yPos += 8;
+    });
+
+    yPos += 5;
+    doc.line(140, yPos, 180, yPos);
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Tip Fees Total:', 105, yPos);
+    doc.text(`$${tipFeesTotal.toFixed(2)}`, 160, yPos);
+    yPos += 20;
+  } else {
+    doc.setFont('helvetica', 'normal');
+    doc.text('No tip fees', 25, yPos);
+    yPos += 20;
+  }
+
   // Calculate totals
   let subtotal = 0;
   if (job.laborEntries) subtotal += job.laborEntries.reduce((sum, entry) => sum + (parseFloat(entry.hourlyRate) * parseFloat(entry.hoursLogged)), 0);
   if (job.materials) subtotal += job.materials.reduce((sum, material) => sum + parseFloat(material.amount), 0);
   if (job.subTrades) subtotal += job.subTrades.reduce((sum, subTrade) => sum + parseFloat(subTrade.amount), 0);
   if (job.otherCosts) subtotal += job.otherCosts.reduce((sum, cost) => sum + parseFloat(cost.amount), 0);
+  if (job.tipFees) subtotal += job.tipFees.reduce((sum, tipFee) => sum + parseFloat(tipFee.totalAmount), 0);
 
   const marginPercent = parseFloat(job.builderMargin || "0");
   const marginAmount = subtotal * (marginPercent / 100);
