@@ -23,7 +23,7 @@ import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, Settings, UserPlus, Download, Edit, DollarSign, TrendingUp, Building2, Bell, RotateCcw, Shield, Lock, RefreshCw, Trophy, Upload, User, Copy } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, Settings, UserPlus, Download, Edit, DollarSign, TrendingUp, Building2, Bell, RotateCcw, Shield, Lock, RefreshCw, Trophy, Upload, User, Copy, Link } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
@@ -3175,21 +3175,115 @@ export default function AdminDashboard() {
                                 <div className="flex gap-2">
                                   {/* Edit button for custom addresses */}
                                   {entry.description && entry.description.startsWith('CUSTOM_ADDRESS:') && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => {
-                                        const address = entry.description.replace('CUSTOM_ADDRESS: ', '');
-                                        editCustomAddress(entry.id, address);
-                                      }}
-                                      disabled={editCustomAddressMutation.isPending}
-                                      data-testid={`button-edit-address-${entry.id}`}
-                                      className="min-w-20"
-                                      title="Edit custom address"
-                                    >
-                                      <Edit className="h-3 w-3 mr-1" />
-                                      Edit
-                                    </Button>
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          const address = entry.description.replace('CUSTOM_ADDRESS: ', '');
+                                          editCustomAddress(entry.id, address);
+                                        }}
+                                        disabled={editCustomAddressMutation.isPending}
+                                        data-testid={`button-edit-address-${entry.id}`}
+                                        className="min-w-20"
+                                        title="Edit custom address"
+                                      >
+                                        <Edit className="h-3 w-3 mr-1" />
+                                        Edit
+                                      </Button>
+                                      {/* Assign to Job button for custom addresses */}
+                                      <Button
+                                        size="sm"
+                                        variant="default"
+                                        className="bg-blue-600 hover:bg-blue-700 min-w-28"
+                                        onClick={async () => {
+                                          const dialog = document.createElement('div');
+                                          dialog.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
+                                          dialog.innerHTML = `
+                                            <div class="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
+                                              <h3 class="text-lg font-semibold mb-2">Assign to Job</h3>
+                                              <p class="text-sm text-gray-600 mb-4">Custom address: ${entry.description.replace('CUSTOM_ADDRESS: ', '')}</p>
+                                              <select id="job-select-${entry.id}" class="w-full border border-gray-300 rounded-md p-2 mb-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                                <option value="">Select a job...</option>
+                                              </select>
+                                              <div class="flex gap-2 justify-end">
+                                                <button id="cancel-btn-${entry.id}" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">Cancel</button>
+                                                <button id="assign-btn-${entry.id}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">Assign</button>
+                                              </div>
+                                            </div>
+                                          `;
+                                          document.body.appendChild(dialog);
+
+                                          // Fetch jobs and populate dropdown
+                                          try {
+                                            const response = await fetch('/api/jobs');
+                                            const jobs = await response.json();
+                                            const select = dialog.querySelector('#job-select-' + entry.id) as HTMLSelectElement;
+                                            jobs.forEach((job: any) => {
+                                              const option = document.createElement('option');
+                                              option.value = job.id;
+                                              option.textContent = job.jobAddress;
+                                              select.appendChild(option);
+                                            });
+                                          } catch (error) {
+                                            console.error('Failed to fetch jobs:', error);
+                                          }
+
+                                          // Cancel button
+                                          dialog.querySelector('#cancel-btn-' + entry.id)?.addEventListener('click', () => {
+                                            dialog.remove();
+                                          });
+
+                                          // Assign button
+                                          dialog.querySelector('#assign-btn-' + entry.id)?.addEventListener('click', async () => {
+                                            const select = dialog.querySelector('#job-select-' + entry.id) as HTMLSelectElement;
+                                            const jobId = select.value;
+                                            
+                                            if (!jobId) {
+                                              alert('Please select a job');
+                                              return;
+                                            }
+
+                                            try {
+                                              const response = await fetch('/api/admin/timesheet/assign-job', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ entryId: entry.id, jobId })
+                                              });
+
+                                              if (response.ok) {
+                                                const result = await response.json();
+                                                queryClient.invalidateQueries({ queryKey: ['/api/admin/timesheets'] });
+                                                dialog.remove();
+                                                // Show success toast
+                                                const toast = document.createElement('div');
+                                                toast.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                                                toast.textContent = 'Assigned to: ' + result.jobAddress;
+                                                document.body.appendChild(toast);
+                                                setTimeout(() => toast.remove(), 3000);
+                                              } else {
+                                                const error = await response.json();
+                                                alert(error.message || 'Failed to assign job');
+                                              }
+                                            } catch (error) {
+                                              alert('Failed to assign job');
+                                            }
+                                          });
+
+                                          // Close on background click
+                                          dialog.addEventListener('click', (e) => {
+                                            if (e.target === dialog) {
+                                              dialog.remove();
+                                            }
+                                          });
+                                        }}
+                                        data-testid={`button-assign-job-${entry.id}`}
+                                        title="Assign to job sheet"
+                                      >
+                                        <Link className="h-3 w-3 mr-1" />
+                                        Assign to Job
+                                      </Button>
+                                    </>
                                   )}
                                   <Button
                                     size="sm"
