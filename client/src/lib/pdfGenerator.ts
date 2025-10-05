@@ -36,6 +36,13 @@ type JobWithRelations = {
     description: string;
     amount: string;
   }>;
+  tipFees: Array<{
+    id: string;
+    description: string;
+    amount: string;
+    cartageAmount: string;
+    totalAmount: string;
+  }>;
   timesheets?: Array<{
     id: string;
     date: string;
