@@ -6,13 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft, Users, Plus, Trash2, Save, Clock, CheckCircle, Calendar, Lock, Unlock, Edit, Search, X, Link2 as LinkIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, FileText, ArrowLeft, Users, Plus, Trash2, Save, Clock, CheckCircle, Calendar, Lock, Unlock, Edit, Search, X } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { OrientationToggle } from "@/components/orientation-toggle";
-import { JobAddressSearch } from "@/components/job-address-search";
 import { format, addDays, parseISO } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -49,9 +48,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const [addressDialogData, setAddressDialogData] = useState<{dayIndex: number, entryIndex: number}>({dayIndex: -1, entryIndex: -1});
   const [showEditAddressDialog, setShowEditAddressDialog] = useState(false);
   const [editAddressData, setEditAddressData] = useState<{entryId: string, currentAddress: string}>({entryId: '', currentAddress: ''});
-  const [showMatchJobDialog, setShowMatchJobDialog] = useState(false);
-  const [matchJobData, setMatchJobData] = useState<{entryId: string, currentAddress: string}>({entryId: '', currentAddress: ''});
-  const [selectedJobForMatch, setSelectedJobForMatch] = useState<string>("");
   const [currentAddress, setCurrentAddress] = useState({houseNumber: '', streetAddress: ''});
   const [showLowHoursDialog, setShowLowHoursDialog] = useState(false);
   const [lowHoursTotal, setLowHoursTotal] = useState(0);
@@ -719,28 +715,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         title: "Entry Deleted",
         description: "Timesheet entry has been removed.",
         variant: "default",
-      });
-    },
-  });
-
-  const matchJobMutation = useMutation({
-    mutationFn: async ({ entryId, jobId }: { entryId: string; jobId: string }) => {
-      return apiRequest('PATCH', `/api/admin/timesheet/${entryId}/match-to-job`, { jobId });
-    },
-    onSuccess: async () => {
-      await refetchTimesheetEntries();
-      setShowMatchJobDialog(false);
-      setMatchJobData({ entryId: '', currentAddress: '' });
-      toast({
-        title: "Success",
-        description: "Custom address matched to job successfully",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to match custom address to job",
-        variant: "destructive",
       });
     },
   });
@@ -2020,36 +1994,19 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                 </Button>
                                 {/* Edit button for custom addresses - admin only */}
                                 {isAdminView && entry?.description && entry.description.startsWith('CUSTOM_ADDRESS:') && (
-                                  <>
-                                    <Button
-                                      size="sm"
-                                      variant="default"
-                                      onClick={() => {
-                                        const address = entry.description.replace('CUSTOM_ADDRESS: ', '');
-                                        setMatchJobData({ entryId: entry.id, currentAddress: address });
-                                        setShowMatchJobDialog(true);
-                                      }}
-                                      className="ml-1"
-                                      data-testid={`button-match-job-${entry.id}`}
-                                      title="Match to existing job"
-                                    >
-                                      <LinkIcon className="h-4 w-4 mr-1" />
-                                      Match
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => {
-                                        const address = entry.description.replace('CUSTOM_ADDRESS: ', '');
-                                        editCustomAddress(entry.id, address);
-                                      }}
-                                      className="ml-1"
-                                      data-testid={`button-edit-address-${entry.id}`}
-                                      title="Edit custom address"
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                  </>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const address = entry.description.replace('CUSTOM_ADDRESS: ', '');
+                                      editCustomAddress(entry.id, address);
+                                    }}
+                                    className="ml-1"
+                                    data-testid={`button-edit-address-${entry.id}`}
+                                    title="Edit custom address"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
                                 )}
                               </>
                             )}
@@ -3121,66 +3078,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           description={rewardData.description}
           onClose={() => setRewardData(prev => ({ ...prev, show: false }))}
         />
-
-        {/* Match Job Dialog */}
-        <Dialog open={showMatchJobDialog} onOpenChange={(open) => {
-          setShowMatchJobDialog(open);
-          if (!open) {
-            setSelectedJobForMatch("");
-            setMatchJobData({ entryId: '', currentAddress: '' });
-          }
-        }}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Match Custom Address to Job</DialogTitle>
-              <DialogDescription>
-                Custom address entered: <strong>{matchJobData.currentAddress}</strong>
-                <br />
-                Select a job from the list below to match this custom address.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="py-4">
-              {jobs && Array.isArray(jobs) && jobs.length > 0 ? (
-                <JobAddressSearch
-                  value={selectedJobForMatch}
-                  onValueChange={setSelectedJobForMatch}
-                  jobs={jobs}
-                  placeholder="Search and select a job..."
-                />
-              ) : (
-                <p className="text-sm text-muted-foreground">Loading jobs...</p>
-              )}
-            </div>
-            
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowMatchJobDialog(false);
-                  setSelectedJobForMatch("");
-                  setMatchJobData({ entryId: '', currentAddress: '' });
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  if (matchJobData.entryId && selectedJobForMatch) {
-                    matchJobMutation.mutate({ 
-                      entryId: matchJobData.entryId, 
-                      jobId: selectedJobForMatch 
-                    });
-                  }
-                }}
-                disabled={!selectedJobForMatch || matchJobMutation.isPending}
-                data-testid="button-confirm-match-job"
-              >
-                {matchJobMutation.isPending ? "Matching..." : "Confirm Match"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
         
         </div>
       </div>

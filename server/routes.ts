@@ -280,24 +280,8 @@ const findBestJobMatch = async (timesheetJobDescription: string, threshold: numb
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize reward settings and migrate labor entries on startup
-  try {
-    await initializeRewardSettings();
-  } catch (error: any) {
-    console.error("⚠️ Failed to initialize reward settings:", error?.message || error);
-    if (error?.code === '42P01') {
-      console.error("🚨 DATABASE SCHEMA OUTDATED: rewardSettings table missing");
-      console.error("🚨 Please run: npm run db:push");
-    }
-    // Don't crash - allow server to continue running
-  }
-  
-  try {
-    await storage.migrateLaborEntryHours();
-  } catch (error: any) {
-    console.error("⚠️ Failed to migrate labor entry hours:", error?.message || error);
-    // Don't crash - allow server to continue running
-  }
-  
+  await initializeRewardSettings();
+  await storage.migrateLaborEntryHours();
   // Auth middleware
   await setupAuth(app);
 
@@ -1762,64 +1746,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating custom address:", error);
       res.status(500).json({ message: "Failed to update custom address", error: (error as Error).message });
-    }
-  });
-
-  // Match custom address to a job (admin only)
-  app.patch("/api/admin/timesheet/:entryId/match-to-job", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      if (user?.role !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const entryId = req.params.entryId;
-      const { jobId } = req.body;
-      
-      if (!entryId) {
-        return res.status(400).json({ message: "Entry ID is required" });
-      }
-
-      if (!jobId) {
-        return res.status(400).json({ message: "Job ID is required" });
-      }
-
-      // Verify the job exists
-      const job = await storage.getJob(jobId);
-      if (!job) {
-        return res.status(404).json({ message: "Job not found" });
-      }
-
-      // Get the existing entry to verify it's a custom address
-      const entry = await storage.getTimesheetEntry(entryId);
-      if (!entry) {
-        return res.status(404).json({ message: "Timesheet entry not found" });
-      }
-
-      if (!entry.description || !entry.description.startsWith('CUSTOM_ADDRESS:')) {
-        return res.status(400).json({ message: "This entry is not a custom address" });
-      }
-
-      // Convert custom address to job-matched entry
-      // Clear the custom address description and set the jobId
-      await storage.updateTimesheetEntry(entryId, { 
-        jobId: jobId,
-        description: null  // Clear the custom address description
-      });
-      
-      console.log(`✅ Matched custom address entry ${entryId} to job ${jobId} (${job.jobAddress})`);
-      
-      res.status(200).json({ 
-        message: "Custom address matched to job successfully",
-        entryId,
-        jobId,
-        jobAddress: job.jobAddress
-      });
-    } catch (error) {
-      console.error("Error matching custom address to job:", error);
-      res.status(500).json({ message: "Failed to match custom address to job", error: (error as Error).message });
     }
   });
 

@@ -423,7 +423,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(employees)
       .where(eq(employees.isActive, true))
-      .orderBy(employees.name);
+      .orderBy(desc(employees.createdAt));
   }
 
   async getEmployee(id: string): Promise<Employee | undefined> {
@@ -474,8 +474,7 @@ export class DatabaseStorage implements IStorage {
 
   async getAllEmployees(): Promise<Employee[]> {
     // Get all employees regardless of active status (for admin management)
-    // Note: Removed .orderBy(desc(employees.createdAt)) for production DB compatibility
-    return await db.select().from(employees);
+    return await db.select().from(employees).orderBy(desc(employees.createdAt));
   }
 
   async updateEmployee(id: string, employee: Partial<InsertEmployee>): Promise<Employee> {
@@ -1505,6 +1504,8 @@ export class DatabaseStorage implements IStorage {
         description: timesheetEntries.description,
         approved: timesheetEntries.approved,
         submitted: timesheetEntries.submitted,
+        createdAt: timesheetEntries.createdAt,
+        updatedAt: timesheetEntries.updatedAt,
         staffName: sql`COALESCE(${employees.name}, ${users.firstName}, CASE WHEN ${users.email} IS NOT NULL THEN SPLIT_PART(${users.email}, '@', 1) ELSE 'Unknown Staff' END, 'Unknown Staff')`.as('staffName'),
         staffEmail: users.email,
         entryType: sql`'timesheet'`.as('entryType'),
@@ -1528,6 +1529,8 @@ export class DatabaseStorage implements IStorage {
         description: manualHourEntries.description,
         approved: sql`true`.as('approved'), // Manual entries are always "approved"
         submitted: sql`true`.as('submitted'),
+        createdAt: manualHourEntries.createdAt,
+        updatedAt: manualHourEntries.createdAt,
         staffName: employees.name,
         staffEmail: sql`NULL`.as('staffEmail'),
         entryType: sql`'manual'`.as('entryType'),
@@ -1548,8 +1551,8 @@ export class DatabaseStorage implements IStorage {
     // Combine and sort by date (most recent first)
     const allEntries = [...timesheetResults, ...manualResults];
     return allEntries.sort((a, b) => {
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return dateB - dateA;
     });
   }
@@ -1567,6 +1570,8 @@ export class DatabaseStorage implements IStorage {
         description: timesheetEntries.description,
         approved: timesheetEntries.approved,
         submitted: timesheetEntries.submitted,
+        createdAt: timesheetEntries.createdAt,
+        updatedAt: timesheetEntries.updatedAt,
         staffName: sql`COALESCE(${employees.name}, ${users.firstName}, CASE WHEN ${users.email} IS NOT NULL THEN SPLIT_PART(${users.email}, '@', 1) ELSE 'Unknown Staff' END, 'Unknown Staff')`.as('staffName'),
         staffEmail: users.email,
         // Enhanced job address to handle custom addresses and leave types
@@ -1607,7 +1612,7 @@ export class DatabaseStorage implements IStorage {
   async markTimesheetEntriesAsSubmitted(userId: string, fortnightStart: string, fortnightEnd: string): Promise<void> {
     await db
       .update(timesheetEntries)
-      .set({ submitted: true })
+      .set({ submitted: true, updatedAt: new Date() })
       .where(
         and(
           eq(timesheetEntries.staffId, userId),
@@ -1818,7 +1823,8 @@ export class DatabaseStorage implements IStorage {
         jobAddress: jobs.jobAddress,
         jobClient: jobs.clientName,
         materials: timesheetEntries.materials,
-        approved: timesheetEntries.approved
+        approved: timesheetEntries.approved,
+        createdAt: timesheetEntries.createdAt
       })
       .from(timesheetEntries)
       .leftJoin(users, eq(timesheetEntries.staffId, users.id))
@@ -1886,7 +1892,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     const results = await query
-      .orderBy(desc(timesheetEntries.date))
+      .orderBy(desc(timesheetEntries.date), desc(timesheetEntries.createdAt))
       .limit(500); // Limit results for performance
 
     return results;
@@ -2392,6 +2398,7 @@ export class DatabaseStorage implements IStorage {
           name: employees.name,
           defaultHourlyRate: employees.defaultHourlyRate,
           isActive: employees.isActive,
+          createdAt: employees.createdAt,
         },
       })
       .from(jobNotes)

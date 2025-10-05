@@ -144,15 +144,9 @@ app.use((req, res, next) => {
     } else {
       console.log(`✅ System-wide Google Drive tokens already configured`);
     }
-  } catch (migrationError: any) {
-    console.error('⚠️ Error during Google Drive token migration:', migrationError?.message || migrationError);
-    
-    // Check if it's a schema/table missing error
-    if (migrationError?.message?.includes('relation') || migrationError?.message?.includes('column') || migrationError?.code === '42P01' || migrationError?.code === '42703') {
-      console.error('🚨 DATABASE SCHEMA OUTDATED: Please run database migrations/push to update schema');
-      console.error('🚨 In production, you may need to run: npm run db:push');
-    }
-    // Don't crash the server - allow it to continue running even with schema issues
+  } catch (migrationError) {
+    console.error('⚠️ Error during Google Drive token migration:', migrationError);
+    // Don't crash the server on migration errors
   }
 
   // Enhanced error handler with detailed logging
