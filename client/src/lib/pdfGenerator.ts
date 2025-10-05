@@ -234,7 +234,46 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
     yPos += 10;
   }
 
+  // TIP FEES SECTION
+  if (job.tipFees && job.tipFees.length > 0) {
+    checkPageBreak(30);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TIP FEES (inc. 20% cartage)', 20, yPos);
+    yPos += 10;
 
+    doc.setFontSize(9);
+    doc.text('Description', 25, yPos);
+    doc.text('Base', 110, yPos);
+    doc.text('Cartage', 140, yPos);
+    doc.text('Total', 160, yPos);
+    yPos += 3;
+    doc.line(20, yPos, 190, yPos);
+    yPos += 8;
+
+    doc.setFont('helvetica', 'normal');
+    let tipFeesTotal = 0;
+    job.tipFees.forEach((tipFee) => {
+      checkPageBreak(10);
+      
+      const baseAmount = parseFloat(tipFee.amount);
+      const cartageAmount = parseFloat(tipFee.cartageAmount);
+      const totalAmount = parseFloat(tipFee.totalAmount);
+      tipFeesTotal += totalAmount;
+      
+      doc.text(tipFee.description, 25, yPos);
+      doc.text(`$${baseAmount.toFixed(2)}`, 110, yPos);
+      doc.text(`$${cartageAmount.toFixed(2)}`, 140, yPos);
+      doc.text(`$${totalAmount.toFixed(2)}`, 160, yPos);
+      yPos += 8;
+    });
+
+    yPos += 3;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Total', 120, yPos);
+    doc.text(`$${tipFeesTotal.toFixed(2)}`, 160, yPos);
+    yPos += 20;
+  }
 
   // SUMMARY SECTION - Enhanced with detailed breakdown
   checkPageBreak(100); // Ensure summary stays together
@@ -246,7 +285,8 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
   const materialsTotal = job.materials.reduce((sum, material) => sum + parseFloat(material.amount), 0);
   const subTradesTotal = job.subTrades.reduce((sum, subTrade) => sum + parseFloat(subTrade.amount), 0);
   const otherCostsTotal = job.otherCosts.reduce((sum, cost) => sum + parseFloat(cost.amount), 0);
-  const subtotal = laborTotal + materialsTotal + subTradesTotal + otherCostsTotal;
+  const tipFeesTotal = job.tipFees?.reduce((sum, tipFee) => sum + parseFloat(tipFee.totalAmount), 0) || 0;
+  const subtotal = laborTotal + materialsTotal + subTradesTotal + otherCostsTotal + tipFeesTotal;
   
   const marginPercent = parseFloat(job.builderMargin) / 100;
   const marginAmount = subtotal * marginPercent;
@@ -278,6 +318,12 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
   if (otherCostsTotal > 0) {
     doc.text('Other Costs Total:', 25, yPos);
     doc.text(`$${otherCostsTotal.toFixed(2)}`, 160, yPos, { align: 'right' });
+    yPos += 8;
+  }
+  
+  if (tipFeesTotal > 0) {
+    doc.text('Tip Fees (inc. cartage):', 25, yPos);
+    doc.text(`$${tipFeesTotal.toFixed(2)}`, 160, yPos, { align: 'right' });
     yPos += 8;
   }
   
