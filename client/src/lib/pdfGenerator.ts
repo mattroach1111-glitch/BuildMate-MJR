@@ -203,16 +203,17 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
     doc.setFont('helvetica', 'normal');
     let subTradesTotal = 0;
     job.subTrades.forEach((subTrade) => {
-      checkPageBreak(10);
+      checkPageBreak(15);
       
       const amount = parseFloat(subTrade.amount);
       subTradesTotal += amount;
       
-      doc.text(subTrade.trade || 'Sub Trade', 25, yPos);
+      // Use wrapped text for trade description (max width ~50 units)
+      const numLines = addWrappedText(subTrade.trade || 'Sub Trade', 25, 50);
       doc.text(subTrade.contractor || '-', 80, yPos);
       doc.text(subTrade.invoiceDate || '-', 130, yPos);
       doc.text(`$${amount.toFixed(2)}`, 160, yPos);
-      yPos += 8;
+      yPos += Math.max(8, numLines * 6);
     });
 
     yPos += 3;
@@ -238,13 +239,14 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
 
     doc.setFont('helvetica', 'normal');
     job.otherCosts.forEach((cost) => {
-      checkPageBreak(10);
+      checkPageBreak(15);
       
       const amount = parseFloat(cost.amount);
       
-      doc.text(cost.description, 25, yPos);
+      // Use wrapped text for description (max width ~130 units for wider space)
+      const numLines = addWrappedText(cost.description, 25, 130);
       doc.text(`$${amount.toFixed(2)}`, 160, yPos);
-      yPos += 8;
+      yPos += Math.max(8, numLines * 6);
     });
     yPos += 10;
   }
@@ -269,18 +271,19 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
     doc.setFont('helvetica', 'normal');
     let tipFeesTotal = 0;
     job.tipFees.forEach((tipFee) => {
-      checkPageBreak(10);
+      checkPageBreak(15);
       
       const baseAmount = parseFloat(tipFee.amount);
       const cartageAmount = parseFloat(tipFee.cartageAmount);
       const totalAmount = parseFloat(tipFee.totalAmount);
       tipFeesTotal += totalAmount;
       
-      doc.text(tipFee.description, 25, yPos);
+      // Use wrapped text for description (max width ~80 units)
+      const numLines = addWrappedText(tipFee.description, 25, 80);
       doc.text(`$${baseAmount.toFixed(2)}`, 110, yPos);
       doc.text(`$${cartageAmount.toFixed(2)}`, 140, yPos);
       doc.text(`$${totalAmount.toFixed(2)}`, 160, yPos);
-      yPos += 8;
+      yPos += Math.max(8, numLines * 6);
     });
 
     yPos += 3;
