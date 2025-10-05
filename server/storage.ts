@@ -423,7 +423,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(employees)
       .where(eq(employees.isActive, true))
-      .orderBy(desc(employees.createdAt));
+      .orderBy(employees.name);
   }
 
   async getEmployee(id: string): Promise<Employee | undefined> {
@@ -2394,7 +2394,6 @@ export class DatabaseStorage implements IStorage {
           name: employees.name,
           defaultHourlyRate: employees.defaultHourlyRate,
           isActive: employees.isActive,
-          createdAt: employees.createdAt,
         },
       })
       .from(jobNotes)
