@@ -555,6 +555,20 @@ export async function generateJobPDFBase64(job: JobWithRelations, attachedFiles?
     }
     return false;
   };
+
+  // Helper function to add wrapped text
+  const addWrappedText = (text: string, x: number, maxWidth: number): number => {
+    const lines = doc.splitTextToSize(text, maxWidth);
+    let currentY = yPos;
+    lines.forEach((line: string, index: number) => {
+      if (index > 0) {
+        currentY += 6;
+        checkPageBreak(10);
+      }
+      doc.text(line, x, currentY);
+    });
+    return lines.length;
+  };
   
   let yPos = 30;
 
@@ -645,20 +659,20 @@ export async function generateJobPDFBase64(job: JobWithRelations, attachedFiles?
     let materialsTotal = 0;
     
     job.materials.forEach((material) => {
-      checkPageBreak();
+      checkPageBreak(15);
       
       const amount = parseFloat(material.amount);
       materialsTotal += amount;
 
-      const description = material.description.length > 30 ? material.description.substring(0, 27) + '...' : material.description;
       const supplier = material.supplier.length > 18 ? material.supplier.substring(0, 15) + '...' : material.supplier;
       const date = material.invoiceDate || 'N/A';
 
-      doc.text(description, 25, yPos);
+      // Use wrapped text for description
+      const numLines = addWrappedText(material.description, 25, 60);
       doc.text(supplier, 90, yPos);
       doc.text(date, 130, yPos);
       doc.text(`$${amount.toFixed(2)}`, 160, yPos);
-      yPos += 8;
+      yPos += Math.max(8, numLines * 6);
     });
 
     yPos += 5;
@@ -696,20 +710,20 @@ export async function generateJobPDFBase64(job: JobWithRelations, attachedFiles?
     let subTradesTotal = 0;
     
     job.subTrades.forEach((subTrade) => {
-      checkPageBreak();
+      checkPageBreak(15);
       
       const amount = parseFloat(subTrade.amount);
       subTradesTotal += amount;
 
-      const trade = subTrade.trade.length > 20 ? subTrade.trade.substring(0, 17) + '...' : subTrade.trade;
       const contractor = subTrade.contractor.length > 25 ? subTrade.contractor.substring(0, 22) + '...' : subTrade.contractor;
       const date = subTrade.invoiceDate || 'N/A';
 
-      doc.text(trade, 25, yPos);
+      // Use wrapped text for trade description
+      const numLines = addWrappedText(subTrade.trade, 25, 40);
       doc.text(contractor, 70, yPos);
       doc.text(date, 130, yPos);
       doc.text(`$${amount.toFixed(2)}`, 160, yPos);
-      yPos += 8;
+      yPos += Math.max(8, numLines * 6);
     });
 
     yPos += 5;
@@ -745,16 +759,15 @@ export async function generateJobPDFBase64(job: JobWithRelations, attachedFiles?
     let otherCostsTotal = 0;
     
     job.otherCosts.forEach((cost) => {
-      checkPageBreak();
+      checkPageBreak(15);
       
       const amount = parseFloat(cost.amount);
       otherCostsTotal += amount;
 
-      const description = cost.description.length > 50 ? cost.description.substring(0, 47) + '...' : cost.description;
-
-      doc.text(description, 25, yPos);
+      // Use wrapped text for description
+      const numLines = addWrappedText(cost.description, 25, 130);
       doc.text(`$${amount.toFixed(2)}`, 160, yPos);
-      yPos += 8;
+      yPos += Math.max(8, numLines * 6);
     });
 
     yPos += 5;
@@ -792,20 +805,19 @@ export async function generateJobPDFBase64(job: JobWithRelations, attachedFiles?
     let tipFeesTotal = 0;
     
     job.tipFees.forEach((tipFee) => {
-      checkPageBreak();
+      checkPageBreak(15);
       
       const baseAmount = parseFloat(tipFee.amount);
       const cartageAmount = parseFloat(tipFee.cartageAmount);
       const totalAmount = parseFloat(tipFee.totalAmount);
       tipFeesTotal += totalAmount;
 
-      const description = tipFee.description.length > 35 ? tipFee.description.substring(0, 32) + '...' : tipFee.description;
-
-      doc.text(description, 25, yPos);
+      // Use wrapped text for description
+      const numLines = addWrappedText(tipFee.description, 25, 80);
       doc.text(`$${baseAmount.toFixed(2)}`, 110, yPos);
       doc.text(`$${cartageAmount.toFixed(2)}`, 140, yPos);
       doc.text(`$${totalAmount.toFixed(2)}`, 160, yPos);
-      yPos += 8;
+      yPos += Math.max(8, numLines * 6);
     });
 
     yPos += 5;
