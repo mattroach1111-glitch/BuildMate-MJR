@@ -169,9 +169,13 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
       const amount = parseFloat(material.amount);
       materialsTotal += amount;
       
+      // Truncate supplier to fit in column (max 20 chars)
+      const supplier = material.supplier || '-';
+      const truncatedSupplier = supplier.length > 20 ? supplier.substring(0, 17) + '...' : supplier;
+      
       // Use wrapped text for description (max width ~70 units to fit before supplier column)
       const numLines = addWrappedText(material.description || 'Material Item', 25, 70);
-      doc.text(material.supplier || '-', 100, yPos);
+      doc.text(truncatedSupplier, 100, yPos);
       doc.text(material.invoiceDate || '-', 130, yPos);
       doc.text(`$${amount.toFixed(2)}`, 160, yPos);
       yPos += Math.max(8, numLines * 6); // Adjust based on wrapped lines
@@ -664,12 +668,14 @@ export async function generateJobPDFBase64(job: JobWithRelations, attachedFiles?
       const amount = parseFloat(material.amount);
       materialsTotal += amount;
 
-      const supplier = material.supplier.length > 18 ? material.supplier.substring(0, 15) + '...' : material.supplier;
+      // Truncate supplier to fit in column (max 20 chars)
+      const supplier = material.supplier || '-';
+      const truncatedSupplier = supplier.length > 20 ? supplier.substring(0, 17) + '...' : supplier;
       const date = material.invoiceDate || 'N/A';
 
       // Use wrapped text for description
       const numLines = addWrappedText(material.description, 25, 60);
-      doc.text(supplier, 90, yPos);
+      doc.text(truncatedSupplier, 90, yPos);
       doc.text(date, 130, yPos);
       doc.text(`$${amount.toFixed(2)}`, 160, yPos);
       yPos += Math.max(8, numLines * 6);
