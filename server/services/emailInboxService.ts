@@ -461,13 +461,13 @@ export class EmailInboxService {
       const emailHost = process.env.EMAIL_HOST;
       const emailPort = parseInt(process.env.EMAIL_PORT || '993');
       const emailUser = process.env.EMAIL_USER;
-      const emailPass = process.env.EMAIL_PASS;
+      const emailPass = process.env.EMAIL_PASSWORD;
       
       if (!emailHost || !emailUser || !emailPass) {
         console.log('❌ Email credentials not configured');
         return {
           processed: 0,
-          errors: ['Email credentials not configured. Please add EMAIL_HOST, EMAIL_USER, and EMAIL_PASS environment variables.']
+          errors: ['Email credentials not configured. Please add EMAIL_HOST, EMAIL_USER, and EMAIL_PASSWORD environment variables.']
         };
       }
       
