@@ -80,6 +80,36 @@ app.use((req: any, res, next) => {
 import { setupEmailWebhook } from "./emailWebhook";
 setupEmailWebhook(app);
 
+// Email secrets health check - verify all required secrets are present
+function checkEmailSecretsHealth() {
+  const requiredSecrets = ['EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_USER', 'EMAIL_PASSWORD'];
+  const missingSecrets: string[] = [];
+  
+  console.log('🔍 Checking email secrets configuration...');
+  
+  for (const secret of requiredSecrets) {
+    if (!process.env[secret]) {
+      missingSecrets.push(secret);
+    }
+  }
+  
+  if (missingSecrets.length > 0) {
+    console.error('');
+    console.error('⚠️⚠️⚠️ EMAIL CONFIGURATION WARNING ⚠️⚠️⚠️');
+    console.error(`❌ Missing required email secrets: ${missingSecrets.join(', ')}`);
+    console.error('📧 Email document processing will NOT work until these secrets are added!');
+    console.error('💡 Add missing secrets in the Replit Secrets panel (🔒 icon)');
+    console.error('');
+  } else {
+    console.log('✅ All email secrets configured correctly');
+  }
+  
+  return missingSecrets.length === 0;
+}
+
+// Run health check on startup
+checkEmailSecretsHealth();
+
 
 app.use((req, res, next) => {
   const start = Date.now();
