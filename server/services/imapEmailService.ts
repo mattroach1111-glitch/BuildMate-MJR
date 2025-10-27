@@ -58,34 +58,31 @@ export class ImapEmailService {
 
           console.log(`📧 Inbox opened. Total messages: ${box.messages.total}, New: ${box.messages.new}`);
 
-          // Search for ALL emails first to see what's there
-          this.imap.search(['ALL'], (err: any, allResults: any) => {
+          // Calculate date 7 days ago for searching recent emails
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          const searchDate = sevenDaysAgo.toISOString().split('T')[0].replace(/-/g, '/');
+          
+          console.log(`📧 Searching for emails since: ${searchDate}`);
+
+          // Search for emails from the last 7 days (both read and unread)
+          this.imap.search(['SINCE', searchDate], (err: any, results: any) => {
             if (err) {
-              console.error('Error searching all emails:', err);
+              console.error('Error searching emails:', err);
               reject(err);
               return;
             }
 
-            console.log(`📧 Total emails in inbox: ${allResults ? allResults.length : 0}`);
+            console.log(`📧 Emails found from last 7 days: ${results ? results.length : 0}`);
 
-            // Now search for unread emails
-            this.imap.search(['UNSEEN'], (err: any, results: any) => {
-              if (err) {
-                console.error('Error searching unread emails:', err);
-                reject(err);
-                return;
-              }
+            if (!results || results.length === 0) {
+              console.log('📧 No recent emails found');
+              this.imap.end();
+              resolve([]);
+              return;
+            }
 
-              console.log(`📧 Unread emails found: ${results ? results.length : 0}`);
-
-              if (!results || results.length === 0) {
-                console.log('📧 No unread emails found');
-                this.imap.end();
-                resolve([]);
-                return;
-              }
-
-              console.log(`📧 Processing ${results.length} unread emails`);
+            console.log(`📧 Processing ${results.length} emails from last 7 days`);
 
             const fetch = this.imap.fetch(results, {
               bodies: '',
@@ -155,7 +152,6 @@ export class ImapEmailService {
               console.log(`📧 Finished processing ${emails.length} emails with attachments`);
               this.imap.end();
               resolve(emails);
-              });
             });
           });
         });
