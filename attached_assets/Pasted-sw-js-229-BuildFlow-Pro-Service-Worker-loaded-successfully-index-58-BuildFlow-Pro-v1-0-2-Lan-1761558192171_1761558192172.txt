@@ -1,0 +1,21 @@
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully
+(index):58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+(index):64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-jM2NNaYZ.js:48 🔄 Session backup stored successfully
+index-jM2NNaYZ.js:48 🔄 Session backup stored successfully
+index-jM2NNaYZ.js:48 🔄 Session backup stored successfully
+index-jM2NNaYZ.js:48 🔄 Session backup stored successfully
+index-jM2NNaYZ.js:773 🔵 Job selection changed: 
+index-jM2NNaYZ.js:773 🔵 Job address changed: 
+index-jM2NNaYZ.js:773 🔵 Client name changed: 
+index-jM2NNaYZ.js:773 🔵 Project manager changed: 
+index-jM2NNaYZ.js:773 🔵 Frontend: Check for new emails button clicked
+index-jM2NNaYZ.js:773 🔵 Frontend: Starting email processing request...
+index-jM2NNaYZ.js:773 🔵 Frontend: API response received: 200
+index-jM2NNaYZ.js:773 🔵 Frontend: Response data: Object
+index-jM2NNaYZ.js:773 🟢 Frontend: Email processing succeeded: Object
+index-jM2NNaYZ.js:773 🔵 Frontend: Check for new emails button clicked
+index-jM2NNaYZ.js:773 🔵 Frontend: Starting email processing request...
+index-jM2NNaYZ.js:773 🔵 Frontend: API response received: 200
+index-jM2NNaYZ.js:773 🔵 Frontend: Response data: {message: 'Email processing completed', processed: 39, errors: Array(0)}errors: Array(0)length: 0[[Prototype]]: Array(0)message: "Email processing completed"processed: 39[[Prototype]]: Objectconstructor: ƒ Object()hasOwnProperty: ƒ hasOwnProperty()isPrototypeOf: ƒ isPrototypeOf()propertyIsEnumerable: ƒ propertyIsEnumerable()toLocaleString: ƒ toLocaleString()toString: ƒ toString()valueOf: ƒ valueOf()__defineGetter__: ƒ __defineGetter__()__defineSetter__: ƒ __defineSetter__()__lookupGetter__: ƒ __lookupGetter__()__lookupSetter__: ƒ __lookupSetter__()__proto__: (...)get __proto__: ƒ __proto__()set __proto__: ƒ __proto__()
+index-jM2NNaYZ.js:773 🟢 Frontend: Email processing succeeded: {message: 'Email processing completed', processed: 39, errors: Array(0)}
