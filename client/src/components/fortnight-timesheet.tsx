@@ -1921,16 +1921,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                               const currentEntry = dayEntries[entryIndex] || {};
                                               const currentHours = parseFloat(currentEntry.hours || entry?.hours || '0');
                                               
-                                              // If selecting public holiday, auto-set to 8 hours
-                                              if (leaveType.id === 'public-holiday') {
-                                                handleCellChange(day, entryIndex, 'hours', '8');
-                                                toast({
-                                                  title: "Hours Set",
-                                                  description: "Public holiday automatically set to 8 hours.",
-                                                  variant: "default",
-                                                });
-                                              }
-                                              
                                               // If selecting leave-without-pay and hours > 0, show warning
                                               if (leaveType.id === 'leave-without-pay' && currentHours > 0) {
                                                 toast({
