@@ -1092,7 +1092,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           const hours = parseFloat(entry.hours || '0');
           
           // Include entries with hours > 0 OR any leave type (even with 0 hours) OR custom addresses with hours > 0
-          const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'];
+          const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'public-holiday', 'leave-without-pay', 'tafe'];
           const isLeaveType = leaveTypes.includes(entry.jobId);
           const isCustomAddress = entry.jobId && entry.jobId.startsWith('custom-');
           
@@ -1714,7 +1714,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                         <td className="p-3">
                           <Input
                             type="number"
-                            step={entry?.jobId && ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'].includes(entry.jobId) ? "0.01" : "0.5"}
+                            step={entry?.jobId && ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'public-holiday', 'leave-without-pay', 'tafe'].includes(entry.jobId) ? "0.01" : "0.5"}
                             placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "0"}
                             value={entry?.hours || ''}
                             onChange={(e) => {
