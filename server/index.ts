@@ -82,7 +82,7 @@ setupEmailWebhook(app);
 
 // Email secrets health check - verify all required secrets are present
 function checkEmailSecretsHealth() {
-  const requiredSecrets = ['EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_USER', 'EMAIL_PASSWORD'];
+  const requiredSecrets = ['EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_USER', 'EMAIL_PASS'];
   const missingSecrets: string[] = [];
   
   console.log('🔍 Checking email secrets configuration...');
