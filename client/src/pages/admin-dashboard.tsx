@@ -3153,16 +3153,22 @@ export default function AdminDashboard() {
                                     if (entry.description && entry.description.startsWith('CUSTOM_ADDRESS:')) {
                                       return entry.description.replace('CUSTOM_ADDRESS: ', 'Custom Address: ');
                                     }
-                                    // Handle leave types stored in materials field
-                                    if (!entry.jobAddress && entry.materials) {
-                                      const leaveTypes: { [key: string]: string } = {
-                                        'sick-leave': 'Sick Leave',
-                                        'personal-leave': 'Personal Leave', 
-                                        'annual-leave': 'Annual Leave',
-                                        'public-holiday': 'Public Holiday',
-                                        'rdo': 'RDO (Rest Day Off)'
-                                      };
-                                      return leaveTypes[entry.materials] || entry.materials;
+                                    // Handle leave types stored in jobId field
+                                    const leaveTypes: { [key: string]: string } = {
+                                      'sick-leave': 'Sick Leave',
+                                      'personal-leave': 'Personal Leave', 
+                                      'annual-leave': 'Annual Leave',
+                                      'public-holiday': 'Public Holiday',
+                                      'rdo': 'RDO (Rest Day Off)',
+                                      'leave-without-pay': 'Leave Without Pay',
+                                      'tafe': 'Tafe'
+                                    };
+                                    if (!entry.jobAddress && entry.jobId && leaveTypes[entry.jobId]) {
+                                      return leaveTypes[entry.jobId];
+                                    }
+                                    // Fallback: check materials field for backward compatibility
+                                    if (!entry.jobAddress && entry.materials && leaveTypes[entry.materials]) {
+                                      return leaveTypes[entry.materials];
                                     }
                                     return entry.jobAddress || 'Unknown Job';
                                   })()} • {entry.clientName} • {parseFloat(entry.hours || 0)}h
@@ -3486,17 +3492,22 @@ export default function AdminDashboard() {
                                                           if (entry.description && entry.description.startsWith('CUSTOM_ADDRESS:')) {
                                                             return entry.description.replace('CUSTOM_ADDRESS: ', 'Custom Address: ');
                                                           }
-                                                          // Handle leave types stored in materials field
-                                                          if (!entry.jobAddress && entry.materials) {
-                                                            const leaveTypes: { [key: string]: string } = {
-                                                              'sick-leave': 'Sick Leave',
-                                                              'personal-leave': 'Personal Leave', 
-                                                              'annual-leave': 'Annual Leave',
-                                                              'public-holiday': 'Public Holiday',
-                                                              'rdo': 'RDO (Rest Day Off)',
-                                                              'leave-without-pay': 'Leave Without Pay'
-                                                            };
-                                                            return leaveTypes[entry.materials] || entry.materials;
+                                                          // Handle leave types stored in jobId field
+                                                          const leaveTypes: { [key: string]: string } = {
+                                                            'sick-leave': 'Sick Leave',
+                                                            'personal-leave': 'Personal Leave', 
+                                                            'annual-leave': 'Annual Leave',
+                                                            'public-holiday': 'Public Holiday',
+                                                            'rdo': 'RDO (Rest Day Off)',
+                                                            'leave-without-pay': 'Leave Without Pay',
+                                                            'tafe': 'Tafe'
+                                                          };
+                                                          if (!entry.jobAddress && entry.jobId && leaveTypes[entry.jobId]) {
+                                                            return leaveTypes[entry.jobId];
+                                                          }
+                                                          // Fallback: check materials field for backward compatibility
+                                                          if (!entry.jobAddress && entry.materials && leaveTypes[entry.materials]) {
+                                                            return leaveTypes[entry.materials];
                                                           }
                                                           return entry.jobAddress || 'Unknown Job';
                                                         })()} • {entry.clientName} • {parseFloat(entry.hours || 0)}h
