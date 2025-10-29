@@ -2742,6 +2742,7 @@ export default function AdminDashboard() {
                               <SelectItem value="sick-leave">Sick Leave</SelectItem>
                               <SelectItem value="personal-leave">Personal Leave</SelectItem>
                               <SelectItem value="annual-leave">Annual Leave</SelectItem>
+                              <SelectItem value="public-holiday">Public Holiday</SelectItem>
                               <SelectItem value="leave-without-pay">Leave without pay</SelectItem>
                               <SelectItem value="rdo">RDO (Rest Day Off)</SelectItem>
                             </SelectContent>
@@ -3158,6 +3159,7 @@ export default function AdminDashboard() {
                                         'sick-leave': 'Sick Leave',
                                         'personal-leave': 'Personal Leave', 
                                         'annual-leave': 'Annual Leave',
+                                        'public-holiday': 'Public Holiday',
                                         'rdo': 'RDO (Rest Day Off)'
                                       };
                                       return leaveTypes[entry.materials] || entry.materials;
@@ -3490,6 +3492,7 @@ export default function AdminDashboard() {
                                                               'sick-leave': 'Sick Leave',
                                                               'personal-leave': 'Personal Leave', 
                                                               'annual-leave': 'Annual Leave',
+                                                              'public-holiday': 'Public Holiday',
                                                               'rdo': 'RDO (Rest Day Off)',
                                                               'leave-without-pay': 'Leave Without Pay'
                                                             };
