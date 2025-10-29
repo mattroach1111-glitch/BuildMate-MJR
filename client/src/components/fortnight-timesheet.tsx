@@ -955,13 +955,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             errors.push(`${format(parseISO(dateKey), 'MMM dd')}: Leave without pay must have 0 hours`);
           }
           
-          // Validation 1a: Sick leave, annual leave, personal leave, and Tafe must have hours > 0
-          const hourRequiredLeaveTypes = ['sick-leave', 'annual-leave', 'personal-leave', 'tafe'];
+          // Validation 1a: Sick leave, annual leave, personal leave, public holiday, and Tafe must have hours > 0
+          const hourRequiredLeaveTypes = ['sick-leave', 'annual-leave', 'personal-leave', 'public-holiday', 'tafe'];
           if (hourRequiredLeaveTypes.includes(jobId) && hours <= 0) {
             const leaveTypeNames: Record<string, string> = {
               'sick-leave': 'Sick Leave',
               'annual-leave': 'Annual Leave', 
               'personal-leave': 'Personal Leave',
+              'public-holiday': 'Public Holiday',
               'tafe': 'Tafe'
             };
             errors.push(`${format(parseISO(dateKey), 'MMM dd')}: ${leaveTypeNames[jobId]} must have hours greater than 0`);
@@ -969,7 +970,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           
           // Validation 2: If hours > 0, must have a job selected (not "no-job") 
           // Exception: Special leave types (RDO, sick leave, etc.) and Tafe are allowed even with no actual job
-          const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'];
+          const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'public-holiday', 'leave-without-pay', 'tafe'];
           const isLeaveEntry = leaveTypes.includes(jobId) || 
                               leaveTypes.includes(entry.materials) ||
                               (jobId === null && (entry.description || '').toUpperCase().includes('TAFE'));
@@ -1007,7 +1008,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               
               // RDO and leave entries are valid even with 0 hours
               // IMPORTANT: Leave types are stored in the materials field, not description
-              const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'];
+              const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'public-holiday', 'leave-without-pay', 'tafe'];
               const isLeaveEntry = leaveTypes.includes(entry.jobId) || 
                                  leaveTypes.includes(entry.materials) ||
                                  (entry.jobId === null && (entry.description || '').toUpperCase().includes('TAFE'));
@@ -1023,7 +1024,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           ? localEntries.filter(entry => {
               // RDO and leave entries are valid even with 0 hours
               // IMPORTANT: Leave types are stored in the materials field, not description
-              const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'];
+              const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'public-holiday', 'leave-without-pay', 'tafe'];
               const isLeaveEntry = leaveTypes.includes(entry.jobId) || 
                                  leaveTypes.includes(entry.materials) ||
                                  (entry.jobId === null && (entry.description || '').toUpperCase().includes('TAFE'));
@@ -1163,7 +1164,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                   const entryDescription = entryData.description || '';
                   const descriptionMatch = savedDescription === entryDescription;
                   
-                  const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'];
+                  const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'public-holiday', 'leave-without-pay', 'tafe'];
                   const isLeaveType = leaveTypes.includes(entryData.jobId);
                   const isCustomAddress = entryData.jobId === 'custom-address' || (entryData.description && entryData.description.startsWith('CUSTOM_ADDRESS:'));
                   
@@ -1482,6 +1483,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               'sick-leave': 'Sick Leave',
               'personal-leave': 'Personal Leave', 
               'annual-leave': 'Annual Leave',
+              'public-holiday': 'Public Holiday',
               'rdo': 'RDO (Rest Day Off)',
               'leave-without-pay': 'Leave without pay'
             };
@@ -1759,13 +1761,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               if (jobId === 'custom-address') {
                                 return entry?.description ? entry.description.replace('CUSTOM_ADDRESS: ', '') : 'Custom Address';
                               }
-                              if (['tafe', 'rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay'].includes(jobId)) {
+                              if (['tafe', 'rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'public-holiday', 'leave-without-pay'].includes(jobId)) {
                                 const leaveTypes: {[key: string]: string} = {
                                   'tafe': 'Tafe',
                                   'rdo': 'RDO (Rest Day Off)',
                                   'sick-leave': 'Sick Leave',
                                   'personal-leave': 'Personal Leave',
                                   'annual-leave': 'Annual Leave',
+                                  'public-holiday': 'Public Holiday',
                                   'leave-without-pay': 'Leave without pay'
                                 };
                                 return leaveTypes[jobId] || jobId;
@@ -1900,6 +1903,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                           { id: 'sick-leave', name: 'Sick Leave' },
                                           { id: 'personal-leave', name: 'Personal Leave' },
                                           { id: 'annual-leave', name: 'Annual Leave' },
+                                          { id: 'public-holiday', name: 'Public Holiday' },
                                           { id: 'leave-without-pay', name: 'Leave without pay' }
                                         ].map((leaveType) => (
                                           <CommandItem
@@ -1916,6 +1920,16 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                               const dayEntries = Array.isArray(timesheetData[dateKey]) ? timesheetData[dateKey] : [];
                                               const currentEntry = dayEntries[entryIndex] || {};
                                               const currentHours = parseFloat(currentEntry.hours || entry?.hours || '0');
+                                              
+                                              // If selecting public holiday, auto-set to 8 hours
+                                              if (leaveType.id === 'public-holiday') {
+                                                handleCellChange(day, entryIndex, 'hours', '8');
+                                                toast({
+                                                  title: "Hours Set",
+                                                  description: "Public holiday automatically set to 8 hours.",
+                                                  variant: "default",
+                                                });
+                                              }
                                               
                                               // If selecting leave-without-pay and hours > 0, show warning
                                               if (leaveType.id === 'leave-without-pay' && currentHours > 0) {
@@ -2638,7 +2652,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                             <td className="p-3">
                               <Input
                                 type="number"
-                                step={entry?.jobId && ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'].includes(entry.jobId) ? "0.01" : "0.5"}
+                                step={entry?.jobId && ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'public-holiday', 'leave-without-pay', 'tafe'].includes(entry.jobId) ? "0.01" : "0.5"}
                                 placeholder={isWeekend && !isWeekendUnlocked(dateKey) ? "🔒 LOCKED" : "0"}
                                 value={entry?.hours || ''}
                                 onChange={(e) => {
@@ -2692,6 +2706,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                         'sick-leave': 'Sick Leave',
                                         'personal-leave': 'Personal Leave', 
                                         'annual-leave': 'Annual Leave',
+                                        'public-holiday': 'Public Holiday',
                                         'rdo': 'RDO (Rest Day Off)',
                                         'leave-without-pay': 'Leave without pay',
                                         'no-job': 'No job'
@@ -2712,6 +2727,8 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                           return 'Personal Leave';
                                         } else if (desc === 'ANNUAL LEAVE' || desc === 'ANNUAL-LEAVE') {
                                           return 'Annual Leave';
+                                        } else if (desc === 'PUBLIC HOLIDAY' || desc === 'PUBLIC-HOLIDAY') {
+                                          return 'Public Holiday';
                                         } else if (desc === 'LEAVE WITHOUT PAY' || desc === 'LEAVE-WITHOUT-PAY') {
                                           return 'Leave without pay';
                                         } else if (desc === 'TAFE') {
