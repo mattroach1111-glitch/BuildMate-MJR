@@ -330,10 +330,13 @@ export class GoogleDriveService {
     }
 
     return await this.executeWithTokenRefresh(async () => {
+      // Escape single quotes in folder name for Google Drive query syntax
+      const escapedFolderName = folderName.replace(/'/g, "\\'");
+      
       // Search for existing folder
       const query = parentFolderId 
-        ? `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and '${parentFolderId}' in parents and trashed=false`
-        : `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+        ? `name='${escapedFolderName}' and mimeType='application/vnd.google-apps.folder' and '${parentFolderId}' in parents and trashed=false`
+        : `name='${escapedFolderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
 
       const response = await this.drive.files.list({
         q: query,

@@ -1,0 +1,164 @@
+ BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+ ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+ 🔄 Session backup stored successfully
+ 🔄 Session backup stored successfully
+ 🔄 Session backup stored successfully
+ 🔄 Session backup stored successfully
+ 🔄 Session backup stored successfully
+ 🔵 Job selection changed: 
+ 🔵 Job address changed: 
+ 🔵 Client name changed: 
+ 🔵 Project manager changed: 
+ 🔵 Job selection changed: 60831436-7f2b-46ea-bec4-8834994cb19d
+  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-Dr5V8y7R.js:521
+ 🔵 UPLOAD DEBUG: Getting upload parameters for file: File
+ 🔵 Making API request to /api/documents/upload
+ 🔵 API response status: 200
+ 🔵 API response data: Object
+ 🔵 UPLOAD DEBUG: Upload URL response: Object
+ 🟢 UPLOAD COMPLETE: Object
+ 🔵 Selected Job ID: 60831436-7f2b-46ea-bec4-8834994cb19d
+ 🟢 PROCESSING FILES: 1
+ 🟢 PROCESSING FILE: Object
+ 🔵 Document URL: https://storage.googleapis.com/replit-objstore-24d4ec2f-e1e3-47ea-be49-d2813cd4465c/.private/uploads/a05029af-e04f-4d02-9f0c-186d97986c15?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=heimdall-production%40replit-user-deployments.iam.gserviceaccount.com%2F20251030%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20251030T231733Z&X-Goog-Expires=899&X-Goog-Signature=328024f534600e2020046886080d5090eb8f869c1ad4330c2e30ed540919dbf455026593a166f10e88efde8b8427d2ba8d4db9009d042214e08ac38710ea05299cfeb20fab04038f127004cb4615bee3c3eacda1b2684c0695b85d000b4484a5ed50453a863bf1dafa69300b0f0085fba2268be81f98e7a030672bb5a5d502503baad59a73024e572e8eb2ac03d6b6c29e8db3d16481eb59a72acce1c964735219ad3f10ced14a5087664976fa60a0a488c5067838753e41e18cebfe508d54ac4f3cacb4078d9930ba2c6ec0f34562dd64b5e89c2f5103ff905dd0b71b5d445eb217b630120123b7b0be2ae5f64c3e9a2a99a6136fa1f2b7508b2d9cef55fefd&X-Goog-SignedHeaders=host
+ 🔵 Job ID: 60831436-7f2b-46ea-bec4-8834994cb19d
+ 🔵 Document processed successfully: Object
+ ✅ Saved document as job file attachment
+ ✅ Automatically uploaded all files to Google Drive
+ 🔄 Session backup stored successfully
+  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-Dr5V8y7R.js:521
+ 🔵 Job selection changed: 
+index-Dr5V8y7R.js:773 🔵 Job address changed: 
+index-Dr5V8y7R.js:773 🔵 Client name changed: 
+index-Dr5V8y7R.js:773 🔵 Project manager changed: 
+index-Dr5V8y7R.js:773 🔵 Job selection changed: a1a91a95-5851-4527-9b3b-03713c8b5d54
+index-Dr5V8y7R.js:521  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-Dr5V8y7R.js:521
+index-Dr5V8y7R.js:773 🔵 UPLOAD DEBUG: Getting upload parameters for file: File
+index-Dr5V8y7R.js:773 🔵 Making API request to /api/documents/upload
+index-Dr5V8y7R.js:773 🔵 API response status: 200
+index-Dr5V8y7R.js:773 🔵 API response data: Object
+index-Dr5V8y7R.js:773 🔵 UPLOAD DEBUG: Upload URL response: Object
+index-Dr5V8y7R.js:773 🟢 UPLOAD COMPLETE: Object
+index-Dr5V8y7R.js:773 🔵 Selected Job ID: a1a91a95-5851-4527-9b3b-03713c8b5d54
+index-Dr5V8y7R.js:773 🟢 PROCESSING FILES: 1
+index-Dr5V8y7R.js:773 🟢 PROCESSING FILE: Object
+index-Dr5V8y7R.js:773 🔵 Document URL: https://storage.googleapis.com/replit-objstore-24d4ec2f-e1e3-47ea-be49-d2813cd4465c/.private/uploads/6b204e2b-1bed-422a-8f98-eb7860b16416?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=heimdall-production%40replit-user-deployments.iam.gserviceaccount.com%2F20251030%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20251030T231902Z&X-Goog-Expires=899&X-Goog-Signature=39d1633beb288ab8f4aec3a270a8d8a7231cbfffda70414361c7841d825dcd21011451c5f5ae75f536f87566d75ed080ebffe82c2760bb86a826ee4438201317e535f8157d40d11b863ada09e99738fc9b9c46f7e95098ce62c4e70937d962db8d866db488c619f7aca6c0ce273e3284ede87310d9542e8588603c4af74edea0c59d3810368dd9d0a30acc95b282ab13b8d4c79b3fb05de6a4f6d7958a0546d0912648f7b97ff91c842e5fb334ddef746561defbf7705363c3c8b35121999f7c312db91da42b541bb43f6d632a668b46b8b616ae4cdc83e731f96def89008a5c059de37be19d58ccb146dcbcb62f29bdfed3c96be57df26c56707dc3aebf9799&X-Goog-SignedHeaders=host
+index-Dr5V8y7R.js:773 🔵 Job ID: a1a91a95-5851-4527-9b3b-03713c8b5d54
+index-Dr5V8y7R.js:773 🔵 Document processed successfully: Object
+index-Dr5V8y7R.js:773 ✅ Saved document as job file attachment
+index-Dr5V8y7R.js:773 ✅ Automatically uploaded all files to Google Drive
+index-Dr5V8y7R.js:773 🔵 Job selection changed: 6b9b82c6-1713-45b7-a379-729c7590b45c
+index-Dr5V8y7R.js:521  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-Dr5V8y7R.js:521
+index-Dr5V8y7R.js:773 🔵 UPLOAD DEBUG: Getting upload parameters for file: File
+index-Dr5V8y7R.js:773 🔵 UPLOAD DEBUG: Getting upload parameters for file: File
+index-Dr5V8y7R.js:773 🔵 Making API request to /api/documents/upload
+index-Dr5V8y7R.js:773 🔵 Making API request to /api/documents/upload
+index-Dr5V8y7R.js:773 🔵 API response status: 200
+index-Dr5V8y7R.js:773 🔵 API response data: Object
+index-Dr5V8y7R.js:773 🔵 UPLOAD DEBUG: Upload URL response: Object
+index-Dr5V8y7R.js:773 🔵 API response status: 200
+index-Dr5V8y7R.js:773 🔵 API response data: Object
+index-Dr5V8y7R.js:773 🔵 UPLOAD DEBUG: Upload URL response: Object
+index-Dr5V8y7R.js:773 🟢 UPLOAD COMPLETE: Object
+index-Dr5V8y7R.js:773 🔵 Selected Job ID: 6b9b82c6-1713-45b7-a379-729c7590b45c
+index-Dr5V8y7R.js:773 🟢 PROCESSING FILES: 2
+index-Dr5V8y7R.js:773 🟢 PROCESSING FILE: Object
+index-Dr5V8y7R.js:773 🔵 Document URL: https://storage.googleapis.com/replit-objstore-24d4ec2f-e1e3-47ea-be49-d2813cd4465c/.private/uploads/a3aad10b-e86f-43bc-aba3-147dba1dce13?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=heimdall-production%40replit-user-deployments.iam.gserviceaccount.com%2F20251030%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20251030T231932Z&X-Goog-Expires=899&X-Goog-Signature=80422bdfeaac3847c8fccca09bc0b6d8c3bb019af3ae3885ff56f7a2c0839b4b1c84c30937a3990be33a7773838686568d7c0ef133c95337025be43cd8903f65f25de853c90019119965018d5ce6e38b745040b8bbc1e7b584b77ec4648308051a68dee880cefca0f6cf41d8ab120ef0ba4a23fc51af74897fa9db25679e2dea5e63ae8a209af5f07e7e60850e738b83dfd537a205b910e98e1bbe3effd4458115285feca8b96cac290690fffb223950780efb96d48a8879f667efa42ec5f301cc2a2e77590ae6fa74da2486cd2570e195aad4c04761bd4168b16d7370d9edf8b0d5d868bf07d3c189fa300a057dd8bcb9e3d336ba791cd91132bd98ab878bfc&X-Goog-SignedHeaders=host
+index-Dr5V8y7R.js:773 🔵 Job ID: 6b9b82c6-1713-45b7-a379-729c7590b45c
+index-Dr5V8y7R.js:773 🔵 Document processed successfully: Object
+index-Dr5V8y7R.js:773 🟢 PROCESSING FILE: Object
+index-Dr5V8y7R.js:773 🔵 Document URL: https://storage.googleapis.com/replit-objstore-24d4ec2f-e1e3-47ea-be49-d2813cd4465c/.private/uploads/219b6233-ce1d-48bb-bf5d-77c61cf01c9d?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=heimdall-production%40replit-user-deployments.iam.gserviceaccount.com%2F20251030%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20251030T231932Z&X-Goog-Expires=899&X-Goog-Signature=764d080bbfd5ba51218b5a81b2ae7f9f052495cc393a1b1154cc00571e37a04f03ebe4d4a0f16512aea8f6698d6c4bea581a06b8db2f6cb0944a85bc6fd7fb3851a37cc12ca602c62a7a75141003bbec9a3e0699d4e00757273a2280bcf9af01dbbc449795d099a278c9bc5fdcd057172da5d7c5c2cf4424bda719f44852da0f6504e7ce7f4c492503a9cb52422d34b0c467058a5f7c7460d14ad6991b4e7b0eaa2f9edd20523d0bc8263804d4e15b428563ceca887057b7463d31f81971a5fecfac581583a102c63020324a3549c463da487586006c41d0d9cda8665199196b5c489f8a4f89d38e5eafe6aec0179515b9b8917648529ecbb0bbfe3404b76a9e&X-Goog-SignedHeaders=host
+index-Dr5V8y7R.js:773 🔵 Job ID: 6b9b82c6-1713-45b7-a379-729c7590b45c
+index-Dr5V8y7R.js:773 🔵 Document processed successfully: Object
+index-Dr5V8y7R.js:773 ✅ Saved document as job file attachment
+api/documents/upload-to-drive:1   Failed to load resource: the server responded with a status of 500 ()
+index-Dr5V8y7R.js:773 ℹ️ Google Drive upload not available: 500: {"error":"Invalid Value","code":"UNKNOWN_ERROR","retryable":false,"message":"An unexpected error occurred with Google Drive upload."}
+index-Dr5V8y7R.js:773  Google Drive error details: Error: 500: {"error":"Invalid Value","code":"UNKNOWN_ERROR","retryable":false,"message":"An unexpected error occurred with Google Drive upload."}
+    at f8 (index-Dr5V8y7R.js:48:44364)
+    at async Vt (index-Dr5V8y7R.js:48:44572)
+    at async Object.onSuccess (index-Dr5V8y7R.js:773:20937)
+    at async I6.execute (index-Dr5V8y7R.js:48:20534)
+H @ index-Dr5V8y7R.js:773
+index-Dr5V8y7R.js:773 📄 Parsed structured error: Object
+index-Dr5V8y7R.js:773 🔵 Job selection changed: d84bdc9e-b3a7-40d1-804b-5f8997bd96c7
+index-Dr5V8y7R.js:521  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-Dr5V8y7R.js:521
+index-Dr5V8y7R.js:773 🔵 UPLOAD DEBUG: Getting upload parameters for file: File
+index-Dr5V8y7R.js:773 🔵 UPLOAD DEBUG: Getting upload parameters for file: File
+index-Dr5V8y7R.js:773 🔵 Making API request to /api/documents/upload
+index-Dr5V8y7R.js:773 🔵 Making API request to /api/documents/upload
+index-Dr5V8y7R.js:773 🔵 API response status: 200
+index-Dr5V8y7R.js:773 🔵 API response data: Object
+index-Dr5V8y7R.js:773 🔵 UPLOAD DEBUG: Upload URL response: Object
+index-Dr5V8y7R.js:773 🔵 API response status: 200
+index-Dr5V8y7R.js:773 🔵 API response data: Object
+index-Dr5V8y7R.js:773 🔵 UPLOAD DEBUG: Upload URL response: Object
+index-Dr5V8y7R.js:773 🟢 UPLOAD COMPLETE: Object
+index-Dr5V8y7R.js:773 🔵 Selected Job ID: d84bdc9e-b3a7-40d1-804b-5f8997bd96c7
+index-Dr5V8y7R.js:773 🟢 PROCESSING FILES: 2
+index-Dr5V8y7R.js:773 🟢 PROCESSING FILE: Object
+index-Dr5V8y7R.js:773 🔵 Document URL: https://storage.googleapis.com/replit-objstore-24d4ec2f-e1e3-47ea-be49-d2813cd4465c/.private/uploads/c4101468-2278-4029-92bd-295c72eae3ca?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=heimdall-production%40replit-user-deployments.iam.gserviceaccount.com%2F20251030%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20251030T232036Z&X-Goog-Expires=899&X-Goog-Signature=4615e5e70e141e95718f8a61404fd06153fdad399de189f0016e32b356b8e0723f37556e1c6871b582eb05dec3e563b82ac7bd985b14da5c57fce5bc48a257a795707ee44e3ea53cb0dba0521b01d8783d26c08b6d01a4313b8d4e38f3b6f75e3188072d39896d8ee4e38d46666fa23a05791f31fa72c32fb761f499c5f2ed692a18e719069fa7c60b748872accb75740f03fca697573fe6836791ee68d9921fc29f9ac3a24618dfb372b8e4ee637c1b063908809855676109752771725c0a3368b4b490456e63ebb180fd45561b7218e6660edf9c58e683efb1f6c98f91141d1cc5e65cee0189c7ecf4e7411b46b14fcf4edc998aa01eeed8b0d8afccaf51a6&X-Goog-SignedHeaders=host
+index-Dr5V8y7R.js:773 🔵 Job ID: d84bdc9e-b3a7-40d1-804b-5f8997bd96c7
+index-Dr5V8y7R.js:773 🔵 Document processed successfully: Object
+index-Dr5V8y7R.js:773 🟢 PROCESSING FILE: Object
+index-Dr5V8y7R.js:773 🔵 Document URL: https://storage.googleapis.com/replit-objstore-24d4ec2f-e1e3-47ea-be49-d2813cd4465c/.private/uploads/b9c2fbcd-34ad-49d2-ad40-89257052865a?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=heimdall-production%40replit-user-deployments.iam.gserviceaccount.com%2F20251030%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20251030T232036Z&X-Goog-Expires=899&X-Goog-Signature=87bc1b7ac39e6fa1aaf58396ca94fcc5f179167fee3d910325b5606a78ef39244f5629bb5a5ce0f211211a842a208ea47526fdbf382ce7fe71f47a8e88300fcf9db7dc2ee84b1e4ef38be644330a8ab05501151ab014c1c918cb9459da9df75108c314e95ed4c2edea36bbc1e6c0ab5801447530f46f008c10e1c22ef5c1b6db612cbe058afd0d21582a50ab1071170295b9cf967119cbd27ce2c90eec537c9f51629b178b1d9b05f290643714e6ff9b894771c1def2a759a7b2d6c0fbfd5afe4c7abbdb1f0d5bf37ffce2973a0451b37934db08a3a2fa566f4c8b55f3a9ede1015268a0283ff1b00e604d0787f35bed5d857cdc274c65d4df14b94aa490a9b6&X-Goog-SignedHeaders=host
+index-Dr5V8y7R.js:773 🔵 Job ID: d84bdc9e-b3a7-40d1-804b-5f8997bd96c7
+index-Dr5V8y7R.js:773 🔵 Document processed successfully: Object
+index-Dr5V8y7R.js:773 ✅ Saved document as job file attachment
+index-Dr5V8y7R.js:773 ✅ Automatically uploaded all files to Google Drive
+index-Dr5V8y7R.js:48 🔄 Session backup stored successfully
+index-Dr5V8y7R.js:521  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-Dr5V8y7R.js:521
+index-Dr5V8y7R.js:48 🔄 Session backup stored successfully
+index-Dr5V8y7R.js:48 🔄 Session backup stored successfully
+index-Dr5V8y7R.js:48 🔄 Session backup stored successfully
+index-Dr5V8y7R.js:48 🔄 Session backup stored successfully
+index-Dr5V8y7R.js:48 🔄 Session backup stored successfully
+index-Dr5V8y7R.js:48 🔄 Session backup stored successfully
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully
+index-Dr5V8y7R.js:521  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-Dr5V8y7R.js:521
+index-Dr5V8y7R.js:772 User management API response: Array(10)
+index-Dr5V8y7R.js:772 Is userData an array? true
+index-Dr5V8y7R.js:772 userData length: 10
+index-Dr5V8y7R.js:772 Rendering users: Array(10)
+index-Dr5V8y7R.js:772 Is users array? true
+index-Dr5V8y7R.js:772 Users length: 10
+index-Dr5V8y7R.js:772 Rendering users: Array(10)
+index-Dr5V8y7R.js:772 Is users array? true
+index-Dr5V8y7R.js:772 Users length: 10
+index-Dr5V8y7R.js:763 🔵 Google Drive auth URL response: Object
+index-Dr5V8y7R.js:763 🔵 Opening Google OAuth window with URL: https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive.file&prompt=consent&response_type=code&client_id=1085575960116-a1oujafavurk7lus6urfhbikepp75hh8.apps.googleusercontent.com&redirect_uri=https%3A%2F%2Fbuild-mate-mattroach1111.replit.app%2Fapi%2Fgoogle-drive%2Fcallback
+index-Dr5V8y7R.js:763  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ index-Dr5V8y7R.js:763
+index-Dr5V8y7R.js:763  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ index-Dr5V8y7R.js:763
+index-Dr5V8y7R.js:763  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ index-Dr5V8y7R.js:763
+index-Dr5V8y7R.js:763  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ index-Dr5V8y7R.js:763
+index-Dr5V8y7R.js:763  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ index-Dr5V8y7R.js:763
+index-Dr5V8y7R.js:763  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ index-Dr5V8y7R.js:763
+index-Dr5V8y7R.js:763  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ index-Dr5V8y7R.js:763
+index-Dr5V8y7R.js:763  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ index-Dr5V8y7R.js:763
+index-Dr5V8y7R.js:763 🔵 Google OAuth window closed, refreshing status...
+index-Dr5V8y7R.js:772 Rendering users: Array(10)
+index-Dr5V8y7R.js:772 Is users array? true
+index-Dr5V8y7R.js:772 Users length: 10
+index-Dr5V8y7R.js:772 Rendering users: Array(10)
+index-Dr5V8y7R.js:772 Is users array? true
+index-Dr5V8y7R.js:772 Users length: 10
+index-Dr5V8y7R.js:772 Rendering users: Array(10)
+index-Dr5V8y7R.js:772 Is users array? true
+index-Dr5V8y7R.js:772 Users length: 10
+index-Dr5V8y7R.js:772 Rendering users: Array(10)
+index-Dr5V8y7R.js:772 Is users array? true
+index-Dr5V8y7R.js:772 Users length: 10
