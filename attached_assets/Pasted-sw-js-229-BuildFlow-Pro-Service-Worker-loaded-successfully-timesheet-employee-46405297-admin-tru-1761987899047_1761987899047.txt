@@ -1,0 +1,51 @@
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully
+timesheet?employee=46405297&admin=true:58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+timesheet?employee=46405297&admin=true:64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-BWhyoemn.js:48 🔄 Session backup stored successfully
+index-BWhyoemn.js:48 🔄 Session backup stored successfully
+index-BWhyoemn.js:48 🔄 Session backup stored successfully
+index-BWhyoemn.js:48 🔄 Session backup stored successfully
+index-BWhyoemn.js:926 🔍 RDO DEBUG: entry.jobId is null, description: CUSTOM_ADDRESS: 1 Public holiday uppercase: CUSTOM_ADDRESS: 1 PUBLIC HOLIDAY
+index-BWhyoemn.js:926 ✅ API SUCCESS: /api/admin/timesheets/46405297 Array(107)
+index-BWhyoemn.js:926 ✅ API SUCCESS: /api/admin/timesheets/46275452 Array(55)
+index-BWhyoemn.js:926 💾 SAVE ALL: Starting save process... Object
+index-BWhyoemn.js:926 💾 Saving entry: Object
+/api/admin/timesheet:1   Failed to load resource: the server responded with a status of 500 ()
+index-BWhyoemn.js:926  ❌ Entry save failed: Error: 500: {"message":"Failed to create timesheet entry"}
+    at f8 (index-BWhyoemn.js:48:44364)
+    at async Vt (index-BWhyoemn.js:48:44572)
+    at async Zn (index-BWhyoemn.js:926:9681)
+Zn @ index-BWhyoemn.js:926
+index-BWhyoemn.js:926 💾 SAVE ALL: Starting save process... {entriesToSave: 1, entriesToUpdate: 0}
+index-BWhyoemn.js:926 💾 Saving entry: {date: '2025-10-30', hours: 8, materials: '', jobId: 'public-holiday', staffId: '46275452', …}
+index-BWhyoemn.js:48   POST https://build-mate-mattroach1111.replit.app/api/admin/timesheet 500 (Internal Server Error)
+Vt @ index-BWhyoemn.js:48
+Zn @ index-BWhyoemn.js:926
+kQ @ index-BWhyoemn.js:37
+EQ @ index-BWhyoemn.js:37
+TQ @ index-BWhyoemn.js:37
+rk @ index-BWhyoemn.js:37
+FI @ index-BWhyoemn.js:37
+(anonymous) @ index-BWhyoemn.js:37
+c_ @ index-BWhyoemn.js:40
+iI @ index-BWhyoemn.js:37
+C5 @ index-BWhyoemn.js:37
+R4 @ index-BWhyoemn.js:37
+GQ @ index-BWhyoemn.js:37
+index-BWhyoemn.js:926  ❌ Entry save failed: Error: 500: {"message":"Failed to create timesheet entry"}
+    at f8 (index-BWhyoemn.js:48:44364)
+    at async Vt (index-BWhyoemn.js:48:44572)
+    at async Zn (index-BWhyoemn.js:926:9681)
+Zn @ index-BWhyoemn.js:926
+await in Zn
+kQ @ index-BWhyoemn.js:37
+EQ @ index-BWhyoemn.js:37
+TQ @ index-BWhyoemn.js:37
+rk @ index-BWhyoemn.js:37
+FI @ index-BWhyoemn.js:37
+(anonymous) @ index-BWhyoemn.js:37
+c_ @ index-BWhyoemn.js:40
+iI @ index-BWhyoemn.js:37
+C5 @ index-BWhyoemn.js:37
+R4 @ index-BWhyoemn.js:37
+GQ @ index-BWhyoemn.js:37

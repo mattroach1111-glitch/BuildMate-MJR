@@ -1816,7 +1816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Transform leave types to null jobId before validation
       const requestData = { ...req.body };
-      const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'tafe'];
+      const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'leave-without-pay', 'public-holiday', 'tafe'];
       
       if (leaveTypes.includes(requestData.jobId)) {
         const originalJobId = requestData.jobId;
@@ -1955,7 +1955,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Handle special leave types and Tafe by storing them in materials field and setting jobId to null
       const { jobId, materials, description, ...otherData } = req.body;
-      const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'rdo', 'leave-without-pay', 'tafe'];
+      const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'rdo', 'leave-without-pay', 'public-holiday', 'tafe'];
       let finalJobId = jobId;
       let finalMaterials = materials || '';
       let finalDescription = description || null;
@@ -2544,7 +2544,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Handle special leave types and Tafe by storing them in materials field and setting jobId to null
       const { jobId, materials, ...otherData } = updates;
-      const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'rdo', 'tafe'];
+      const leaveTypes = ['sick-leave', 'personal-leave', 'annual-leave', 'rdo', 'leave-without-pay', 'public-holiday', 'tafe'];
       let finalJobId = jobId;
       let finalMaterials = materials || '';
       
