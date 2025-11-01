@@ -2773,6 +2773,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                   <SelectItem value="sick-leave">Sick Leave</SelectItem>
                                   <SelectItem value="personal-leave">Personal Leave</SelectItem>
                                   <SelectItem value="annual-leave">Annual Leave</SelectItem>
+                                  <SelectItem value="public-holiday">Public Holiday</SelectItem>
                                   <SelectItem value="leave-without-pay">Leave without pay</SelectItem>
                                 </SelectContent>
                               </Select>
