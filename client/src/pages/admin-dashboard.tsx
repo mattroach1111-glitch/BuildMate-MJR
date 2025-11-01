@@ -3153,6 +3153,19 @@ export default function AdminDashboard() {
                                     if (entry.description && entry.description.startsWith('CUSTOM_ADDRESS:')) {
                                       return entry.description.replace('CUSTOM_ADDRESS: ', 'Custom Address: ');
                                     }
+                                    // Handle leave types stored in description field (uppercase format)
+                                    const descriptionLeaveTypes: { [key: string]: string } = {
+                                      'SICK LEAVE': 'Sick Leave',
+                                      'PERSONAL LEAVE': 'Personal Leave',
+                                      'ANNUAL LEAVE': 'Annual Leave',
+                                      'PUBLIC HOLIDAY': 'Public Holiday',
+                                      'RDO': 'RDO (Rest Day Off)',
+                                      'LEAVE WITHOUT PAY': 'Leave Without Pay',
+                                      'TAFE': 'Tafe'
+                                    };
+                                    if (!entry.jobAddress && entry.description && descriptionLeaveTypes[entry.description]) {
+                                      return descriptionLeaveTypes[entry.description];
+                                    }
                                     // Handle leave types stored in jobId field
                                     const leaveTypes: { [key: string]: string } = {
                                       'sick-leave': 'Sick Leave',
@@ -3491,6 +3504,19 @@ export default function AdminDashboard() {
                                                           // Handle custom addresses - display with CUSTOM_ADDRESS: prefix
                                                           if (entry.description && entry.description.startsWith('CUSTOM_ADDRESS:')) {
                                                             return entry.description.replace('CUSTOM_ADDRESS: ', 'Custom Address: ');
+                                                          }
+                                                          // Handle leave types stored in description field (uppercase format)
+                                                          const descriptionLeaveTypes: { [key: string]: string } = {
+                                                            'SICK LEAVE': 'Sick Leave',
+                                                            'PERSONAL LEAVE': 'Personal Leave',
+                                                            'ANNUAL LEAVE': 'Annual Leave',
+                                                            'PUBLIC HOLIDAY': 'Public Holiday',
+                                                            'RDO': 'RDO (Rest Day Off)',
+                                                            'LEAVE WITHOUT PAY': 'Leave Without Pay',
+                                                            'TAFE': 'Tafe'
+                                                          };
+                                                          if (!entry.jobAddress && entry.description && descriptionLeaveTypes[entry.description]) {
+                                                            return descriptionLeaveTypes[entry.description];
                                                           }
                                                           // Handle leave types stored in jobId field
                                                           const leaveTypes: { [key: string]: string } = {
