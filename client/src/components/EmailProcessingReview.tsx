@@ -9,6 +9,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { JobAddressSearch } from './job-address-search';
+import { GoogleDriveReconnectDialog } from './GoogleDriveReconnectDialog';
 import * as fuzzball from 'fuzzball';
 
 // GST calculation function (10% Australian GST)
@@ -166,6 +167,7 @@ export default function EmailProcessingReview() {
     mimeType?: string;
     fileSize?: number;
   } | null>(null);
+  const [showGoogleDriveReconnect, setShowGoogleDriveReconnect] = useState(false);
 
   // Get pending documents from email processing
   const { data: pendingDocs = [], isLoading, refetch } = useQuery({
@@ -217,6 +219,11 @@ export default function EmailProcessingReview() {
     onSuccess: (data) => {
       console.log('🟢 Document approved successfully, refreshing pending list...', data);
       
+      // Check for Google Drive errors and show reconnect dialog
+      if (data.googleDriveError && data.googleDriveError.requiresReconnect) {
+        setShowGoogleDriveReconnect(true);
+      }
+      
       // Force refresh the pending documents list
       queryClient.invalidateQueries({ queryKey: ['/api/email-processing/pending'] });
       queryClient.refetchQueries({ queryKey: ['/api/email-processing/pending'] });
@@ -232,9 +239,15 @@ export default function EmailProcessingReview() {
         description += ` Document uploaded to Google Drive.`;
       }
       
+      // Add warning if Google Drive failed
+      if (data.googleDriveError) {
+        description += ` ⚠️ Google Drive upload failed - please reconnect.`;
+      }
+      
       toast({
         title: "Document Approved",
         description,
+        variant: data.googleDriveError ? "destructive" : "default",
       });
     },
     onError: (error) => {
@@ -520,6 +533,21 @@ export default function EmailProcessingReview() {
           fileSize={previewDoc.fileSize}
         />
       )}
+      
+      {/* Google Drive Reconnect Dialog */}
+      <GoogleDriveReconnectDialog
+        open={showGoogleDriveReconnect}
+        onOpenChange={setShowGoogleDriveReconnect}
+        onReconnectSuccess={() => {
+          setShowGoogleDriveReconnect(false);
+          toast({
+            title: "Google Drive Reconnected",
+            description: "Your Google Drive connection has been restored. Email documents will now upload automatically.",
+          });
+        }}
+        title="Google Drive Connection Required for Email Documents"
+        description="Email attachments need Google Drive to save properly. Please reconnect to continue automatic uploads."
+      />
     </Card>
   );
 }

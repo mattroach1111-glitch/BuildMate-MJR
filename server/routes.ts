@@ -4107,6 +4107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save file attachment to job and upload to Google Drive (if connected)
       let fileRecord = null;
       let googleDriveResult = null;
+      let googleDriveError = null;
       
       try {
         // Get the original document file from email processing attachments
@@ -4192,11 +4193,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
               googleDriveResult = uploadResult;
               console.log(`☁️ File uploaded to Google Drive: ${uploadResult.webViewLink}`);
             }
-          } catch (driveError) {
+          } catch (driveError: any) {
             console.log(`⚠️ Google Drive upload failed: ${driveError instanceof Error ? driveError.message : String(driveError)}`);
+            // Store error details to send to frontend
+            if (driveError.code === 'AUTH_REQUIRED') {
+              googleDriveError = {
+                code: 'AUTH_REQUIRED',
+                message: driveError.message || 'Google Drive connection expired',
+                requiresReconnect: true
+              };
+            }
           }
         } else {
           console.log(`ℹ️ Google Drive not connected for user ${userId}`);
+          googleDriveError = {
+            code: 'NOT_CONNECTED',
+            message: 'Google Drive not connected',
+            requiresReconnect: true
+          };
         }
       } catch (attachmentError) {
         console.log(`⚠️ File attachment processing failed: ${attachmentError instanceof Error ? attachmentError.message : String(attachmentError)}`);
@@ -4217,6 +4231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileAttached: !!fileRecord,
         googleDriveUploaded: !!googleDriveResult,
         googleDriveLink: googleDriveResult?.webViewLink,
+        googleDriveError: googleDriveError,
         message: `Expense added to job as ${finalCategory}${fileRecord ? ' with file attachment' : ''}${googleDriveResult ? ' and uploaded to Google Drive' : ''}`
       });
     } catch (error) {
