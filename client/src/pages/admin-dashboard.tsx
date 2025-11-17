@@ -158,6 +158,7 @@ export default function AdminDashboard() {
   const [expandedManagers, setExpandedManagers] = useState<Set<string>>(new Set());
   const [groupBy, setGroupBy] = useState<'client' | 'manager' | 'none'>('manager');
   const [searchQuery, setSearchQuery] = useState("");
+  const [archivedSearchQuery, setArchivedSearchQuery] = useState("");
   const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>("all");
   const [dateRangeFilter, setDateRangeFilter] = useState<string>("all");
   const [selectedFortnightFilter, setSelectedFortnightFilter] = useState<string>("all");
@@ -2411,9 +2412,69 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* Search Bar for Archived Jobs */}
+            <div className="relative mb-6">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search by job address..."
+                value={archivedSearchQuery}
+                onChange={(e) => setArchivedSearchQuery(e.target.value)}
+                className="pl-12 h-12 border-gray-200 focus:ring-2 focus:ring-blue-500"
+                data-testid="input-search-archived-jobs"
+                aria-label="Search archived jobs by address"
+              />
+              {archivedSearchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                  onClick={() => setArchivedSearchQuery("")}
+                  data-testid="button-clear-archived-search"
+                >
+                  <XCircle className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+
             {deletedJobs && deletedJobs.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {deletedJobs.map((job) => (
+              (() => {
+                // Filter deleted jobs based on search query
+                const filteredJobs = deletedJobs.filter((job) => {
+                  if (!archivedSearchQuery) return true;
+                  const query = archivedSearchQuery.toLowerCase();
+                  return (
+                    job.jobAddress?.toLowerCase().includes(query) ||
+                    job.clientName?.toLowerCase().includes(query) ||
+                    job.projectManager?.toLowerCase().includes(query) ||
+                    job.projectName?.toLowerCase().includes(query)
+                  );
+                });
+
+                if (filteredJobs.length === 0) {
+                  return (
+                    <Card className="p-8 text-center">
+                      <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-medium mb-2">No jobs found</h3>
+                      <p className="text-muted-foreground mb-4">Try adjusting your search terms</p>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setArchivedSearchQuery("")}
+                        data-testid="button-clear-archived-search-empty"
+                      >
+                        Clear Search
+                      </Button>
+                    </Card>
+                  );
+                }
+
+                return (
+                  <>
+                    <div className="text-sm text-gray-600 mb-4">
+                      {filteredJobs.length} {filteredJobs.length === 1 ? 'job' : 'jobs'} found
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {filteredJobs.map((job) => (
                   <Card 
                     key={job.id} 
                     className="cursor-pointer hover:shadow-md transition-shadow bg-white relative opacity-75"
@@ -2479,8 +2540,11 @@ export default function AdminDashboard() {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
-              </div>
+                      ))}
+                    </div>
+                  </>
+                );
+              })()
             ) : (
               <Card className="p-8 text-center">
                 <Trash2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
