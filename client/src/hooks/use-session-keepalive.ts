@@ -24,8 +24,8 @@ export function useSessionKeepalive() {
     // Call keepalive immediately on mount
     keepalive();
 
-    // Then call every 30 minutes (1800000 ms)
-    intervalRef.current = setInterval(keepalive, 30 * 60 * 1000);
+    // Then call every 10 minutes (600000 ms)
+    intervalRef.current = setInterval(keepalive, 10 * 60 * 1000);
 
     return () => {
       if (intervalRef.current) {
