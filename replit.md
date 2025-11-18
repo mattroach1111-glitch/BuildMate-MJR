@@ -37,7 +37,8 @@ Data backup strategy: Comprehensive multi-location backup approach with automate
 ## Authentication & Authorization
 - **Provider**: Replit Authentication (OpenID Connect)
 - **Role System**: Two-tier (admin/staff) with route-level protection.
-- **Session Storage**: PostgreSQL-backed sessions.
+- **Session Storage**: PostgreSQL-backed sessions with 90-day expiry.
+- **Session Keepalive**: Automatic session refresh every 30 minutes to prevent timeout.
 - **Security**: HTTP-only cookies with secure flags.
 - **User Management**: Admins can assign roles, link user accounts to employee records, and manage assignment status. Automatic user account creation for employees.
 

@@ -23,7 +23,7 @@ const getOidcConfig = memoize(
 );
 
 export function getSession() {
-  const sessionTtl = 30 * 24 * 60 * 60 * 1000; // 30 days (1 month)
+  const sessionTtl = 90 * 24 * 60 * 60 * 1000; // 90 days (3 months) - extended for better UX
   const pgStore = connectPg(session);
   
   // Create resilient session store with timeout handling
@@ -265,7 +265,7 @@ export async function setupAuth(app: Express) {
     passport.authenticate(`replitauth:${req.hostname}`, {
       successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
-    })(req, res, (err) => {
+    })(req, res, (err: any) => {
       if (err) {
         console.error("🔑 Auth callback error:", err);
         return next(err);
@@ -314,6 +314,19 @@ export async function setupAuth(app: Express) {
     } else {
       console.log('🔄 Session restore: no session to restore');
       res.status(401).json({ success: false, message: 'No session to restore' });
+    }
+  });
+
+  // Session keep-alive endpoint - extends session expiry
+  app.post("/api/auth/keepalive", (req, res) => {
+    if (req.user && req.isAuthenticated && req.isAuthenticated()) {
+      // Touch the session to update the expiry time
+      req.session.touch();
+      console.log('💓 Session keepalive - session extended');
+      return res.json({ success: true, authenticated: true });
+    } else {
+      console.log('💓 Session keepalive - not authenticated');
+      return res.status(401).json({ success: false, authenticated: false });
     }
   });
 }

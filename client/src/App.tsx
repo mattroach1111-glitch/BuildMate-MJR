@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { useSessionKeepalive } from "@/hooks/use-session-keepalive";
 import { NotificationPopup } from "@/components/notification-popup";
 import { PWAInstallPrompt } from "./components/pwa-install-prompt";
 import { OrientationToggle } from "./components/orientation-toggle";
@@ -22,6 +23,8 @@ import StaffOrganiser from "@/pages/staff-organiser";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
+  
+  useSessionKeepalive();
 
   if (isLoading) {
     return (
