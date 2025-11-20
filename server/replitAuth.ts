@@ -319,13 +319,19 @@ export async function setupAuth(app: Express) {
 
   // Session keep-alive endpoint - extends session expiry
   app.post("/api/auth/keepalive", (req, res) => {
-    if (req.user && req.isAuthenticated && req.isAuthenticated()) {
+    const user = req.user as any;
+    const isAuth = req.isAuthenticated && req.isAuthenticated();
+    const hasClaims = user && user.claims && user.claims.sub;
+    
+    console.log('💓 Keepalive check - isAuth:', isAuth, 'hasClaims:', hasClaims);
+    
+    if (isAuth && hasClaims) {
       // Touch the session to update the expiry time
       req.session.touch();
-      console.log('💓 Session keepalive - session extended');
+      console.log('💓 Session keepalive - session extended for user:', user.claims.sub.substring(0, 8) + '...');
       return res.json({ success: true, authenticated: true });
     } else {
-      console.log('💓 Session keepalive - not authenticated');
+      console.log('💓 Session keepalive - not authenticated or missing claims');
       return res.status(401).json({ success: false, authenticated: false });
     }
   });
