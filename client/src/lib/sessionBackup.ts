@@ -42,11 +42,21 @@ export class SessionBackup {
 
       const backup: BackupSession = JSON.parse(stored);
       
-      // Check if backup has expired
+      // Check if backup has expired (30 day limit)
       if (Date.now() > backup.expiresAt) {
-        console.log('🔄 Session backup expired, removing');
+        console.log('🔄 Session backup expired (age limit), removing');
         this.clear();
         return null;
+      }
+
+      // Check if the user's access token has expired
+      if (backup.user?.expires_at) {
+        const now = Math.floor(Date.now() / 1000);
+        if (now > backup.user.expires_at) {
+          console.log('🔄 Session backup has expired token, clearing and requiring re-login');
+          this.clear();
+          return null;
+        }
       }
 
       console.log('🔄 Session backup retrieved successfully');
