@@ -12,9 +12,24 @@ export function useSessionKeepalive() {
         });
         
         if (response.ok) {
-          console.log('💓 Session keepalive successful');
+          const data = await response.json();
+          if (data.refreshed) {
+            console.log('💓 Session keepalive - token refreshed successfully');
+          } else {
+            console.log('💓 Session keepalive successful');
+          }
         } else {
-          console.log('💓 Session keepalive failed - user may need to re-login');
+          const data = await response.json().catch(() => ({}));
+          
+          if (data.requiresLogin) {
+            console.log('💓 Session expired - redirecting to login');
+            // Clear any session backup
+            localStorage.removeItem('session_backup');
+            // Redirect to login
+            window.location.href = '/api/login';
+          } else {
+            console.log('💓 Session keepalive failed:', data.reason || 'unknown');
+          }
         }
       } catch (error) {
         console.error('💓 Session keepalive error:', error);

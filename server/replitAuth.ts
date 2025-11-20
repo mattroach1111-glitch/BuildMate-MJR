@@ -317,22 +317,52 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  // Session keep-alive endpoint - extends session expiry
-  app.post("/api/auth/keepalive", (req, res) => {
+  // Session keep-alive endpoint - extends session expiry and checks token validity
+  app.post("/api/auth/keepalive", async (req, res) => {
     const user = req.user as any;
     const isAuth = req.isAuthenticated && req.isAuthenticated();
     const hasClaims = user && user.claims && user.claims.sub;
     
-    console.log('💓 Keepalive check - isAuth:', isAuth, 'hasClaims:', hasClaims);
+    if (!isAuth || !hasClaims) {
+      console.log('💓 Session keepalive - not authenticated or missing claims');
+      return res.status(401).json({ success: false, authenticated: false, reason: 'not_authenticated' });
+    }
     
-    if (isAuth && hasClaims) {
-      // Touch the session to update the expiry time
+    // Check if token is expired
+    const now = Math.floor(Date.now() / 1000);
+    const timeUntilExpiry = user.expires_at - now;
+    console.log('💓 Keepalive check - time until expiry:', timeUntilExpiry, 'seconds');
+    
+    // If token is still valid, just extend session
+    if (now <= user.expires_at) {
       req.session.touch();
       console.log('💓 Session keepalive - session extended for user:', user.claims.sub.substring(0, 8) + '...');
       return res.json({ success: true, authenticated: true });
-    } else {
-      console.log('💓 Session keepalive - not authenticated or missing claims');
-      return res.status(401).json({ success: false, authenticated: false });
+    }
+    
+    // Token expired, try to refresh it
+    console.log('💓 Keepalive - token expired, attempting refresh');
+    const refreshToken = user.refresh_token;
+    if (!refreshToken) {
+      console.log('💓 Keepalive - no refresh token available');
+      return res.status(401).json({ success: false, authenticated: false, reason: 'no_refresh_token' });
+    }
+    
+    try {
+      const config = await getOidcConfig();
+      const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
+      updateUserSession(user, tokenResponse);
+      req.session.touch();
+      console.log('💓 Keepalive - token refreshed successfully');
+      return res.json({ success: true, authenticated: true, refreshed: true });
+    } catch (error: any) {
+      console.log('💓 Keepalive - refresh failed:', error.message);
+      return res.status(401).json({ 
+        success: false, 
+        authenticated: false, 
+        reason: 'refresh_failed',
+        requiresLogin: true 
+      });
     }
   });
 }

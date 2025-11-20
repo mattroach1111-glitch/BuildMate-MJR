@@ -1,0 +1,44 @@
+(index):58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+(index):64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-ZKyLmUy_.js:468 💓 Session keepalive successful
+index-ZKyLmUy_.js:48 🔄 Session backup stored successfully
+index-ZKyLmUy_.js:48 🔄 Session backup stored successfully
+index-ZKyLmUy_.js:48 🔄 Session backup stored successfully
+index-ZKyLmUy_.js:48 🔄 Session backup stored successfully
+index-ZKyLmUy_.js:468 💓 Session keepalive successful
+index-ZKyLmUy_.js:468 💓 Session keepalive successful
+index-ZKyLmUy_.js:468 💓 Session keepalive successful
+/api/deleted-jobs:1   Failed to load resource: the server responded with a status of 401 ()
+index-ZKyLmUy_.js:48 🔄 Query failed with 401 for: /api/deleted-jobs
+index-ZKyLmUy_.js:48 🔄 Session backup retrieved successfully
+index-ZKyLmUy_.js:48 🔄 Backup session available: true
+/api/employees:1   Failed to load resource: the server responded with a status of 401 ()
+index-ZKyLmUy_.js:48 🔄 Query failed with 401 for: /api/employees
+index-ZKyLmUy_.js:48 🔄 Session backup retrieved successfully
+index-ZKyLmUy_.js:48 🔄 Backup session available: true
+index-ZKyLmUy_.js:468 💓 Session keepalive successful
+/api/auth/user:1   Failed to load resource: the server responded with a status of 401 ()
+index-ZKyLmUy_.js:48 🔄 Query failed with 401 for: /api/auth/user
+index-ZKyLmUy_.js:48 🔄 Session backup retrieved successfully
+index-ZKyLmUy_.js:48 🔄 Backup session available: true
+/api/staff-users:1   Failed to load resource: the server responded with a status of 401 ()
+index-ZKyLmUy_.js:48 🔄 Query failed with 401 for: /api/staff-users
+index-ZKyLmUy_.js:48 🔄 Session backup retrieved successfully
+index-ZKyLmUy_.js:48 🔄 Backup session available: true
+/api/jobs:1   Failed to load resource: the server responded with a status of 401 ()
+index-ZKyLmUy_.js:48 🔄 Query failed with 401 for: /api/jobs
+index-ZKyLmUy_.js:48 🔄 Session backup retrieved successfully
+index-ZKyLmUy_.js:48 🔄 Backup session available: true
+/api/jobs/total-costs:1   Failed to load resource: the server responded with a status of 401 ()
+index-ZKyLmUy_.js:48 🔄 Query failed with 401 for: /api/jobs/total-costs
+index-ZKyLmUy_.js:48 🔄 Session backup retrieved successfully
+index-ZKyLmUy_.js:48 🔄 Backup session available: true
+/api/admin/timesheets:1   Failed to load resource: the server responded with a status of 401 ()
+index-ZKyLmUy_.js:48 🔄 Query failed with 401 for: /api/admin/timesheets
+index-ZKyLmUy_.js:48 🔄 Session backup retrieved successfully
+index-ZKyLmUy_.js:48 🔄 Backup session available: true
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully
+/api/auth/user:1   Failed to load resource: the server responded with a status of 401 ()
+index-ZKyLmUy_.js:48 🔄 Query failed with 401 for: /api/auth/user
+index-ZKyLmUy_.js:48 🔄 Session backup retrieved successfully
+index-ZKyLmUy_.js:48 🔄 Backup session available: true
