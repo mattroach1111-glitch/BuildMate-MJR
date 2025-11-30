@@ -1,0 +1,18 @@
+timesheet?employee=46275452&admin=true:58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+timesheet?employee=46275452&admin=true:64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-Dnx4o_WL.js:468 💓 Session keepalive successful
+index-Dnx4o_WL.js:48 🔄 Session backup stored successfully
+index-Dnx4o_WL.js:48 🔄 Session backup stored successfully
+index-Dnx4o_WL.js:48 🔄 Session backup stored successfully
+index-Dnx4o_WL.js:48 🔄 Session backup stored successfully
+index-Dnx4o_WL.js:926 ✅ API SUCCESS: /api/admin/timesheets/46275452 (95) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-Dnx4o_WL.js:926 ✅ Confirmation response received
+index-Dnx4o_WL.js:926 🎉 Confirmation successful: {message: "Timesheet approved successfully. PDF generated and…oogle Drive in 'BuildFlow Pro/Timesheets' folder.", fortnightStart: '2025-11-17', fortnightEnd: '2025-11-30', confirmedAt: '2025-11-30T23:56:11.449Z', driveLink: 'https://drive.google.com/file/d/1yCpCkV4KpFH4OktQyM9SLzUM-UZL5HDR/view?usp=drivesdk', …}
+index-Dnx4o_WL.js:926 🔄 Refreshing timesheet data...
+index-Dnx4o_WL.js:926 ✅ API SUCCESS: /api/admin/timesheets/46275452 (95) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-Dnx4o_WL.js:48 🔄 Session backup stored successfully
+index-Dnx4o_WL.js:48 🔄 Session backup stored successfully
+index-Dnx4o_WL.js:48 🔄 Session backup stored successfully
+index-Dnx4o_WL.js:773 🔥 ADMIN APPROVE BUTTON CLICKED
+index-Dnx4o_WL.js:773 🚨 ADMIN APPROVE - totalHours: 82 will show dialog: false
+index-Dnx4o_WL.js:773 🚨 APPROVING DIRECTLY - NO DIALOG

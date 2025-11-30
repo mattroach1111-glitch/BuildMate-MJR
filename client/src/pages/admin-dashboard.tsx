@@ -835,22 +835,28 @@ export default function AdminDashboard() {
       fortnightEnd: string; 
       approved: boolean; 
     }) => {
-      await apiRequest("PATCH", `/api/admin/timesheet/approve-fortnight`, { 
+      console.log(`🚀 APPROVAL MUTATION STARTING:`, { staffId, fortnightStart, fortnightEnd, approved });
+      const response = await apiRequest("PATCH", `/api/admin/timesheet/approve-fortnight`, { 
         staffId, 
         fortnightStart, 
         fortnightEnd, 
         approved 
       });
+      console.log(`✅ APPROVAL MUTATION RESPONSE:`, response);
+      return response;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (response, variables) => {
+      console.log(`✅ APPROVAL SUCCESS - Invalidating cache for ["/api/admin/timesheets"]`);
       queryClient.invalidateQueries({ queryKey: ["/api/admin/timesheets"] });
       const action = variables.approved ? "approved" : "unapproved";
+      console.log(`✅ APPROVAL SUCCESS - Showing toast: ${action}`);
       toast({
         title: "Success",
         description: `Fortnight timesheet ${action} successfully`,
       });
     },
     onError: (error) => {
+      console.error(`❌ APPROVAL MUTATION FAILED:`, error);
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
