@@ -1,0 +1,20 @@
+timesheet?employee=46275452&admin=true:58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+timesheet?employee=46275452&admin=true:64 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-KWBJ0-HL.js:468 💓 Session keepalive successful
+index-KWBJ0-HL.js:48 🔄 Session backup stored successfully
+index-KWBJ0-HL.js:48 🔄 Session backup stored successfully
+index-KWBJ0-HL.js:48 🔄 Session backup stored successfully
+index-KWBJ0-HL.js:48 🔄 Session backup stored successfully
+index-KWBJ0-HL.js:926 ✅ API SUCCESS: /api/admin/timesheets/46275452 (95) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-KWBJ0-HL.js:926 🔓 UNLOCKING WEEKEND: 2025-11-30
+index-KWBJ0-HL.js:926 🗂️ UPDATED UNLOCKED WEEKENDS: ['2025-11-30']
+index-KWBJ0-HL.js:926 ✅ Confirmation response received
+index-KWBJ0-HL.js:926 🎉 Confirmation successful: {message: "Timesheet approved successfully. PDF generated and…oogle Drive in 'BuildFlow Pro/Timesheets' folder.", fortnightStart: '2025-11-17', fortnightEnd: '2025-11-30', confirmedAt: '2025-11-30T23:27:58.237Z', driveLink: 'https://drive.google.com/file/d/1AQo0yFK5vW2QKUDT7SvnnsepgQqV6e2Q/view?usp=drivesdk', …}
+index-KWBJ0-HL.js:926 🔄 Refreshing timesheet data...
+index-KWBJ0-HL.js:926 ✅ API SUCCESS: /api/admin/timesheets/46275452 (95) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-KWBJ0-HL.js:48 🔄 Session backup stored successfully
+index-KWBJ0-HL.js:48 🔄 Session backup stored successfully
+index-KWBJ0-HL.js:48 🔄 Session backup stored successfully
+index-KWBJ0-HL.js:773 🔥 ADMIN APPROVE BUTTON CLICKED
+index-KWBJ0-HL.js:773 🚨 ADMIN APPROVE - totalHours: 82 will show dialog: false
+index-KWBJ0-HL.js:773 🚨 APPROVING DIRECTLY - NO DIALOG
