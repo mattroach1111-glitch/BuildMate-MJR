@@ -1631,7 +1631,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Log entries before approval for debugging
+      const entriesBeforeApproval = await storage.getTimesheetEntriesByPeriod(staffId, fortnightStart, fortnightEnd);
+      console.log(`📋 BEFORE APPROVAL: Found ${entriesBeforeApproval.length} entries for ${staffId} from ${fortnightStart} to ${fortnightEnd}`);
+      
+      // Check for weekend entries specifically
+      const weekendEntriesBefore = entriesBeforeApproval.filter(e => {
+        const date = new Date(e.date);
+        const dayOfWeek = date.getDay();
+        return dayOfWeek === 0 || dayOfWeek === 6; // Sunday = 0, Saturday = 6
+      });
+      console.log(`🌴 BEFORE APPROVAL: ${weekendEntriesBefore.length} weekend entries found:`, weekendEntriesBefore.map(e => ({ date: e.date, hours: e.hours, approved: e.approved, jobId: e.jobId })));
+      
       await storage.updateFortnightApproval(staffId, fortnightStart, fortnightEnd, approved);
+      
+      // Log entries after approval for debugging
+      const entriesAfterApproval = await storage.getTimesheetEntriesByPeriod(staffId, fortnightStart, fortnightEnd);
+      console.log(`📋 AFTER APPROVAL: Found ${entriesAfterApproval.length} entries`);
+      
+      const weekendEntriesAfter = entriesAfterApproval.filter(e => {
+        const date = new Date(e.date);
+        const dayOfWeek = date.getDay();
+        return dayOfWeek === 0 || dayOfWeek === 6;
+      });
+      console.log(`🌴 AFTER APPROVAL: ${weekendEntriesAfter.length} weekend entries found:`, weekendEntriesAfter.map(e => ({ date: e.date, hours: e.hours, approved: e.approved, jobId: e.jobId })));
       
       const action = approved ? "approved" : "unapproved";
       res.status(200).json({ 
