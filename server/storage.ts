@@ -1670,6 +1670,31 @@ export class DatabaseStorage implements IStorage {
       );
     
     console.log(`✏️ STORAGE: Update query executed, result:`, result);
+    
+    // Fetch entries again to verify the update worked
+    const entriesAfterUpdate = await db
+      .select()
+      .from(timesheetEntries)
+      .where(
+        and(
+          eq(timesheetEntries.staffId, staffId),
+          gte(timesheetEntries.date, fortnightStart),
+          lte(timesheetEntries.date, fortnightEnd)
+        )
+      );
+    
+    const weekendEntriesAfterUpdate = entriesAfterUpdate.filter(e => {
+      const date = new Date(e.date);
+      const dayOfWeek = date.getDay();
+      return dayOfWeek === 0 || dayOfWeek === 6;
+    });
+    console.log(`🌴 STORAGE AFTER UPDATE: Found ${weekendEntriesAfterUpdate.length} weekend entries:`, weekendEntriesAfterUpdate.map(e => ({ 
+      id: e.id,
+      date: e.date, 
+      hours: e.hours, 
+      submitted: e.submitted, 
+      approved: e.approved 
+    })));
 
     // Update labor hours only when approving (not when unapproving)
     if (approved) {
