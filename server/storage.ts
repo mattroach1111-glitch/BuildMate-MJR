@@ -1635,8 +1635,30 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
+    // Log entries found
+    console.log(`📊 STORAGE: updateFortnightApproval called for ${staffId} from ${fortnightStart} to ${fortnightEnd}`);
+    console.log(`📊 STORAGE: Found ${affectedEntries.length} total entries`);
+    
+    // Check for weekend entries
+    const weekendEntries = affectedEntries.filter(e => {
+      const date = new Date(e.date);
+      const dayOfWeek = date.getDay();
+      return dayOfWeek === 0 || dayOfWeek === 6;
+    });
+    console.log(`🌴 STORAGE: Found ${weekendEntries.length} weekend entries:`, weekendEntries.map(e => ({ 
+      date: e.date, 
+      hours: e.hours, 
+      submitted: e.submitted, 
+      approved: e.approved 
+    })));
+    
+    // Check for submitted vs not submitted
+    const submittedEntries = affectedEntries.filter(e => e.submitted);
+    const notSubmittedEntries = affectedEntries.filter(e => !e.submitted);
+    console.log(`✅ STORAGE: ${submittedEntries.length} submitted, ❌ ${notSubmittedEntries.length} not submitted`);
+
     // Update approval status
-    await db
+    const result = await db
       .update(timesheetEntries)
       .set({ approved })
       .where(
@@ -1646,6 +1668,8 @@ export class DatabaseStorage implements IStorage {
           lte(timesheetEntries.date, fortnightEnd)
         )
       );
+    
+    console.log(`✏️ STORAGE: Update query executed, result:`, result);
 
     // Update labor hours only when approving (not when unapproving)
     if (approved) {
