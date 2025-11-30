@@ -42,7 +42,17 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   const [currentFortnightIndex, setCurrentFortnightIndex] = useState(getCurrentFortnightIndex()); // Start with current fortnight
   const [timesheetData, setTimesheetData] = useState<any>({});
-  const [unlockedWeekends, setUnlockedWeekends] = useState<Set<string>>(new Set());
+  
+  // Load unlocked weekends from localStorage on mount
+  const [unlockedWeekends, setUnlockedWeekends] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('unlockedWeekends');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch (error) {
+      console.error('Failed to load unlocked weekends from localStorage:', error);
+      return new Set();
+    }
+  });
   const [customAddresses, setCustomAddresses] = useState<{[key: string]: {houseNumber: string, streetAddress: string}}>({});
   const [showAddressDialog, setShowAddressDialog] = useState(false);
   const [addressDialogData, setAddressDialogData] = useState<{dayIndex: number, entryIndex: number}>({dayIndex: -1, entryIndex: -1});
@@ -590,6 +600,15 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     setUnlockedWeekends(prev => {
       const newSet = new Set([...Array.from(prev), dateKey]);
       console.log(`🗂️ UPDATED UNLOCKED WEEKENDS:`, Array.from(newSet));
+      
+      // Persist to localStorage
+      try {
+        localStorage.setItem('unlockedWeekends', JSON.stringify(Array.from(newSet)));
+        console.log('💾 Unlocked weekends saved to localStorage');
+      } catch (error) {
+        console.error('Failed to save unlocked weekends to localStorage:', error);
+      }
+      
       return newSet;
     });
     toast({
