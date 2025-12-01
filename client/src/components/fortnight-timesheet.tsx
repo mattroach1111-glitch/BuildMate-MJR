@@ -1149,9 +1149,23 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             const dayOfWeek = entryDate.getDay();
             const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
             
-            if (isWeekend && isWeekendUnlocked(dateKey)) {
-              entryData.weekendConfirmed = true;
-              // Weekend confirmation added for unlocked weekend
+            // Diagnostic logging for weekend entries
+            if (isWeekend) {
+              const isUnlocked = isWeekendUnlocked(dateKey);
+              console.log(`🌴 WEEKEND ENTRY DETECTED:`, {
+                dateKey,
+                dayOfWeek,
+                hours,
+                isUnlocked,
+                unlockedWeekends: Array.from(unlockedWeekends)
+              });
+              
+              if (isUnlocked) {
+                entryData.weekendConfirmed = true;
+                console.log(`✅ WEEKEND CONFIRMED FLAG SET for ${dateKey}`);
+              } else {
+                console.log(`⚠️ WEEKEND NOT UNLOCKED - Entry will be rejected by backend for ${dateKey}`);
+              }
             }
             
             // For admin view, add the selected employee's staffId
