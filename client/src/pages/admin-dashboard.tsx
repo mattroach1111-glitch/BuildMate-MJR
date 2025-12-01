@@ -309,6 +309,15 @@ export default function AdminDashboard() {
     const [year, month, day] = dateStr.split('-').map(Number);
     return new Date(year, month - 1, day); // month is 0-indexed
   };
+  
+  // Helper to format date as yyyy-MM-dd without timezone issues
+  // IMPORTANT: Do NOT use toISOString().split('T')[0] as it converts to UTC and shifts dates
+  const formatLocalDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   // Get available fortnights from timesheet data
   const availableFortnights = useMemo(() => {
@@ -3167,8 +3176,8 @@ export default function AdminDashboard() {
                               if (confirm(`Are you sure you want to clear all timesheet entries for ${fortnight.staffName || 'this staff member'} for this fortnight? This action cannot be undone.`)) {
                                 clearTimesheetMutation.mutate({
                                   staffId: fortnight.staffId,
-                                  fortnightStart: fortnight.fortnightStart.toISOString().split('T')[0],
-                                  fortnightEnd: fortnight.fortnightEnd.toISOString().split('T')[0]
+                                  fortnightStart: formatLocalDate(fortnight.fortnightStart),
+                                  fortnightEnd: formatLocalDate(fortnight.fortnightEnd)
                                 });
                               }
                             }}
@@ -3199,8 +3208,8 @@ export default function AdminDashboard() {
                                 setLowHoursTotal(totalHours);
                                 setPendingApproval({
                                   staffId: fortnight.staffId,
-                                  fortnightStart: fortnight.fortnightStart.toISOString().split('T')[0],
-                                  fortnightEnd: fortnight.fortnightEnd.toISOString().split('T')[0],
+                                  fortnightStart: formatLocalDate(fortnight.fortnightStart),
+                                  fortnightEnd: formatLocalDate(fortnight.fortnightEnd),
                                   approved: !fortnight.allApproved
                                 });
                                 setShowLowHoursDialog(true);
@@ -3210,8 +3219,8 @@ export default function AdminDashboard() {
                               console.log('🚨 APPROVING DIRECTLY - NO DIALOG');
                               approveFortnightMutation.mutate({
                                 staffId: fortnight.staffId,
-                                fortnightStart: fortnight.fortnightStart.toISOString().split('T')[0],
-                                fortnightEnd: fortnight.fortnightEnd.toISOString().split('T')[0],
+                                fortnightStart: formatLocalDate(fortnight.fortnightStart),
+                                fortnightEnd: formatLocalDate(fortnight.fortnightEnd),
                                 approved: !fortnight.allApproved
                               });
                             }}
@@ -3572,8 +3581,8 @@ export default function AdminDashboard() {
                                                   variant="outline"
                                                   onClick={() => approveFortnightMutation.mutate({
                                                     staffId: fortnight.staffId,
-                                                    fortnightStart: format(fortnight.fortnightStart, 'yyyy-MM-dd'),
-                                                    fortnightEnd: format(fortnight.fortnightEnd, 'yyyy-MM-dd'),
+                                                    fortnightStart: formatLocalDate(fortnight.fortnightStart),
+                                                    fortnightEnd: formatLocalDate(fortnight.fortnightEnd),
                                                     approved: false
                                                   })}
                                                   disabled={approveFortnightMutation.isPending}
