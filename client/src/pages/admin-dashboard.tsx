@@ -265,20 +265,29 @@ export default function AdminDashboard() {
 
   // Filter timesheets based on selected employee and date range
   // Helper function to get fortnight start date (Monday)
+  // Uses UTC-based day calculations to avoid DST issues
   const getFortnightStart = (date: Date) => {
-    // Create a local date copy to avoid timezone issues
-    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const day = d.getDay();
-    // Adjust to Monday: if Sunday (0), go back 6 days; otherwise go back (day-1) days
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-    d.setDate(diff);
-    const mondayOfWeek = new Date(d);
+    // Get the year, month, day components
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
     
-    // Find which fortnight this Monday belongs to
-    // Base date: August 11, 2025 (Monday) - aligned so Nov 17-30, Dec 1-14 are correct fortnights
-    const baseDate = new Date(2025, 7, 11); // August 11, 2025 - Monday (month is 0-indexed)
-    const diffTime = mondayOfWeek.getTime() - baseDate.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    // Create a local date copy
+    const d = new Date(year, month, day);
+    const dayOfWeek = d.getDay();
+    // Adjust to Monday: if Sunday (0), go back 6 days; otherwise go back (day-1) days
+    const diff = day - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+    d.setDate(diff);
+    const mondayOfWeek = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    
+    // Use UTC-based day calculations to avoid DST issues
+    // Convert both dates to UTC midnight for accurate day difference
+    const mondayUTC = Date.UTC(mondayOfWeek.getFullYear(), mondayOfWeek.getMonth(), mondayOfWeek.getDate());
+    const baseUTC = Date.UTC(2025, 7, 11); // August 11, 2025 - Monday (month is 0-indexed)
+    
+    // Calculate difference in days using UTC (immune to DST)
+    const DAY_MS = 1000 * 60 * 60 * 24;
+    const diffDays = Math.round((mondayUTC - baseUTC) / DAY_MS);
     const fortnightNumber = Math.floor(diffDays / 14);
     
     // Calculate fortnight start by adding fortnight weeks to base date
@@ -332,20 +341,6 @@ export default function AdminDashboard() {
 
   // Group timesheets by staff and fortnight
   const groupedTimesheets = useMemo(() => {
-    // DEBUG: Log all raw entries
-    console.log('📋 DEBUG: Total allTimesheets count:', Array.isArray(allTimesheets) ? allTimesheets.length : 0);
-    if (Array.isArray(allTimesheets) && allTimesheets.length > 0) {
-      console.log('📋 DEBUG: Sample entries (first 5):', allTimesheets.slice(0, 5).map((e: any) => ({
-        date: e.date,
-        staffName: e.staffName,
-        staffId: e.staffId
-      })));
-      
-      // Log all unique dates in the data
-      const uniqueDates = [...new Set(allTimesheets.map((e: any) => e.date))].sort();
-      console.log('📅 DEBUG: All unique dates in data:', uniqueDates);
-    }
-    
     const filtered = (Array.isArray(allTimesheets) ? allTimesheets : []).filter((entry: any) => {
       const employeeMatch = selectedEmployeeFilter === "all" || entry.staffId === selectedEmployeeFilter;
       
@@ -355,12 +350,6 @@ export default function AdminDashboard() {
         const fortnightStart = getFortnightStart(entryDate);
         const fortnightEnd = getFortnightEnd(fortnightStart);
         const fortnightKey = `${format(fortnightStart, 'yyyy-MM-dd')}_${format(fortnightEnd, 'yyyy-MM-dd')}`;
-        
-        // DEBUG: Log fortnight calculation for each entry
-        if (entry.date >= '2025-11-17' && entry.date <= '2025-11-30') {
-          console.log(`🔍 DEBUG: Entry ${entry.date} -> fortnightKey: ${fortnightKey}, selectedFilter: ${selectedFortnightFilter}, match: ${fortnightKey === selectedFortnightFilter}`);
-        }
-        
         if (fortnightKey !== selectedFortnightFilter) return false;
       }
       
@@ -386,9 +375,6 @@ export default function AdminDashboard() {
           return true;
       }
     }) || [];
-    
-    console.log('✅ DEBUG: Filtered entries count:', filtered.length);
-    console.log('✅ DEBUG: Filtered entries dates:', [...new Set(filtered.map((e: any) => e.date))].sort());
 
     const grouped = new Map();
 

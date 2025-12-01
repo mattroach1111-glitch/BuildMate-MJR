@@ -33,10 +33,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const [selectedEmployee, setSelectedEmployee] = useState<string>(selectedEmployeeId || "");
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   // Calculate which fortnight we should start with based on current date
+  // Uses UTC-based calculations to avoid DST issues
   const getCurrentFortnightIndex = () => {
     const today = new Date();
-    const startDate = FORTNIGHT_START_DATE;
-    const daysDiff = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    // Use UTC to calculate day difference (immune to DST)
+    const todayUTC = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+    const startUTC = Date.UTC(2025, 7, 11); // August 11, 2025
+    const DAY_MS = 1000 * 60 * 60 * 24;
+    const daysDiff = Math.round((todayUTC - startUTC) / DAY_MS);
     return Math.max(0, Math.floor(daysDiff / 14));
   };
 
