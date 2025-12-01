@@ -375,11 +375,6 @@ export default function AdminDashboard() {
       const fortnightStart = getFortnightStart(entryDate);
       const fortnightEnd = getFortnightEnd(fortnightStart);
       const key = `${entry.staffId}-${format(fortnightStart, 'yyyy-MM-dd')}`;
-      
-      // Debug logging for Nov 17-30 entries
-      if (entry.date >= '2025-11-17' && entry.date <= '2025-11-30') {
-        console.log(`📋 GROUPING ENTRY: date=${entry.date}, staffId=${entry.staffId}, fortnightStart=${format(fortnightStart, 'yyyy-MM-dd')}, key=${key}`);
-      }
 
       if (!grouped.has(key)) {
         grouped.set(key, {

@@ -56,7 +56,13 @@
     <script>
       console.log('BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed');
       
-      if ('serviceWorker' in navigator) {
+      // Only register service worker in production (not in Replit dev preview)
+      const isDevMode = window.location.hostname.includes('repl.co') || 
+                        window.location.hostname.includes('localhost') ||
+                        window.location.port === '5000' ||
+                        window.location.hostname.includes('webcontainer');
+      
+      if ('serviceWorker' in navigator && !isDevMode) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
             .then((registration) => {
@@ -65,6 +71,14 @@
             .catch((error) => {
               console.log('❌ Service Worker registration failed:', error);
             });
+        });
+      } else if (isDevMode && 'serviceWorker' in navigator) {
+        // Unregister any existing service workers in dev mode to prevent caching issues
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(registration => {
+            registration.unregister();
+            console.log('🧹 Unregistered service worker in dev mode');
+          });
         });
       }
 
