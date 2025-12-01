@@ -1065,6 +1065,28 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
 
     if (existingEntry.length === 0) {
+      // No labor entry exists - create one automatically when approving timesheet hours
+      if (timesheetHours > 0) {
+        console.log(`[LABOR_UPDATE] No existing labor entry found for staffId ${employeeId} on job ${jobId}. Creating new entry with ${timesheetHours} timesheet hours.`);
+        
+        // Get the hourly rate from the job or use a default
+        const [job] = await db.select().from(jobs).where(eq(jobs.id, jobId)).limit(1);
+        const hourlyRate = '0'; // Default rate, admin can update later
+        
+        // Create new labor entry with timesheet hours
+        await db.insert(laborEntries).values({
+          jobId: jobId,
+          staffId: employeeId,
+          hoursLogged: timesheetHours.toString(),
+          manualHours: '0',
+          timesheetHours: timesheetHours.toString(),
+          hourlyRate: hourlyRate
+        });
+        
+        console.log(`[LABOR_UPDATE] Created new labor entry for staffId ${employeeId} on job ${jobId} with ${timesheetHours} hours`);
+      } else {
+        console.log(`[LABOR_UPDATE] No labor entry exists for staffId ${employeeId} on job ${jobId}, and no approved hours to add`);
+      }
       return;
     }
 
