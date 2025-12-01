@@ -272,15 +272,20 @@ export default function AdminDashboard() {
     // Adjust to Monday: if Sunday (0), go back 6 days; otherwise go back (day-1) days
     const diff = d.getDate() - day + (day === 0 ? -6 : 1);
     d.setDate(diff);
+    const mondayOfWeek = new Date(d);
     
     // Find which fortnight this Monday belongs to (assuming fortnights start from Aug 11, 2025)
     // Use explicit local time constructor to avoid timezone issues
     const baseDate = new Date(2025, 7, 11); // August 11, 2025 - Monday (month is 0-indexed)
-    const diffTime = d.getTime() - baseDate.getTime();
+    const diffTime = mondayOfWeek.getTime() - baseDate.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     const fortnightNumber = Math.floor(diffDays / 14);
+    
+    // Calculate fortnight start by adding fortnight weeks to base date
     const fortnightStart = new Date(2025, 7, 11); // Fresh copy of base date
-    fortnightStart.setDate(baseDate.getDate() + (fortnightNumber * 14));
+    fortnightStart.setDate(11 + (fortnightNumber * 14)); // Add days from the 11th
+    
+    console.log(`📅 FORTNIGHT CALC: date=${format(date, 'yyyy-MM-dd')}, mondayOfWeek=${format(mondayOfWeek, 'yyyy-MM-dd')}, diffDays=${diffDays}, fortnightNumber=${fortnightNumber}, fortnightStart=${format(fortnightStart, 'yyyy-MM-dd')}`);
     
     return fortnightStart;
   };
