@@ -332,6 +332,20 @@ export default function AdminDashboard() {
 
   // Group timesheets by staff and fortnight
   const groupedTimesheets = useMemo(() => {
+    // DEBUG: Log all raw entries
+    console.log('📋 DEBUG: Total allTimesheets count:', Array.isArray(allTimesheets) ? allTimesheets.length : 0);
+    if (Array.isArray(allTimesheets) && allTimesheets.length > 0) {
+      console.log('📋 DEBUG: Sample entries (first 5):', allTimesheets.slice(0, 5).map((e: any) => ({
+        date: e.date,
+        staffName: e.staffName,
+        staffId: e.staffId
+      })));
+      
+      // Log all unique dates in the data
+      const uniqueDates = [...new Set(allTimesheets.map((e: any) => e.date))].sort();
+      console.log('📅 DEBUG: All unique dates in data:', uniqueDates);
+    }
+    
     const filtered = (Array.isArray(allTimesheets) ? allTimesheets : []).filter((entry: any) => {
       const employeeMatch = selectedEmployeeFilter === "all" || entry.staffId === selectedEmployeeFilter;
       
@@ -341,6 +355,12 @@ export default function AdminDashboard() {
         const fortnightStart = getFortnightStart(entryDate);
         const fortnightEnd = getFortnightEnd(fortnightStart);
         const fortnightKey = `${format(fortnightStart, 'yyyy-MM-dd')}_${format(fortnightEnd, 'yyyy-MM-dd')}`;
+        
+        // DEBUG: Log fortnight calculation for each entry
+        if (entry.date >= '2025-11-17' && entry.date <= '2025-11-30') {
+          console.log(`🔍 DEBUG: Entry ${entry.date} -> fortnightKey: ${fortnightKey}, selectedFilter: ${selectedFortnightFilter}, match: ${fortnightKey === selectedFortnightFilter}`);
+        }
+        
         if (fortnightKey !== selectedFortnightFilter) return false;
       }
       
@@ -366,6 +386,9 @@ export default function AdminDashboard() {
           return true;
       }
     }) || [];
+    
+    console.log('✅ DEBUG: Filtered entries count:', filtered.length);
+    console.log('✅ DEBUG: Filtered entries dates:', [...new Set(filtered.map((e: any) => e.date))].sort());
 
     const grouped = new Map();
 
