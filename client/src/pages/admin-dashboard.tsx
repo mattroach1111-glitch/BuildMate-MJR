@@ -266,17 +266,20 @@ export default function AdminDashboard() {
   // Filter timesheets based on selected employee and date range
   // Helper function to get fortnight start date (Monday)
   const getFortnightStart = (date: Date) => {
-    const d = new Date(date);
+    // Create a local date copy to avoid timezone issues
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+    // Adjust to Monday: if Sunday (0), go back 6 days; otherwise go back (day-1) days
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
     d.setDate(diff);
     
     // Find which fortnight this Monday belongs to (assuming fortnights start from Aug 11, 2025)
-    const baseDate = new Date('2025-08-11'); // Base Monday for fortnight calculation
+    // Use explicit local time constructor to avoid timezone issues
+    const baseDate = new Date(2025, 7, 11); // August 11, 2025 - Monday (month is 0-indexed)
     const diffTime = d.getTime() - baseDate.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     const fortnightNumber = Math.floor(diffDays / 14);
-    const fortnightStart = new Date(baseDate);
+    const fortnightStart = new Date(2025, 7, 11); // Fresh copy of base date
     fortnightStart.setDate(baseDate.getDate() + (fortnightNumber * 14));
     
     return fortnightStart;
@@ -284,9 +287,15 @@ export default function AdminDashboard() {
 
   // Helper function to get fortnight end date (Sunday)
   const getFortnightEnd = (fortnightStart: Date) => {
-    const end = new Date(fortnightStart);
+    const end = new Date(fortnightStart.getFullYear(), fortnightStart.getMonth(), fortnightStart.getDate());
     end.setDate(fortnightStart.getDate() + 13);
     return end;
+  };
+
+  // Helper function to parse date string as local date (avoids timezone issues)
+  const parseLocalDate = (dateStr: string) => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day); // month is 0-indexed
   };
 
   // Get available fortnights from timesheet data
@@ -295,7 +304,8 @@ export default function AdminDashboard() {
     
     const fortnightSet = new Set<string>();
     allTimesheets.forEach((entry: any) => {
-      const entryDate = new Date(entry.date);
+      // Parse date as local to avoid timezone issues
+      const entryDate = parseLocalDate(entry.date);
       const fortnightStart = getFortnightStart(entryDate);
       const fortnightEnd = getFortnightEnd(fortnightStart);
       const fortnightKey = `${format(fortnightStart, 'yyyy-MM-dd')}_${format(fortnightEnd, 'yyyy-MM-dd')}`;
@@ -305,11 +315,13 @@ export default function AdminDashboard() {
     return Array.from(fortnightSet)
       .map(key => {
         const [startStr, endStr] = key.split('_');
+        const start = parseLocalDate(startStr);
+        const end = parseLocalDate(endStr);
         return {
           key,
-          start: new Date(startStr),
-          end: new Date(endStr),
-          label: `${format(new Date(startStr), 'dd MMM')} - ${format(new Date(endStr), 'dd MMM yyyy')}`
+          start,
+          end,
+          label: `${format(start, 'dd MMM')} - ${format(end, 'dd MMM yyyy')}`
         };
       })
       .sort((a, b) => b.start.getTime() - a.start.getTime()); // Most recent first
@@ -320,9 +332,9 @@ export default function AdminDashboard() {
     const filtered = (Array.isArray(allTimesheets) ? allTimesheets : []).filter((entry: any) => {
       const employeeMatch = selectedEmployeeFilter === "all" || entry.staffId === selectedEmployeeFilter;
       
-      // Fortnight filter
+      // Fortnight filter - use parseLocalDate to avoid timezone issues
       if (selectedFortnightFilter !== "all") {
-        const entryDate = new Date(entry.date);
+        const entryDate = parseLocalDate(entry.date);
         const fortnightStart = getFortnightStart(entryDate);
         const fortnightEnd = getFortnightEnd(fortnightStart);
         const fortnightKey = `${format(fortnightStart, 'yyyy-MM-dd')}_${format(fortnightEnd, 'yyyy-MM-dd')}`;
@@ -333,7 +345,8 @@ export default function AdminDashboard() {
       
       if (dateRangeFilter === "all") return true;
       
-      const entryDate = new Date(entry.date);
+      // Use parseLocalDate to avoid timezone issues
+      const entryDate = parseLocalDate(entry.date);
       const today = new Date();
       
       switch (dateRangeFilter) {
@@ -354,10 +367,11 @@ export default function AdminDashboard() {
     const grouped = new Map();
 
     filtered.forEach((entry) => {
-      const entryDate = new Date(entry.date);
+      // Use parseLocalDate to avoid timezone issues
+      const entryDate = parseLocalDate(entry.date);
       const fortnightStart = getFortnightStart(entryDate);
       const fortnightEnd = getFortnightEnd(fortnightStart);
-      const key = `${entry.staffId}-${fortnightStart.toISOString().split('T')[0]}`;
+      const key = `${entry.staffId}-${format(fortnightStart, 'yyyy-MM-dd')}`;
 
       if (!grouped.has(key)) {
         grouped.set(key, {
