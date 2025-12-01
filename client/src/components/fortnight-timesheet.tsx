@@ -628,10 +628,30 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   };
 
   // Calculate fortnight boundaries based on August 11, 2025 start date
+  // Uses local date construction to avoid timezone issues
   const getFortnightDates = (fortnightIndex: number) => {
-    const start = addDays(FORTNIGHT_START_DATE, fortnightIndex * 14);
-    const end = addDays(start, 13);
+    // Calculate the start date using days offset from base date
+    const daysOffset = fortnightIndex * 14;
+    // Create a new date from base and add days manually to avoid DST issues
+    const baseYear = 2025;
+    const baseMonth = 7; // August (0-indexed)
+    const baseDay = 11;
+    
+    // Calculate the actual date by adding days
+    const tempDate = new Date(baseYear, baseMonth, baseDay + daysOffset);
+    // Reconstruct to ensure local date
+    const start = new Date(tempDate.getFullYear(), tempDate.getMonth(), tempDate.getDate());
+    const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 13);
+    
     return { start, end };
+  };
+  
+  // Helper to format date as yyyy-MM-dd without timezone issues
+  const formatLocalDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const currentFortnight = getFortnightDates(currentFortnightIndex);
@@ -774,10 +794,21 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         throw new Error("No employee selected");
       }
       
+      // Use formatLocalDate to avoid timezone issues with date formatting
+      const startDate = formatLocalDate(currentFortnight.start);
+      const endDate = formatLocalDate(currentFortnight.end);
+      
+      console.log('🚀 APPROVAL MUTATION STARTING:', { 
+        staffId: selectedEmployeeId, 
+        fortnightStart: startDate, 
+        fortnightEnd: endDate, 
+        approved 
+      });
+      
       return await apiRequest("PATCH", "/api/admin/timesheet/approve-fortnight", {
         staffId: selectedEmployeeId,
-        fortnightStart: format(currentFortnight.start, 'yyyy-MM-dd'),
-        fortnightEnd: format(currentFortnight.end, 'yyyy-MM-dd'),
+        fortnightStart: startDate,
+        fortnightEnd: endDate,
         approved
       });
     },
@@ -811,9 +842,13 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       }, 30000); // 30 second timeout
       
       try {
+        // Use formatLocalDate to avoid timezone issues with date formatting
+        const startDate = formatLocalDate(currentFortnight.start);
+        const endDate = formatLocalDate(currentFortnight.end);
+        
         const response = await apiRequest("POST", "/api/timesheet/confirm", {
-          fortnightStart: format(currentFortnight.start, 'yyyy-MM-dd'),
-          fortnightEnd: format(currentFortnight.end, 'yyyy-MM-dd'),
+          fortnightStart: startDate,
+          fortnightEnd: endDate,
           // For admin view, specify which employee's timesheet to submit
           ...(isAdminView && selectedEmployeeId && { staffId: selectedEmployeeId })
         }, {

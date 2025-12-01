@@ -1,0 +1,27 @@
+timesheet?employee=46275452&admin=true:58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+timesheet?employee=46275452&admin=true:70 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-Dkv9x_6P.js:468 💓 Session keepalive successful
+index-Dkv9x_6P.js:48 🔄 Session backup stored successfully
+index-Dkv9x_6P.js:48 🔄 Session backup stored successfully
+index-Dkv9x_6P.js:48 🔄 Session backup stored successfully
+index-Dkv9x_6P.js:48 🔄 Session backup stored successfully
+index-Dkv9x_6P.js:926 ✅ API SUCCESS: /api/admin/timesheets/46275452 (95) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-Dkv9x_6P.js:926 ✅ Confirmation response received
+index-Dkv9x_6P.js:926 🎉 Confirmation successful: {message: "Timesheet approved successfully. PDF generated and…oogle Drive in 'BuildFlow Pro/Timesheets' folder.", fortnightStart: '2025-11-17', fortnightEnd: '2025-11-30', confirmedAt: '2025-12-01T04:24:56.612Z', driveLink: 'https://drive.google.com/file/d/1Jt50ssmNXT7hZGE1haCtAaxz5e-KwWDB/view?usp=drivesdk', …}
+index-Dkv9x_6P.js:926 🔄 Refreshing timesheet data...
+index-Dkv9x_6P.js:926 ✅ API SUCCESS: /api/admin/timesheets/46275452 (95) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-Dkv9x_6P.js:48 🔄 Session backup stored successfully
+index-Dkv9x_6P.js:48 🔄 Session backup stored successfully
+index-Dkv9x_6P.js:48 🔄 Session backup stored successfully
+index-Dkv9x_6P.js:773 🔥 ADMIN APPROVE BUTTON CLICKED
+index-Dkv9x_6P.js:773 🚨 ADMIN APPROVE - totalHours: 82 will show dialog: false
+index-Dkv9x_6P.js:773 🚨 APPROVING DIRECTLY - NO DIALOG
+index-Dkv9x_6P.js:773 🚀 APPROVAL MUTATION STARTING: {staffId: '46275452', fortnightStart: '2025-11-16', fortnightEnd: '2025-11-29', approved: true}
+index-Dkv9x_6P.js:773 📋 APPROVAL - Sending request to update entries for staffId: 46275452
+index-Dkv9x_6P.js:773 📅 APPROVAL - Date range: 2025-11-16 to 2025-11-29
+index-Dkv9x_6P.js:773 ✅ APPROVAL MUTATION RESPONSE: Response {type: 'basic', url: 'https://build-mate-mattroach1111.replit.app/api/admin/timesheet/approve-fortnight', redirected: false, status: 200, ok: true, …}
+index-Dkv9x_6P.js:773 📦 APPROVAL RESPONSE BODY: {}
+index-Dkv9x_6P.js:773 ✅ APPROVAL SUCCESS - Response data: Response {type: 'basic', url: 'https://build-mate-mattroach1111.replit.app/api/admin/timesheet/approve-fortnight', redirected: false, status: 200, ok: true, …}
+index-Dkv9x_6P.js:773 ✅ APPROVAL SUCCESS - Invalidating cache for ["/api/admin/timesheets"]
+index-Dkv9x_6P.js:773 📊 AFTER INVALIDATION - Cached data entries: 748
+index-Dkv9x_6P.js:773 ✅ APPROVAL SUCCESS - Showing toast: approved
