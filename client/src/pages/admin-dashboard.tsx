@@ -836,6 +836,8 @@ export default function AdminDashboard() {
       approved: boolean; 
     }) => {
       console.log(`🚀 APPROVAL MUTATION STARTING:`, { staffId, fortnightStart, fortnightEnd, approved });
+      console.log(`📋 APPROVAL - Sending request to update entries for staffId: ${staffId}`);
+      console.log(`📅 APPROVAL - Date range: ${fortnightStart} to ${fortnightEnd}`);
       const response = await apiRequest("PATCH", `/api/admin/timesheet/approve-fortnight`, { 
         staffId, 
         fortnightStart, 
@@ -843,11 +845,18 @@ export default function AdminDashboard() {
         approved 
       });
       console.log(`✅ APPROVAL MUTATION RESPONSE:`, response);
+      console.log(`📦 APPROVAL RESPONSE BODY:`, JSON.stringify(response));
       return response;
     },
-    onSuccess: (response, variables) => {
+    onSuccess: async (response, variables) => {
+      console.log(`✅ APPROVAL SUCCESS - Response data:`, response);
       console.log(`✅ APPROVAL SUCCESS - Invalidating cache for ["/api/admin/timesheets"]`);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/timesheets"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/timesheets"] });
+      
+      // Force refetch and log result
+      const refetchedData = queryClient.getQueryData(["/api/admin/timesheets"]);
+      console.log(`📊 AFTER INVALIDATION - Cached data entries:`, Array.isArray(refetchedData) ? refetchedData.length : 'not an array');
+      
       const action = variables.approved ? "approved" : "unapproved";
       console.log(`✅ APPROVAL SUCCESS - Showing toast: ${action}`);
       toast({
