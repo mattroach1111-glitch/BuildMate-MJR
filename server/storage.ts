@@ -802,10 +802,13 @@ export class DatabaseStorage implements IStorage {
       tipFees: number;
     };
   }> {
-    // Get all active jobs (not deleted)
+    // Get all active jobs (not deleted and not excluded from total)
     const activeJobs = await db.select({ id: jobs.id })
       .from(jobs)
-      .where(or(eq(jobs.isDeleted, false), isNull(jobs.isDeleted)));
+      .where(and(
+        or(eq(jobs.isDeleted, false), isNull(jobs.isDeleted)),
+        or(eq(jobs.excludeFromTotal, false), isNull(jobs.excludeFromTotal))
+      ));
 
     const jobIds = activeJobs.map(job => job.id);
 

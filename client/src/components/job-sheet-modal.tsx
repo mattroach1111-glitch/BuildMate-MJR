@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +40,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const isAdmin = (user as any)?.role === "admin";
   const [builderMargin, setBuilderMargin] = useState("25");
   const [defaultHourlyRate, setDefaultHourlyRate] = useState("50");
+  const [excludeFromTotal, setExcludeFromTotal] = useState(false);
   const [localLaborRates, setLocalLaborRates] = useState<Record<string, string>>({});
   const [hasUnsavedRates, setHasUnsavedRates] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -1098,6 +1100,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     if (jobDetails) {
       setBuilderMargin(jobDetails.builderMargin);
       setDefaultHourlyRate(jobDetails.defaultHourlyRate);
+      setExcludeFromTotal(jobDetails.excludeFromTotal || false);
       // Initialize local labor rates
       const rates: Record<string, string> = {};
       jobDetails.laborEntries.forEach(entry => {
@@ -1217,6 +1220,11 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     if (value && !isNaN(parseFloat(value))) {
       debouncedUpdateJobSettings({ defaultHourlyRate: value });
     }
+  };
+
+  const handleExcludeFromTotalChange = (checked: boolean) => {
+    setExcludeFromTotal(checked);
+    debouncedUpdateJobSettings({ excludeFromTotal: checked });
   };
 
   // Debounced function to ask about updating all labor rates
@@ -1512,6 +1520,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     if (jobDetails) {
       setBuilderMargin(jobDetails.builderMargin);
       setDefaultHourlyRate(jobDetails.defaultHourlyRate);
+      setExcludeFromTotal(jobDetails.excludeFromTotal || false);
       // Initialize local labor rates
       const rates: Record<string, string> = {};
       jobDetails.laborEntries.forEach(entry => {
@@ -2821,6 +2830,20 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                         className="text-lg"
                         data-testid="input-builder-margin"
                       />
+                    </div>
+                    <div className="flex items-center space-x-3 py-3 px-4 rounded-lg bg-amber-50 border border-amber-200">
+                      <Checkbox
+                        id="excludeFromTotal"
+                        checked={excludeFromTotal}
+                        onCheckedChange={handleExcludeFromTotalChange}
+                        data-testid="checkbox-exclude-from-total"
+                      />
+                      <Label 
+                        htmlFor="excludeFromTotal" 
+                        className="text-sm font-medium text-amber-800 cursor-pointer"
+                      >
+                        Exclude from Dashboard Total
+                      </Label>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-gray-200">
                       <span className="text-gray-700">Margin Amount:</span>
