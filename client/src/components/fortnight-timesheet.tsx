@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import RewardNotification from "@/components/rewards-notification";
 
-const FORTNIGHT_START_DATE = new Date(2025, 6, 28); // July 28, 2025 - Monday (month is 0-indexed)
+const FORTNIGHT_START_DATE = new Date(2025, 7, 4); // August 4, 2025 - Monday (month is 0-indexed)
 
 interface FortnightTimesheetProps {
   selectedEmployeeId?: string;

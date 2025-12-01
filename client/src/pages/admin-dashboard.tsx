@@ -275,15 +275,15 @@ export default function AdminDashboard() {
     const mondayOfWeek = new Date(d);
     
     // Find which fortnight this Monday belongs to
-    // Base date: July 28, 2025 (Monday) - aligned so Nov 3-16, Nov 17-30 are correct fortnights
-    const baseDate = new Date(2025, 6, 28); // July 28, 2025 - Monday (month is 0-indexed)
+    // Base date: August 4, 2025 (Monday) - aligned so Nov 3-16, Nov 17-30 are correct fortnights
+    const baseDate = new Date(2025, 7, 4); // August 4, 2025 - Monday (month is 0-indexed)
     const diffTime = mondayOfWeek.getTime() - baseDate.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     const fortnightNumber = Math.floor(diffDays / 14);
     
     // Calculate fortnight start by adding fortnight weeks to base date
-    const fortnightStart = new Date(2025, 6, 28); // Fresh copy of base date
-    fortnightStart.setDate(28 + (fortnightNumber * 14)); // Add days from the 28th
+    const fortnightStart = new Date(2025, 7, 4); // Fresh copy of base date
+    fortnightStart.setDate(4 + (fortnightNumber * 14)); // Add days from the 4th
     
     return fortnightStart;
   };

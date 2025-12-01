@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { OrientationToggle } from "@/components/orientation-toggle";
 import PageLayout from "@/components/page-layout";
 
-const FORTNIGHT_START_DATE = new Date(2025, 7, 11); // August 11, 2025 (month is 0-indexed)
+const FORTNIGHT_START_DATE = new Date(2025, 7, 4); // August 4, 2025 - Monday (month is 0-indexed)
 
 export default function StaffTimesheet() {
   const { toast } = useToast();
