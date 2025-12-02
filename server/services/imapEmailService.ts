@@ -162,10 +162,22 @@ export class ImapEmailService {
       });
 
       this.imap.once('error', (err: any) => {
-        console.error('IMAP connection error:', err);
+        console.error('📧 IMAP connection error details:');
+        console.error('📧 Error message:', err.message);
+        console.error('📧 Error code:', err.code);
+        console.error('📧 Error textCode:', err.textCode);
+        console.error('📧 Error source:', err.source);
+        console.error('📧 Full error:', JSON.stringify(err, null, 2));
+        console.error('📧 Connection details: host=' + this.host + ', port=' + this.port + ', tls=' + this.tls + ', user=' + this.username);
         reject(err);
       });
 
+      // Log IMAP alerts from server
+      this.imap.on('alert', (message: string) => {
+        console.log('📧 IMAP server alert:', message);
+      });
+
+      console.log('📧 Attempting IMAP connection to:', this.host, 'port:', this.port, 'user:', this.username);
       this.imap.connect();
     });
   }
