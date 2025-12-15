@@ -1,0 +1,856 @@
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully
+(index):58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+(index):70 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-BlpOOIu7.js:468 💓 Session keepalive successful
+user:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+jobs:1   Failed to load resource: the server responded with a status of 500 ()
+user:1   Failed to load resource: the server responded with a status of 500 ()
+timesheets:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+employees:1   Failed to load resource: the server responded with a status of 500 ()
+total-costs:1   Failed to load resource: the server responded with a status of 500 ()
+deleted-jobs:1   Failed to load resource: the server responded with a status of 500 ()
+staff-users:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+jobs:1   Failed to load resource: the server responded with a status of 500 ()
+user:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+timesheets:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+total-costs:1   Failed to load resource: the server responded with a status of 500 ()
+user:1   Failed to load resource: the server responded with a status of 500 ()
+jobs:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+deleted-jobs:1   Failed to load resource: the server responded with a status of 500 ()
+staff-users:1   Failed to load resource: the server responded with a status of 500 ()
+employees:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+user:1   Failed to load resource: the server responded with a status of 500 ()
+timesheets:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+jobs:1   Failed to load resource: the server responded with a status of 500 ()
+total-costs:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+deleted-jobs:1   Failed to load resource: the server responded with a status of 500 ()
+staff-users:1   Failed to load resource: the server responded with a status of 500 ()
+user:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+/api/employees:1   Failed to load resource: the server responded with a status of 500 ()
+/api/admin/timesheets:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+/api/jobs/total-costs:1   Failed to load resource: the server responded with a status of 500 ()
+/api/deleted-jobs:1   Failed to load resource: the server responded with a status of 500 ()
+/api/staff-users:1   Failed to load resource: the server responded with a status of 500 ()
+/api/auth/user:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+/api/jobs:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+/api/employees:1   Failed to load resource: the server responded with a status of 500 ()
+/api/jobs/total-costs:1   Failed to load resource: the server responded with a status of 500 ()
+/api/auth/user:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+/api/deleted-jobs:1   Failed to load resource: the server responded with a status of 500 ()
+/api/admin/timesheets:1   Failed to load resource: the server responded with a status of 500 ()
+/api/staff-users:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+/api/auth/user:1   Failed to load resource: the server responded with a status of 500 ()
+/api/jobs/total-costs:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+/api/jobs:1   Failed to load resource: the server responded with a status of 500 ()
+/api/employees:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+/api/admin/timesheets:1   Failed to load resource: the server responded with a status of 500 ()
+/api/staff-users:1   Failed to load resource: the server responded with a status of 500 ()
+/api/auth/user:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+/api/deleted-jobs:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+/api/auth/user:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+/api/employees:1   Failed to load resource: the server responded with a status of 500 ()
+/api/admin/timesheets:1   Failed to load resource: the server responded with a status of 500 ()
+/api/jobs/total-costs:1   Failed to load resource: the server responded with a status of 500 ()
+/api/staff-users:1   Failed to load resource: the server responded with a status of 500 ()
+/api/jobs:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+/api/deleted-jobs:1   Failed to load resource: the server responded with a status of 500 ()
+/api/auth/user:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+/api/jobs:1   Failed to load resource: the server responded with a status of 500 ()
+/api/auth/user:1   Failed to load resource: the server responded with a status of 500 ()
+/api/jobs/total-costs:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+/api/deleted-jobs:1   Failed to load resource: the server responded with a status of 500 ()
+/api/staff-users:1   Failed to load resource: the server responded with a status of 500 ()
+/api/employees:1   Failed to load resource: the server responded with a status of 500 ()
+/api/admin/timesheets:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+/api/jobs:1   Failed to load resource: the server responded with a status of 500 ()
+/api/jobs/total-costs:1   Failed to load resource: the server responded with a status of 500 ()
+/api/auth/user:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+/api/jobs/total-costs:1   Failed to load resource: the server responded with a status of 500 ()
+/api/auth/user:1   Failed to load resource: the server responded with a status of 500 ()
+/api/deleted-jobs:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+/api/employees:1   Failed to load resource: the server responded with a status of 500 ()
+/api/staff-users:1   Failed to load resource: the server responded with a status of 500 ()
+/api/admin/timesheets:1   Failed to load resource: the server responded with a status of 500 ()
+/api/jobs:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+/api/auth/user:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+/api/jobs/total-costs:1   Failed to load resource: the server responded with a status of 500 ()
+/api/deleted-jobs:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+staff-users:1   Failed to load resource: the server responded with a status of 500 ()
+user:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+jobs:1   Failed to load resource: the server responded with a status of 500 ()
+timesheets:1   Failed to load resource: the server responded with a status of 500 ()
+employees:1   Failed to load resource: the server responded with a status of 500 ()
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/deleted-jobs 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/staff-users 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/total-costs 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/admin/timesheets 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/total-costs 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/deleted-jobs 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/employees 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/staff-users 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/employees 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/deleted-jobs 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/total-costs 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/admin/timesheets 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/staff-users 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/employees 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/staff-users 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/deleted-jobs 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/total-costs 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/admin/timesheets 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/employees 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/staff-users 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:48 🔄 Server session restored successfully
+index-BlpOOIu7.js:468 🔄 Server session restored, switching back to server auth
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/admin/timesheets 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/auth/user 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/deleted-jobs 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Server auth failed, using backup session immediately
+index-BlpOOIu7.js:48 🔄 Session backup retrieved successfully
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:468 🔄 Using backup authentication for user: mattroach1111@gmail.com
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/staff-users 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/jobs/total-costs 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
+index-BlpOOIu7.js:48   GET https://build-mate-mattroach1111.replit.app/api/employees 500 (Internal Server Error)
+(anonymous) @ index-BlpOOIu7.js:48
+a @ index-BlpOOIu7.js:48
+S @ index-BlpOOIu7.js:48
+start @ index-BlpOOIu7.js:48
+fetch @ index-BlpOOIu7.js:48
+ax @ index-BlpOOIu7.js:48
+onSubscribe @ index-BlpOOIu7.js:48
+subscribe @ index-BlpOOIu7.js:48
+(anonymous) @ index-BlpOOIu7.js:48
+tR @ index-BlpOOIu7.js:38
+N2 @ index-BlpOOIu7.js:40
+ag @ index-BlpOOIu7.js:40
+(anonymous) @ index-BlpOOIu7.js:40
+D @ index-BlpOOIu7.js:25
+$ @ index-BlpOOIu7.js:25
