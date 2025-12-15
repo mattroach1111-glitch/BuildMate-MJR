@@ -1411,78 +1411,15 @@ export class DatabaseStorage implements IStorage {
   async getTimesheetEntries(staffId: string): Promise<TimesheetEntry[]> {
     console.log(`🗃️ STORAGE: Querying timesheet entries for staffId: ${staffId}`);
     
-    // LINKED ACCOUNTS: Find all user accounts linked to the same employee
-    // This allows users with multiple login methods (Apple ID + email) to see combined timesheets
-    try {
-      const linkedUserIds = await this.getLinkedUserIds(staffId);
-      console.log(`🗃️ STORAGE: Found ${linkedUserIds.length} linked user account(s) for staffId ${staffId}`);
-      
-      // Query timesheets for ALL linked user accounts
-      const results = await db
-        .select()
-        .from(timesheetEntries)
-        .where(inArray(timesheetEntries.staffId, linkedUserIds))
-        .orderBy(desc(timesheetEntries.date));
-      
-      console.log(`🗃️ STORAGE RESULT: Found ${results.length} combined entries for linked accounts`);
-      
-      return results;
-    } catch (error) {
-      console.error('🗃️ STORAGE ERROR in getTimesheetEntries:', error);
-      // Fallback to simple query if linked accounts fails
-      const results = await db
-        .select()
-        .from(timesheetEntries)
-        .where(eq(timesheetEntries.staffId, staffId))
-        .orderBy(desc(timesheetEntries.date));
-      return results;
-    }
-  }
-
-  // Helper: Check if a string is a valid UUID format
-  private isValidUUID(str: string): boolean {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(str);
-  }
-
-  // Helper: Get all user IDs linked to the same employee as the given user
-  async getLinkedUserIds(userId: string): Promise<string[]> {
-    try {
-      // CRITICAL: Skip lookup if userId is not a valid UUID (e.g., "employee-12345")
-      // Non-UUID staffIds are used for employees without user accounts
-      if (!this.isValidUUID(userId)) {
-        console.log(`🗃️ LINKED ACCOUNTS: Skipping lookup for non-UUID staffId: ${userId}`);
-        return [userId];
-      }
-
-      // First, find the employeeId for this user
-      const user = await db
-        .select({ employeeId: users.employeeId })
-        .from(users)
-        .where(eq(users.id, userId))
-        .limit(1);
-      
-      if (!user[0] || !user[0].employeeId) {
-        // User not linked to any employee, return just this user ID
-        return [userId];
-      }
-      
-      const employeeId = user[0].employeeId;
-      
-      // Find all users linked to the same employee
-      const linkedUsers = await db
-        .select({ id: users.id })
-        .from(users)
-        .where(eq(users.employeeId, employeeId));
-      
-      const linkedIds = linkedUsers.map(u => u.id);
-      console.log(`🗃️ LINKED ACCOUNTS: Employee ${employeeId} has ${linkedIds.length} linked user accounts`);
-      
-      return linkedIds.length > 0 ? linkedIds : [userId];
-    } catch (error) {
-      console.error('🗃️ ERROR in getLinkedUserIds:', error);
-      return [userId]; // Fallback to just this user
-    }
+    const results = await db
+      .select()
+      .from(timesheetEntries)
+      .where(eq(timesheetEntries.staffId, staffId))
+      .orderBy(desc(timesheetEntries.date));
+    
+    console.log(`🗃️ STORAGE RESULT: Found ${results.length} entries for staffId: ${staffId}`);
+    
+    return results;
   }
 
   async createTimesheetEntry(entry: InsertTimesheetEntry): Promise<TimesheetEntry> {
@@ -2042,71 +1979,34 @@ export class DatabaseStorage implements IStorage {
 
   // Get timesheet entries for a specific period
   async getTimesheetEntriesByPeriod(staffId: string, startDate: string, endDate: string): Promise<any[]> {
-    try {
-      // LINKED ACCOUNTS: Get all user accounts linked to the same employee
-      const linkedUserIds = await this.getLinkedUserIds(staffId);
-      console.log(`🗃️ PERIOD QUERY: Fetching entries for ${linkedUserIds.length} linked account(s), period ${startDate} to ${endDate}`);
-      
-      return await db
-        .select({
-          id: timesheetEntries.id,
-          staffId: timesheetEntries.staffId,
-          jobId: timesheetEntries.jobId,
-          date: timesheetEntries.date,
-          hours: timesheetEntries.hours,
-          description: timesheetEntries.description,
-          materials: timesheetEntries.materials,
-          approved: timesheetEntries.approved,
-          submitted: timesheetEntries.submitted,
-          job: {
-            id: jobs.id,
-            jobAddress: jobs.jobAddress,
-            clientName: jobs.clientName,
-            projectName: jobs.projectName,
-          }
-        })
-        .from(timesheetEntries)
-        .leftJoin(jobs, eq(timesheetEntries.jobId, jobs.id))
-        .where(
-          and(
-            inArray(timesheetEntries.staffId, linkedUserIds),
-            gte(timesheetEntries.date, startDate),
-            lte(timesheetEntries.date, endDate)
-          )
+    return await db
+      .select({
+        id: timesheetEntries.id,
+        staffId: timesheetEntries.staffId,
+        jobId: timesheetEntries.jobId,
+        date: timesheetEntries.date,
+        hours: timesheetEntries.hours,
+        description: timesheetEntries.description,
+        materials: timesheetEntries.materials,
+        approved: timesheetEntries.approved,
+        submitted: timesheetEntries.submitted,
+        job: {
+          id: jobs.id,
+          jobAddress: jobs.jobAddress,
+          clientName: jobs.clientName,
+          projectName: jobs.projectName,
+        }
+      })
+      .from(timesheetEntries)
+      .leftJoin(jobs, eq(timesheetEntries.jobId, jobs.id))
+      .where(
+        and(
+          eq(timesheetEntries.staffId, staffId),
+          gte(timesheetEntries.date, startDate),
+          lte(timesheetEntries.date, endDate)
         )
-        .orderBy(timesheetEntries.date);
-    } catch (error) {
-      console.error('🗃️ STORAGE ERROR in getTimesheetEntriesByPeriod:', error);
-      // Fallback to simple query
-      return await db
-        .select({
-          id: timesheetEntries.id,
-          staffId: timesheetEntries.staffId,
-          jobId: timesheetEntries.jobId,
-          date: timesheetEntries.date,
-          hours: timesheetEntries.hours,
-          description: timesheetEntries.description,
-          materials: timesheetEntries.materials,
-          approved: timesheetEntries.approved,
-          submitted: timesheetEntries.submitted,
-          job: {
-            id: jobs.id,
-            jobAddress: jobs.jobAddress,
-            clientName: jobs.clientName,
-            projectName: jobs.projectName,
-          }
-        })
-        .from(timesheetEntries)
-        .leftJoin(jobs, eq(timesheetEntries.jobId, jobs.id))
-        .where(
-          and(
-            eq(timesheetEntries.staffId, staffId),
-            gte(timesheetEntries.date, startDate),
-            lte(timesheetEntries.date, endDate)
-          )
-        )
-        .orderBy(timesheetEntries.date);
-    }
+      )
+      .orderBy(timesheetEntries.date);
   }
 
   // Admin method to create timesheet entry with flexible data
