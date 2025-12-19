@@ -2314,10 +2314,10 @@ export default function AdminDashboard() {
                         </DropdownMenu>
                       </div>
                       
-                      {/* Folder Total Excluding GST - Below folder name */}
+                      {/* Folder Total Excluding GST - Below folder name (excludes jobs marked as "exclude from total") */}
                       <div className="mt-2 pl-9 text-base font-semibold text-gray-800 dark:text-gray-200" data-testid={`text-folder-total-${groupName}`}>
                         {new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(
-                          groupJobs.reduce((sum, job) => sum + ((job as any).subtotalExGst || 0), 0)
+                          groupJobs.filter(job => !(job as any).excludeFromTotal).reduce((sum, job) => sum + ((job as any).subtotalExGst || 0), 0)
                         )}
                       </div>
                     </div>
