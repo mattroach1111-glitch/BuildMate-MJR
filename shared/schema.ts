@@ -496,7 +496,8 @@ export const emailProcessedDocuments = pgTable("email_processed_documents", {
   userId: varchar("user_id").notNull().references(() => users.id),
   jobId: varchar("job_id").references(() => jobs.id),
   createdAt: timestamp("created_at").defaultNow(),
-  processedAt: timestamp("processed_at")
+  processedAt: timestamp("processed_at"),
+  googleDriveUploaded: boolean("google_drive_uploaded").default(false),
 });
 
 export const insertEmailProcessedDocumentSchema = createInsertSchema(emailProcessedDocuments).omit({
