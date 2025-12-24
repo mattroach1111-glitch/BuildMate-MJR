@@ -131,26 +131,27 @@ export function GoogleDriveReconnectDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Not Now</AlertDialogCancel>
-          <AlertDialogAction asChild>
-            <Button 
-              onClick={handleReconnect}
-              disabled={isReconnecting}
-              className="gap-2"
-            >
-              {isReconnecting ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  Connecting...
-                </>
-              ) : (
-                <>
-                  <ExternalLink className="h-4 w-4" />
-                  Reconnect Google Drive
-                </>
-              )}
-            </Button>
-          </AlertDialogAction>
+          <AlertDialogCancel disabled={isReconnecting}>Not Now</AlertDialogCancel>
+          <Button 
+            onClick={(e) => {
+              e.preventDefault();
+              handleReconnect();
+            }}
+            disabled={isReconnecting}
+            className="gap-2"
+          >
+            {isReconnecting ? (
+              <>
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Connecting...
+              </>
+            ) : (
+              <>
+                <ExternalLink className="h-4 w-4" />
+                Reconnect Google Drive
+              </>
+            )}
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
