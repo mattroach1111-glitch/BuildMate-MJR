@@ -292,8 +292,10 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
     // Handle structured error responses
     if (errorData.code === 'AUTH_REQUIRED' || errorData.requiresReconnect) {
       // Store the retry data and show reconnection dialog
+      console.log('🔵 AUTH_REQUIRED detected - opening reconnect dialog');
       setPendingGoogleDriveRetry({ jobId, fileInfo });
       setShowGoogleDriveReconnect(true);
+      console.log('🔵 setShowGoogleDriveReconnect(true) called');
       
       toast({
         title: "Google Drive Connection Expired",

@@ -110,9 +110,21 @@ export function GoogleDriveReconnectDialog({
     }
   };
 
+  // Log when dialog state changes
+  console.log('🔵 GoogleDriveReconnectDialog - open:', open, 'isReconnecting:', isReconnecting);
+
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+    <AlertDialog 
+      open={open} 
+      onOpenChange={(newOpen) => {
+        // Only allow closing via explicit button clicks, not outside clicks or escape
+        console.log('🔵 GoogleDriveReconnectDialog - onOpenChange called with:', newOpen);
+        if (!isReconnecting) {
+          onOpenChange(newOpen);
+        }
+      }}
+    >
+      <AlertDialogContent onEscapeKeyDown={(e: KeyboardEvent) => e.preventDefault()}>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <RefreshCw className="h-5 w-5 text-blue-600" />
