@@ -39,28 +39,42 @@ export class DocumentProcessor {
       const prompt = `
         Analyze this document image and extract expense/invoice information.
         
+        IMPORTANT: The image may be rotated/sideways - rotate mentally if needed to read it correctly.
+        
         Return a JSON object with these fields:
-        - vendor: The company/vendor name
+        - vendor: The company/vendor name (look for business name, logo, or header)
         - amount: The FINAL TOTAL amount from the invoice (see instructions below)
         - description: Brief description of the goods/services
-        - date: Invoice/document date in YYYY-MM-DD format
+        - date: Invoice/document date in YYYY-MM-DD format (e.g., 2025-12-30)
         - category: One of: "materials", "sub_trades", "other_costs", "tip_fees"
         - confidence: Your confidence level (0.0 to 1.0)
         
         CRITICAL INSTRUCTIONS FOR AMOUNT EXTRACTION:
         - Extract the FINAL INVOICE TOTAL only - the grand total that the customer must pay
-        - Look for labels like: "TOTAL INC TAX", "TOTAL INCLUDING GST", "GRAND TOTAL", "AMOUNT DUE", "TOTAL PAID", "BALANCE DUE"
-        - DO NOT extract individual line item amounts
-        - DO NOT extract subtotals before tax
+        - Look for labels like: "TOTAL INC TAX", "TOTAL INCLUDING GST", "GRAND TOTAL", "AMOUNT DUE", "TOTAL PAID", "BALANCE DUE", "Docket Total", "Invoice Total"
+        - DO NOT extract "Unit Price" or "Rate" - these are per-unit costs, not the total
+        - DO NOT extract individual line item amounts or subtotals before tax
         - DO NOT add up items yourself - find the final total on the document
-        - If multiple totals exist, choose the largest final amount (usually includes tax)
+        - If multiple totals exist, choose the one labeled as TOTAL or DOCKET TOTAL
         - Return the amount as a number without currency symbols or commas
         
+        SPECIAL INSTRUCTIONS FOR TIP FEE / WASTE DISPOSAL RECEIPTS:
+        - Look for "Docket Total" - this is the final amount to extract
+        - Ignore "Unit Price" (e.g., $300.00/tonne) - this is NOT the total
+        - The actual total is usually much smaller based on weight (Net WT × Unit Price)
+        - Vendor is often a Council (e.g., "Glenorchy City Council", "Hobart City Council")
+        - Description should mention waste type (e.g., "Mixed Waste", "Green Waste", "Demolition")
+        
+        DATE EXTRACTION:
+        - Look for labels like "Date Out", "Date", "Invoice Date", "Tax Invoice"
+        - Convert to YYYY-MM-DD format (e.g., "30-Dec-2025" becomes "2025-12-30")
+        - Day must be 1-31, Month must be 1-12 - validate the date is realistic
+        
         For category classification:
-        - "materials": Building supplies, hardware, lumber, concrete, etc.
-        - "sub_trades": Subcontractor services, electrician, plumber, etc.
+        - "materials": Building supplies, hardware, lumber, concrete, paint, flooring, etc.
+        - "sub_trades": Subcontractor services, electrician, plumber, tiler, etc.
         - "other_costs": General expenses, equipment rental, permits, etc.
-        - "tip_fees": Waste disposal, dump fees, rubbish removal
+        - "tip_fees": Waste disposal, dump fees, rubbish removal, Council tips, transfer stations
         
         If you cannot extract clear information, set confidence to 0.0.
         Always return valid JSON.
@@ -339,13 +353,30 @@ export class DocumentProcessor {
       const prompt = `
         Analyze this expense document/invoice and extract the information.
         
+        IMPORTANT: The image may be rotated/sideways - rotate mentally if needed to read it correctly.
+        
         Return a JSON object with these fields:
-        - vendor: The company/vendor name
-        - amount: The total amount as a number
+        - vendor: The company/vendor name (look for business name, logo, or header)
+        - amount: The FINAL TOTAL amount as a number (see instructions below)
         - description: Brief description of goods/services
-        - date: Invoice/document date in YYYY-MM-DD format
+        - date: Invoice/document date in YYYY-MM-DD format (e.g., 2025-12-30)
         - category: One of "materials", "sub_trades", "other_costs", "tip_fees"
         - confidence: Your confidence level (0.0 to 1.0)
+        
+        CRITICAL AMOUNT INSTRUCTIONS:
+        - Find the FINAL TOTAL - labels like "Docket Total", "Total Inc GST", "Grand Total", "Amount Due"
+        - DO NOT extract "Unit Price" or "Rate" - these are per-unit costs, not the total
+        - For tip fees, look for "Docket Total" - this is usually the smallest dollar amount
+        
+        SPECIAL INSTRUCTIONS FOR TIP FEE / WASTE DISPOSAL RECEIPTS:
+        - Look for "Docket Total" - this is the final amount to extract
+        - Ignore "Unit Price" (e.g., $300.00/tonne) - this is NOT the total
+        - Vendor is often a Council (e.g., "Glenorchy City Council")
+        - Description should mention waste type (e.g., "Mixed Waste", "Green Waste")
+        
+        DATE EXTRACTION:
+        - Convert dates to YYYY-MM-DD format (e.g., "30-Dec-2025" becomes "2025-12-30")
+        - Validate: Day 1-31, Month 1-12
         
         Always return valid JSON.
       `;
