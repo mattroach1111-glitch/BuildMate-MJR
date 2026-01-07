@@ -4140,31 +4140,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let fileRecord = null;
       let googleDriveResult = null;
       let googleDriveError = null;
+      let objectPath: string | null = null;
       
       try {
         // Get the original document file from email processing attachments
         const fileName = document.filename;
         const mimeType = document.filename.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream';
         
-        // For email attachments, we need to find the original attachment file
-        // The document filename should correspond to an email attachment file
         console.log(`📎 Attempting to save email attachment: ${fileName}`);
         
-        // First, try to save as job file attachment from object storage
+        // Get the file buffer from attachment content
+        let fileBuffer: Buffer | null = null;
+        if (document.attachmentContent) {
+          fileBuffer = Buffer.from(document.attachmentContent, 'base64');
+          console.log(`📎 Using stored attachment content (${fileBuffer.length} bytes)`);
+        }
+        
+        // First, save to object storage so we have a persistent copy for retry
+        if (fileBuffer) {
+          try {
+            const ObjectStorageService = (await import('./objectStorage')).ObjectStorageService;
+            const objectStorageService = new ObjectStorageService();
+            objectPath = await objectStorageService.saveBuffer(fileBuffer, fileName, document.mimeType || mimeType);
+            console.log(`💾 Attachment saved to object storage: ${objectPath}`);
+          } catch (storageError) {
+            console.log(`⚠️ Could not save to object storage: ${storageError instanceof Error ? storageError.message : String(storageError)}`);
+          }
+        }
+        
+        // Create job file record with objectPath and needsDriveSync flag
         try {
-          // Create a job file record for the email attachment
           fileRecord = await storage.createJobFile({
             jobId: targetJobId,
             fileName: fileName,
             originalName: fileName,
-            fileSize: document.attachmentContent ? Buffer.from(document.attachmentContent, 'base64').length : 0,
+            fileSize: fileBuffer ? fileBuffer.length : 0,
             mimeType: document.mimeType || mimeType,
-            objectPath: null, // Email attachments are not in object storage initially
+            objectPath: objectPath,
             googleDriveLink: null,
             googleDriveFileId: null,
+            needsDriveSync: true, // Flag for retry after Google Drive reconnection
             uploadedById: req.user.claims.sub
           });
-          console.log(`📎 Job file record created: ${fileRecord.id}`);
+          console.log(`📎 Job file record created: ${fileRecord.id} (needsDriveSync: true)`);
         } catch (fileError) {
           console.log(`⚠️ Could not create job file record: ${fileError instanceof Error ? fileError.message : String(fileError)}`);
         }
@@ -4173,24 +4191,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const userId = req.user.claims.sub;
         const systemTokens = await storage.getSystemGoogleDriveTokens();
         
-        if (systemTokens) {
+        if (systemTokens && fileBuffer) {
           try {
             console.log(`☁️ Uploading to Google Drive: ${fileName}`);
             
             // Get job for folder naming
             const job = await storage.getJob(targetJobId);
-            
-            // Get the actual attachment content from the stored base64 data
-            let fileBuffer;
-            if (document.attachmentContent) {
-              fileBuffer = Buffer.from(document.attachmentContent, 'base64');
-              console.log(`📎 Using stored attachment content (${fileBuffer.length} bytes)`);
-            } else {
-              // Fallback - create a small text file with document info
-              const fallbackContent = `Email Document: ${fileName}\nFrom: ${document.emailFrom || 'unknown'}\nSubject: ${document.emailSubject || 'unknown'}\nVendor: ${document.vendor}\nAmount: $${document.amount}\nCategory: ${finalCategory}`;
-              fileBuffer = Buffer.from(fallbackContent, 'utf8');
-              console.log(`⚠️ No attachment content stored, using fallback text file`);
-            }
             
             const googleDriveService = new GoogleDriveService();
             const tokens = JSON.parse(systemTokens);
@@ -4217,31 +4223,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
             );
             
             if (uploadResult && fileRecord) {
-              // Update the file record with Google Drive info
+              // Update the file record with Google Drive info and clear needsDriveSync
               await storage.updateJobFile(fileRecord.id, {
                 googleDriveLink: uploadResult.webViewLink,
-                googleDriveFileId: uploadResult.fileId
+                googleDriveFileId: uploadResult.fileId,
+                needsDriveSync: false
               });
               googleDriveResult = uploadResult;
               console.log(`☁️ File uploaded to Google Drive: ${uploadResult.webViewLink}`);
             }
           } catch (driveError: any) {
             console.log(`⚠️ Google Drive upload failed: ${driveError instanceof Error ? driveError.message : String(driveError)}`);
-            // Store error details to send to frontend
+            // Store error details to send to frontend - file stays with needsDriveSync: true for retry
             if (driveError.code === 'AUTH_REQUIRED') {
               googleDriveError = {
                 code: 'AUTH_REQUIRED',
                 message: driveError.message || 'Google Drive connection expired',
-                requiresReconnect: true
+                requiresReconnect: true,
+                fileRecordId: fileRecord?.id // Include file record ID for potential retry
               };
             }
           }
-        } else {
+        } else if (!systemTokens) {
           console.log(`ℹ️ Google Drive not connected for user ${userId}`);
           googleDriveError = {
             code: 'NOT_CONNECTED',
             message: 'Google Drive not connected',
-            requiresReconnect: true
+            requiresReconnect: true,
+            fileRecordId: fileRecord?.id
           };
         }
       } catch (attachmentError) {

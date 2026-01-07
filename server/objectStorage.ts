@@ -237,6 +237,34 @@ export class ObjectStorageService {
       requestedPermission: requestedPermission ?? ObjectPermission.READ,
     });
   }
+
+  // Save a buffer directly to object storage (server-side upload)
+  async saveBuffer(buffer: Buffer, fileName: string, mimeType: string): Promise<string> {
+    const privateObjectDir = this.getPrivateObjectDir();
+    if (!privateObjectDir) {
+      throw new Error(
+        "PRIVATE_OBJECT_DIR not set. Create a bucket in 'Object Storage' " +
+          "tool and set PRIVATE_OBJECT_DIR env var."
+      );
+    }
+
+    const objectId = randomUUID();
+    const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const fullPath = `${privateObjectDir}/uploads/${objectId}_${sanitizedFileName}`;
+
+    const { bucketName, objectName } = parseObjectPath(fullPath);
+    const bucket = objectStorageClient.bucket(bucketName);
+    const file = bucket.file(objectName);
+
+    await file.save(buffer, {
+      metadata: {
+        contentType: mimeType,
+      },
+    });
+
+    // Return the normalized object path for storage in database
+    return `/objects/uploads/${objectId}_${sanitizedFileName}`;
+  }
 }
 
 function parseObjectPath(path: string): {
