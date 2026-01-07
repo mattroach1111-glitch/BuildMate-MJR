@@ -168,6 +168,12 @@ export default function EmailProcessingReview() {
     fileSize?: number;
   } | null>(null);
   const [showGoogleDriveReconnect, setShowGoogleDriveReconnect] = useState(false);
+  const [pendingGoogleDriveRetry, setPendingGoogleDriveRetry] = useState<{
+    docId: string;
+    jobId?: string;
+    category?: string;
+    gstOption?: 'include' | 'exclude';
+  } | null>(null);
 
   // Get pending documents from email processing
   const { data: pendingDocs = [], isLoading, refetch } = useQuery({

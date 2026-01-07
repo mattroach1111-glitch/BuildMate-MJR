@@ -1,0 +1,394 @@
+ BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+ ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+ 💓 Session keepalive successful
+ 🔄 Session backup stored successfully
+ 🔄 Session backup stored successfully
+ 🔄 Session backup stored successfully
+ 🔄 Session backup stored successfully
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔵 Job selection changed: 
+ 🔵 Job address changed: 
+ 🔵 Client name changed: 
+ 🔵 Project manager changed: 
+ 🔵 Frontend: Check for new emails button clicked
+ 🔵 Frontend: Starting email processing request...
+ 🔍 Frontend matching email subject: 30 corby
+ 🔍 Available jobs for matching: Array(42)
+ 🔍 Partial address comparison: "30 corby" vs "2 hassell pl"
+ 🔍 Partial address comparison: "30 corby" vs "2 mary st"
+ 🔍 Partial address comparison: "30 corby" vs "581 oceana dr"
+ 🔍 Partial address comparison: "30 corby" vs "90 abbotsfield rd"
+ 🔍 Partial address comparison: "30 corby" vs "4 lambert ave"
+ 🔍 Partial address comparison: "30 corby" vs "10 lincoln st"
+ 🔍 Partial address comparison: "30 corby" vs "10 sycamore rd"
+ 🔍 Partial address comparison: "30 corby" vs "14 tyson dr"
+ 🔍 Partial address comparison: "30 corby" vs "17 lord st"
+ 🔍 Partial address comparison: "30 corby" vs "17 ocean st"
+ 🔍 Partial address comparison: "30 corby" vs "20 banawarra rd"
+ 🔍 Partial address comparison: "30 corby" vs "24 willowdene ave"
+ 🔍 Partial address comparison: "30 corby" vs "32 augusta rd"
+ 🔍 Partial address comparison: "30 corby" vs "32 fletchers rd"
+ 🔍 Partial address comparison: "30 corby" vs "35 fisher ave"
+ 🔍 Partial address comparison: "30 corby" vs "127 lynrowan dr"
+ 🔍 Partial address comparison: "30 corby" vs "139 patrick st"
+ 🔍 Partial address comparison: "30 corby" vs "594 sandy bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "596 acton rd"
+ 🔍 Partial address comparison: "30 corby" vs "842 adventure bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "966 dolphins sands rd"
+ 🔍 Partial address comparison: "30 corby" vs "6 dallas ave"
+ 🔍 Partial address comparison: "30 corby" vs "10 sycamore rd"
+ 🔍 Partial address comparison: "30 corby" vs "24 aquila st"
+ 🔍 Partial address comparison: "30 corby" vs "248 back river rd"
+ 🔍 Partial address comparison: "30 corby" vs "594 sandy bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "262 lenah valley rd"
+ 🔍 Partial address comparison: "30 corby" vs "134 chapel st"
+ 🔍 Partial address comparison: "30 corby" vs "30 corby ave"
+ ✅ Frontend PARTIAL address match: U6 and U8 30 Corby ave West Hobart 
+ 🎯 Frontend match result: U6 and U8 30 Corby ave West Hobart  (partial_address match, priority 2)
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔍 Frontend matching email subject: 30 corby
+ 🔍 Available jobs for matching: Array(42)
+ 🔍 Partial address comparison: "30 corby" vs "2 hassell pl"
+ 🔍 Partial address comparison: "30 corby" vs "2 mary st"
+ 🔍 Partial address comparison: "30 corby" vs "581 oceana dr"
+ 🔍 Partial address comparison: "30 corby" vs "90 abbotsfield rd"
+ 🔍 Partial address comparison: "30 corby" vs "4 lambert ave"
+ 🔍 Partial address comparison: "30 corby" vs "10 lincoln st"
+ 🔍 Partial address comparison: "30 corby" vs "10 sycamore rd"
+ 🔍 Partial address comparison: "30 corby" vs "14 tyson dr"
+ 🔍 Partial address comparison: "30 corby" vs "17 lord st"
+ 🔍 Partial address comparison: "30 corby" vs "17 ocean st"
+ 🔍 Partial address comparison: "30 corby" vs "20 banawarra rd"
+ 🔍 Partial address comparison: "30 corby" vs "24 willowdene ave"
+ 🔍 Partial address comparison: "30 corby" vs "32 augusta rd"
+ 🔍 Partial address comparison: "30 corby" vs "32 fletchers rd"
+ 🔍 Partial address comparison: "30 corby" vs "35 fisher ave"
+ 🔍 Partial address comparison: "30 corby" vs "127 lynrowan dr"
+ 🔍 Partial address comparison: "30 corby" vs "139 patrick st"
+ 🔍 Partial address comparison: "30 corby" vs "594 sandy bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "596 acton rd"
+ 🔍 Partial address comparison: "30 corby" vs "842 adventure bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "966 dolphins sands rd"
+ 🔍 Partial address comparison: "30 corby" vs "6 dallas ave"
+ 🔍 Partial address comparison: "30 corby" vs "10 sycamore rd"
+ 🔍 Partial address comparison: "30 corby" vs "24 aquila st"
+ 🔍 Partial address comparison: "30 corby" vs "248 back river rd"
+ 🔍 Partial address comparison: "30 corby" vs "594 sandy bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "262 lenah valley rd"
+ 🔍 Partial address comparison: "30 corby" vs "134 chapel st"
+ 🔍 Partial address comparison: "30 corby" vs "30 corby ave"
+ ✅ Frontend PARTIAL address match: U6 and U8 30 Corby ave West Hobart 
+ 🎯 Frontend match result: U6 and U8 30 Corby ave West Hobart  (partial_address match, priority 2)
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔍 Frontend matching email subject: botanica
+ 🔍 Available jobs for matching: Array(42)
+ ❌ No job match found
+ 🔍 Frontend matching email subject: 30 corby
+ 🔍 Available jobs for matching: Array(42)
+ 🔍 Partial address comparison: "30 corby" vs "2 hassell pl"
+ 🔍 Partial address comparison: "30 corby" vs "2 mary st"
+ 🔍 Partial address comparison: "30 corby" vs "581 oceana dr"
+ 🔍 Partial address comparison: "30 corby" vs "90 abbotsfield rd"
+ 🔍 Partial address comparison: "30 corby" vs "4 lambert ave"
+ 🔍 Partial address comparison: "30 corby" vs "10 lincoln st"
+ 🔍 Partial address comparison: "30 corby" vs "10 sycamore rd"
+ 🔍 Partial address comparison: "30 corby" vs "14 tyson dr"
+ 🔍 Partial address comparison: "30 corby" vs "17 lord st"
+ 🔍 Partial address comparison: "30 corby" vs "17 ocean st"
+ 🔍 Partial address comparison: "30 corby" vs "20 banawarra rd"
+ 🔍 Partial address comparison: "30 corby" vs "24 willowdene ave"
+ 🔍 Partial address comparison: "30 corby" vs "32 augusta rd"
+ 🔍 Partial address comparison: "30 corby" vs "32 fletchers rd"
+ 🔍 Partial address comparison: "30 corby" vs "35 fisher ave"
+ 🔍 Partial address comparison: "30 corby" vs "127 lynrowan dr"
+ 🔍 Partial address comparison: "30 corby" vs "139 patrick st"
+ 🔍 Partial address comparison: "30 corby" vs "594 sandy bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "596 acton rd"
+ 🔍 Partial address comparison: "30 corby" vs "842 adventure bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "966 dolphins sands rd"
+ 🔍 Partial address comparison: "30 corby" vs "6 dallas ave"
+ 🔍 Partial address comparison: "30 corby" vs "10 sycamore rd"
+ 🔍 Partial address comparison: "30 corby" vs "24 aquila st"
+ 🔍 Partial address comparison: "30 corby" vs "248 back river rd"
+ 🔍 Partial address comparison: "30 corby" vs "594 sandy bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "262 lenah valley rd"
+ 🔍 Partial address comparison: "30 corby" vs "134 chapel st"
+ 🔍 Partial address comparison: "30 corby" vs "30 corby ave"
+ ✅ Frontend PARTIAL address match: U6 and U8 30 Corby ave West Hobart 
+ 🎯 Frontend match result: U6 and U8 30 Corby ave West Hobart  (partial_address match, priority 2)
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔵 Frontend: API response received: 200
+ 🔵 Frontend: Response data: Object
+ 🟢 Frontend: Email processing succeeded: Object
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔍 Frontend matching email subject: botanica
+ 🔍 Available jobs for matching: Array(42)
+ ❌ No job match found
+ 🔍 Frontend matching email subject: 30 corby
+ 🔍 Available jobs for matching: Array(42)
+ 🔍 Partial address comparison: "30 corby" vs "2 hassell pl"
+ 🔍 Partial address comparison: "30 corby" vs "2 mary st"
+ 🔍 Partial address comparison: "30 corby" vs "581 oceana dr"
+ 🔍 Partial address comparison: "30 corby" vs "90 abbotsfield rd"
+ 🔍 Partial address comparison: "30 corby" vs "4 lambert ave"
+ 🔍 Partial address comparison: "30 corby" vs "10 lincoln st"
+ 🔍 Partial address comparison: "30 corby" vs "10 sycamore rd"
+ 🔍 Partial address comparison: "30 corby" vs "14 tyson dr"
+ 🔍 Partial address comparison: "30 corby" vs "17 lord st"
+ 🔍 Partial address comparison: "30 corby" vs "17 ocean st"
+ 🔍 Partial address comparison: "30 corby" vs "20 banawarra rd"
+ 🔍 Partial address comparison: "30 corby" vs "24 willowdene ave"
+ 🔍 Partial address comparison: "30 corby" vs "32 augusta rd"
+ 🔍 Partial address comparison: "30 corby" vs "32 fletchers rd"
+ 🔍 Partial address comparison: "30 corby" vs "35 fisher ave"
+ 🔍 Partial address comparison: "30 corby" vs "127 lynrowan dr"
+ 🔍 Partial address comparison: "30 corby" vs "139 patrick st"
+ 🔍 Partial address comparison: "30 corby" vs "594 sandy bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "596 acton rd"
+ 🔍 Partial address comparison: "30 corby" vs "842 adventure bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "966 dolphins sands rd"
+ 🔍 Partial address comparison: "30 corby" vs "6 dallas ave"
+ 🔍 Partial address comparison: "30 corby" vs "10 sycamore rd"
+ 🔍 Partial address comparison: "30 corby" vs "24 aquila st"
+ 🔍 Partial address comparison: "30 corby" vs "248 back river rd"
+ 🔍 Partial address comparison: "30 corby" vs "594 sandy bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "262 lenah valley rd"
+ 🔍 Partial address comparison: "30 corby" vs "134 chapel st"
+ 🔍 Partial address comparison: "30 corby" vs "30 corby ave"
+ ✅ Frontend PARTIAL address match: U6 and U8 30 Corby ave West Hobart 
+ 🎯 Frontend match result: U6 and U8 30 Corby ave West Hobart  (partial_address match, priority 2)
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔍 Frontend matching email subject: botanica
+ 🔍 Available jobs for matching: Array(42)
+ ❌ No job match found
+ 🔍 Frontend matching email subject: 30 corby
+ 🔍 Available jobs for matching: Array(42)
+ 🔍 Partial address comparison: "30 corby" vs "2 hassell pl"
+ 🔍 Partial address comparison: "30 corby" vs "2 mary st"
+ 🔍 Partial address comparison: "30 corby" vs "581 oceana dr"
+ 🔍 Partial address comparison: "30 corby" vs "90 abbotsfield rd"
+ 🔍 Partial address comparison: "30 corby" vs "4 lambert ave"
+ 🔍 Partial address comparison: "30 corby" vs "10 lincoln st"
+ 🔍 Partial address comparison: "30 corby" vs "10 sycamore rd"
+ 🔍 Partial address comparison: "30 corby" vs "14 tyson dr"
+ 🔍 Partial address comparison: "30 corby" vs "17 lord st"
+ 🔍 Partial address comparison: "30 corby" vs "17 ocean st"
+ 🔍 Partial address comparison: "30 corby" vs "20 banawarra rd"
+ 🔍 Partial address comparison: "30 corby" vs "24 willowdene ave"
+ 🔍 Partial address comparison: "30 corby" vs "32 augusta rd"
+ 🔍 Partial address comparison: "30 corby" vs "32 fletchers rd"
+ 🔍 Partial address comparison: "30 corby" vs "35 fisher ave"
+ 🔍 Partial address comparison: "30 corby" vs "127 lynrowan dr"
+ 🔍 Partial address comparison: "30 corby" vs "139 patrick st"
+ 🔍 Partial address comparison: "30 corby" vs "594 sandy bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "596 acton rd"
+ 🔍 Partial address comparison: "30 corby" vs "842 adventure bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "966 dolphins sands rd"
+ 🔍 Partial address comparison: "30 corby" vs "6 dallas ave"
+ 🔍 Partial address comparison: "30 corby" vs "10 sycamore rd"
+ 🔍 Partial address comparison: "30 corby" vs "24 aquila st"
+ 🔍 Partial address comparison: "30 corby" vs "248 back river rd"
+ 🔍 Partial address comparison: "30 corby" vs "594 sandy bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "262 lenah valley rd"
+ 🔍 Partial address comparison: "30 corby" vs "134 chapel st"
+ 🔍 Partial address comparison: "30 corby" vs "30 corby ave"
+ ✅ Frontend PARTIAL address match: U6 and U8 30 Corby ave West Hobart 
+ 🎯 Frontend match result: U6 and U8 30 Corby ave West Hobart  (partial_address match, priority 2)
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔍 Frontend matching email subject: 30 corby
+ 🔍 Available jobs for matching: Array(42)
+ 🔍 Partial address comparison: "30 corby" vs "2 hassell pl"
+ 🔍 Partial address comparison: "30 corby" vs "2 mary st"
+ 🔍 Partial address comparison: "30 corby" vs "581 oceana dr"
+ 🔍 Partial address comparison: "30 corby" vs "90 abbotsfield rd"
+ 🔍 Partial address comparison: "30 corby" vs "4 lambert ave"
+ 🔍 Partial address comparison: "30 corby" vs "10 lincoln st"
+ 🔍 Partial address comparison: "30 corby" vs "10 sycamore rd"
+ 🔍 Partial address comparison: "30 corby" vs "14 tyson dr"
+ 🔍 Partial address comparison: "30 corby" vs "17 lord st"
+ 🔍 Partial address comparison: "30 corby" vs "17 ocean st"
+ 🔍 Partial address comparison: "30 corby" vs "20 banawarra rd"
+ 🔍 Partial address comparison: "30 corby" vs "24 willowdene ave"
+ 🔍 Partial address comparison: "30 corby" vs "32 augusta rd"
+ 🔍 Partial address comparison: "30 corby" vs "32 fletchers rd"
+ 🔍 Partial address comparison: "30 corby" vs "35 fisher ave"
+ 🔍 Partial address comparison: "30 corby" vs "127 lynrowan dr"
+ 🔍 Partial address comparison: "30 corby" vs "139 patrick st"
+ 🔍 Partial address comparison: "30 corby" vs "594 sandy bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "596 acton rd"
+ 🔍 Partial address comparison: "30 corby" vs "842 adventure bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "966 dolphins sands rd"
+ 🔍 Partial address comparison: "30 corby" vs "6 dallas ave"
+ 🔍 Partial address comparison: "30 corby" vs "10 sycamore rd"
+ 🔍 Partial address comparison: "30 corby" vs "24 aquila st"
+ 🔍 Partial address comparison: "30 corby" vs "248 back river rd"
+ 🔍 Partial address comparison: "30 corby" vs "594 sandy bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "262 lenah valley rd"
+ 🔍 Partial address comparison: "30 corby" vs "134 chapel st"
+ 🔍 Partial address comparison: "30 corby" vs "30 corby ave"
+ ✅ Frontend PARTIAL address match: U6 and U8 30 Corby ave West Hobart 
+ 🎯 Frontend match result: U6 and U8 30 Corby ave West Hobart  (partial_address match, priority 2)
+ 🔍 Frontend matching email subject: botanica
+ 🔍 Available jobs for matching: Array(42)
+ ❌ No job match found
+ 🔍 Frontend matching email subject: 30 corby
+ 🔍 Available jobs for matching: Array(42)
+ 🔍 Partial address comparison: "30 corby" vs "2 hassell pl"
+ 🔍 Partial address comparison: "30 corby" vs "2 mary st"
+ 🔍 Partial address comparison: "30 corby" vs "581 oceana dr"
+ 🔍 Partial address comparison: "30 corby" vs "90 abbotsfield rd"
+ 🔍 Partial address comparison: "30 corby" vs "4 lambert ave"
+ 🔍 Partial address comparison: "30 corby" vs "10 lincoln st"
+ 🔍 Partial address comparison: "30 corby" vs "10 sycamore rd"
+ 🔍 Partial address comparison: "30 corby" vs "14 tyson dr"
+ 🔍 Partial address comparison: "30 corby" vs "17 lord st"
+ 🔍 Partial address comparison: "30 corby" vs "17 ocean st"
+ 🔍 Partial address comparison: "30 corby" vs "20 banawarra rd"
+ 🔍 Partial address comparison: "30 corby" vs "24 willowdene ave"
+ 🔍 Partial address comparison: "30 corby" vs "32 augusta rd"
+ 🔍 Partial address comparison: "30 corby" vs "32 fletchers rd"
+ 🔍 Partial address comparison: "30 corby" vs "35 fisher ave"
+ 🔍 Partial address comparison: "30 corby" vs "127 lynrowan dr"
+ 🔍 Partial address comparison: "30 corby" vs "139 patrick st"
+ 🔍 Partial address comparison: "30 corby" vs "594 sandy bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "596 acton rd"
+ 🔍 Partial address comparison: "30 corby" vs "842 adventure bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "966 dolphins sands rd"
+ 🔍 Partial address comparison: "30 corby" vs "6 dallas ave"
+ 🔍 Partial address comparison: "30 corby" vs "10 sycamore rd"
+ 🔍 Partial address comparison: "30 corby" vs "24 aquila st"
+ 🔍 Partial address comparison: "30 corby" vs "248 back river rd"
+ 🔍 Partial address comparison: "30 corby" vs "594 sandy bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "262 lenah valley rd"
+ 🔍 Partial address comparison: "30 corby" vs "134 chapel st"
+ 🔍 Partial address comparison: "30 corby" vs "30 corby ave"
+ ✅ Frontend PARTIAL address match: U6 and U8 30 Corby ave West Hobart 
+ 🎯 Frontend match result: U6 and U8 30 Corby ave West Hobart  (partial_address match, priority 2)
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🟢 Document approved successfully, refreshing pending list... Object
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔍 Frontend matching email subject: botanica
+ 🔍 Available jobs for matching: Array(42)
+ ❌ No job match found
+ 🔍 Frontend matching email subject: 30 corby
+ 🔍 Available jobs for matching: Array(42)
+ 🔍 Partial address comparison: "30 corby" vs "2 hassell pl"
+ 🔍 Partial address comparison: "30 corby" vs "2 mary st"
+ 🔍 Partial address comparison: "30 corby" vs "581 oceana dr"
+ 🔍 Partial address comparison: "30 corby" vs "90 abbotsfield rd"
+ 🔍 Partial address comparison: "30 corby" vs "4 lambert ave"
+ 🔍 Partial address comparison: "30 corby" vs "10 lincoln st"
+ 🔍 Partial address comparison: "30 corby" vs "10 sycamore rd"
+ 🔍 Partial address comparison: "30 corby" vs "14 tyson dr"
+ 🔍 Partial address comparison: "30 corby" vs "17 lord st"
+ 🔍 Partial address comparison: "30 corby" vs "17 ocean st"
+ 🔍 Partial address comparison: "30 corby" vs "20 banawarra rd"
+ 🔍 Partial address comparison: "30 corby" vs "24 willowdene ave"
+ 🔍 Partial address comparison: "30 corby" vs "32 augusta rd"
+ 🔍 Partial address comparison: "30 corby" vs "32 fletchers rd"
+ 🔍 Partial address comparison: "30 corby" vs "35 fisher ave"
+ 🔍 Partial address comparison: "30 corby" vs "127 lynrowan dr"
+ 🔍 Partial address comparison: "30 corby" vs "139 patrick st"
+ 🔍 Partial address comparison: "30 corby" vs "594 sandy bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "596 acton rd"
+ 🔍 Partial address comparison: "30 corby" vs "842 adventure bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "966 dolphins sands rd"
+ 🔍 Partial address comparison: "30 corby" vs "6 dallas ave"
+ 🔍 Partial address comparison: "30 corby" vs "10 sycamore rd"
+ 🔍 Partial address comparison: "30 corby" vs "24 aquila st"
+ 🔍 Partial address comparison: "30 corby" vs "248 back river rd"
+ 🔍 Partial address comparison: "30 corby" vs "594 sandy bay rd"
+ 🔍 Partial address comparison: "30 corby" vs "262 lenah valley rd"
+ 🔍 Partial address comparison: "30 corby" vs "134 chapel st"
+ 🔍 Partial address comparison: "30 corby" vs "30 corby ave"
+ ✅ Frontend PARTIAL address match: U6 and U8 30 Corby ave West Hobart 
+ 🎯 Frontend match result: U6 and U8 30 Corby ave West Hobart  (partial_address match, priority 2)
+ 🔵 GoogleDriveReconnectDialog - open: true isReconnecting: false
+ 🔍 Frontend matching email subject: botanica
+ 🔍 Available jobs for matching: Array(42)
+ ❌ No job match found
+ 🔵 GoogleDriveReconnectDialog - open: true isReconnecting: false
+ 🔵 GoogleDriveReconnectDialog - open: true isReconnecting: true
+  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ /assets/index-De9kqQIX.js:773
+  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ /assets/index-De9kqQIX.js:773
+  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ /assets/index-De9kqQIX.js:773
+  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ /assets/index-De9kqQIX.js:773
+  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ /assets/index-De9kqQIX.js:773
+  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ /assets/index-De9kqQIX.js:773
+  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ /assets/index-De9kqQIX.js:773
+  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ /assets/index-De9kqQIX.js:773
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔍 Frontend matching email subject: botanica
+ 🔍 Available jobs for matching: Array(42)
+ ❌ No job match found
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔍 Frontend matching email subject: botanica
+ 🔍 Available jobs for matching: Array(42)
+ ❌ No job match found
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔍 Frontend matching email subject: botanica
+ 🔍 Available jobs for matching: Array(42)
+ ❌ No job match found
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔍 Frontend matching email subject: botanica
+ 🔍 Available jobs for matching: Array(42)
+ ❌ No job match found
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ /assets/index-De9kqQIX.js:521
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔍 Frontend matching email subject: botanica
+ 🔍 Available jobs for matching: Array(43)
+ ✅ Frontend exact substring match by address: Botanica
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔵 Job selection changed: 
+ 🔵 Job address changed: 
+ 🔵 Client name changed: 
+ 🔵 Project manager changed: 
+ 🔍 Frontend matching email subject: botanica
+ 🔍 Available jobs for matching: Array(43)
+ ✅ Frontend exact substring match by address: Botanica
+ 🔍 Frontend matching email subject: botanica
+ 🔍 Available jobs for matching: Array(43)
+ ✅ Frontend exact substring match by address: Botanica
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🟢 Document approved successfully, refreshing pending list... Object
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔍 Frontend matching email subject: botanica
+ 🔍 Available jobs for matching: Array(43)
+ ✅ Frontend exact substring match by address: Botanica
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+ 🔄 Session backup stored successfully
+  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ /assets/index-De9kqQIX.js:521
+ 💓 Session keepalive successful
+ 💓 Session keepalive successful
+ 🔄 Session backup stored successfully
+  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ /assets/index-De9kqQIX.js:521
+ 💓 Session keepalive successful
+ 🔄 Session backup stored successfully
+  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ /assets/index-De9kqQIX.js:521
+ 🔄 Session backup stored successfully
+  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ /assets/index-De9kqQIX.js:521
+ 💓 Session keepalive successful
+ 💓 Session keepalive successful
+ 🔄 Session backup stored successfully
+  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ /assets/index-De9kqQIX.js:521
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully

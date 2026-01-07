@@ -169,6 +169,7 @@ export const jobFiles = pgTable("job_files", {
   objectPath: varchar("object_path"), // Path in object storage (optional for Google Drive files)
   googleDriveLink: varchar("google_drive_link"), // Link to file on Google Drive
   googleDriveFileId: varchar("google_drive_file_id"), // Google Drive file ID
+  needsDriveSync: boolean("needs_drive_sync").default(false), // Flag for files needing Google Drive upload
   uploadedById: varchar("uploaded_by_id").notNull().references(() => users.id),
   // Expense tracking fields
   expenseAmount: decimal("expense_amount", { precision: 10, scale: 2 }),
