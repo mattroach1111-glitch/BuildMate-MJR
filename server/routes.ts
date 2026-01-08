@@ -5328,13 +5328,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      // Generate list of weeks (8 weeks back + current week + 4 weeks forward)
+      // Generate list of weeks (2 weeks back + current week + 10 weeks forward)
       const weeks = [];
       const today = new Date();
       const currentMonday = new Date(today);
       currentMonday.setDate(today.getDate() - today.getDay() + 1); // Get Monday of current week
 
-      for (let i = -8; i <= 4; i++) {
+      for (let i = -2; i <= 10; i++) {
         const weekStart = new Date(currentMonday);
         weekStart.setDate(currentMonday.getDate() + (i * 7));
         
