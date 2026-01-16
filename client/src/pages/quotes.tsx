@@ -84,7 +84,7 @@ export default function QuotesPage() {
     validUntil: "",
     notes: "",
     builderMargin: "10",
-    director: "Matt Roach",
+    director: "Will Scott",
   });
 
   const { data: quotes = [], isLoading } = useQuery<Quote[]>({
@@ -109,7 +109,7 @@ export default function QuotesPage() {
         validUntil: "",
         notes: "",
         builderMargin: "10",
-        director: "Matt Roach",
+        director: "Will Scott",
       });
       toast({ title: "Success", description: "Quote created successfully" });
       fetchQuoteDetails(newQuote.id);
