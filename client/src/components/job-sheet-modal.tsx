@@ -64,6 +64,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const [emailRecipient, setEmailRecipient] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
+  const [includeSwmsInEmail, setIncludeSwmsInEmail] = useState(false);
   
   // Editing states for materials, sub-trades, other costs, and tip fees
   const [editingMaterial, setEditingMaterial] = useState<string | null>(null);
@@ -1321,7 +1322,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
 
   // Email PDF functionality
   const emailPDFMutation = useMutation({
-    mutationFn: async (emailData: { to: string; subject: string; message: string }) => {
+    mutationFn: async (emailData: { to: string; subject: string; message: string; includeSwms?: boolean }) => {
       // Generate PDF client-side first
       if (!jobDetails) throw new Error("Job details not available");
       
@@ -1343,8 +1344,11 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       
       // Send email data with PDF
       const response = await apiRequest("POST", `/api/jobs/${jobId}/email-pdf`, {
-        ...emailData,
-        pdfData: pdfBase64
+        to: emailData.to,
+        subject: emailData.subject,
+        message: emailData.message,
+        pdfData: pdfBase64,
+        includeSwms: emailData.includeSwms
       });
       return response.json();
     },
@@ -1357,6 +1361,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       setEmailRecipient("");
       setEmailSubject("");
       setEmailMessage("");
+      setIncludeSwmsInEmail(false);
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -1518,6 +1523,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       to: emailRecipient.trim(),
       subject: emailSubject.trim() || `Job Sheet - ${jobDetails?.jobAddress}`,
       message: emailMessage.trim() || "Please find attached the job sheet PDF.",
+      includeSwms: includeSwmsInEmail,
     });
   };
 
@@ -3228,6 +3234,24 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                         </tbody>
                       </table>
                     </div>
+                    
+                    {/* Download SWMS Package Button */}
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <Button
+                        onClick={() => {
+                          window.open(`/api/swms/job/${jobDetails?.id}/combined-pdf`, '_blank');
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="w-full sm:w-auto"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download SWMS Package (with signatures)
+                      </Button>
+                      <p className="text-xs text-gray-500 mt-2">
+                        Downloads all SWMS documents with digital signature proof for compliance records.
+                      </p>
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center py-6 text-gray-500">
@@ -3363,6 +3387,24 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                 data-testid="textarea-email-message"
               />
             </div>
+            {/* Include SWMS Package Option */}
+            {swmsSignatures.length > 0 && (
+              <div className="flex items-center space-x-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <Checkbox
+                  id="include-swms"
+                  checked={includeSwmsInEmail}
+                  onCheckedChange={(checked) => setIncludeSwmsInEmail(checked === true)}
+                />
+                <div className="flex-1">
+                  <Label htmlFor="include-swms" className="text-sm font-medium cursor-pointer">
+                    Include SWMS Package
+                  </Label>
+                  <p className="text-xs text-gray-500">
+                    Attach signed SWMS documents with signature proof ({swmsSignatures.length} signature{swmsSignatures.length > 1 ? 's' : ''})
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="flex gap-2 justify-end max-sm:flex-col max-sm:gap-3">
               <Button
                 variant="outline"

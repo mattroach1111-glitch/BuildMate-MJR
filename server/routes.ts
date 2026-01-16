@@ -15,6 +15,7 @@ import { GoogleDriveService, GoogleDriveError } from "./googleDriveService";
 import { GoogleDriveAuth } from "./googleAuth";
 import { DocumentProcessor } from "./services/documentProcessor";
 import { rewardsService } from "./services/rewardsService";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
 // Database-backed reward settings helper functions
 async function initializeRewardSettings() {
@@ -3805,7 +3806,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const jobId = req.params.id;
-      const { to, subject, message, pdfData } = req.body;
+      const { to, subject, message, pdfData, includeSwms } = req.body;
 
       if (!to || !to.trim()) {
         return res.status(400).json({ message: "Recipient email is required" });
@@ -3893,21 +3894,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         emailHtml += `<br><br><p><strong>View PDF online:</strong> <a href="${googleDrivePdfLink}">Click here to open in Google Drive</a></p>`;
       }
       
+      // Build attachments array
+      const attachments: Array<{ filename: string; content: Buffer; contentType: string }> = [{
+        filename: `JobSheet_${jobDetails.jobAddress.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+        content: pdfBuffer,
+        contentType: 'application/pdf'
+      }];
+
+      // Include SWMS package if requested
+      if (includeSwms) {
+        try {
+          // Generate SWMS compliance package PDF
+          const { generateSwmsCompliancePackage } = await import('./services/swmsPdfService');
+          const swmsPdfBuffer = await generateSwmsCompliancePackage(jobId);
+          if (swmsPdfBuffer) {
+            attachments.push({
+              filename: `SWMS_Compliance_${jobDetails.jobAddress.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+              content: swmsPdfBuffer,
+              contentType: 'application/pdf'
+            });
+            emailHtml += `<br><p><strong>SWMS Compliance:</strong> Signed SWMS documents are attached for your records.</p>`;
+            emailText += `\n\nSWMS Compliance: Signed SWMS documents are attached for your records.`;
+            console.log(`✅ SWMS compliance package attached to email for job ${jobId}`);
+          }
+        } catch (swmsError) {
+          console.log('⚠️ Failed to generate SWMS package (email will still be sent):', swmsError);
+        }
+      }
+
       const emailSuccess = await sendEmail({
         from: fromEmail,
         to: to.trim(),
         subject: subject || `Job Sheet - ${jobDetails.jobAddress}`,
         text: emailText,
         html: emailHtml,
-        attachments: [{
-          filename: `JobSheet_${jobDetails.jobAddress.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
-          content: pdfBuffer,
-          contentType: 'application/pdf'
-        }]
+        attachments
       });
 
       if (emailSuccess) {
-        res.json({ message: "Job sheet PDF sent successfully" });
+        const attachmentCount = attachments.length;
+        const swmsIncluded = attachments.length > 1 ? ' with SWMS compliance package' : '';
+        res.json({ message: `Job sheet PDF sent successfully${swmsIncluded}` });
       } else {
         res.status(500).json({ message: "Failed to send email" });
       }
@@ -5865,6 +5892,197 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching job SWMS signatures:", error);
       res.status(500).json({ message: "Failed to fetch SWMS signatures" });
+    }
+  });
+
+  // Generate combined PDF with job's SWMS documents and signature proof
+  app.get("/api/swms/job/:jobId/combined-pdf", isAuthenticated, async (req: any, res) => {
+    try {
+      const { jobId } = req.params;
+      const objectStorageService = new ObjectStorageService();
+      
+      // Get job details for the cover page
+      const job = await storage.getJob(jobId);
+      if (!job) {
+        return res.status(404).json({ message: "Job not found" });
+      }
+
+      // Get all SWMS signatures for this job with template details
+      const signatures = await storage.getSwmsSignaturesForJobWithDetails(jobId);
+      
+      if (signatures.length === 0) {
+        return res.status(404).json({ message: "No SWMS signatures found for this job" });
+      }
+
+      // Group signatures by template
+      const signaturesByTemplate = new Map<string, Array<typeof signatures[0]>>();
+      for (const sig of signatures) {
+        if (sig.template) {
+          const existing = signaturesByTemplate.get(sig.templateId) || [];
+          existing.push(sig);
+          signaturesByTemplate.set(sig.templateId, existing);
+        }
+      }
+
+      // Create the combined PDF
+      const combinedPdf = await PDFDocument.create();
+      const font = await combinedPdf.embedFont(StandardFonts.Helvetica);
+      const boldFont = await combinedPdf.embedFont(StandardFonts.HelveticaBold);
+
+      // Add cover page with job info and signature summary
+      const coverPage = combinedPdf.addPage([595, 842]); // A4 size
+      let yPos = 780;
+
+      // Header
+      coverPage.drawText('SWMS COMPLIANCE PACKAGE', {
+        x: 50,
+        y: yPos,
+        size: 20,
+        font: boldFont,
+        color: rgb(0.1, 0.1, 0.4),
+      });
+      yPos -= 40;
+
+      // Job details
+      coverPage.drawText(`Job: ${job.jobAddress}`, { x: 50, y: yPos, size: 12, font: boldFont });
+      yPos -= 20;
+      coverPage.drawText(`Client: ${job.clientName}`, { x: 50, y: yPos, size: 10, font });
+      yPos -= 15;
+      coverPage.drawText(`Project Manager: ${job.projectName}`, { x: 50, y: yPos, size: 10, font });
+      yPos -= 15;
+      coverPage.drawText(`Generated: ${new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`, { x: 50, y: yPos, size: 10, font });
+      yPos -= 40;
+
+      // Signature summary section
+      coverPage.drawText('SIGNATURE RECORDS', { x: 50, y: yPos, size: 14, font: boldFont, color: rgb(0.1, 0.1, 0.4) });
+      yPos -= 25;
+
+      coverPage.drawText('This document contains the following Safe Work Method Statements with digital signature proof:', { x: 50, y: yPos, size: 10, font });
+      yPos -= 30;
+
+      // List each document with its signatories
+      for (const [templateId, templateSigs] of Array.from(signaturesByTemplate)) {
+        const template = templateSigs[0].template;
+        if (!template) continue;
+
+        coverPage.drawText(`• ${template.title}`, { x: 60, y: yPos, size: 11, font: boldFont });
+        yPos -= 18;
+
+        for (const sig of templateSigs) {
+          const signedDate = sig.signedAt ? new Date(sig.signedAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Unknown';
+          coverPage.drawText(`   - ${sig.signerName} (${sig.occupation}) - Signed: ${signedDate}`, { x: 70, y: yPos, size: 9, font });
+          yPos -= 15;
+        }
+        yPos -= 10;
+
+        // Check if we need a new page
+        if (yPos < 100) {
+          const newPage = combinedPdf.addPage([595, 842]);
+          yPos = 780;
+        }
+      }
+
+      // Add each SWMS template PDF with its signature page
+      for (const [templateId, templateSigs] of Array.from(signaturesByTemplate)) {
+        const template = templateSigs[0].template;
+        if (!template || !template.objectPath) continue;
+
+        try {
+          // Fetch the SWMS PDF from object storage
+          const objectFile = await objectStorageService.getObjectEntityFile(template.objectPath);
+          const [buffer] = await objectFile.download();
+          
+          // Load and merge the SWMS PDF
+          const swmsPdf = await PDFDocument.load(buffer);
+          const copiedPages = await combinedPdf.copyPages(swmsPdf, swmsPdf.getPageIndices());
+          for (const page of copiedPages) {
+            combinedPdf.addPage(page);
+          }
+
+          // Add a signature evidence page after each SWMS document
+          const sigPage = combinedPdf.addPage([595, 842]);
+          let sigYPos = 780;
+
+          sigPage.drawText('SWMS SIGNATURE EVIDENCE', {
+            x: 50,
+            y: sigYPos,
+            size: 16,
+            font: boldFont,
+            color: rgb(0.1, 0.1, 0.4),
+          });
+          sigYPos -= 30;
+
+          sigPage.drawText(`Document: ${template.title}`, { x: 50, y: sigYPos, size: 12, font: boldFont });
+          sigYPos -= 20;
+          sigPage.drawText(`Job: ${job.jobAddress}`, { x: 50, y: sigYPos, size: 10, font });
+          sigYPos -= 40;
+
+          sigPage.drawText('Digital Signatures:', { x: 50, y: sigYPos, size: 12, font: boldFont });
+          sigYPos -= 25;
+
+          // Draw table header
+          sigPage.drawText('Name', { x: 60, y: sigYPos, size: 10, font: boldFont });
+          sigPage.drawText('Occupation', { x: 200, y: sigYPos, size: 10, font: boldFont });
+          sigPage.drawText('Date Signed', { x: 350, y: sigYPos, size: 10, font: boldFont });
+          sigYPos -= 5;
+          sigPage.drawLine({ start: { x: 50, y: sigYPos }, end: { x: 545, y: sigYPos }, thickness: 1, color: rgb(0.7, 0.7, 0.7) });
+          sigYPos -= 18;
+
+          // Draw each signature
+          for (const sig of templateSigs) {
+            const signedDate = sig.signedAt ? new Date(sig.signedAt).toLocaleDateString('en-AU', { 
+              day: 'numeric', 
+              month: 'short', 
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }) : 'Unknown';
+            
+            sigPage.drawText(sig.signerName, { x: 60, y: sigYPos, size: 10, font });
+            sigPage.drawText(sig.occupation, { x: 200, y: sigYPos, size: 10, font });
+            sigPage.drawText(signedDate, { x: 350, y: sigYPos, size: 10, font });
+            sigYPos -= 18;
+          }
+
+          // Add certification statement
+          sigYPos -= 30;
+          sigPage.drawText('Certification:', { x: 50, y: sigYPos, size: 10, font: boldFont });
+          sigYPos -= 18;
+          sigPage.drawText('The above individuals have digitally signed this SWMS document, acknowledging that they have:', { x: 50, y: sigYPos, size: 9, font });
+          sigYPos -= 15;
+          sigPage.drawText('• Read and understood the safe work procedures outlined in this document', { x: 60, y: sigYPos, size: 9, font });
+          sigYPos -= 15;
+          sigPage.drawText('• Been instructed in the work activities and controls to be adopted', { x: 60, y: sigYPos, size: 9, font });
+          sigYPos -= 15;
+          sigPage.drawText('• Agreed to follow the safety procedures when performing work on this job', { x: 60, y: sigYPos, size: 9, font });
+
+        } catch (pdfError) {
+          console.error(`Error loading SWMS PDF for template ${templateId}:`, pdfError);
+          // Add an error page instead
+          const errorPage = combinedPdf.addPage([595, 842]);
+          errorPage.drawText(`Unable to load SWMS document: ${template.title}`, {
+            x: 50,
+            y: 780,
+            size: 12,
+            font: boldFont,
+            color: rgb(0.8, 0.2, 0.2),
+          });
+        }
+      }
+
+      // Serialize the combined PDF
+      const pdfBytes = await combinedPdf.save();
+
+      // Set response headers
+      const filename = `SWMS_Compliance_${job.jobAddress.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Length', pdfBytes.length);
+      
+      res.send(Buffer.from(pdfBytes));
+    } catch (error) {
+      console.error("Error generating combined SWMS PDF:", error);
+      res.status(500).json({ message: "Failed to generate combined SWMS PDF" });
     }
   });
 
