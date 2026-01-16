@@ -146,7 +146,7 @@ export function SwmsSigningModal({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0 max-h-[60vh] pr-4">
+        <ScrollArea className="flex-1 min-h-0 overflow-y-auto pr-4">
           <div className="space-y-4">
             <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
               <h4 className="font-medium text-amber-800 dark:text-amber-200 mb-2">
