@@ -3192,35 +3192,35 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     <p className="text-sm text-gray-600 mb-4">
                       The following staff members have signed Safe Work Method Statements for this job:
                     </p>
-                    <div className="border rounded-lg overflow-hidden">
-                      <table className="w-full text-sm">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-3 py-2 text-left font-medium text-gray-700">Document</th>
-                            <th className="px-3 py-2 text-left font-medium text-gray-700">Signed By</th>
-                            <th className="px-3 py-2 text-left font-medium text-gray-700">Role</th>
-                            <th className="px-3 py-2 text-left font-medium text-gray-700">Date</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {swmsSignatures.map((sig) => (
-                            <tr key={sig.id} className="hover:bg-gray-50">
-                              <td className="px-3 py-2">
-                                <div className="flex items-center gap-2">
-                                  <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-                                  <span className={sig.templateActive ? "text-gray-900" : "text-gray-500"}>
-                                    {sig.templateTitle}
-                                  </span>
-                                  {!sig.templateActive && (
-                                    <span className="text-xs bg-gray-100 text-gray-500 px-1 py-0.5 rounded">
-                                      Archived
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-3 py-2 text-gray-900">{sig.signerName}</td>
-                              <td className="px-3 py-2 text-gray-600">{sig.occupation}</td>
-                              <td className="px-3 py-2 text-gray-600">
+                    {/* Mobile-friendly card layout */}
+                    <div className="space-y-2">
+                      {swmsSignatures.map((sig) => (
+                        <div key={sig.id} className="border rounded-lg p-3 bg-gray-50/50">
+                          <div className="flex items-start gap-2 mb-2">
+                            <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <p className={`font-medium text-sm truncate ${sig.templateActive ? "text-gray-900" : "text-gray-500"}`}>
+                                {sig.templateTitle}
+                              </p>
+                              {!sig.templateActive && (
+                                <span className="text-xs bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded inline-block mt-1">
+                                  Archived
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm pl-6">
+                            <div>
+                              <span className="text-gray-500 text-xs">Signed by:</span>
+                              <p className="text-gray-900 font-medium">{sig.signerName}</p>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 text-xs">Role:</span>
+                              <p className="text-gray-700">{sig.occupation}</p>
+                            </div>
+                            <div className="col-span-2 mt-1">
+                              <span className="text-gray-500 text-xs">Date:</span>
+                              <p className="text-gray-600 text-xs">
                                 {new Date(sig.signedAt).toLocaleDateString('en-AU', {
                                   day: '2-digit',
                                   month: 'short',
@@ -3228,11 +3228,11 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                                   hour: '2-digit',
                                   minute: '2-digit'
                                 })}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                     
                     {/* Download SWMS Package Button */}
