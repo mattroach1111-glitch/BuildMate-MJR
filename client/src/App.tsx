@@ -20,6 +20,7 @@ import RewardsDashboard from "@/pages/rewards-dashboard";
 import RewardsRules from "@/pages/rewards-rules";
 import AdminRewards from "@/pages/admin-rewards";
 import StaffOrganiser from "@/pages/staff-organiser";
+import SwmsDocuments from "@/pages/swms-documents";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -49,6 +50,7 @@ function Router() {
           <Route path="/rewards" component={RewardsDashboard} />
           <Route path="/rewards/rules" component={RewardsRules} />
           <Route path="/admin/rewards" component={AdminRewards} />
+          <Route path="/swms" component={SwmsDocuments} />
         </>
       ) : (
         <>
@@ -58,6 +60,7 @@ function Router() {
           <Route path="/organiser" component={StaffOrganiser} />
           <Route path="/rewards" component={RewardsDashboard} />
           <Route path="/rewards/rules" component={RewardsRules} />
+          <Route path="/swms" component={SwmsDocuments} />
         </>
       )}
       <Route component={NotFound} />

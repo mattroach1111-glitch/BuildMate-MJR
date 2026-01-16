@@ -833,3 +833,72 @@ export type OrganiserStaff = typeof organiserStaff.$inferSelect;
 export type InsertOrganiserStaff = z.infer<typeof insertOrganiserStaffSchema>;
 export type OrganiserAssignment = typeof organiserAssignments.$inferSelect;
 export type InsertOrganiserAssignment = z.infer<typeof insertOrganiserAssignmentSchema>;
+
+// =============================================================================
+// SWMS (SAFE WORK METHOD STATEMENT) SYSTEM
+// =============================================================================
+
+// SWMS templates - stores the template documents
+export const swmsTemplates = pgTable("swms_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  fileName: varchar("file_name").notNull(),
+  originalName: varchar("original_name").notNull(),
+  objectPath: varchar("object_path").notNull(), // Path in object storage
+  mimeType: varchar("mime_type").notNull().default("application/pdf"),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// SWMS signatures - tracks who has signed which SWMS for which job
+export const swmsSignatures = pgTable("swms_signatures", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  templateId: varchar("template_id").notNull().references(() => swmsTemplates.id, { onDelete: "cascade" }),
+  jobId: varchar("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  signerName: varchar("signer_name").notNull(), // Name as entered by the signer
+  occupation: varchar("occupation").notNull(), // Occupation as entered by the signer
+  signatureData: text("signature_data"), // Optional: base64 encoded signature image
+  signedAt: timestamp("signed_at").defaultNow(),
+});
+
+// Relations for SWMS system
+export const swmsTemplatesRelations = relations(swmsTemplates, ({ many }) => ({
+  signatures: many(swmsSignatures),
+}));
+
+export const swmsSignaturesRelations = relations(swmsSignatures, ({ one }) => ({
+  template: one(swmsTemplates, {
+    fields: [swmsSignatures.templateId],
+    references: [swmsTemplates.id],
+  }),
+  job: one(jobs, {
+    fields: [swmsSignatures.jobId],
+    references: [jobs.id],
+  }),
+  user: one(users, {
+    fields: [swmsSignatures.userId],
+    references: [users.id],
+  }),
+}));
+
+// Insert schemas for SWMS system
+export const insertSwmsTemplateSchema = createInsertSchema(swmsTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSwmsSignatureSchema = createInsertSchema(swmsSignatures).omit({
+  id: true,
+  signedAt: true,
+});
+
+// Types for SWMS system
+export type SwmsTemplate = typeof swmsTemplates.$inferSelect;
+export type InsertSwmsTemplate = z.infer<typeof insertSwmsTemplateSchema>;
+export type SwmsSignature = typeof swmsSignatures.$inferSelect;
+export type InsertSwmsSignature = z.infer<typeof insertSwmsSignatureSchema>;

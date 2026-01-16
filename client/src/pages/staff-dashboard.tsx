@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Calendar, Settings, ArrowRight, Trophy, BookOpen } from "lucide-react";
+import { Clock, Calendar, Settings, ArrowRight, Trophy, BookOpen, FileText, Shield } from "lucide-react";
 import { useLocation } from "wouter";
 import PageLayout from "@/components/page-layout";
 
@@ -155,7 +155,32 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
               </p>
             </div>
 
-            <div className="flex justify-center max-w-2xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+              {/* SWMS Documents */}
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 border-2 border-green-200 hover:border-green-400"
+                onClick={() => navigate("/swms")}
+                data-testid="button-swms-documents"
+              >
+                <CardHeader className="text-center pb-3">
+                  <div className="mx-auto mb-3 p-3 bg-green-100 rounded-full w-12 h-12 flex items-center justify-center">
+                    <Shield className="h-6 w-6 text-green-600" />
+                  </div>
+                  <CardTitle className="text-lg font-semibold text-gray-900">
+                    Safety Documents
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-center">
+                  <p className="text-gray-600 mb-3 text-sm">
+                    View Safe Work Method Statements (SWMS)
+                  </p>
+                  <div className="flex items-center justify-center text-green-600 font-medium text-sm">
+                    <span>View Documents</span>
+                    <ArrowRight className="ml-2 h-3 w-3" />
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Rewards Rules */}
               <Card 
                 className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 border-2 border-blue-200 hover:border-blue-400"
@@ -180,8 +205,6 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
                   </div>
                 </CardContent>
               </Card>
-
-
             </div>
           </div>
 

@@ -65,6 +65,12 @@ import {
   type InsertOrganiserStaff,
   type OrganiserAssignment,
   type InsertOrganiserAssignment,
+  swmsTemplates,
+  swmsSignatures,
+  type SwmsTemplate,
+  type InsertSwmsTemplate,
+  type SwmsSignature,
+  type InsertSwmsSignature,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sum, ne, gte, lte, lt, sql, isNull, or, ilike, inArray } from "drizzle-orm";
@@ -249,6 +255,19 @@ export interface IStorage {
   upsertOrganiserAssignment(assignment: InsertOrganiserAssignment): Promise<OrganiserAssignment>;
   updateOrganiserAssignment(id: string, assignment: Partial<InsertOrganiserAssignment>): Promise<OrganiserAssignment>;
   getStaffOrganiserData(staffName: string, weekStartDate: string): Promise<{ id?: string; staffId: string; staffName: string; weekStartDate: string; assignments: { monday: string; tuesday: string; wednesday: string; thursday: string; friday: string; saturday: string; sunday: string; }; notes: string; } | null>;
+
+  // SWMS (Safe Work Method Statement) operations
+  getSwmsTemplates(): Promise<SwmsTemplate[]>;
+  getSwmsTemplate(id: string): Promise<SwmsTemplate | undefined>;
+  createSwmsTemplate(template: InsertSwmsTemplate): Promise<SwmsTemplate>;
+  updateSwmsTemplate(id: string, template: Partial<InsertSwmsTemplate>): Promise<SwmsTemplate>;
+  deleteSwmsTemplate(id: string): Promise<void>;
+  getSwmsSignaturesForJob(jobId: string): Promise<SwmsSignature[]>;
+  getSwmsSignaturesForUser(userId: string): Promise<SwmsSignature[]>;
+  getSwmsSignature(templateId: string, jobId: string, userId: string): Promise<SwmsSignature | undefined>;
+  createSwmsSignature(signature: InsertSwmsSignature): Promise<SwmsSignature>;
+  getUnsignedSwmsTemplatesForJob(jobId: string, userId: string): Promise<SwmsTemplate[]>;
+  hasUserSignedAllSwmsForJob(jobId: string, userId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2916,6 +2935,169 @@ export class DatabaseStorage implements IStorage {
       };
     } catch (error) {
       console.error("Error getting staff organiser data:", error);
+      throw error;
+    }
+  }
+
+  // SWMS (Safe Work Method Statement) operations
+  async getSwmsTemplates(): Promise<SwmsTemplate[]> {
+    try {
+      return await db
+        .select()
+        .from(swmsTemplates)
+        .where(eq(swmsTemplates.isActive, true))
+        .orderBy(swmsTemplates.sortOrder);
+    } catch (error) {
+      console.error("Error getting SWMS templates:", error);
+      throw error;
+    }
+  }
+
+  async getSwmsTemplate(id: string): Promise<SwmsTemplate | undefined> {
+    try {
+      const [template] = await db
+        .select()
+        .from(swmsTemplates)
+        .where(eq(swmsTemplates.id, id));
+      return template;
+    } catch (error) {
+      console.error("Error getting SWMS template:", error);
+      throw error;
+    }
+  }
+
+  async createSwmsTemplate(template: InsertSwmsTemplate): Promise<SwmsTemplate> {
+    try {
+      const [newTemplate] = await db
+        .insert(swmsTemplates)
+        .values(template)
+        .returning();
+      return newTemplate;
+    } catch (error) {
+      console.error("Error creating SWMS template:", error);
+      throw error;
+    }
+  }
+
+  async updateSwmsTemplate(id: string, template: Partial<InsertSwmsTemplate>): Promise<SwmsTemplate> {
+    try {
+      const [updatedTemplate] = await db
+        .update(swmsTemplates)
+        .set({
+          ...template,
+          updatedAt: new Date(),
+        })
+        .where(eq(swmsTemplates.id, id))
+        .returning();
+      
+      if (!updatedTemplate) {
+        throw new Error("SWMS template not found");
+      }
+      
+      return updatedTemplate;
+    } catch (error) {
+      console.error("Error updating SWMS template:", error);
+      throw error;
+    }
+  }
+
+  async deleteSwmsTemplate(id: string): Promise<void> {
+    try {
+      await db.delete(swmsTemplates).where(eq(swmsTemplates.id, id));
+    } catch (error) {
+      console.error("Error deleting SWMS template:", error);
+      throw error;
+    }
+  }
+
+  async getSwmsSignaturesForJob(jobId: string): Promise<SwmsSignature[]> {
+    try {
+      return await db
+        .select()
+        .from(swmsSignatures)
+        .where(eq(swmsSignatures.jobId, jobId));
+    } catch (error) {
+      console.error("Error getting SWMS signatures for job:", error);
+      throw error;
+    }
+  }
+
+  async getSwmsSignaturesForUser(userId: string): Promise<SwmsSignature[]> {
+    try {
+      return await db
+        .select()
+        .from(swmsSignatures)
+        .where(eq(swmsSignatures.userId, userId));
+    } catch (error) {
+      console.error("Error getting SWMS signatures for user:", error);
+      throw error;
+    }
+  }
+
+  async getSwmsSignature(templateId: string, jobId: string, userId: string): Promise<SwmsSignature | undefined> {
+    try {
+      const [signature] = await db
+        .select()
+        .from(swmsSignatures)
+        .where(
+          and(
+            eq(swmsSignatures.templateId, templateId),
+            eq(swmsSignatures.jobId, jobId),
+            eq(swmsSignatures.userId, userId)
+          )
+        );
+      return signature;
+    } catch (error) {
+      console.error("Error getting SWMS signature:", error);
+      throw error;
+    }
+  }
+
+  async createSwmsSignature(signature: InsertSwmsSignature): Promise<SwmsSignature> {
+    try {
+      const [newSignature] = await db
+        .insert(swmsSignatures)
+        .values(signature)
+        .returning();
+      return newSignature;
+    } catch (error) {
+      console.error("Error creating SWMS signature:", error);
+      throw error;
+    }
+  }
+
+  async getUnsignedSwmsTemplatesForJob(jobId: string, userId: string): Promise<SwmsTemplate[]> {
+    try {
+      // Get all active templates
+      const allTemplates = await this.getSwmsTemplates();
+      
+      // Get user's signatures for this job
+      const userSignatures = await db
+        .select()
+        .from(swmsSignatures)
+        .where(
+          and(
+            eq(swmsSignatures.jobId, jobId),
+            eq(swmsSignatures.userId, userId)
+          )
+        );
+      
+      const signedTemplateIds = new Set(userSignatures.map(s => s.templateId));
+      
+      // Return templates that haven't been signed
+      return allTemplates.filter(t => !signedTemplateIds.has(t.id));
+    } catch (error) {
+      console.error("Error getting unsigned SWMS templates:", error);
+      throw error;
+    }
+  }
+
+  async hasUserSignedAllSwmsForJob(jobId: string, userId: string): Promise<boolean> {
+    try {
+      const unsignedTemplates = await this.getUnsignedSwmsTemplatesForJob(jobId, userId);
+      return unsignedTemplates.length === 0;
+    } catch (error) {
+      console.error("Error checking SWMS signing status:", error);
       throw error;
     }
   }

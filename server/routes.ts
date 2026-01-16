@@ -2034,6 +2034,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Server-side SWMS enforcement: Ensure staff has signed SWMS for this job
+      // Skip check for admins and for entries without a valid job ID (leave types, etc.)
+      if (user.role !== 'admin' && finalJobId) {
+        const templates = await storage.getSwmsTemplates();
+        const activeTemplates = templates.filter(t => t.isActive);
+        
+        if (activeTemplates.length > 0) {
+          const signatures = await storage.getSwmsSignaturesByEmployee(userId);
+          const signedTemplateIds = new Set(
+            signatures
+              .filter((s: any) => s.jobId === finalJobId)
+              .map((s: any) => s.templateId)
+          );
+          
+          const unsignedTemplates = activeTemplates.filter(t => !signedTemplateIds.has(t.id));
+          
+          if (unsignedTemplates.length > 0) {
+            console.log(`🚫 SWMS enforcement: User ${user.email} has ${unsignedTemplates.length} unsigned SWMS for job ${finalJobId}`);
+            return res.status(403).json({ 
+              message: "SWMS signing required",
+              requiresSwms: true,
+              unsignedCount: unsignedTemplates.length,
+              jobId: finalJobId
+            });
+          }
+        }
+      }
+      
       const validatedData = insertTimesheetEntrySchema.parse({
         ...otherData,
         staffId: staffId,
@@ -5655,6 +5683,248 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching organiser schedule:", error);
       res.status(500).json({ message: "Failed to fetch schedule" });
+    }
+  });
+
+  // =============================================================================
+  // SWMS (SAFE WORK METHOD STATEMENT) ROUTES
+  // =============================================================================
+
+  // Get all SWMS templates
+  app.get("/api/swms/templates", isAuthenticated, async (req: any, res) => {
+    try {
+      const templates = await storage.getSwmsTemplates();
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching SWMS templates:", error);
+      res.status(500).json({ message: "Failed to fetch SWMS templates" });
+    }
+  });
+
+  // Get a single SWMS template
+  app.get("/api/swms/templates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const template = await storage.getSwmsTemplate(req.params.id);
+      if (!template) {
+        return res.status(404).json({ message: "SWMS template not found" });
+      }
+      res.json(template);
+    } catch (error) {
+      console.error("Error fetching SWMS template:", error);
+      res.status(500).json({ message: "Failed to fetch SWMS template" });
+    }
+  });
+
+  // Download/view SWMS template file
+  app.get("/api/swms/templates/:id/file", isAuthenticated, async (req: any, res) => {
+    try {
+      const template = await storage.getSwmsTemplate(req.params.id);
+      if (!template) {
+        return res.status(404).json({ message: "SWMS template not found" });
+      }
+
+      const objectStorageService = new ObjectStorageService();
+      const objectFile = await objectStorageService.getObjectEntityFile(template.objectPath);
+      await objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error downloading SWMS template file:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.status(404).json({ message: "SWMS template file not found" });
+      }
+      res.status(500).json({ message: "Failed to download SWMS template file" });
+    }
+  });
+
+  // Check which SWMS templates need to be signed for a job
+  app.get("/api/swms/check/:jobId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { jobId } = req.params;
+
+      const unsignedTemplates = await storage.getUnsignedSwmsTemplatesForJob(jobId, userId);
+      const allSigned = unsignedTemplates.length === 0;
+
+      res.json({
+        allSigned,
+        unsignedTemplates,
+        unsignedCount: unsignedTemplates.length
+      });
+    } catch (error) {
+      console.error("Error checking SWMS signing status:", error);
+      res.status(500).json({ message: "Failed to check SWMS signing status" });
+    }
+  });
+
+  // Sign a SWMS template for a job
+  app.post("/api/swms/sign", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { templateId, jobId, signerName, occupation, signatureData } = req.body;
+
+      if (!templateId || !jobId || !signerName || !occupation) {
+        return res.status(400).json({ message: "Template ID, job ID, signer name, and occupation are required" });
+      }
+
+      // Check if already signed
+      const existingSignature = await storage.getSwmsSignature(templateId, jobId, userId);
+      if (existingSignature) {
+        return res.status(400).json({ message: "You have already signed this SWMS for this job" });
+      }
+
+      // Verify template exists
+      const template = await storage.getSwmsTemplate(templateId);
+      if (!template) {
+        return res.status(404).json({ message: "SWMS template not found" });
+      }
+
+      // Create the signature
+      const signature = await storage.createSwmsSignature({
+        templateId,
+        jobId,
+        userId,
+        signerName,
+        occupation,
+        signatureData: signatureData || null
+      });
+
+      res.json({ success: true, signature });
+    } catch (error) {
+      console.error("Error signing SWMS:", error);
+      res.status(500).json({ message: "Failed to sign SWMS" });
+    }
+  });
+
+  // Sign all SWMS templates for a job at once
+  app.post("/api/swms/sign-all", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { jobId, signerName, occupation, signatureData } = req.body;
+
+      if (!jobId || !signerName || !occupation) {
+        return res.status(400).json({ message: "Job ID, signer name, and occupation are required" });
+      }
+
+      // Get all unsigned templates for this job
+      const unsignedTemplates = await storage.getUnsignedSwmsTemplatesForJob(jobId, userId);
+
+      if (unsignedTemplates.length === 0) {
+        return res.json({ success: true, message: "All SWMS already signed", signedCount: 0 });
+      }
+
+      // Sign all templates
+      const signatures = [];
+      for (const template of unsignedTemplates) {
+        const signature = await storage.createSwmsSignature({
+          templateId: template.id,
+          jobId,
+          userId,
+          signerName,
+          occupation,
+          signatureData: signatureData || null
+        });
+        signatures.push(signature);
+      }
+
+      res.json({ success: true, signedCount: signatures.length, signatures });
+    } catch (error) {
+      console.error("Error signing all SWMS:", error);
+      res.status(500).json({ message: "Failed to sign SWMS" });
+    }
+  });
+
+  // Get user's SWMS signatures
+  app.get("/api/swms/my-signatures", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const signatures = await storage.getSwmsSignaturesForUser(userId);
+      res.json(signatures);
+    } catch (error) {
+      console.error("Error fetching user SWMS signatures:", error);
+      res.status(500).json({ message: "Failed to fetch SWMS signatures" });
+    }
+  });
+
+  // Admin: Seed SWMS templates from attached files (one-time setup)
+  app.post("/api/swms/seed", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user || user.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const fs = await import('fs');
+      const path = await import('path');
+      const objectStorageService = new ObjectStorageService();
+
+      // Define the SWMS templates to seed
+      const templatesData = [
+        {
+          title: "Use of Power Tools & Electrical Equipment",
+          description: "Safe work method statement for the use of power tools and electrical equipment on construction sites",
+          filePath: "attached_assets/MJR_Builders_SWMS_Use_of_Power_Tools_&_Electrical_Equipment__1768528114300.pdf",
+          originalName: "MJR_Builders_SWMS_Use_of_Power_Tools.pdf",
+          sortOrder: 1
+        },
+        {
+          title: "Working at Height",
+          description: "Safe work method statement for working from height including ladders and scaffolds",
+          filePath: "attached_assets/MJR_Builders_SWMS_Working_at_Height_1768528120729.pdf",
+          originalName: "MJR_Builders_SWMS_Working_at_Height.pdf",
+          sortOrder: 2
+        }
+      ];
+
+      const seededTemplates = [];
+
+      for (const templateData of templatesData) {
+        // Check if template already exists by title
+        const existingTemplates = await storage.getSwmsTemplates();
+        const exists = existingTemplates.some(t => t.title === templateData.title);
+        
+        if (exists) {
+          console.log(`📋 SWMS template "${templateData.title}" already exists, skipping`);
+          continue;
+        }
+
+        const fullPath = path.join(process.cwd(), templateData.filePath);
+        
+        if (!fs.existsSync(fullPath)) {
+          console.error(`📋 SWMS file not found: ${fullPath}`);
+          continue;
+        }
+
+        // Read the file and upload to object storage
+        const fileBuffer = fs.readFileSync(fullPath);
+        const objectPath = await objectStorageService.saveBuffer(
+          fileBuffer,
+          templateData.originalName,
+          "application/pdf"
+        );
+
+        // Create the template record
+        const template = await storage.createSwmsTemplate({
+          title: templateData.title,
+          description: templateData.description,
+          fileName: templateData.originalName.replace(/[^a-zA-Z0-9.-]/g, '_'),
+          originalName: templateData.originalName,
+          objectPath,
+          mimeType: "application/pdf",
+          isActive: true,
+          sortOrder: templateData.sortOrder
+        });
+
+        seededTemplates.push(template);
+        console.log(`📋 SWMS template seeded: ${templateData.title}`);
+      }
+
+      res.json({
+        success: true,
+        message: `Seeded ${seededTemplates.length} SWMS template(s)`,
+        templates: seededTemplates
+      });
+    } catch (error) {
+      console.error("Error seeding SWMS templates:", error);
+      res.status(500).json({ message: "Failed to seed SWMS templates" });
     }
   });
 

@@ -19,6 +19,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import RewardNotification from "@/components/rewards-notification";
+import { SwmsSigningModal } from "@/components/SwmsSigningModal";
 
 const FORTNIGHT_START_DATE = new Date(2025, 7, 11); // August 11, 2025 - Monday (month is 0-indexed)
 
@@ -86,6 +87,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     achievements: [],
     description: ''
   });
+  
+  // SWMS signing state
+  const [showSwmsModal, setShowSwmsModal] = useState(false);
+  const [pendingSwmsJobId, setPendingSwmsJobId] = useState<string>("");
+  const [pendingSwmsJobAddress, setPendingSwmsJobAddress] = useState<string>("");
+  const [pendingSaveAfterSwms, setPendingSaveAfterSwms] = useState(false);
   
   // Zoom state for mobile pinch-to-zoom
   const [zoomScale, setZoomScale] = useState(1);
@@ -1109,7 +1116,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
 
   const [isSaving, setIsSaving] = useState(false);
 
-  const saveAllEntries = async () => {
+  const saveAllEntries = async (skipSwmsCheck = false) => {
     // Prevent double-clicking by checking if already saving
     if (isSaving) {
       console.log('⚠️ Save already in progress, ignoring duplicate click');
@@ -1124,6 +1131,55 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         variant: "default",
       });
       return;
+    }
+
+    // Check SWMS signing requirements for all jobs being saved (skip if already checked)
+    if (!skipSwmsCheck && !isAdminView) {
+      // Collect unique job IDs from entries being saved
+      const jobIdsInEntries = new Set<string>();
+      const leaveTypes = ['rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'public-holiday', 'leave-without-pay', 'tafe', 'no-job'];
+      
+      Object.values(timesheetData).forEach((dayEntries: any) => {
+        if (Array.isArray(dayEntries)) {
+          dayEntries.forEach((entry: any) => {
+            const hours = parseFloat(entry.hours || '0');
+            const isLeaveType = leaveTypes.includes(entry.jobId);
+            const isCustomAddress = entry.jobId && entry.jobId.startsWith('custom-');
+            
+            // Only check SWMS for actual jobs with hours
+            if (hours > 0 && entry.jobId && !isLeaveType && !isCustomAddress) {
+              jobIdsInEntries.add(entry.jobId);
+            }
+          });
+        }
+      });
+      
+      // Check SWMS signature status via API for each job (don't assume existing entries mean signed)
+      const jobIdsToCheck = Array.from(jobIdsInEntries);
+      
+      for (const jobId of jobIdsToCheck) {
+        try {
+          const response = await fetch(`/api/swms/check/${jobId}`, { credentials: 'include' });
+          if (response.ok) {
+            const data = await response.json();
+            if (!data.allSigned && data.unsignedCount > 0) {
+              // Need SWMS signing - find job address for display
+              const jobsList = Array.isArray(jobs) ? jobs : [];
+              const job = jobsList.find((j: any) => j.id === jobId);
+              const jobAddress = job?.jobAddress || job?.address || 'this job';
+              
+              setPendingSwmsJobId(jobId);
+              setPendingSwmsJobAddress(jobAddress);
+              setPendingSaveAfterSwms(true);
+              setShowSwmsModal(true);
+              return; // Stop here - will resume after signing
+            }
+          }
+        } catch (error) {
+          console.error('SWMS check failed:', error);
+          // Continue with save if SWMS check fails (fail-open for now)
+        }
+      }
     }
 
     setIsSaving(true);
@@ -1662,7 +1718,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button 
-                  onClick={saveAllEntries}
+                  onClick={() => saveAllEntries()}
                   variant="default"
                   disabled={updateTimesheetMutation.isPending}
                   className="bg-green-600 hover:bg-green-700"
@@ -2379,7 +2435,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <Button 
-              onClick={saveAllEntries}
+              onClick={() => saveAllEntries()}
               variant="default"
               disabled={isSaving || updateTimesheetMutation.isPending}
               className="bg-green-600 hover:bg-green-700"
@@ -3254,6 +3310,31 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           achievements={rewardData.achievements}
           description={rewardData.description}
           onClose={() => setRewardData(prev => ({ ...prev, show: false }))}
+        />
+        
+        {/* SWMS Signing Modal */}
+        <SwmsSigningModal
+          open={showSwmsModal}
+          onOpenChange={(open) => {
+            setShowSwmsModal(open);
+            if (!open) {
+              // If closed without completing, reset pending state
+              setPendingSaveAfterSwms(false);
+              setPendingSwmsJobId("");
+              setPendingSwmsJobAddress("");
+            }
+          }}
+          jobId={pendingSwmsJobId}
+          jobAddress={pendingSwmsJobAddress}
+          onSigningComplete={() => {
+            // After signing, continue with save (skip SWMS check this time)
+            if (pendingSaveAfterSwms) {
+              setPendingSaveAfterSwms(false);
+              setPendingSwmsJobId("");
+              setPendingSwmsJobAddress("");
+              saveAllEntries(true); // Skip SWMS check, continue with save
+            }
+          }}
         />
         
         </div>
