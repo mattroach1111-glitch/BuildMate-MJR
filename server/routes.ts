@@ -6507,7 +6507,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Send email with link and optional PDF attachment
       const { sendEmail } = await import('./services/emailService');
-      const viewUrl = `${process.env.REPLIT_DEV_DOMAIN || req.headers.origin}/quote/view/${token}`;
+      
+      // Build proper URL with https protocol
+      let baseUrl = req.headers.origin || '';
+      if (process.env.REPLIT_DEPLOYMENT_URL) {
+        baseUrl = `https://${process.env.REPLIT_DEPLOYMENT_URL}`;
+      } else if (process.env.REPLIT_DEV_DOMAIN) {
+        baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
+      } else if (!baseUrl.startsWith('http')) {
+        baseUrl = `https://${baseUrl}`;
+      }
+      const viewUrl = `${baseUrl}/quote/view/${token}`;
       
       const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || "quotes@mjrbuilders.com.au";
       
