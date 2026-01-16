@@ -3490,16 +3490,20 @@ export class DatabaseStorage implements IStorage {
       const quote = await this.getQuote(quoteId);
       if (!quote) throw new Error("Quote not found");
       
-      // Create the job
-      const newJob = await this.createJob({
-        jobAddress: quote.projectAddress || quote.clientAddress || "",
-        clientName: quote.clientName,
-        projectName: quote.projectDescription,
-        projectManager: "",
-        status: "new_job",
-        builderMargin: quote.builderMargin,
-        defaultHourlyRate: "50",
-      });
+      // Create the job with quote reference
+      const [newJob] = await db
+        .insert(jobs)
+        .values({
+          jobAddress: quote.projectAddress || quote.clientAddress || "",
+          clientName: quote.clientName,
+          projectName: quote.projectDescription,
+          projectManager: "",
+          status: "new_job",
+          builderMargin: quote.builderMargin,
+          defaultHourlyRate: "50",
+          sourceQuoteId: quoteId,
+        })
+        .returning();
       
       // Update quote with job reference
       await this.updateQuote(quoteId, {

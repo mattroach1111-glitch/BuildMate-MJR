@@ -640,6 +640,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storage.getTipFeesForJob(job.id),
       ]);
 
+      // Get linked quote if this job was created from a quote
+      let sourceQuote = null;
+      if (job.sourceQuoteId) {
+        const quote = await storage.getQuote(job.sourceQuoteId);
+        if (quote) {
+          const quoteItems = await storage.getQuoteItems(quote.id);
+          const signatures = await storage.getQuoteSignatures(quote.id);
+          sourceQuote = { ...quote, items: quoteItems, signature: signatures[0] || null };
+        }
+      }
+
       res.json({
         ...job,
         laborEntries,
@@ -647,6 +658,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subTrades,
         otherCosts,
         tipFees,
+        sourceQuote,
       });
     } catch (error) {
       console.error("Error fetching job:", error);

@@ -70,6 +70,7 @@ export const jobs = pgTable("jobs", {
   excludeFromTotal: boolean("exclude_from_total").notNull().default(false),
   isDeleted: boolean("is_deleted").default(false),
   deletedAt: timestamp("deleted_at"),
+  sourceQuoteId: varchar("source_quote_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

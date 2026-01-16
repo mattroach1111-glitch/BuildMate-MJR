@@ -358,7 +358,7 @@ export default function PublicQuoteView() {
               <Input
                 value={signerData.signerTitle}
                 onChange={(e) => setSignerData({ ...signerData, signerTitle: e.target.value })}
-                placeholder="e.g., Director, Project Manager"
+                placeholder="e.g., Home Owner"
               />
             </div>
             <div>

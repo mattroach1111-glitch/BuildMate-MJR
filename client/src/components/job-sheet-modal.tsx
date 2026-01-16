@@ -19,12 +19,17 @@ import { OrientationToggle } from "@/components/orientation-toggle";
 import { debounce } from "lodash";
 import { Upload, Download, Trash2, FileText, Clock, X, Edit, Mail, Users, RefreshCw, MessageSquare, Plus, Shield, CheckCircle2, FileSignature } from "lucide-react";
 import { SwmsSigningModal } from "@/components/SwmsSigningModal";
-import type { Job, LaborEntry, Material, SubTrade, OtherCost, TipFee, JobFile, JobNote } from "@shared/schema";
+import type { Job, LaborEntry, Material, SubTrade, OtherCost, TipFee, JobFile, JobNote, Quote, QuoteItem, QuoteSignature } from "@shared/schema";
 
 interface JobSheetModalProps {
   jobId: string;
   isOpen: boolean;
   onClose: () => void;
+}
+
+interface SourceQuote extends Quote {
+  items: QuoteItem[];
+  signature: QuoteSignature | null;
 }
 
 interface JobDetails extends Job {
@@ -33,6 +38,7 @@ interface JobDetails extends Job {
   subTrades: SubTrade[];
   otherCosts: OtherCost[];
   tipFees: TipFee[];
+  sourceQuote?: SourceQuote | null;
 }
 
 export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalProps) {
@@ -1901,8 +1907,65 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
           ) : (
             <div className="space-y-6 p-4 sm:p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
             
+            {/* Linked Quote Section */}
+            {jobDetails.sourceQuote && (
+              <Card className="border-blue-200 bg-blue-50/50">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-blue-800 flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Linked Quote: {jobDetails.sourceQuote.quoteNumber}
+                    </CardTitle>
+                    {jobDetails.sourceQuote.signature && (
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Accepted
+                      </span>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                    <div>
+                      <span className="text-blue-600 text-xs">Quoted Total</span>
+                      <p className="font-semibold">${parseFloat(jobDetails.sourceQuote.totalAmount).toLocaleString('en-AU', { minimumFractionDigits: 2 })}</p>
+                    </div>
+                    <div>
+                      <span className="text-blue-600 text-xs">Client</span>
+                      <p className="font-medium">{jobDetails.sourceQuote.clientName}</p>
+                    </div>
+                    {jobDetails.sourceQuote.signature && (
+                      <>
+                        <div>
+                          <span className="text-blue-600 text-xs">Signed By</span>
+                          <p className="font-medium">{jobDetails.sourceQuote.signature.signerName}</p>
+                        </div>
+                        <div>
+                          <span className="text-blue-600 text-xs">Accepted</span>
+                          <p className="font-medium">{new Date(jobDetails.sourceQuote.signature.signedAt!).toLocaleDateString('en-AU')}</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {jobDetails.sourceQuote.items && jobDetails.sourceQuote.items.length > 0 && (
+                    <details className="mt-3">
+                      <summary className="cursor-pointer text-xs text-blue-600 hover:text-blue-800">
+                        View {jobDetails.sourceQuote.items.length} quoted items
+                      </summary>
+                      <div className="mt-2 text-xs space-y-1 max-h-32 overflow-y-auto">
+                        {jobDetails.sourceQuote.items.map((item) => (
+                          <div key={item.id} className="flex justify-between py-1 border-b border-blue-100">
+                            <span>{item.description}</span>
+                            <span className="font-medium">${parseFloat(item.totalPrice).toLocaleString('en-AU', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
-            
             {/* Labour Section */}
             <Card>
               <CardHeader>
