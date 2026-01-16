@@ -3351,6 +3351,7 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         />
         
         {/* SWMS Signing Modal */}
+        {(() => { console.log('🎯 SWMS Modal in JSX - open:', showSwmsModal, 'jobId:', pendingSwmsJobId); return null; })()}
         <SwmsSigningModal
           open={showSwmsModal}
           onOpenChange={(open) => {
