@@ -6508,14 +6508,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send email with link and optional PDF attachment
       const { sendEmail } = await import('./services/emailService');
       
-      // Build proper URL with https protocol
-      let baseUrl = req.headers.origin || '';
-      if (process.env.REPLIT_DEPLOYMENT_URL) {
-        baseUrl = `https://${process.env.REPLIT_DEPLOYMENT_URL}`;
-      } else if (process.env.REPLIT_DEV_DOMAIN) {
-        baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
-      } else if (!baseUrl.startsWith('http')) {
-        baseUrl = `https://${baseUrl}`;
+      // Build proper URL with https protocol - use production domain if available
+      let baseUrl = '';
+      if (process.env.REPLIT_DOMAINS) {
+        // REPLIT_DOMAINS contains the production domain when deployed
+        const domains = process.env.REPLIT_DOMAINS.split(',');
+        baseUrl = `https://${domains[0]}`;
+      } else if (req.headers.origin && req.headers.origin.startsWith('http')) {
+        baseUrl = req.headers.origin;
+      } else if (req.headers.host) {
+        baseUrl = `https://${req.headers.host}`;
+      } else {
+        baseUrl = 'https://buildflowpro.replit.app';
       }
       const viewUrl = `${baseUrl}/quote/view/${token}`;
       

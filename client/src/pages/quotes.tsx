@@ -281,7 +281,7 @@ export default function QuotesPage() {
                     </p>
                   </div>
                   <div className="flex gap-2 mt-4" onClick={(e) => e.stopPropagation()}>
-                    {quote.status === "draft" && (
+                    {(quote.status === "draft" || quote.status === "sent" || quote.status === "viewed") && (
                       <>
                         <Button size="sm" variant="outline" onClick={() => fetchQuoteDetails(quote.id)}>
                           <Edit className="h-3 w-3 mr-1" />
@@ -290,7 +290,7 @@ export default function QuotesPage() {
                         {quote.clientEmail && (
                           <Button size="sm" onClick={() => sendQuoteMutation.mutate(quote.id)} disabled={sendQuoteMutation.isPending}>
                             <Mail className="h-3 w-3 mr-1" />
-                            Send
+                            {quote.status === "draft" ? "Send" : "Resend"}
                           </Button>
                         )}
                       </>
