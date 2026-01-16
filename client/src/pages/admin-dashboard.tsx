@@ -1732,6 +1732,16 @@ export default function AdminDashboard() {
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline font-medium">Organiser</span>
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/quotes")}
+              className="flex items-center gap-2 transition-all duration-200 border-cyan-200 text-cyan-600 hover:bg-cyan-50 hover:border-cyan-300 hover:shadow-md"
+              data-testid="tab-quotes"
+            >
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline font-medium">Quotes</span>
+            </Button>
           </div>
 
           {/* More Button - Opens App Grid Page */}
