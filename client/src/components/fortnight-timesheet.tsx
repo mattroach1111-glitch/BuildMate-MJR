@@ -2437,6 +2437,30 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           </CardContent>
           </Card>
         </div>
+        
+        {/* SWMS Signing Modal for Staff */}
+        {(() => { console.log('🎯 STAFF SWMS Modal in JSX - open:', showSwmsModal, 'jobId:', pendingSwmsJobId); return null; })()}
+        <SwmsSigningModal
+          open={showSwmsModal}
+          onOpenChange={(open) => {
+            setShowSwmsModal(open);
+            if (!open) {
+              setPendingSaveAfterSwms(false);
+              setPendingSwmsJobId("");
+              setPendingSwmsJobAddress("");
+            }
+          }}
+          jobId={pendingSwmsJobId}
+          jobAddress={pendingSwmsJobAddress}
+          onSigningComplete={() => {
+            if (pendingSaveAfterSwms) {
+              setPendingSaveAfterSwms(false);
+              setPendingSwmsJobId("");
+              setPendingSwmsJobAddress("");
+              saveAllEntries(true);
+            }
+          }}
+        />
       </>
     );
   }
