@@ -160,7 +160,7 @@ export function SwmsSigningModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+      <DialogContent className="w-[95vw] max-w-2xl max-h-[85vh] flex flex-col fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[100]">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-amber-500" />
