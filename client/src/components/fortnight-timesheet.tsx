@@ -1176,10 +1176,12 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
               const job = jobsList.find((j: any) => j.id === jobId);
               const jobAddress = job?.jobAddress || job?.address || 'this job';
               
+              console.log('📋 SWMS: Opening modal for job:', jobId, 'address:', jobAddress);
               setPendingSwmsJobId(jobId);
               setPendingSwmsJobAddress(jobAddress);
               setPendingSaveAfterSwms(true);
               setShowSwmsModal(true);
+              console.log('📋 SWMS: Modal state set to true, returning early');
               return; // Stop here - will resume after signing
             }
           }
