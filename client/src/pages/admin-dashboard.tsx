@@ -2720,6 +2720,21 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
 
+              {/* Quotes App */}
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-teal-50 to-teal-100 border-teal-200"
+                onClick={() => window.location.href = '/quotes'}
+                data-testid="app-quotes"
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-teal-500 rounded-full flex items-center justify-center">
+                    <FileText className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-medium text-sm">Quotes</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Create & send quotes</p>
+                </CardContent>
+              </Card>
+
               {/* Staff Notes App */}
               <Card 
                 className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200"

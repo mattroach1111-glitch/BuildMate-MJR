@@ -6,7 +6,7 @@ import { db, checkDbHealth } from "./db";
 import { 
   timesheetEntries, laborEntries, users, staffNotes, employees, staffMembers, 
   staffNotesEntries, rewardCatalog, rewardSettings, jobs, materials, subTrades, otherCosts, 
-  tipFees, jobFiles, jobNotes, jobUpdateNotes
+  tipFees, jobFiles, jobNotes, jobUpdateNotes, quotes
 } from "@shared/schema";
 import { eq, sql, desc } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
@@ -6299,6 +6299,326 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error reactivating SWMS template:", error);
       res.status(500).json({ message: "Failed to reactivate SWMS template" });
+    }
+  });
+
+  // =============================================================================
+  // QUOTING SYSTEM ROUTES
+  // =============================================================================
+
+  // Get all quotes
+  app.get("/api/quotes", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      const allQuotes = await storage.getQuotes();
+      res.json(allQuotes);
+    } catch (error) {
+      console.error("Error fetching quotes:", error);
+      res.status(500).json({ message: "Failed to fetch quotes" });
+    }
+  });
+
+  // Get single quote with items
+  app.get("/api/quotes/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      const quote = await storage.getQuote(req.params.id);
+      if (!quote) {
+        return res.status(404).json({ message: "Quote not found" });
+      }
+      const items = await storage.getQuoteItems(req.params.id);
+      const signatures = await storage.getQuoteSignatures(req.params.id);
+      res.json({ ...quote, items, signatures });
+    } catch (error) {
+      console.error("Error fetching quote:", error);
+      res.status(500).json({ message: "Failed to fetch quote" });
+    }
+  });
+
+  // Create new quote
+  app.post("/api/quotes", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const quoteNumber = await storage.getNextQuoteNumber();
+      const newQuote = await storage.createQuote({
+        ...req.body,
+        quoteNumber,
+        createdById: req.user.claims.sub,
+      });
+      
+      res.status(201).json(newQuote);
+    } catch (error) {
+      console.error("Error creating quote:", error);
+      res.status(500).json({ message: "Failed to create quote" });
+    }
+  });
+
+  // Update quote
+  app.patch("/api/quotes/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const updatedQuote = await storage.updateQuote(req.params.id, req.body);
+      res.json(updatedQuote);
+    } catch (error) {
+      console.error("Error updating quote:", error);
+      res.status(500).json({ message: "Failed to update quote" });
+    }
+  });
+
+  // Delete quote
+  app.delete("/api/quotes/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      await storage.deleteQuote(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting quote:", error);
+      res.status(500).json({ message: "Failed to delete quote" });
+    }
+  });
+
+  // Quote items CRUD
+  app.post("/api/quotes/:id/items", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const newItem = await storage.createQuoteItem({
+        ...req.body,
+        quoteId: req.params.id,
+      });
+      res.status(201).json(newItem);
+    } catch (error) {
+      console.error("Error creating quote item:", error);
+      res.status(500).json({ message: "Failed to create quote item" });
+    }
+  });
+
+  app.patch("/api/quotes/:quoteId/items/:itemId", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const updatedItem = await storage.updateQuoteItem(req.params.itemId, req.body);
+      res.json(updatedItem);
+    } catch (error) {
+      console.error("Error updating quote item:", error);
+      res.status(500).json({ message: "Failed to update quote item" });
+    }
+  });
+
+  app.delete("/api/quotes/:quoteId/items/:itemId", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      await storage.deleteQuoteItem(req.params.itemId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting quote item:", error);
+      res.status(500).json({ message: "Failed to delete quote item" });
+    }
+  });
+
+  // Get historical cost data for quoting
+  app.get("/api/quotes/historical-costs", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const historicalData = await storage.getHistoricalCostData();
+      res.json(historicalData);
+    } catch (error) {
+      console.error("Error fetching historical costs:", error);
+      res.status(500).json({ message: "Failed to fetch historical costs" });
+    }
+  });
+
+  // Send quote to client
+  app.post("/api/quotes/:id/send", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const quote = await storage.getQuote(req.params.id);
+      if (!quote) {
+        return res.status(404).json({ message: "Quote not found" });
+      }
+
+      if (!quote.clientEmail) {
+        return res.status(400).json({ message: "Quote has no client email" });
+      }
+
+      // Generate access token for client viewing
+      const crypto = await import('crypto');
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30); // 30 day expiry
+
+      await storage.createQuoteAccessToken({
+        quoteId: quote.id,
+        token,
+        expiresAt,
+      });
+
+      // Send email with link
+      const { sendEmail } = await import('./services/emailService');
+      const viewUrl = `${process.env.REPLIT_DEV_DOMAIN || req.headers.origin}/quote/view/${token}`;
+      
+      const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || "quotes@mjrbuilders.com.au";
+      
+      await sendEmail({
+        from: fromEmail,
+        to: quote.clientEmail,
+        subject: `Quote ${quote.quoteNumber} - ${quote.projectDescription}`,
+        text: `You have received a quote from MJR Builders.\n\nQuote Number: ${quote.quoteNumber}\nProject: ${quote.projectDescription}\nTotal: $${quote.totalAmount} (inc. GST)\n\nView and accept your quote here: ${viewUrl}\n\nThis link expires in 30 days.`,
+        html: `
+          <h2>Quote from MJR Builders</h2>
+          <p><strong>Quote Number:</strong> ${quote.quoteNumber}</p>
+          <p><strong>Project:</strong> ${quote.projectDescription}</p>
+          <p><strong>Total:</strong> $${parseFloat(quote.totalAmount).toLocaleString('en-AU', { minimumFractionDigits: 2 })} (inc. GST)</p>
+          <p><a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 6px;">View & Accept Quote</a></p>
+          <p><small>This link expires in 30 days.</small></p>
+        `,
+      });
+
+      // Update quote status
+      await storage.updateQuote(quote.id, { status: "sent" });
+      await db.update(quotes).set({ sentAt: new Date() }).where(eq(quotes.id, quote.id));
+
+      res.json({ success: true, message: "Quote sent successfully" });
+    } catch (error) {
+      console.error("Error sending quote:", error);
+      res.status(500).json({ message: "Failed to send quote" });
+    }
+  });
+
+  // Public: View quote by access token (no auth required)
+  app.get("/api/public/quote/:token", async (req, res) => {
+    try {
+      const quote = await storage.getQuoteByAccessToken(req.params.token);
+      if (!quote) {
+        return res.status(404).json({ message: "Quote not found or expired" });
+      }
+
+      // Mark as viewed if not already
+      if (quote.status === "sent") {
+        await storage.updateQuote(quote.id, { status: "viewed" });
+        await db.update(quotes).set({ viewedAt: new Date() }).where(eq(quotes.id, quote.id));
+      }
+
+      const items = await storage.getQuoteItems(quote.id);
+      res.json({ ...quote, items });
+    } catch (error) {
+      console.error("Error fetching public quote:", error);
+      res.status(500).json({ message: "Failed to fetch quote" });
+    }
+  });
+
+  // Public: Accept quote with signature (no auth required)
+  app.post("/api/public/quote/:token/accept", async (req, res) => {
+    try {
+      const { signerName, signerEmail, signerTitle, signatureData } = req.body;
+
+      if (!signerName || !signerEmail) {
+        return res.status(400).json({ message: "Signer name and email are required" });
+      }
+
+      const quote = await storage.getQuoteByAccessToken(req.params.token);
+      if (!quote) {
+        return res.status(404).json({ message: "Quote not found or expired" });
+      }
+
+      if (quote.status === "accepted") {
+        return res.status(400).json({ message: "Quote has already been accepted" });
+      }
+
+      // Create signature
+      await storage.createQuoteSignature({
+        quoteId: quote.id,
+        signerName,
+        signerEmail,
+        signerTitle,
+        signatureData,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      res.json({ success: true, message: "Quote accepted successfully" });
+    } catch (error) {
+      console.error("Error accepting quote:", error);
+      res.status(500).json({ message: "Failed to accept quote" });
+    }
+  });
+
+  // Public: Decline quote (no auth required)
+  app.post("/api/public/quote/:token/decline", async (req, res) => {
+    try {
+      const quote = await storage.getQuoteByAccessToken(req.params.token);
+      if (!quote) {
+        return res.status(404).json({ message: "Quote not found or expired" });
+      }
+
+      await storage.updateQuote(quote.id, { status: "declined" });
+      await db.update(quotes).set({ declinedAt: new Date() }).where(eq(quotes.id, quote.id));
+
+      res.json({ success: true, message: "Quote declined" });
+    } catch (error) {
+      console.error("Error declining quote:", error);
+      res.status(500).json({ message: "Failed to decline quote" });
+    }
+  });
+
+  // Convert accepted quote to job
+  app.post("/api/quotes/:id/convert", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const quote = await storage.getQuote(req.params.id);
+      if (!quote) {
+        return res.status(404).json({ message: "Quote not found" });
+      }
+
+      if (quote.status !== "accepted") {
+        return res.status(400).json({ message: "Only accepted quotes can be converted to jobs" });
+      }
+
+      const job = await storage.convertQuoteToJob(req.params.id);
+      res.json({ success: true, job });
+    } catch (error) {
+      console.error("Error converting quote to job:", error);
+      res.status(500).json({ message: "Failed to convert quote to job" });
     }
   });
 

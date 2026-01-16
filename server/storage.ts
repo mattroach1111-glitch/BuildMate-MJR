@@ -71,6 +71,18 @@ import {
   type InsertSwmsTemplate,
   type SwmsSignature,
   type InsertSwmsSignature,
+  quotes,
+  quoteItems,
+  quoteSignatures,
+  quoteAccessTokens,
+  type Quote,
+  type InsertQuote,
+  type QuoteItem,
+  type InsertQuoteItem,
+  type QuoteSignature,
+  type InsertQuoteSignature,
+  type QuoteAccessToken,
+  type InsertQuoteAccessToken,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sum, ne, gte, lte, lt, sql, isNull, or, ilike, inArray } from "drizzle-orm";
@@ -3149,6 +3161,355 @@ export class DatabaseStorage implements IStorage {
       return unsignedTemplates.length === 0;
     } catch (error) {
       console.error("Error checking SWMS signing status:", error);
+      throw error;
+    }
+  }
+
+  // =============================================================================
+  // QUOTING SYSTEM METHODS
+  // =============================================================================
+
+  async getQuotes(): Promise<Quote[]> {
+    try {
+      return await db
+        .select()
+        .from(quotes)
+        .orderBy(desc(quotes.createdAt));
+    } catch (error) {
+      console.error("Error getting quotes:", error);
+      throw error;
+    }
+  }
+
+  async getQuote(id: string): Promise<Quote | undefined> {
+    try {
+      const [quote] = await db
+        .select()
+        .from(quotes)
+        .where(eq(quotes.id, id));
+      return quote;
+    } catch (error) {
+      console.error("Error getting quote:", error);
+      throw error;
+    }
+  }
+
+  async getQuoteByNumber(quoteNumber: string): Promise<Quote | undefined> {
+    try {
+      const [quote] = await db
+        .select()
+        .from(quotes)
+        .where(eq(quotes.quoteNumber, quoteNumber));
+      return quote;
+    } catch (error) {
+      console.error("Error getting quote by number:", error);
+      throw error;
+    }
+  }
+
+  async getNextQuoteNumber(): Promise<string> {
+    try {
+      const year = new Date().getFullYear();
+      const prefix = `Q-${year}-`;
+      
+      // Get the latest quote number for this year
+      const [latestQuote] = await db
+        .select({ quoteNumber: quotes.quoteNumber })
+        .from(quotes)
+        .where(ilike(quotes.quoteNumber, `${prefix}%`))
+        .orderBy(desc(quotes.quoteNumber))
+        .limit(1);
+      
+      if (latestQuote) {
+        const lastNumber = parseInt(latestQuote.quoteNumber.replace(prefix, ''), 10);
+        return `${prefix}${String(lastNumber + 1).padStart(3, '0')}`;
+      }
+      
+      return `${prefix}001`;
+    } catch (error) {
+      console.error("Error getting next quote number:", error);
+      throw error;
+    }
+  }
+
+  async createQuote(quote: InsertQuote): Promise<Quote> {
+    try {
+      const [newQuote] = await db
+        .insert(quotes)
+        .values(quote)
+        .returning();
+      return newQuote;
+    } catch (error) {
+      console.error("Error creating quote:", error);
+      throw error;
+    }
+  }
+
+  async updateQuote(id: string, quote: Partial<InsertQuote>): Promise<Quote> {
+    try {
+      const [updatedQuote] = await db
+        .update(quotes)
+        .set({ ...quote, updatedAt: new Date() })
+        .where(eq(quotes.id, id))
+        .returning();
+      return updatedQuote;
+    } catch (error) {
+      console.error("Error updating quote:", error);
+      throw error;
+    }
+  }
+
+  async deleteQuote(id: string): Promise<void> {
+    try {
+      await db.delete(quotes).where(eq(quotes.id, id));
+    } catch (error) {
+      console.error("Error deleting quote:", error);
+      throw error;
+    }
+  }
+
+  async updateQuoteTotals(quoteId: string): Promise<Quote> {
+    try {
+      // Calculate totals from items
+      const items = await this.getQuoteItems(quoteId);
+      const subtotal = items.reduce((sum, item) => sum + parseFloat(item.totalPrice), 0);
+      const gstAmount = subtotal * 0.1; // 10% GST
+      const totalAmount = subtotal + gstAmount;
+
+      return await this.updateQuote(quoteId, {
+        subtotal: subtotal.toFixed(2),
+        gstAmount: gstAmount.toFixed(2),
+        totalAmount: totalAmount.toFixed(2),
+      });
+    } catch (error) {
+      console.error("Error updating quote totals:", error);
+      throw error;
+    }
+  }
+
+  // Quote Items
+  async getQuoteItems(quoteId: string): Promise<QuoteItem[]> {
+    try {
+      return await db
+        .select()
+        .from(quoteItems)
+        .where(eq(quoteItems.quoteId, quoteId))
+        .orderBy(quoteItems.sortOrder);
+    } catch (error) {
+      console.error("Error getting quote items:", error);
+      throw error;
+    }
+  }
+
+  async createQuoteItem(item: InsertQuoteItem): Promise<QuoteItem> {
+    try {
+      const [newItem] = await db
+        .insert(quoteItems)
+        .values(item)
+        .returning();
+      
+      // Update quote totals
+      await this.updateQuoteTotals(item.quoteId);
+      
+      return newItem;
+    } catch (error) {
+      console.error("Error creating quote item:", error);
+      throw error;
+    }
+  }
+
+  async updateQuoteItem(id: string, item: Partial<InsertQuoteItem>): Promise<QuoteItem> {
+    try {
+      const [updatedItem] = await db
+        .update(quoteItems)
+        .set(item)
+        .where(eq(quoteItems.id, id))
+        .returning();
+      
+      // Update quote totals
+      await this.updateQuoteTotals(updatedItem.quoteId);
+      
+      return updatedItem;
+    } catch (error) {
+      console.error("Error updating quote item:", error);
+      throw error;
+    }
+  }
+
+  async deleteQuoteItem(id: string): Promise<void> {
+    try {
+      // Get the item first to know which quote to update
+      const [item] = await db
+        .select()
+        .from(quoteItems)
+        .where(eq(quoteItems.id, id));
+      
+      if (item) {
+        await db.delete(quoteItems).where(eq(quoteItems.id, id));
+        await this.updateQuoteTotals(item.quoteId);
+      }
+    } catch (error) {
+      console.error("Error deleting quote item:", error);
+      throw error;
+    }
+  }
+
+  // Quote Signatures
+  async getQuoteSignatures(quoteId: string): Promise<QuoteSignature[]> {
+    try {
+      return await db
+        .select()
+        .from(quoteSignatures)
+        .where(eq(quoteSignatures.quoteId, quoteId));
+    } catch (error) {
+      console.error("Error getting quote signatures:", error);
+      throw error;
+    }
+  }
+
+  async createQuoteSignature(signature: InsertQuoteSignature): Promise<QuoteSignature> {
+    try {
+      const [newSignature] = await db
+        .insert(quoteSignatures)
+        .values(signature)
+        .returning();
+      
+      // Update quote status to accepted
+      await this.updateQuote(signature.quoteId, {
+        status: "accepted",
+      });
+      await db.update(quotes)
+        .set({ acceptedAt: new Date() })
+        .where(eq(quotes.id, signature.quoteId));
+      
+      return newSignature;
+    } catch (error) {
+      console.error("Error creating quote signature:", error);
+      throw error;
+    }
+  }
+
+  // Quote Access Tokens
+  async createQuoteAccessToken(token: InsertQuoteAccessToken): Promise<QuoteAccessToken> {
+    try {
+      const [newToken] = await db
+        .insert(quoteAccessTokens)
+        .values(token)
+        .returning();
+      return newToken;
+    } catch (error) {
+      console.error("Error creating quote access token:", error);
+      throw error;
+    }
+  }
+
+  async getQuoteByAccessToken(token: string): Promise<Quote | undefined> {
+    try {
+      const [accessToken] = await db
+        .select()
+        .from(quoteAccessTokens)
+        .where(
+          and(
+            eq(quoteAccessTokens.token, token),
+            gte(quoteAccessTokens.expiresAt, new Date())
+          )
+        );
+      
+      if (!accessToken) return undefined;
+      
+      // Mark token as used
+      await db.update(quoteAccessTokens)
+        .set({ usedAt: new Date() })
+        .where(eq(quoteAccessTokens.id, accessToken.id));
+      
+      return await this.getQuote(accessToken.quoteId);
+    } catch (error) {
+      console.error("Error getting quote by access token:", error);
+      throw error;
+    }
+  }
+
+  // Historical cost data for quoting
+  async getHistoricalCostData(): Promise<{
+    averageLaborRate: number;
+    materialsByDescription: Array<{ description: string; avgAmount: number; count: number }>;
+    subTradesByTrade: Array<{ trade: string; avgAmount: number; count: number }>;
+  }> {
+    try {
+      // Get average labor rate from completed jobs
+      const laborRates = await db
+        .select({ avgRate: sql<string>`AVG(${laborEntries.hourlyRate})` })
+        .from(laborEntries);
+      
+      // Get material costs grouped by description pattern
+      const materialCosts = await db
+        .select({
+          description: materials.description,
+          avgAmount: sql<string>`AVG(${materials.amount})`,
+          count: sql<number>`COUNT(*)`,
+        })
+        .from(materials)
+        .groupBy(materials.description)
+        .orderBy(desc(sql`COUNT(*)`))
+        .limit(50);
+      
+      // Get sub-trade costs grouped by trade type
+      const subTradeCosts = await db
+        .select({
+          trade: subTrades.trade,
+          avgAmount: sql<string>`AVG(${subTrades.amount})`,
+          count: sql<number>`COUNT(*)`,
+        })
+        .from(subTrades)
+        .groupBy(subTrades.trade)
+        .orderBy(desc(sql`COUNT(*)`))
+        .limit(30);
+      
+      return {
+        averageLaborRate: parseFloat(laborRates[0]?.avgRate || "50"),
+        materialsByDescription: materialCosts.map(m => ({
+          description: m.description,
+          avgAmount: parseFloat(m.avgAmount || "0"),
+          count: Number(m.count),
+        })),
+        subTradesByTrade: subTradeCosts.map(s => ({
+          trade: s.trade,
+          avgAmount: parseFloat(s.avgAmount || "0"),
+          count: Number(s.count),
+        })),
+      };
+    } catch (error) {
+      console.error("Error getting historical cost data:", error);
+      throw error;
+    }
+  }
+
+  // Convert quote to job
+  async convertQuoteToJob(quoteId: string): Promise<Job> {
+    try {
+      const quote = await this.getQuote(quoteId);
+      if (!quote) throw new Error("Quote not found");
+      
+      // Create the job
+      const newJob = await this.createJob({
+        jobAddress: quote.projectAddress || quote.clientAddress || "",
+        clientName: quote.clientName,
+        projectName: quote.projectDescription,
+        projectManager: "",
+        status: "new_job",
+        builderMargin: quote.builderMargin,
+        defaultHourlyRate: "50",
+      });
+      
+      // Update quote with job reference
+      await this.updateQuote(quoteId, {
+        status: "converted",
+        convertedToJobId: newJob.id,
+      });
+      
+      return newJob;
+    } catch (error) {
+      console.error("Error converting quote to job:", error);
       throw error;
     }
   }

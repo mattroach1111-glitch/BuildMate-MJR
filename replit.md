@@ -58,6 +58,7 @@ Data backup strategy: Comprehensive multi-location backup approach with automate
 - **Automatic PDF Backup**: Automated job sheet PDF generation and backup to Google Drive upon job deletion.
 - **System-Wide Google Drive Integration**: Centralized Google Drive OAuth tokens for company-wide access, shared by all admins.
 - **Admin Custom Address Job Assignment**: Admins can manually assign jobs to custom address timesheet entries.
+- **Quoting System**: Full quoting workflow with quote creation, line items (labor, materials, sub-trades, other, tip fees), Australian GST calculation, email delivery with access tokens, client-facing quote view, digital signature acceptance, status tracking (draft, sent, viewed, accepted, declined, converted), and quote-to-job conversion for accepted quotes.
 
 # External Dependencies
 

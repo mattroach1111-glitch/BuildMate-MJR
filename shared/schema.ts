@@ -902,3 +902,154 @@ export type SwmsTemplate = typeof swmsTemplates.$inferSelect;
 export type InsertSwmsTemplate = z.infer<typeof insertSwmsTemplateSchema>;
 export type SwmsSignature = typeof swmsSignatures.$inferSelect;
 export type InsertSwmsSignature = z.infer<typeof insertSwmsSignatureSchema>;
+
+// =============================================================================
+// QUOTING SYSTEM
+// =============================================================================
+
+// Main quotes table
+export const quotes = pgTable("quotes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  quoteNumber: varchar("quote_number").notNull().unique(), // e.g., "Q-2024-001"
+  clientName: varchar("client_name").notNull(),
+  clientEmail: varchar("client_email"),
+  clientPhone: varchar("client_phone"),
+  clientAddress: varchar("client_address"),
+  projectDescription: text("project_description").notNull(),
+  projectAddress: varchar("project_address"),
+  status: varchar("status", { 
+    enum: ["draft", "sent", "viewed", "accepted", "declined", "expired", "converted"] 
+  }).notNull().default("draft"),
+  subtotal: decimal("subtotal", { precision: 12, scale: 2 }).notNull().default("0"),
+  gstAmount: decimal("gst_amount", { precision: 12, scale: 2 }).notNull().default("0"),
+  totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull().default("0"),
+  builderMargin: decimal("builder_margin", { precision: 5, scale: 2 }).notNull().default("0"),
+  validUntil: date("valid_until"),
+  termsAndConditions: text("terms_and_conditions"),
+  notes: text("notes"),
+  convertedToJobId: varchar("converted_to_job_id").references(() => jobs.id, { onDelete: "set null" }),
+  createdById: varchar("created_by_id").notNull().references(() => users.id),
+  sentAt: timestamp("sent_at"),
+  viewedAt: timestamp("viewed_at"),
+  acceptedAt: timestamp("accepted_at"),
+  declinedAt: timestamp("declined_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Quote line items
+export const quoteItems = pgTable("quote_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  quoteId: varchar("quote_id").notNull().references(() => quotes.id, { onDelete: "cascade" }),
+  itemType: varchar("item_type", { 
+    enum: ["labor", "materials", "sub_trade", "other", "tip_fee"] 
+  }).notNull(),
+  description: text("description").notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull().default("1"),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  // Optional reference to historical job data used for pricing
+  sourceJobId: varchar("source_job_id").references(() => jobs.id, { onDelete: "set null" }),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Quote signatures for client acceptance
+export const quoteSignatures = pgTable("quote_signatures", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  quoteId: varchar("quote_id").notNull().references(() => quotes.id, { onDelete: "cascade" }),
+  signerName: varchar("signer_name").notNull(),
+  signerEmail: varchar("signer_email").notNull(),
+  signerTitle: varchar("signer_title"), // e.g., "Director", "Project Manager"
+  signatureData: text("signature_data"), // Base64 encoded signature image
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  signedAt: timestamp("signed_at").defaultNow(),
+});
+
+// Access tokens for client quote viewing/signing
+export const quoteAccessTokens = pgTable("quote_access_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  quoteId: varchar("quote_id").notNull().references(() => quotes.id, { onDelete: "cascade" }),
+  token: varchar("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Relations for quoting system
+export const quotesRelations = relations(quotes, ({ one, many }) => ({
+  createdBy: one(users, {
+    fields: [quotes.createdById],
+    references: [users.id],
+  }),
+  convertedToJob: one(jobs, {
+    fields: [quotes.convertedToJobId],
+    references: [jobs.id],
+  }),
+  items: many(quoteItems),
+  signatures: many(quoteSignatures),
+  accessTokens: many(quoteAccessTokens),
+}));
+
+export const quoteItemsRelations = relations(quoteItems, ({ one }) => ({
+  quote: one(quotes, {
+    fields: [quoteItems.quoteId],
+    references: [quotes.id],
+  }),
+  sourceJob: one(jobs, {
+    fields: [quoteItems.sourceJobId],
+    references: [jobs.id],
+  }),
+}));
+
+export const quoteSignaturesRelations = relations(quoteSignatures, ({ one }) => ({
+  quote: one(quotes, {
+    fields: [quoteSignatures.quoteId],
+    references: [quotes.id],
+  }),
+}));
+
+export const quoteAccessTokensRelations = relations(quoteAccessTokens, ({ one }) => ({
+  quote: one(quotes, {
+    fields: [quoteAccessTokens.quoteId],
+    references: [quotes.id],
+  }),
+}));
+
+// Insert schemas for quoting system
+export const insertQuoteSchema = createInsertSchema(quotes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  sentAt: true,
+  viewedAt: true,
+  acceptedAt: true,
+  declinedAt: true,
+});
+
+export const insertQuoteItemSchema = createInsertSchema(quoteItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertQuoteSignatureSchema = createInsertSchema(quoteSignatures).omit({
+  id: true,
+  signedAt: true,
+});
+
+export const insertQuoteAccessTokenSchema = createInsertSchema(quoteAccessTokens).omit({
+  id: true,
+  createdAt: true,
+  usedAt: true,
+});
+
+// Types for quoting system
+export type Quote = typeof quotes.$inferSelect;
+export type InsertQuote = z.infer<typeof insertQuoteSchema>;
+export type QuoteItem = typeof quoteItems.$inferSelect;
+export type InsertQuoteItem = z.infer<typeof insertQuoteItemSchema>;
+export type QuoteSignature = typeof quoteSignatures.$inferSelect;
+export type InsertQuoteSignature = z.infer<typeof insertQuoteSignatureSchema>;
+export type QuoteAccessToken = typeof quoteAccessTokens.$inferSelect;
+export type InsertQuoteAccessToken = z.infer<typeof insertQuoteAccessTokenSchema>;
