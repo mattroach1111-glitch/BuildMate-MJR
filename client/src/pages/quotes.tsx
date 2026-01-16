@@ -47,9 +47,11 @@ import {
   Mail,
   DollarSign,
   Building2,
-  RefreshCw
+  RefreshCw,
+  Download
 } from "lucide-react";
 import { Link } from "wouter";
+import { generateQuotePDF } from "@/lib/pdfGenerator";
 import type { Quote, QuoteItem } from "@shared/schema";
 
 type QuoteWithItems = Quote & { items: QuoteItem[]; signatures: any[] };
@@ -583,6 +585,34 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-2 pt-4 border-t">
+          <Button
+            variant="outline"
+            onClick={async () => {
+              try {
+                await generateQuotePDF({
+                  ...quote,
+                  createdAt: quote.createdAt?.toString() || new Date().toISOString(),
+                  acceptedAt: quote.acceptedAt?.toString() || null,
+                  validUntil: quote.validUntil?.toString() || null,
+                  signature: quote.signatures?.[0] ? {
+                    signerName: quote.signatures[0].signerName,
+                    signatureData: quote.signatures[0].signatureData,
+                    signedAt: quote.signatures[0].signedAt?.toString() || new Date().toISOString()
+                  } : null
+                });
+                toast({ title: "PDF downloaded" });
+              } catch (err) {
+                toast({ title: "Error", description: "Failed to generate PDF", variant: "destructive" });
+              }
+            }}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Download PDF
+          </Button>
         </div>
 
         <Dialog open={showAddItem} onOpenChange={setShowAddItem}>

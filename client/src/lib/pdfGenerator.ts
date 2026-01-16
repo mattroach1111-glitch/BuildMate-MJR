@@ -1214,3 +1214,302 @@ export async function generateJobListPDF(jobs: JobListItem[], managerName: strin
   const fileName = `${managerName.replace(/[^a-zA-Z0-9]/g, '-')}-job-list-${new Date().toISOString().split('T')[0]}.pdf`;
   doc.save(fileName);
 }
+
+// Quote PDF Generator - MJR-Builders branded template
+type QuoteForPDF = {
+  id: string;
+  quoteNumber: string;
+  clientName: string;
+  clientEmail: string | null;
+  clientPhone: string | null;
+  projectDescription: string;
+  projectAddress: string | null;
+  status: string;
+  validUntil: string | null;
+  builderMargin: string;
+  subtotal: string;
+  gstAmount: string;
+  totalAmount: string;
+  notes: string | null;
+  createdAt: string;
+  acceptedAt: string | null;
+  items: Array<{
+    id: string;
+    itemType: string;
+    description: string;
+    quantity: string;
+    unitPrice: string;
+    totalPrice: string;
+  }>;
+  signature?: {
+    signerName: string;
+    signatureData: string;
+    signedAt: string;
+  } | null;
+};
+
+export async function generateQuotePDF(quote: QuoteForPDF, download: boolean = true): Promise<jsPDF> {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.width;
+  const pageHeight = doc.internal.pageSize.height;
+  const marginLeft = 25;
+  const marginRight = 25;
+  const contentWidth = pageWidth - marginLeft - marginRight;
+  
+  let yPos = 25;
+
+  // === HEADER SECTION ===
+  // MJR-BUILDERS logo with roof graphic
+  doc.setFontSize(22);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  
+  // Draw underline for logo text
+  const logoText = 'MJR - BUILDERS';
+  const logoWidth = doc.getTextWidth(logoText);
+  const logoX = marginLeft;
+  doc.text(logoText, logoX, yPos);
+  
+  // Draw roof graphic (simple triangle above text)
+  const roofStartX = logoX + logoWidth + 2;
+  const roofEndX = roofStartX + 20;
+  const roofPeakX = roofStartX + 10;
+  const roofY = yPos - 3;
+  doc.setLineWidth(0.8);
+  doc.line(roofStartX, roofY, roofPeakX, roofY - 8);
+  doc.line(roofPeakX, roofY - 8, roofEndX, roofY);
+  
+  // Underline for company name
+  doc.setLineWidth(0.5);
+  doc.line(logoX, yPos + 2, logoX + logoWidth, yPos + 2);
+  
+  yPos += 15;
+  
+  // Company details - centered right of logo area
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  const companyDetails = [
+    'ABN 36 674 122 866',
+    'Telephone: 0459 200 766',
+    'T2/3 131 Main rd Moonah 7009',
+    'Admin@mjrbuilders.com.au'
+  ];
+  
+  const detailsX = 75;
+  companyDetails.forEach((line, index) => {
+    doc.text(line, detailsX, yPos + (index * 5), { align: 'left' });
+  });
+  
+  // HIA Member badge area (placeholder text)
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 100, 0);
+  doc.text('HIA', pageWidth - marginRight - 15, yPos);
+  doc.setFontSize(6);
+  doc.text('Member', pageWidth - marginRight - 18, yPos + 4);
+  
+  doc.setTextColor(0, 0, 0);
+  yPos += 30;
+  
+  // Horizontal line separator
+  doc.setDrawColor(150, 150, 150);
+  doc.setLineWidth(0.3);
+  doc.line(marginLeft, yPos, pageWidth - marginRight, yPos);
+  yPos += 15;
+  
+  // === DATE ===
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  const quoteDate = new Date(quote.createdAt).toLocaleDateString('en-AU', {
+    day: 'numeric',
+    month: 'numeric', 
+    year: 'numeric'
+  });
+  doc.text(`Date: ${quoteDate}`, marginLeft, yPos);
+  yPos += 15;
+  
+  // === CLIENT GREETING ===
+  const firstName = quote.clientName.split(' ')[0];
+  doc.text(`Dear ${firstName},`, marginLeft, yPos);
+  yPos += 15;
+  
+  // === PROJECT REFERENCE ===
+  doc.setFont('helvetica', 'bold');
+  const projectRef = quote.projectAddress || quote.projectDescription;
+  doc.text(`RE: ${projectRef}`, pageWidth / 2, yPos, { align: 'center' });
+  yPos += 20;
+  
+  // === SCOPE OF WORKS ===
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  
+  // Group items by type
+  const itemsByType: Record<string, typeof quote.items> = {};
+  quote.items.forEach(item => {
+    if (!itemsByType[item.itemType]) {
+      itemsByType[item.itemType] = [];
+    }
+    itemsByType[item.itemType].push(item);
+  });
+  
+  // Render items as bullet list (matching the template style)
+  const allItems = quote.items;
+  allItems.forEach((item) => {
+    // Check for page break
+    if (yPos > pageHeight - 80) {
+      doc.addPage();
+      yPos = 30;
+    }
+    
+    // Bullet point
+    doc.text('-', marginLeft, yPos);
+    
+    // Description with word wrap
+    const lines = doc.splitTextToSize(item.description, contentWidth - 10);
+    lines.forEach((line: string, lineIndex: number) => {
+      if (lineIndex > 0 && yPos > pageHeight - 50) {
+        doc.addPage();
+        yPos = 30;
+      }
+      doc.text(line, marginLeft + 8, yPos + (lineIndex * 5));
+    });
+    yPos += Math.max(lines.length * 5, 8) + 4;
+  });
+  
+  yPos += 15;
+  
+  // === ESTIMATE QUOTATION ===
+  if (yPos > pageHeight - 100) {
+    doc.addPage();
+    yPos = 30;
+  }
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  
+  const subtotal = parseFloat(quote.subtotal);
+  const total = parseFloat(quote.totalAmount);
+  
+  // Format as range or single value based on typical quote presentation
+  const formattedTotal = `$${total.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  doc.text(`Estimate Quotation of: ${formattedTotal} + GST`, marginLeft, yPos);
+  
+  yPos += 10;
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`(Subtotal: $${subtotal.toLocaleString('en-AU', { minimumFractionDigits: 2 })} | GST: $${parseFloat(quote.gstAmount).toLocaleString('en-AU', { minimumFractionDigits: 2 })} | Total inc. GST: $${total.toLocaleString('en-AU', { minimumFractionDigits: 2 })})`, marginLeft, yPos);
+  
+  yPos += 20;
+  
+  // === NOTES (if any) ===
+  if (quote.notes) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'italic');
+    const noteLines = doc.splitTextToSize(`Note: ${quote.notes}`, contentWidth);
+    noteLines.forEach((line: string, index: number) => {
+      doc.text(line, marginLeft, yPos + (index * 5));
+    });
+    yPos += noteLines.length * 5 + 10;
+  }
+  
+  // === VALIDITY ===
+  if (quote.validUntil) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    const validDate = new Date(quote.validUntil).toLocaleDateString('en-AU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+    doc.text(`This quote is valid until: ${validDate}`, marginLeft, yPos);
+    yPos += 15;
+  }
+  
+  // === KIND REGARDS & SIGNATURE ===
+  if (yPos > pageHeight - 80) {
+    doc.addPage();
+    yPos = 30;
+  }
+  
+  yPos += 10;
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Kind Regards,', marginLeft, yPos);
+  yPos += 25;
+  
+  // Signature line (placeholder for handwritten signature)
+  doc.setDrawColor(100, 100, 100);
+  doc.setLineWidth(0.3);
+  doc.line(marginLeft, yPos, marginLeft + 60, yPos);
+  yPos += 8;
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.text('Director', marginLeft, yPos);
+  yPos += 5;
+  doc.setFont('helvetica', 'normal');
+  doc.text('Matthew Roach', marginLeft, yPos);
+  
+  // === CLIENT ACCEPTANCE SECTION (if signed) ===
+  if (quote.signature) {
+    yPos += 25;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CLIENT ACCEPTANCE', marginLeft, yPos);
+    yPos += 10;
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(`Signed by: ${quote.signature.signerName}`, marginLeft, yPos);
+    yPos += 5;
+    
+    const signedDate = new Date(quote.signature.signedAt).toLocaleDateString('en-AU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    doc.text(`Date: ${signedDate}`, marginLeft, yPos);
+    yPos += 15;
+    
+    // Add the actual signature image if available
+    if (quote.signature.signatureData && quote.signature.signatureData.startsWith('data:image')) {
+      try {
+        doc.addImage(quote.signature.signatureData, 'PNG', marginLeft, yPos, 60, 20);
+        yPos += 25;
+      } catch (e) {
+        console.error('Failed to add signature image to PDF:', e);
+      }
+    }
+  }
+  
+  // === FOOTER ===
+  const footerY = pageHeight - 15;
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80, 80, 80);
+  
+  // Left side - company registration
+  doc.text('MJR-Builders Pty Limited   A.C.N 674 122 866', marginLeft, footerY);
+  
+  // Right side - builder's license
+  doc.text('Builders License no: cc6163t', pageWidth - marginRight, footerY, { align: 'right' });
+  
+  // Reset text color
+  doc.setTextColor(0, 0, 0);
+  
+  // Save or return the PDF
+  if (download) {
+    const fileName = `${quote.quoteNumber}-${quote.clientName.replace(/[^a-zA-Z0-9]/g, '-')}.pdf`;
+    doc.save(fileName);
+  }
+  
+  return doc;
+}
+
+// Generate quote PDF as base64 for email attachment
+export async function generateQuotePDFBase64(quote: QuoteForPDF): Promise<string> {
+  const doc = await generateQuotePDF(quote, false);
+  return doc.output('datauristring').split(',')[1]; // Return just the base64 part
+}
