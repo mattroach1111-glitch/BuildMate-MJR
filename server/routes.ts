@@ -2041,7 +2041,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const activeTemplates = templates.filter(t => t.isActive);
         
         if (activeTemplates.length > 0) {
-          const signatures = await storage.getSwmsSignaturesByEmployee(userId);
+          const signatures = await storage.getSwmsSignaturesForUser(userId);
           const signedTemplateIds = new Set(
             signatures
               .filter((s: any) => s.jobId === finalJobId)

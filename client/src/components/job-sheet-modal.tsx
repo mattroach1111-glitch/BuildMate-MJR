@@ -17,7 +17,8 @@ import { generateJobPDF } from "@/lib/pdfGenerator";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { OrientationToggle } from "@/components/orientation-toggle";
 import { debounce } from "lodash";
-import { Upload, Download, Trash2, FileText, Clock, X, Edit, Mail, Users, RefreshCw, MessageSquare, Plus, Shield, CheckCircle2 } from "lucide-react";
+import { Upload, Download, Trash2, FileText, Clock, X, Edit, Mail, Users, RefreshCw, MessageSquare, Plus, Shield, CheckCircle2, FileSignature } from "lucide-react";
+import { SwmsSigningModal } from "@/components/SwmsSigningModal";
 import type { Job, LaborEntry, Material, SubTrade, OtherCost, TipFee, JobFile, JobNote } from "@shared/schema";
 
 interface JobSheetModalProps {
@@ -87,6 +88,9 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   const [deletePassword, setDeletePassword] = useState('');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
+  // SWMS signing state for admins (voluntary signing)
+  const [showSwmsSigningModal, setShowSwmsSigningModal] = useState(false);
+  
   // Get the deletion password from localStorage (set in admin settings)
   const DELETION_PASSWORD = localStorage.getItem('buildflow-deletion-password') || 'Festool1!';
   const [editingLaborEntry, setEditingLaborEntry] = useState<string | null>(null);
@@ -134,6 +138,17 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     userName: string;
   }>>({
     queryKey: ["/api/swms/job", jobId, "signatures"],
+    enabled: isOpen && !!jobId,
+    retry: false,
+  });
+
+  // Check if current user has unsigned SWMS templates for this job
+  const { data: swmsCheckData, refetch: refetchSwmsCheck } = useQuery<{
+    allSigned: boolean;
+    unsignedCount: number;
+    unsignedTemplates: Array<{ id: string; title: string }>;
+  }>({
+    queryKey: ["/api/swms/check", jobId],
     enabled: isOpen && !!jobId,
     retry: false,
   });
@@ -3140,17 +3155,30 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
             </Card>
 
             {/* SWMS Signatures Section */}
-            {swmsSignatures.length > 0 && (
-              <Card>
-                <CardHeader>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Shield className="h-5 w-5 text-green-600" />
                     <CardTitle className="text-lg font-semibold text-gray-800">
                       SWMS Compliance Records
                     </CardTitle>
                   </div>
-                </CardHeader>
-                <CardContent>
+                  {/* Sign SWMS button - shown if user has unsigned templates */}
+                  {swmsCheckData && !swmsCheckData.allSigned && swmsCheckData.unsignedCount > 0 && (
+                    <Button
+                      onClick={() => setShowSwmsSigningModal(true)}
+                      size="sm"
+                      className="bg-amber-500 hover:bg-amber-600"
+                    >
+                      <FileSignature className="h-4 w-4 mr-2" />
+                      Sign SWMS ({swmsCheckData.unsignedCount})
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {swmsSignatures.length > 0 ? (
                   <div className="space-y-3">
                     <p className="text-sm text-gray-600 mb-4">
                       The following staff members have signed Safe Work Method Statements for this job:
@@ -3198,9 +3226,19 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                       </table>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                ) : (
+                  <div className="text-center py-6 text-gray-500">
+                    <Shield className="h-10 w-10 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">No SWMS signatures recorded for this job yet.</p>
+                    {swmsCheckData && !swmsCheckData.allSigned && swmsCheckData.unsignedCount > 0 && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        Click the "Sign SWMS" button above to sign safety documents.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Action Buttons - Fixed at bottom of content area - v2 */}
             <div className="flex flex-col sm:flex-row gap-3 w-full pt-4 border-t border-gray-200 mt-6 bg-white" id="bottom-action-buttons">
@@ -3538,6 +3576,30 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
         </DialogContent>
       </Dialog>
       
+      {/* SWMS Signing Modal for voluntary signing */}
+      <SwmsSigningModal
+        open={showSwmsSigningModal}
+        onOpenChange={(open) => {
+          setShowSwmsSigningModal(open);
+          if (!open) {
+            // Refresh signatures and check status when modal closes
+            queryClient.invalidateQueries({ queryKey: ["/api/swms/job", jobId, "signatures"] });
+            refetchSwmsCheck();
+          }
+        }}
+        jobId={jobId}
+        jobAddress={jobDetails?.jobAddress || 'this job'}
+        onSigningComplete={() => {
+          setShowSwmsSigningModal(false);
+          // Refresh data
+          queryClient.invalidateQueries({ queryKey: ["/api/swms/job", jobId, "signatures"] });
+          refetchSwmsCheck();
+          toast({
+            title: "SWMS Signed",
+            description: "All required safety documents have been signed for this job.",
+          });
+        }}
+      />
     </>
   );
 }
