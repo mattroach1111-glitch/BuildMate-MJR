@@ -79,7 +79,7 @@ const adminTimesheetFormSchema = insertTimesheetEntrySchema.extend({
 export default function AdminDashboard() {
   const { user, isAuthenticated, isLoading, isUsingBackup } = useAuth();
   const { toast } = useToast();
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const { 
     showWelcome, 
     showTour, 
@@ -4177,6 +4177,34 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* SWMS Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-green-600" />
+                  SWMS Management
+                </CardTitle>
+                <CardDescription>
+                  Manage Safe Work Method Statement templates for staff safety
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Upload and manage SWMS documents that staff must sign before logging hours on new jobs.
+                    Deactivated templates remain on job sheets where they were already signed.
+                  </p>
+                  <Button 
+                    variant="outline"
+                    onClick={() => navigate("/admin/swms")}
+                  >
+                    <Shield className="h-4 w-4 mr-2" />
+                    Manage SWMS Templates
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 

@@ -5928,6 +5928,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Get all SWMS templates (including inactive)
+  app.get("/api/swms/admin/templates", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const templates = await storage.getAllSwmsTemplates();
+      
+      // Add signature counts for each template
+      const templatesWithCounts = await Promise.all(
+        templates.map(async (template) => {
+          const signatureCount = await storage.getSwmsSignatureCountByTemplate(template.id);
+          return { ...template, signatureCount };
+        })
+      );
+      
+      res.json(templatesWithCounts);
+    } catch (error) {
+      console.error("Error fetching all SWMS templates:", error);
+      res.status(500).json({ message: "Failed to fetch SWMS templates" });
+    }
+  });
+
+  // Admin: Upload new SWMS template
+  app.post("/api/swms/admin/templates", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { title, description, fileData, fileName, mimeType } = req.body;
+      
+      if (!title || !fileData || !fileName) {
+        return res.status(400).json({ message: "Title, file data, and file name are required" });
+      }
+
+      // Validate mimeType
+      if (mimeType !== "application/pdf") {
+        return res.status(400).json({ message: "Only PDF files are allowed" });
+      }
+
+      // Decode base64 file data
+      const fileBuffer = Buffer.from(fileData, 'base64');
+      
+      // Upload to object storage
+      const objectStorageService = new ObjectStorageService();
+      const objectPath = await objectStorageService.saveBuffer(
+        fileBuffer,
+        fileName,
+        mimeType
+      );
+
+      // Get the highest current sort order and add 1
+      const existingTemplates = await storage.getAllSwmsTemplates();
+      const maxSortOrder = existingTemplates.reduce((max, t) => Math.max(max, t.sortOrder || 0), 0);
+
+      // Create the template record
+      const template = await storage.createSwmsTemplate({
+        title,
+        description: description || null,
+        fileName: fileName.replace(/[^a-zA-Z0-9.-]/g, '_'),
+        originalName: fileName,
+        objectPath,
+        mimeType,
+        isActive: true,
+        sortOrder: maxSortOrder + 1
+      });
+
+      console.log(`📋 Admin uploaded new SWMS template: ${title}`);
+      res.status(201).json(template);
+    } catch (error) {
+      console.error("Error uploading SWMS template:", error);
+      res.status(500).json({ message: "Failed to upload SWMS template" });
+    }
+  });
+
+  // Admin: Update SWMS template metadata
+  app.patch("/api/swms/admin/templates/:id", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { title, description, sortOrder } = req.body;
+      
+      const template = await storage.getSwmsTemplate(id);
+      if (!template) {
+        return res.status(404).json({ message: "SWMS template not found" });
+      }
+
+      const updates: any = {};
+      if (title !== undefined) updates.title = title;
+      if (description !== undefined) updates.description = description;
+      if (sortOrder !== undefined) updates.sortOrder = sortOrder;
+
+      const updatedTemplate = await storage.updateSwmsTemplate(id, updates);
+      console.log(`📋 Admin updated SWMS template: ${updatedTemplate.title}`);
+      res.json(updatedTemplate);
+    } catch (error) {
+      console.error("Error updating SWMS template:", error);
+      res.status(500).json({ message: "Failed to update SWMS template" });
+    }
+  });
+
+  // Admin: Deactivate SWMS template (soft delete)
+  app.patch("/api/swms/admin/templates/:id/deactivate", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      const template = await storage.getSwmsTemplate(id);
+      if (!template) {
+        return res.status(404).json({ message: "SWMS template not found" });
+      }
+
+      const updatedTemplate = await storage.updateSwmsTemplate(id, { isActive: false });
+      console.log(`📋 Admin deactivated SWMS template: ${updatedTemplate.title}`);
+      res.json({ success: true, template: updatedTemplate });
+    } catch (error) {
+      console.error("Error deactivating SWMS template:", error);
+      res.status(500).json({ message: "Failed to deactivate SWMS template" });
+    }
+  });
+
+  // Admin: Reactivate SWMS template
+  app.patch("/api/swms/admin/templates/:id/activate", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      const template = await storage.getSwmsTemplate(id);
+      if (!template) {
+        return res.status(404).json({ message: "SWMS template not found" });
+      }
+
+      const updatedTemplate = await storage.updateSwmsTemplate(id, { isActive: true });
+      console.log(`📋 Admin reactivated SWMS template: ${updatedTemplate.title}`);
+      res.json({ success: true, template: updatedTemplate });
+    } catch (error) {
+      console.error("Error reactivating SWMS template:", error);
+      res.status(500).json({ message: "Failed to reactivate SWMS template" });
+    }
+  });
+
   // Health check endpoint
   app.get("/api/health", async (req, res) => {
     try {

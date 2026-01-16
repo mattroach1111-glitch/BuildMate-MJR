@@ -258,10 +258,12 @@ export interface IStorage {
 
   // SWMS (Safe Work Method Statement) operations
   getSwmsTemplates(): Promise<SwmsTemplate[]>;
+  getAllSwmsTemplates(): Promise<SwmsTemplate[]>;
   getSwmsTemplate(id: string): Promise<SwmsTemplate | undefined>;
   createSwmsTemplate(template: InsertSwmsTemplate): Promise<SwmsTemplate>;
   updateSwmsTemplate(id: string, template: Partial<InsertSwmsTemplate>): Promise<SwmsTemplate>;
   deleteSwmsTemplate(id: string): Promise<void>;
+  getSwmsSignatureCountByTemplate(templateId: string): Promise<number>;
   getSwmsSignaturesForJob(jobId: string): Promise<SwmsSignature[]>;
   getSwmsSignaturesForUser(userId: string): Promise<SwmsSignature[]>;
   getSwmsSignature(templateId: string, jobId: string, userId: string): Promise<SwmsSignature | undefined>;
@@ -2953,6 +2955,18 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getAllSwmsTemplates(): Promise<SwmsTemplate[]> {
+    try {
+      return await db
+        .select()
+        .from(swmsTemplates)
+        .orderBy(swmsTemplates.sortOrder);
+    } catch (error) {
+      console.error("Error getting all SWMS templates:", error);
+      throw error;
+    }
+  }
+
   async getSwmsTemplate(id: string): Promise<SwmsTemplate | undefined> {
     try {
       const [template] = await db
@@ -3006,6 +3020,19 @@ export class DatabaseStorage implements IStorage {
       await db.delete(swmsTemplates).where(eq(swmsTemplates.id, id));
     } catch (error) {
       console.error("Error deleting SWMS template:", error);
+      throw error;
+    }
+  }
+
+  async getSwmsSignatureCountByTemplate(templateId: string): Promise<number> {
+    try {
+      const result = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(swmsSignatures)
+        .where(eq(swmsSignatures.templateId, templateId));
+      return Number(result[0]?.count || 0);
+    } catch (error) {
+      console.error("Error getting SWMS signature count:", error);
       throw error;
     }
   }

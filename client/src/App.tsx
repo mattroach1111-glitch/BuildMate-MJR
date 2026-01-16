@@ -21,6 +21,7 @@ import RewardsRules from "@/pages/rewards-rules";
 import AdminRewards from "@/pages/admin-rewards";
 import StaffOrganiser from "@/pages/staff-organiser";
 import SwmsDocuments from "@/pages/swms-documents";
+import AdminSwms from "@/pages/admin-swms";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -51,6 +52,7 @@ function Router() {
           <Route path="/rewards/rules" component={RewardsRules} />
           <Route path="/admin/rewards" component={AdminRewards} />
           <Route path="/swms" component={SwmsDocuments} />
+          <Route path="/admin/swms" component={AdminSwms} />
         </>
       ) : (
         <>
