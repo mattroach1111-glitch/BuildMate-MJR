@@ -6492,21 +6492,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get quote items for PDF
       const quoteItems = await storage.getQuoteItems(quote.id);
       
-      // Generate PDF attachment
-      const { generateQuotePDFBuffer } = await import('./services/quotePdfService');
-      const pdfBuffer = await generateQuotePDFBuffer({
-        ...quote,
-        items: quoteItems,
-        signature: null
-      });
+      // Try to generate PDF attachment (may fail in some environments)
+      let pdfBuffer: Buffer | null = null;
+      try {
+        const { generateQuotePDFBuffer } = await import('./services/quotePdfService');
+        pdfBuffer = await generateQuotePDFBuffer({
+          ...quote,
+          items: quoteItems,
+          signature: null
+        });
+      } catch (pdfError) {
+        console.error("PDF generation failed, sending email without attachment:", pdfError);
+      }
       
-      // Send email with link and PDF attachment
+      // Send email with link and optional PDF attachment
       const { sendEmail } = await import('./services/emailService');
       const viewUrl = `${process.env.REPLIT_DEV_DOMAIN || req.headers.origin}/quote/view/${token}`;
       
       const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || "quotes@mjrbuilders.com.au";
       
-      await sendEmail({
+      const emailOptions: any = {
         from: fromEmail,
         to: quote.clientEmail,
         subject: `Quote ${quote.quoteNumber} - ${quote.projectDescription}`,
@@ -6519,12 +6524,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           <p><a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 6px;">View & Accept Quote</a></p>
           <p><small>This link expires in 30 days.</small></p>
         `,
-        attachments: [{
+      };
+      
+      if (pdfBuffer) {
+        emailOptions.attachments = [{
           filename: `${quote.quoteNumber}.pdf`,
           content: pdfBuffer,
           contentType: 'application/pdf'
-        }]
-      });
+        }];
+      }
+      
+      await sendEmail(emailOptions);
 
       // Update quote status
       await storage.updateQuote(quote.id, { status: "sent" });
