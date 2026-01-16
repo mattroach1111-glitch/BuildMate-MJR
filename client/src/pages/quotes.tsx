@@ -602,26 +602,11 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label>Type</Label>
-                <Select value={newItem.itemType} onValueChange={(v: any) => setNewItem({ ...newItem, itemType: v })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="labor">Labour</SelectItem>
-                    <SelectItem value="materials">Materials</SelectItem>
-                    <SelectItem value="sub_trade">Sub-Trade</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                    <SelectItem value="tip_fee">Tip Fee</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
                 <Label>Description</Label>
                 <Input
                   value={newItem.description}
                   onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-                  placeholder="Item description"
+                  placeholder="e.g. Demolition of deck tiles and rubbish removal"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
