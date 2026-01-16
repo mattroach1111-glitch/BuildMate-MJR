@@ -1357,6 +1357,29 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
           successCount++;
         } catch (error: any) {
           console.error('❌ Entry save failed:', error);
+          
+          // Check if this is an SWMS signing requirement error from server
+          if (error?.message?.includes('SWMS') || error?.requiresSwms) {
+            // Server enforced SWMS requirement - show the modal
+            const jobId = entry.jobId;
+            const jobsList = Array.isArray(jobs) ? jobs : [];
+            const job = jobsList.find((j: any) => j.id === jobId);
+            const jobAddress = job?.jobAddress || job?.address || 'this job';
+            
+            setPendingSwmsJobId(jobId);
+            setPendingSwmsJobAddress(jobAddress);
+            setPendingSaveAfterSwms(true);
+            setShowSwmsModal(true);
+            setIsSaving(false);
+            
+            toast({
+              title: "SWMS Signing Required",
+              description: `You need to sign safety documents before logging hours for ${jobAddress}`,
+              variant: "default",
+            });
+            return; // Stop processing - modal will handle resuming
+          }
+          
           failureCount++;
           const errorMsg = error?.message || 'Unknown error';
           failureDetails.push(`Failed to save entry for ${entry.date}: ${errorMsg}`);
