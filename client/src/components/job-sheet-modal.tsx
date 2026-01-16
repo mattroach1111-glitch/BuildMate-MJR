@@ -17,7 +17,7 @@ import { generateJobPDF } from "@/lib/pdfGenerator";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { OrientationToggle } from "@/components/orientation-toggle";
 import { debounce } from "lodash";
-import { Upload, Download, Trash2, FileText, Clock, X, Edit, Mail, Users, RefreshCw, MessageSquare, Plus } from "lucide-react";
+import { Upload, Download, Trash2, FileText, Clock, X, Edit, Mail, Users, RefreshCw, MessageSquare, Plus, Shield, CheckCircle2 } from "lucide-react";
 import type { Job, LaborEntry, Material, SubTrade, OtherCost, TipFee, JobFile, JobNote } from "@shared/schema";
 
 interface JobSheetModalProps {
@@ -119,6 +119,21 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   // Get job notes
   const { data: jobNotes = [] } = useQuery<(JobNote & { user: any })[]>({
     queryKey: ["/api/jobs", jobId, "notes"],
+    enabled: isOpen && !!jobId,
+    retry: false,
+  });
+
+  // Get SWMS signatures for this job
+  const { data: swmsSignatures = [] } = useQuery<Array<{
+    id: string;
+    templateTitle: string;
+    templateActive: boolean;
+    signerName: string;
+    occupation: string;
+    signedAt: string;
+    userName: string;
+  }>>({
+    queryKey: ["/api/swms/job", jobId, "signatures"],
     enabled: isOpen && !!jobId,
     retry: false,
   });
@@ -1275,7 +1290,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
         googleDriveLink: file.googleDriveLink
       }));
       
-      await generateJobPDF(jobWithTimesheets, attachmentFiles);
+      await generateJobPDF(jobWithTimesheets, attachmentFiles, swmsSignatures);
       toast({
         title: "Success",
         description: `PDF downloaded with ${attachmentFiles.length} attached document${attachmentFiles.length === 1 ? '' : 's'}`,
@@ -1309,7 +1324,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       
       // Generate PDF as base64 data
       const { generateJobPDFBase64 } = await import("@/lib/pdfGenerator");
-      const pdfBase64 = await generateJobPDFBase64(jobWithTimesheets, attachmentFiles);
+      const pdfBase64 = await generateJobPDFBase64(jobWithTimesheets, attachmentFiles, swmsSignatures);
       
       // Send email data with PDF
       const response = await apiRequest("POST", `/api/jobs/${jobId}/email-pdf`, {
@@ -3123,6 +3138,69 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                 </div>
               </CardContent>
             </Card>
+
+            {/* SWMS Signatures Section */}
+            {swmsSignatures.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-green-600" />
+                    <CardTitle className="text-lg font-semibold text-gray-800">
+                      SWMS Compliance Records
+                    </CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600 mb-4">
+                      The following staff members have signed Safe Work Method Statements for this job:
+                    </p>
+                    <div className="border rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-3 py-2 text-left font-medium text-gray-700">Document</th>
+                            <th className="px-3 py-2 text-left font-medium text-gray-700">Signed By</th>
+                            <th className="px-3 py-2 text-left font-medium text-gray-700">Role</th>
+                            <th className="px-3 py-2 text-left font-medium text-gray-700">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {swmsSignatures.map((sig) => (
+                            <tr key={sig.id} className="hover:bg-gray-50">
+                              <td className="px-3 py-2">
+                                <div className="flex items-center gap-2">
+                                  <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                                  <span className={sig.templateActive ? "text-gray-900" : "text-gray-500"}>
+                                    {sig.templateTitle}
+                                  </span>
+                                  {!sig.templateActive && (
+                                    <span className="text-xs bg-gray-100 text-gray-500 px-1 py-0.5 rounded">
+                                      Archived
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-3 py-2 text-gray-900">{sig.signerName}</td>
+                              <td className="px-3 py-2 text-gray-600">{sig.occupation}</td>
+                              <td className="px-3 py-2 text-gray-600">
+                                {new Date(sig.signedAt).toLocaleDateString('en-AU', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Action Buttons - Fixed at bottom of content area - v2 */}
             <div className="flex flex-col sm:flex-row gap-3 w-full pt-4 border-t border-gray-200 mt-6 bg-white" id="bottom-action-buttons">

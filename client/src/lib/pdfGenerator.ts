@@ -55,7 +55,17 @@ type JobWithRelations = {
   }>;
 };
 
-export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Array<{id: string, originalName: string, objectPath: string | null, googleDriveLink?: string | null}>) {
+type SwmsSignatureForPDF = {
+  id: string;
+  templateTitle: string;
+  templateActive: boolean;
+  signerName: string;
+  occupation: string;
+  signedAt: string;
+  userName: string;
+};
+
+export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Array<{id: string, originalName: string, objectPath: string | null, googleDriveLink?: string | null}>, swmsSignatures?: SwmsSignatureForPDF[]) {
   const doc = new jsPDF();
   const pageHeight = doc.internal.pageSize.height;
   const marginBottom = 20;
@@ -498,6 +508,80 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
     }
   }
 
+  // Add SWMS Compliance section if any signatures exist
+  if (swmsSignatures && swmsSignatures.length > 0) {
+    doc.addPage();
+    yPos = 20;
+    
+    // SWMS header
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SWMS COMPLIANCE RECORDS', 20, yPos);
+    yPos += 8;
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Safe Work Method Statement signatures for this job:', 20, yPos);
+    yPos += 12;
+    
+    // Table header
+    doc.setFillColor(240, 240, 240);
+    doc.rect(20, yPos - 4, 170, 10, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text('Document', 22, yPos + 2);
+    doc.text('Signed By', 72, yPos + 2);
+    doc.text('Role', 112, yPos + 2);
+    doc.text('Date', 145, yPos + 2);
+    yPos += 12;
+    
+    // Signature rows
+    doc.setFont('helvetica', 'normal');
+    swmsSignatures.forEach((sig) => {
+      checkPageBreak(15);
+      
+      // Draw row border
+      doc.setDrawColor(200, 200, 200);
+      doc.line(20, yPos + 4, 190, yPos + 4);
+      
+      // Document name (truncate if too long)
+      const docName = sig.templateTitle.length > 25 
+        ? sig.templateTitle.substring(0, 22) + '...' 
+        : sig.templateTitle;
+      doc.text(docName, 22, yPos);
+      
+      // Signer name
+      const signerName = sig.signerName.length > 18
+        ? sig.signerName.substring(0, 15) + '...'
+        : sig.signerName;
+      doc.text(signerName, 72, yPos);
+      
+      // Role/occupation
+      const occupation = sig.occupation.length > 15
+        ? sig.occupation.substring(0, 12) + '...'
+        : sig.occupation;
+      doc.text(occupation, 112, yPos);
+      
+      // Date
+      const signedDate = new Date(sig.signedAt).toLocaleDateString('en-AU', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+      doc.text(signedDate, 145, yPos);
+      
+      yPos += 10;
+    });
+    
+    yPos += 10;
+    
+    // Footer note
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text('This record confirms that the above personnel have reviewed and signed the relevant SWMS documents.', 20, yPos);
+    doc.setTextColor(0, 0, 0);
+  }
+
   // Add compact attached files section if any
   if (attachedFiles && attachedFiles.length > 0) {
     // Force new page for attachments
@@ -545,7 +629,7 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
 }
 
 // Function to generate PDF as base64 string for email attachments
-export async function generateJobPDFBase64(job: JobWithRelations, attachedFiles?: Array<{id: string, originalName: string, objectPath: string | null, googleDriveLink?: string | null}>): Promise<string> {
+export async function generateJobPDFBase64(job: JobWithRelations, attachedFiles?: Array<{id: string, originalName: string, objectPath: string | null, googleDriveLink?: string | null}>, swmsSignatures?: SwmsSignatureForPDF[]): Promise<string> {
   const doc = new jsPDF();
   const pageHeight = doc.internal.pageSize.height;
   const marginBottom = 20;
@@ -899,6 +983,80 @@ export async function generateJobPDFBase64(job: JobWithRelations, attachedFiles?
   
   // Reset color
   doc.setTextColor(0, 0, 0);
+
+  // Add SWMS Compliance section if any signatures exist
+  if (swmsSignatures && swmsSignatures.length > 0) {
+    doc.addPage();
+    yPos = 20;
+    
+    // SWMS header
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SWMS COMPLIANCE RECORDS', 20, yPos);
+    yPos += 8;
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Safe Work Method Statement signatures for this job:', 20, yPos);
+    yPos += 12;
+    
+    // Table header
+    doc.setFillColor(240, 240, 240);
+    doc.rect(20, yPos - 4, 170, 10, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text('Document', 22, yPos + 2);
+    doc.text('Signed By', 72, yPos + 2);
+    doc.text('Role', 112, yPos + 2);
+    doc.text('Date', 145, yPos + 2);
+    yPos += 12;
+    
+    // Signature rows
+    doc.setFont('helvetica', 'normal');
+    swmsSignatures.forEach((sig) => {
+      checkPageBreak(15);
+      
+      // Draw row border
+      doc.setDrawColor(200, 200, 200);
+      doc.line(20, yPos + 4, 190, yPos + 4);
+      
+      // Document name (truncate if too long)
+      const docName = sig.templateTitle.length > 25 
+        ? sig.templateTitle.substring(0, 22) + '...' 
+        : sig.templateTitle;
+      doc.text(docName, 22, yPos);
+      
+      // Signer name
+      const signerName = sig.signerName.length > 18
+        ? sig.signerName.substring(0, 15) + '...'
+        : sig.signerName;
+      doc.text(signerName, 72, yPos);
+      
+      // Role/occupation
+      const occupation = sig.occupation.length > 15
+        ? sig.occupation.substring(0, 12) + '...'
+        : sig.occupation;
+      doc.text(occupation, 112, yPos);
+      
+      // Date
+      const signedDate = new Date(sig.signedAt).toLocaleDateString('en-AU', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+      doc.text(signedDate, 145, yPos);
+      
+      yPos += 10;
+    });
+    
+    yPos += 10;
+    
+    // Footer note
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text('This record confirms that the above personnel have reviewed and signed the relevant SWMS documents.', 20, yPos);
+    doc.setTextColor(0, 0, 0);
+  }
 
   // Add compact attached files section if any
   if (attachedFiles && attachedFiles.length > 0) {

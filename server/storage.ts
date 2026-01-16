@@ -265,6 +265,7 @@ export interface IStorage {
   deleteSwmsTemplate(id: string): Promise<void>;
   getSwmsSignatureCountByTemplate(templateId: string): Promise<number>;
   getSwmsSignaturesForJob(jobId: string): Promise<SwmsSignature[]>;
+  getSwmsSignaturesForJobWithDetails(jobId: string): Promise<Array<SwmsSignature & { template: SwmsTemplate | null; user: User | null }>>;
   getSwmsSignaturesForUser(userId: string): Promise<SwmsSignature[]>;
   getSwmsSignature(templateId: string, jobId: string, userId: string): Promise<SwmsSignature | undefined>;
   createSwmsSignature(signature: InsertSwmsSignature): Promise<SwmsSignature>;
@@ -3045,6 +3046,29 @@ export class DatabaseStorage implements IStorage {
         .where(eq(swmsSignatures.jobId, jobId));
     } catch (error) {
       console.error("Error getting SWMS signatures for job:", error);
+      throw error;
+    }
+  }
+
+  async getSwmsSignaturesForJobWithDetails(jobId: string): Promise<Array<SwmsSignature & { template: SwmsTemplate | null; user: User | null }>> {
+    try {
+      const signatures = await db
+        .select()
+        .from(swmsSignatures)
+        .where(eq(swmsSignatures.jobId, jobId))
+        .orderBy(swmsSignatures.signedAt);
+      
+      const result = await Promise.all(
+        signatures.map(async (sig) => {
+          const template = await this.getSwmsTemplate(sig.templateId);
+          const user = await this.getUser(sig.userId);
+          return { ...sig, template: template || null, user: user || null };
+        })
+      );
+      
+      return result;
+    } catch (error) {
+      console.error("Error getting SWMS signatures with details:", error);
       throw error;
     }
   }

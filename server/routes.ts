@@ -5844,6 +5844,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all SWMS signatures for a job with details (for job sheet display)
+  app.get("/api/swms/job/:jobId/signatures", isAuthenticated, async (req: any, res) => {
+    try {
+      const { jobId } = req.params;
+      const signatures = await storage.getSwmsSignaturesForJobWithDetails(jobId);
+      
+      // Format the response for display
+      const formattedSignatures = signatures.map(sig => ({
+        id: sig.id,
+        templateTitle: sig.template?.title || 'Unknown Template',
+        templateActive: sig.template?.isActive ?? false,
+        signerName: sig.signerName,
+        occupation: sig.occupation,
+        signedAt: sig.signedAt,
+        userName: sig.user ? `${sig.user.firstName || ''} ${sig.user.lastName || ''}`.trim() || sig.user.email : 'Unknown User'
+      }));
+      
+      res.json(formattedSignatures);
+    } catch (error) {
+      console.error("Error fetching job SWMS signatures:", error);
+      res.status(500).json({ message: "Failed to fetch SWMS signatures" });
+    }
+  });
+
   // Admin: Seed SWMS templates from attached files (one-time setup)
   app.post("/api/swms/seed", isAuthenticated, async (req: any, res) => {
     try {
