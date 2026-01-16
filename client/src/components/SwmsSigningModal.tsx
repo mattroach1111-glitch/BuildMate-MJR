@@ -57,15 +57,6 @@ export function SwmsSigningModal({
     enabled: open && !!jobId,
   });
 
-  // Debug logging for mobile issue
-  console.log('🔍 SwmsSigningModal render:', { 
-    open, 
-    jobId, 
-    isChecking, 
-    hasCheckResult: !!checkResult,
-    checkError: checkError ? String(checkError) : null 
-  });
-
   const signAllMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("POST", "/api/swms/sign-all", {
@@ -116,7 +107,6 @@ export function SwmsSigningModal({
   };
 
   if (isChecking) {
-    console.log('🔍 SwmsSigningModal: Rendering loading state');
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="w-[95vw] max-w-lg fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[100]">
@@ -141,7 +131,6 @@ export function SwmsSigningModal({
 
   // If query failed, show error in modal instead of returning null
   if (checkError) {
-    console.log('🔍 SwmsSigningModal: Rendering error state');
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="w-[95vw] max-w-lg fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[100]">
@@ -163,11 +152,8 @@ export function SwmsSigningModal({
   }
 
   if (!checkResult) {
-    console.log('🔍 SwmsSigningModal: No checkResult yet, returning null');
     return null;
   }
-
-  console.log('🔍 SwmsSigningModal: Rendering main dialog with', checkResult.unsignedCount, 'documents');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

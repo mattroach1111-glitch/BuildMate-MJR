@@ -1117,7 +1117,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
   const [isSaving, setIsSaving] = useState(false);
 
   const saveAllEntries = async (skipSwmsCheck = false) => {
-    console.log('🚀 saveAllEntries called, skipSwmsCheck:', skipSwmsCheck, 'isSaving:', isSaving);
     
     // Prevent double-clicking by checking if already saving
     if (isSaving) {
@@ -1126,7 +1125,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     }
 
     // If timesheetData is empty, there's nothing to save - this prevents unnecessary operations
-    console.log('📊 timesheetData keys:', Object.keys(timesheetData).length, timesheetData);
     if (Object.keys(timesheetData).length === 0) {
       toast({
         title: "No unsaved changes",
@@ -1137,7 +1135,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
     }
 
     // Check SWMS signing requirements for all jobs being saved (skip if already checked)
-    console.log('🔍 SWMS check - skipSwmsCheck:', skipSwmsCheck, 'isAdminView:', isAdminView);
     if (!skipSwmsCheck && !isAdminView) {
       // Collect unique job IDs from entries being saved
       const jobIdsInEntries = new Set<string>();
@@ -1160,28 +1157,21 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
       
       // Check SWMS signature status via API for each job (don't assume existing entries mean signed)
       const jobIdsToCheck = Array.from(jobIdsInEntries);
-      console.log('📋 SWMS: Jobs to check:', jobIdsToCheck);
-      
       for (const jobId of jobIdsToCheck) {
         try {
-          console.log('📋 SWMS: Checking job', jobId);
           const response = await fetch(`/api/swms/check/${jobId}`, { credentials: 'include' });
-          console.log('📋 SWMS: Response status', response.status);
           if (response.ok) {
             const data = await response.json();
-            console.log('📋 SWMS: Check result', data);
             if (!data.allSigned && data.unsignedCount > 0) {
               // Need SWMS signing - find job address for display
               const jobsList = Array.isArray(jobs) ? jobs : [];
               const job = jobsList.find((j: any) => j.id === jobId);
               const jobAddress = job?.jobAddress || job?.address || 'this job';
               
-              console.log('📋 SWMS: Opening modal for job:', jobId, 'address:', jobAddress);
               setPendingSwmsJobId(jobId);
               setPendingSwmsJobAddress(jobAddress);
               setPendingSaveAfterSwms(true);
               setShowSwmsModal(true);
-              console.log('📋 SWMS: Modal state set to true, returning early');
               return; // Stop here - will resume after signing
             }
           }
@@ -2439,7 +2429,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         </div>
         
         {/* SWMS Signing Modal for Staff */}
-        {(() => { console.log('🎯 STAFF SWMS Modal in JSX - open:', showSwmsModal, 'jobId:', pendingSwmsJobId); return null; })()}
         <SwmsSigningModal
           open={showSwmsModal}
           onOpenChange={(open) => {
@@ -3375,7 +3364,6 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
         />
         
         {/* SWMS Signing Modal */}
-        {(() => { console.log('🎯 SWMS Modal in JSX - open:', showSwmsModal, 'jobId:', pendingSwmsJobId); return null; })()}
         <SwmsSigningModal
           open={showSwmsModal}
           onOpenChange={(open) => {
