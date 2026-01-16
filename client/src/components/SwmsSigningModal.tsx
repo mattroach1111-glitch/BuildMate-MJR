@@ -53,7 +53,7 @@ export function SwmsSigningModal({
     unsignedTemplates: SwmsTemplate[];
     unsignedCount: number;
   }>({
-    queryKey: ["/api/swms/check", jobId],
+    queryKey: [`/api/swms/check/${jobId}`],
     enabled: open && !!jobId,
   });
 
@@ -72,7 +72,7 @@ export function SwmsSigningModal({
         title: "SWMS Signed",
         description: `Successfully signed ${data.signedCount} SWMS document(s)`,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/swms/check", jobId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/swms/check/${jobId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/swms/my-signatures"] });
       onSigningComplete();
       onOpenChange(false);
