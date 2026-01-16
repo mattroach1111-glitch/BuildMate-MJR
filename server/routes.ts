@@ -6489,7 +6489,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         expiresAt,
       });
 
-      // Send email with link
+      // Get quote items for PDF
+      const quoteItems = await storage.getQuoteItems(quote.id);
+      
+      // Generate PDF attachment
+      const { generateQuotePDFBuffer } = await import('./services/quotePdfService');
+      const pdfBuffer = await generateQuotePDFBuffer({
+        ...quote,
+        items: quoteItems,
+        signature: null
+      });
+      
+      // Send email with link and PDF attachment
       const { sendEmail } = await import('./services/emailService');
       const viewUrl = `${process.env.REPLIT_DEV_DOMAIN || req.headers.origin}/quote/view/${token}`;
       
@@ -6508,6 +6519,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           <p><a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 6px;">View & Accept Quote</a></p>
           <p><small>This link expires in 30 days.</small></p>
         `,
+        attachments: [{
+          filename: `${quote.quoteNumber}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf'
+        }]
       });
 
       // Update quote status
