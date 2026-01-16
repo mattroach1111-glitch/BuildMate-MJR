@@ -3167,7 +3167,10 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                   {/* Sign SWMS button - shown if user has unsigned templates */}
                   {swmsCheckData && !swmsCheckData.allSigned && swmsCheckData.unsignedCount > 0 && (
                     <Button
-                      onClick={() => setShowSwmsSigningModal(true)}
+                      onClick={() => {
+                        console.log('📝 Sign SWMS button clicked, setting showSwmsSigningModal to true');
+                        setShowSwmsSigningModal(true);
+                      }}
                       size="sm"
                       className="bg-amber-500 hover:bg-amber-600"
                     >

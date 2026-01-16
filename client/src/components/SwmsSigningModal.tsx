@@ -48,7 +48,7 @@ export function SwmsSigningModal({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: checkResult, isLoading: isChecking } = useQuery<{
+  const { data: checkResult, isLoading: isChecking, error: checkError } = useQuery<{
     allSigned: boolean;
     unsignedTemplates: SwmsTemplate[];
     unsignedCount: number;
@@ -56,6 +56,9 @@ export function SwmsSigningModal({
     queryKey: [`/api/swms/check/${jobId}`],
     enabled: open && !!jobId,
   });
+
+  // Debug logging for mobile issue
+  console.log('🔍 SwmsSigningModal state:', { open, jobId, isChecking, checkResult, checkError });
 
   const signAllMutation = useMutation({
     mutationFn: async () => {
@@ -127,6 +130,28 @@ export function SwmsSigningModal({
       onOpenChange(false);
     }, 0);
     return null;
+  }
+
+  // If query failed, show error in modal instead of returning null
+  if (checkError) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Error Loading SWMS
+            </DialogTitle>
+            <DialogDescription>
+              Failed to load SWMS requirements. Please try again.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => onOpenChange(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
   }
 
   if (!checkResult) {
