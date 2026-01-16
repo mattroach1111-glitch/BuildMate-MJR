@@ -58,7 +58,13 @@ export function SwmsSigningModal({
   });
 
   // Debug logging for mobile issue
-  console.log('🔍 SwmsSigningModal state:', { open, jobId, isChecking, checkResult, checkError });
+  console.log('🔍 SwmsSigningModal render:', { 
+    open, 
+    jobId, 
+    isChecking, 
+    hasCheckResult: !!checkResult,
+    checkError: checkError ? String(checkError) : null 
+  });
 
   const signAllMutation = useMutation({
     mutationFn: async () => {
@@ -110,9 +116,10 @@ export function SwmsSigningModal({
   };
 
   if (isChecking) {
+    console.log('🔍 SwmsSigningModal: Rendering loading state');
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="w-[95vw] max-w-lg fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[100]">
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <span className="ml-2">Checking SWMS requirements...</span>
@@ -134,9 +141,10 @@ export function SwmsSigningModal({
 
   // If query failed, show error in modal instead of returning null
   if (checkError) {
+    console.log('🔍 SwmsSigningModal: Rendering error state');
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="w-[95vw] max-w-lg fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[100]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-red-500" />
@@ -155,8 +163,11 @@ export function SwmsSigningModal({
   }
 
   if (!checkResult) {
+    console.log('🔍 SwmsSigningModal: No checkResult yet, returning null');
     return null;
   }
+
+  console.log('🔍 SwmsSigningModal: Rendering main dialog with', checkResult.unsignedCount, 'documents');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
