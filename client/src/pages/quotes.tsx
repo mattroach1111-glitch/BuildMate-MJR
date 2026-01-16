@@ -451,7 +451,6 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
   const { toast } = useToast();
   const [showAddItem, setShowAddItem] = useState(false);
   const [newItem, setNewItem] = useState({
-    itemType: "labor" as const,
     description: "",
     quantity: "1",
     unitPrice: "",
@@ -461,6 +460,7 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
     mutationFn: async (item: typeof newItem) => {
       const totalPrice = (parseFloat(item.quantity) * parseFloat(item.unitPrice)).toFixed(2);
       const response = await apiRequest("POST", `/api/quotes/${quote.id}/items`, {
+        itemType: "other",
         ...item,
         totalPrice,
       });
@@ -469,7 +469,7 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
     onSuccess: () => {
       onUpdate();
       setShowAddItem(false);
-      setNewItem({ itemType: "labor", description: "", quantity: "1", unitPrice: "" });
+      setNewItem({ description: "", quantity: "1", unitPrice: "" });
       toast({ title: "Item added" });
     },
     onError: () => {
@@ -487,19 +487,6 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
     },
   });
 
-  const itemTypeLabels: Record<string, string> = {
-    labor: "Labour",
-    materials: "Materials",
-    sub_trade: "Sub-Trade",
-    other: "Other",
-    tip_fee: "Tip Fee",
-  };
-
-  const itemsByType = quote.items.reduce((acc, item) => {
-    if (!acc[item.itemType]) acc[item.itemType] = [];
-    acc[item.itemType].push(item);
-    return acc;
-  }, {} as Record<string, QuoteItem[]>);
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -533,32 +520,25 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
               {quote.items.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">No items yet. Add line items to build your quote.</p>
               ) : (
-                <div className="space-y-4">
-                  {Object.entries(itemsByType).map(([type, items]) => (
-                    <div key={type}>
-                      <h4 className="font-medium text-sm text-gray-600 mb-2">{itemTypeLabels[type] || type}</h4>
-                      <div className="space-y-2">
-                        {items.map((item) => (
-                          <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div className="flex-1">
-                              <p className="font-medium text-sm">{item.description}</p>
-                              <p className="text-xs text-gray-500">
-                                {parseFloat(item.quantity)} x ${parseFloat(item.unitPrice).toFixed(2)}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className="font-semibold">${parseFloat(item.totalPrice).toFixed(2)}</span>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-red-600 h-8 w-8 p-0"
-                                onClick={() => deleteItemMutation.mutate(item.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
+                <div className="space-y-2">
+                  {quote.items.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{item.description}</p>
+                        <p className="text-xs text-gray-500">
+                          {parseFloat(item.quantity)} x ${parseFloat(item.unitPrice).toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-semibold">${parseFloat(item.totalPrice).toFixed(2)}</span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-600 h-8 w-8 p-0"
+                          onClick={() => deleteItemMutation.mutate(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   ))}
