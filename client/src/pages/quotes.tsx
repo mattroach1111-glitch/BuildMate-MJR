@@ -84,7 +84,7 @@ export default function QuotesPage() {
     validUntil: "",
     notes: "",
     builderMargin: "10",
-    director: "Matthew Roach",
+    director: "Matt Roach",
   });
 
   const { data: quotes = [], isLoading } = useQuery<Quote[]>({
@@ -109,7 +109,7 @@ export default function QuotesPage() {
         validUntil: "",
         notes: "",
         builderMargin: "10",
-        director: "Matthew Roach",
+        director: "Matt Roach",
       });
       toast({ title: "Success", description: "Quote created successfully" });
       fetchQuoteDetails(newQuote.id);
@@ -420,9 +420,9 @@ export default function QuotesPage() {
                   <SelectValue placeholder="Select director" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Matthew Roach">Matthew Roach</SelectItem>
-                  <SelectItem value="Mitchell Roach">Mitchell Roach</SelectItem>
-                  <SelectItem value="Jack Roach">Jack Roach</SelectItem>
+                  <SelectItem value="Matt Roach">Matt Roach</SelectItem>
+                  <SelectItem value="Will Scott">Will Scott</SelectItem>
+                  <SelectItem value="Mark Ede">Mark Ede</SelectItem>
                 </SelectContent>
               </Select>
             </div>

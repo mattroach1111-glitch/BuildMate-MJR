@@ -928,7 +928,7 @@ export const quotes = pgTable("quotes", {
   validUntil: date("valid_until"),
   termsAndConditions: text("terms_and_conditions"),
   notes: text("notes"),
-  director: varchar("director").notNull().default("Matthew Roach"),
+  director: varchar("director").notNull().default("Matt Roach"),
   convertedToJobId: varchar("converted_to_job_id").references(() => jobs.id, { onDelete: "set null" }),
   createdById: varchar("created_by_id").notNull().references(() => users.id),
   sentAt: timestamp("sent_at"),

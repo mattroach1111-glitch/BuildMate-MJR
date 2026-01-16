@@ -236,7 +236,7 @@ export async function generateQuotePDFBuffer(quote: QuoteForPDF): Promise<Buffer
   doc.text('Director', marginLeft, yPos);
   yPos += 5;
   doc.setFont('helvetica', 'normal');
-  const directorName = (quote as any).director || 'Matthew Roach';
+  const directorName = (quote as any).director || 'Matt Roach';
   doc.text(directorName, marginLeft, yPos);
   
   // Client acceptance section if signed
