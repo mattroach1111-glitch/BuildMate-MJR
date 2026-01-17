@@ -6914,49 +6914,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update cost library item
-  app.patch("/api/cost-library/:id", isAuthenticated, async (req: any, res) => {
-    try {
-      const [item] = await db.update(costLibraryItems)
-        .set({ ...req.body, updatedAt: new Date() })
-        .where(eq(costLibraryItems.id, req.params.id))
-        .returning();
-      res.json(item);
-    } catch (error) {
-      console.error("Error updating cost library item:", error);
-      res.status(500).json({ message: "Failed to update item" });
-    }
-  });
-
-  // Delete cost library item
-  app.delete("/api/cost-library/:id", isAuthenticated, async (req: any, res) => {
-    try {
-      await db.delete(costLibraryItems).where(eq(costLibraryItems.id, req.params.id));
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting cost library item:", error);
-      res.status(500).json({ message: "Failed to delete item" });
-    }
-  });
-
-  // Increment usage count when item is used in a quote
-  app.post("/api/cost-library/:id/use", isAuthenticated, async (req: any, res) => {
-    try {
-      const [item] = await db.update(costLibraryItems)
-        .set({ 
-          usageCount: sql`${costLibraryItems.usageCount} + 1`,
-          lastUsedAt: new Date()
-        })
-        .where(eq(costLibraryItems.id, req.params.id))
-        .returning();
-      res.json(item);
-    } catch (error) {
-      console.error("Error updating usage count:", error);
-      res.status(500).json({ message: "Failed to update usage" });
-    }
-  });
-
-  // Bulk update cost library items by category
+  // Bulk update cost library items by category (MUST be before :id routes)
   app.patch("/api/cost-library/bulk-update", isAuthenticated, async (req: any, res) => {
     try {
       const { categoryId, unit, action, value } = req.body;
@@ -7011,6 +6969,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error bulk updating cost library:", error);
       res.status(500).json({ message: "Failed to bulk update items" });
+    }
+  });
+
+  // Update cost library item
+  app.patch("/api/cost-library/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const [item] = await db.update(costLibraryItems)
+        .set({ ...req.body, updatedAt: new Date() })
+        .where(eq(costLibraryItems.id, req.params.id))
+        .returning();
+      res.json(item);
+    } catch (error) {
+      console.error("Error updating cost library item:", error);
+      res.status(500).json({ message: "Failed to update item" });
+    }
+  });
+
+  // Delete cost library item
+  app.delete("/api/cost-library/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      await db.delete(costLibraryItems).where(eq(costLibraryItems.id, req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting cost library item:", error);
+      res.status(500).json({ message: "Failed to delete item" });
+    }
+  });
+
+  // Increment usage count when item is used in a quote
+  app.post("/api/cost-library/:id/use", isAuthenticated, async (req: any, res) => {
+    try {
+      const [item] = await db.update(costLibraryItems)
+        .set({ 
+          usageCount: sql`${costLibraryItems.usageCount} + 1`,
+          lastUsedAt: new Date()
+        })
+        .where(eq(costLibraryItems.id, req.params.id))
+        .returning();
+      res.json(item);
+    } catch (error) {
+      console.error("Error updating usage count:", error);
+      res.status(500).json({ message: "Failed to update usage" });
     }
   });
 
@@ -7197,14 +7197,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Upload to Google Drive
       const googleDrive = new GoogleDriveService();
-      const driveFileId = await googleDrive.uploadFile(
-        fileBuffer,
+      googleDrive.setUserTokens(tokens);
+      const result = await googleDrive.uploadFile(
         document.fileName,
-        document.fileType || 'application/octet-stream',
-        tokens
+        fileBuffer,
+        document.fileType || 'application/octet-stream'
       );
       
-      res.json({ success: true, driveFileId });
+      res.json({ success: true, driveFileId: result.fileId });
     } catch (error) {
       console.error("Error backing up to Google Drive:", error);
       res.status(500).json({ message: "Failed to backup document" });
