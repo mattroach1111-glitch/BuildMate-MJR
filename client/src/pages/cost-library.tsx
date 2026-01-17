@@ -43,7 +43,8 @@ import {
   Package,
   ArrowLeft,
   FileUp,
-  Sparkles
+  Sparkles,
+  RefreshCw
 } from "lucide-react";
 import { Link } from "wouter";
 import type { CostCategory, CostLibraryItem, CostSourceDocument } from "@shared/schema";
@@ -56,6 +57,13 @@ export default function CostLibraryPage() {
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showUploadDoc, setShowUploadDoc] = useState(false);
   const [editingItem, setEditingItem] = useState<CostLibraryItem | null>(null);
+  const [showBulkUpdate, setShowBulkUpdate] = useState(false);
+  const [bulkUpdate, setBulkUpdate] = useState({
+    categoryId: "",
+    unit: "all",
+    action: "set",
+    value: "",
+  });
 
   const [newItem, setNewItem] = useState({
     name: "",
@@ -175,6 +183,22 @@ export default function CostLibraryPage() {
     },
   });
 
+  const bulkUpdateMutation = useMutation({
+    mutationFn: async (data: typeof bulkUpdate) => {
+      const response = await apiRequest("PATCH", "/api/cost-library/bulk-update", data);
+      return response.json();
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cost-library"] });
+      setShowBulkUpdate(false);
+      setBulkUpdate({ categoryId: "", unit: "all", action: "set", value: "" });
+      toast({ title: "Bulk update complete", description: `Updated ${result.affectedCount} items` });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update items", variant: "destructive" });
+    },
+  });
+
   const getCategoryName = (categoryId: string | null) => {
     if (!categoryId) return "Uncategorized";
     const cat = categories.find(c => c.id === categoryId);
@@ -207,6 +231,10 @@ export default function CostLibraryPage() {
             </div>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowBulkUpdate(true)}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Bulk Update
+            </Button>
             <Button variant="outline" onClick={() => setShowUploadDoc(true)}>
               <FileUp className="h-4 w-4 mr-2" />
               Upload Document
@@ -664,6 +692,109 @@ export default function CostLibraryPage() {
                 onClick={() => document.getElementById("doc-upload")?.click()}
               >
                 Select File
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showBulkUpdate} onOpenChange={setShowBulkUpdate}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Bulk Update Rates</DialogTitle>
+            <DialogDescription>
+              Update all items in a category at once
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Category *</Label>
+              <Select 
+                value={bulkUpdate.categoryId} 
+                onValueChange={(v) => setBulkUpdate({...bulkUpdate, categoryId: v})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Unit Filter</Label>
+              <Select 
+                value={bulkUpdate.unit} 
+                onValueChange={(v) => setBulkUpdate({...bulkUpdate, unit: v})}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Units</SelectItem>
+                  <SelectItem value="hour">Per Hour</SelectItem>
+                  <SelectItem value="day">Per Day</SelectItem>
+                  <SelectItem value="each">Each</SelectItem>
+                  <SelectItem value="m2">Per m²</SelectItem>
+                  <SelectItem value="m">Per Metre</SelectItem>
+                  <SelectItem value="lm">Per LM</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Action</Label>
+              <Select 
+                value={bulkUpdate.action} 
+                onValueChange={(v) => setBulkUpdate({...bulkUpdate, action: v})}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="set">Set Fixed Rate</SelectItem>
+                  <SelectItem value="percentage">Percentage Change</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>
+                {bulkUpdate.action === "set" ? "New Rate ($)" : "Percentage (+ or -)"}
+              </Label>
+              <Input
+                type="number"
+                step={bulkUpdate.action === "set" ? "0.01" : "1"}
+                placeholder={bulkUpdate.action === "set" ? "e.g. 85.00" : "e.g. 10 or -5"}
+                value={bulkUpdate.value}
+                onChange={(e) => setBulkUpdate({...bulkUpdate, value: e.target.value})}
+              />
+              {bulkUpdate.action === "percentage" && bulkUpdate.value && (
+                <p className="text-xs text-gray-500">
+                  {parseFloat(bulkUpdate.value) > 0 ? `+${bulkUpdate.value}%` : `${bulkUpdate.value}%`} change
+                </p>
+              )}
+            </div>
+            
+            <div className="flex gap-2 pt-4">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => setShowBulkUpdate(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                className="flex-1"
+                disabled={!bulkUpdate.categoryId || !bulkUpdate.value || bulkUpdateMutation.isPending}
+                onClick={() => bulkUpdateMutation.mutate(bulkUpdate)}
+              >
+                {bulkUpdateMutation.isPending ? "Updating..." : "Update All"}
               </Button>
             </div>
           </div>

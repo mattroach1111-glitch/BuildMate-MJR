@@ -9,7 +9,7 @@ import {
   tipFees, jobFiles, jobNotes, jobUpdateNotes, quotes, costCategories, costLibraryItems, 
   costSourceDocuments, costHistory
 } from "@shared/schema";
-import { eq, sql, desc } from "drizzle-orm";
+import { eq, sql, desc, and } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { TimesheetPDFGenerator } from "./pdfGenerator";
 import { GoogleDriveService, GoogleDriveError } from "./googleDriveService";
@@ -6898,6 +6898,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating usage count:", error);
       res.status(500).json({ message: "Failed to update usage" });
+    }
+  });
+
+  // Bulk update cost library items by category
+  app.patch("/api/cost-library/bulk-update", isAuthenticated, async (req: any, res) => {
+    try {
+      const { categoryId, unit, action, value } = req.body;
+      
+      if (!categoryId) {
+        return res.status(400).json({ message: "Category is required" });
+      }
+      
+      // Build conditions for the update
+      let conditions: any[] = [eq(costLibraryItems.categoryId, categoryId)];
+      if (unit && unit !== "all") {
+        conditions.push(eq(costLibraryItems.unit, unit));
+      }
+      
+      // Get items that will be affected for preview
+      const affectedItems = await db.select()
+        .from(costLibraryItems)
+        .where(and(...conditions));
+      
+      if (affectedItems.length === 0) {
+        return res.json({ affectedCount: 0, message: "No items matched the criteria" });
+      }
+      
+      // Calculate new values and update each item
+      const updates = affectedItems.map(item => {
+        let newCost: number;
+        const currentCost = parseFloat(item.defaultUnitCost);
+        
+        if (action === "set") {
+          newCost = parseFloat(value);
+        } else if (action === "percentage") {
+          const percentChange = parseFloat(value);
+          newCost = currentCost * (1 + percentChange / 100);
+        } else {
+          newCost = currentCost;
+        }
+        
+        return db.update(costLibraryItems)
+          .set({ 
+            defaultUnitCost: newCost.toFixed(2),
+            updatedAt: new Date()
+          })
+          .where(eq(costLibraryItems.id, item.id));
+      });
+      
+      await Promise.all(updates);
+      
+      res.json({ 
+        affectedCount: affectedItems.length,
+        message: `Updated ${affectedItems.length} items`
+      });
+    } catch (error) {
+      console.error("Error bulk updating cost library:", error);
+      res.status(500).json({ message: "Failed to bulk update items" });
     }
   });
 
