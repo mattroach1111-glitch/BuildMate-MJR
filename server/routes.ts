@@ -7527,9 +7527,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.json(estimate);
-    } catch (error) {
-      console.error("Error generating AI estimate:", error);
-      res.status(500).json({ message: "Failed to generate estimate. Please try again." });
+    } catch (error: any) {
+      console.error("Error generating AI estimate:", error?.message || error);
+      console.error("Full error details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+      res.status(500).json({ 
+        message: error?.message?.includes('API') || error?.message?.includes('Anthropic') 
+          ? "AI service error. Please try again."
+          : "Failed to generate estimate. Please try again."
+      });
     }
   });
 

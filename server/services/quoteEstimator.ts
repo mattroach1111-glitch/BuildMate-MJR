@@ -150,11 +150,17 @@ Be practical and realistic. This is an estimate to give the user a starting poin
 
     console.log('🖼️ Sending request to AI with', request.images?.length || 0, 'images');
 
-    const response = await this.anthropic.messages.create({
-      model: DEFAULT_MODEL,
-      max_tokens: 4096,
-      messages,
-    });
+    let response;
+    try {
+      response = await this.anthropic.messages.create({
+        model: DEFAULT_MODEL,
+        max_tokens: 4096,
+        messages,
+      });
+    } catch (apiError: any) {
+      console.error('Anthropic API error:', apiError?.message || apiError);
+      throw new Error(`AI API error: ${apiError?.message || 'Unknown error'}`);
+    }
 
     const textContent = response.content[0];
     if (textContent.type !== 'text') {
