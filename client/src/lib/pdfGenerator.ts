@@ -1392,7 +1392,7 @@ export async function generateQuotePDF(quote: QuoteForPDF, download: boolean = t
   
   // Format as range or single value based on typical quote presentation
   const formattedTotal = `$${total.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  doc.text(`Estimate Quotation of: ${formattedTotal} + GST`, marginLeft, yPos);
+  doc.text(`Estimate Quotation of: ${formattedTotal} (inc. GST)`, marginLeft, yPos);
   
   yPos += 20;
   
