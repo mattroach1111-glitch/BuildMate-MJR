@@ -255,7 +255,7 @@ export default function PublicQuoteView() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Quote Items
+              Scope of Works
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -264,14 +264,8 @@ export default function PublicQuoteView() {
                 <h4 className="font-medium text-sm text-gray-600 mb-2">{itemTypeLabels[type] || type}</h4>
                 <div className="space-y-2">
                   {items.map((item) => (
-                    <div key={item.id} className="flex justify-between items-start p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="font-medium">{item.description}</p>
-                        <p className="text-sm text-gray-500">
-                          {parseFloat(item.quantity)} x ${parseFloat(item.unitPrice).toFixed(2)}
-                        </p>
-                      </div>
-                      <span className="font-semibold">${parseFloat(item.totalPrice).toFixed(2)}</span>
+                    <div key={item.id} className="p-3 bg-gray-50 rounded-lg">
+                      <p className="font-medium">{item.description}</p>
                     </div>
                   ))}
                 </div>
@@ -282,27 +276,12 @@ export default function PublicQuoteView() {
 
         <Card className="mb-6">
           <CardContent className="pt-6">
-            <div className="space-y-3">
-              <div className="flex justify-between text-lg">
-                <span className="text-gray-600">Subtotal (ex GST)</span>
-                <span className="font-medium">${(() => {
-                  const subtotal = parseFloat(quote.subtotal);
-                  const margin = parseFloat(quote.builderMargin) || 0;
-                  const subtotalWithMargin = subtotal * (1 + margin / 100);
-                  return subtotalWithMargin.toLocaleString('en-AU', { minimumFractionDigits: 2 });
-                })()}</span>
-              </div>
-              <div className="flex justify-between text-lg">
-                <span className="text-gray-600">GST (10%)</span>
-                <span className="font-medium">${parseFloat(quote.gstAmount).toLocaleString('en-AU', { minimumFractionDigits: 2 })}</span>
-              </div>
-              <div className="flex justify-between text-2xl pt-3 border-t">
-                <span className="font-bold">Total (inc GST)</span>
-                <span className="font-bold text-green-600 flex items-center gap-1">
-                  <DollarSign className="h-6 w-6" />
-                  {parseFloat(quote.totalAmount).toLocaleString('en-AU', { minimumFractionDigits: 2 })}
-                </span>
-              </div>
+            <div className="flex justify-between text-2xl">
+              <span className="font-bold">Total (inc GST)</span>
+              <span className="font-bold text-green-600 flex items-center gap-1">
+                <DollarSign className="h-6 w-6" />
+                {parseFloat(quote.totalAmount).toLocaleString('en-AU', { minimumFractionDigits: 2 })}
+              </span>
             </div>
           </CardContent>
         </Card>
