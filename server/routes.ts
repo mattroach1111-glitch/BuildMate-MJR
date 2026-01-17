@@ -6363,6 +6363,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
       
+      // Validate deposit fields
+      if (req.body.depositRequired) {
+        if (!req.body.depositValue || isNaN(parseFloat(req.body.depositValue))) {
+          return res.status(400).json({ message: "Deposit value is required when deposit is enabled" });
+        }
+        if (!req.body.depositType || !["percentage", "fixed"].includes(req.body.depositType)) {
+          return res.status(400).json({ message: "Deposit type must be 'percentage' or 'fixed'" });
+        }
+        const depositValue = parseFloat(req.body.depositValue);
+        if (req.body.depositType === "percentage" && (depositValue < 0 || depositValue > 100)) {
+          return res.status(400).json({ message: "Deposit percentage must be between 0 and 100" });
+        }
+        if (req.body.depositType === "fixed" && depositValue < 0) {
+          return res.status(400).json({ message: "Fixed deposit amount must be 0 or greater" });
+        }
+      }
+      
       const quoteNumber = await storage.getNextQuoteNumber();
       const newQuote = await storage.createQuote({
         ...req.body,
@@ -6383,6 +6400,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(req.user.claims.sub);
       if (user?.role !== "admin") {
         return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      // Validate deposit fields if being updated
+      if (req.body.depositRequired) {
+        if (!req.body.depositValue || isNaN(parseFloat(req.body.depositValue))) {
+          return res.status(400).json({ message: "Deposit value is required when deposit is enabled" });
+        }
+        if (!req.body.depositType || !["percentage", "fixed"].includes(req.body.depositType)) {
+          return res.status(400).json({ message: "Deposit type must be 'percentage' or 'fixed'" });
+        }
+        const depositValue = parseFloat(req.body.depositValue);
+        if (req.body.depositType === "percentage" && (depositValue < 0 || depositValue > 100)) {
+          return res.status(400).json({ message: "Deposit percentage must be between 0 and 100" });
+        }
+        if (req.body.depositType === "fixed" && depositValue < 0) {
+          return res.status(400).json({ message: "Fixed deposit amount must be 0 or greater" });
+        }
       }
       
       await storage.updateQuote(req.params.id, req.body);

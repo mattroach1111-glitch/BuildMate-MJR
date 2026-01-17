@@ -624,6 +624,9 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
     projectDescription: quote.projectDescription,
     projectAddress: quote.projectAddress || "",
     notes: quote.notes || "",
+    depositRequired: quote.depositRequired || false,
+    depositType: (quote.depositType || "percentage") as "percentage" | "fixed",
+    depositValue: quote.depositValue || "10",
   });
 
   const { data: libraryItems = [] } = useQuery<any[]>({
@@ -983,6 +986,46 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
                       rows={2}
                     />
                   </div>
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-center gap-3 mb-3">
+                      <input
+                        type="checkbox"
+                        id="editDepositRequired"
+                        checked={editDetails.depositRequired}
+                        onChange={(e) => setEditDetails({ ...editDetails, depositRequired: e.target.checked })}
+                        className="h-4 w-4"
+                      />
+                      <Label htmlFor="editDepositRequired" className="font-medium">Require Deposit</Label>
+                    </div>
+                    {editDetails.depositRequired && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>Deposit Type</Label>
+                          <Select
+                            value={editDetails.depositType}
+                            onValueChange={(value) => setEditDetails({ ...editDetails, depositType: value as "percentage" | "fixed" })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="percentage">Percentage (%)</SelectItem>
+                              <SelectItem value="fixed">Fixed Amount ($)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>{editDetails.depositType === "percentage" ? "Deposit %" : "Deposit Amount"}</Label>
+                          <Input
+                            type="number"
+                            value={editDetails.depositValue}
+                            onChange={(e) => setEditDetails({ ...editDetails, depositValue: e.target.value })}
+                            placeholder={editDetails.depositType === "percentage" ? "10" : "1000"}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <Button
                     onClick={() => updateDetailsMutation.mutate(editDetails)}
                     disabled={!editDetails.clientName || !editDetails.projectDescription || updateDetailsMutation.isPending}
@@ -1022,6 +1065,14 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
                       <p className="font-medium">{quote.notes}</p>
                     </div>
                   )}
+                  <div className="col-span-2">
+                    <span className="text-gray-500">Deposit:</span>
+                    <p className="font-medium">
+                      {quote.depositRequired 
+                        ? `${quote.depositType === "percentage" ? `${quote.depositValue}%` : `$${parseFloat(quote.depositValue || "0").toFixed(2)}`} required`
+                        : "Not required"}
+                    </p>
+                  </div>
                 </div>
               )}
             </CardContent>

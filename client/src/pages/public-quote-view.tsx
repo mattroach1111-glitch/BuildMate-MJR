@@ -276,12 +276,29 @@ export default function PublicQuoteView() {
 
         <Card className="mb-6">
           <CardContent className="pt-6">
-            <div className="flex justify-between text-2xl">
-              <span className="font-bold">Total (inc GST)</span>
-              <span className="font-bold text-green-600 flex items-center gap-1">
-                <DollarSign className="h-6 w-6" />
-                {parseFloat(quote.totalAmount).toLocaleString('en-AU', { minimumFractionDigits: 2 })}
-              </span>
+            <div className="space-y-3">
+              <div className="flex justify-between text-2xl">
+                <span className="font-bold">Total (inc GST)</span>
+                <span className="font-bold text-green-600 flex items-center gap-1">
+                  <DollarSign className="h-6 w-6" />
+                  {parseFloat(quote.totalAmount).toLocaleString('en-AU', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+              {quote.depositRequired && (
+                <div className="flex justify-between text-lg pt-2 border-t border-dashed">
+                  <span className="text-gray-600">Deposit Required</span>
+                  <span className="font-semibold text-blue-600">
+                    ${(() => {
+                      const total = parseFloat(quote.totalAmount);
+                      const value = parseFloat(quote.depositValue) || 0;
+                      if (quote.depositType === "percentage") {
+                        return (total * value / 100).toLocaleString('en-AU', { minimumFractionDigits: 2 });
+                      }
+                      return value.toLocaleString('en-AU', { minimumFractionDigits: 2 });
+                    })()}
+                  </span>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
