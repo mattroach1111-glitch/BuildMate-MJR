@@ -550,10 +550,35 @@ export default function QuotesPage() {
 function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onClose: () => void; onUpdate: () => void }) {
   const { toast } = useToast();
   const [showAddItem, setShowAddItem] = useState(false);
+  const [showEditDetails, setShowEditDetails] = useState(false);
   const [newItem, setNewItem] = useState({
     description: "",
     quantity: "1",
     unitPrice: "",
+  });
+  const [editDetails, setEditDetails] = useState({
+    clientName: quote.clientName,
+    clientEmail: quote.clientEmail || "",
+    clientPhone: quote.clientPhone || "",
+    clientAddress: quote.clientAddress || "",
+    projectDescription: quote.projectDescription,
+    projectAddress: quote.projectAddress || "",
+    notes: quote.notes || "",
+  });
+
+  const updateDetailsMutation = useMutation({
+    mutationFn: async (data: typeof editDetails) => {
+      const response = await apiRequest("PATCH", `/api/quotes/${quote.id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      onUpdate();
+      setShowEditDetails(false);
+      toast({ title: "Details updated" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update details", variant: "destructive" });
+    },
   });
 
   const addItemMutation = useMutation({
@@ -606,6 +631,116 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
         </DialogHeader>
 
         <div className="space-y-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Customer & Project Details</CardTitle>
+                <Button size="sm" variant="outline" onClick={() => setShowEditDetails(!showEditDetails)}>
+                  <Edit className="h-4 w-4 mr-1" />
+                  {showEditDetails ? "Cancel" : "Edit"}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {showEditDetails ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Client Name *</Label>
+                      <Input
+                        value={editDetails.clientName}
+                        onChange={(e) => setEditDetails({ ...editDetails, clientName: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label>Client Email</Label>
+                      <Input
+                        type="email"
+                        value={editDetails.clientEmail}
+                        onChange={(e) => setEditDetails({ ...editDetails, clientEmail: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label>Client Phone</Label>
+                      <Input
+                        value={editDetails.clientPhone}
+                        onChange={(e) => setEditDetails({ ...editDetails, clientPhone: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label>Client Address</Label>
+                      <Input
+                        value={editDetails.clientAddress}
+                        onChange={(e) => setEditDetails({ ...editDetails, clientAddress: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Project Description *</Label>
+                    <Input
+                      value={editDetails.projectDescription}
+                      onChange={(e) => setEditDetails({ ...editDetails, projectDescription: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Project Address</Label>
+                    <Input
+                      value={editDetails.projectAddress}
+                      onChange={(e) => setEditDetails({ ...editDetails, projectAddress: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Notes</Label>
+                    <Textarea
+                      value={editDetails.notes}
+                      onChange={(e) => setEditDetails({ ...editDetails, notes: e.target.value })}
+                      rows={2}
+                    />
+                  </div>
+                  <Button
+                    onClick={() => updateDetailsMutation.mutate(editDetails)}
+                    disabled={!editDetails.clientName || !editDetails.projectDescription || updateDetailsMutation.isPending}
+                  >
+                    {updateDetailsMutation.isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-500">Client:</span>
+                    <p className="font-medium">{quote.clientName}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Email:</span>
+                    <p className="font-medium">{quote.clientEmail || "-"}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Phone:</span>
+                    <p className="font-medium">{quote.clientPhone || "-"}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Client Address:</span>
+                    <p className="font-medium">{quote.clientAddress || "-"}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-gray-500">Project:</span>
+                    <p className="font-medium">{quote.projectDescription}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-gray-500">Project Address:</span>
+                    <p className="font-medium">{quote.projectAddress || "-"}</p>
+                  </div>
+                  {quote.notes && (
+                    <div className="col-span-2">
+                      <span className="text-gray-500">Notes:</span>
+                      <p className="font-medium">{quote.notes}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
