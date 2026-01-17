@@ -7031,6 +7031,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk move items to a different category
+  app.post("/api/cost-library/bulk-move", isAuthenticated, async (req: any, res) => {
+    try {
+      const { itemIds, toCategoryId } = req.body;
+      
+      if (!toCategoryId || typeof toCategoryId !== 'string') {
+        return res.status(400).json({ message: "Target category is required" });
+      }
+      
+      if (!Array.isArray(itemIds) || itemIds.length === 0) {
+        return res.status(400).json({ message: "No items specified to move" });
+      }
+      
+      // Validate all IDs are strings
+      const validIds = itemIds.filter((id: any) => typeof id === 'string');
+      if (validIds.length === 0) {
+        return res.status(400).json({ message: "Invalid item IDs" });
+      }
+      
+      // Update all specified items
+      await db.update(costLibraryItems)
+        .set({ categoryId: toCategoryId, updatedAt: new Date() })
+        .where(sql`${costLibraryItems.id} IN (${sql.join(validIds.map((id: string) => sql`${id}`), sql`, `)})`);
+      
+      res.json({ 
+        affectedCount: validIds.length,
+        message: `Moved ${validIds.length} items to new category`
+      });
+    } catch (error) {
+      console.error("Error bulk moving items:", error);
+      res.status(500).json({ message: "Failed to move items" });
+    }
+  });
+
+  // Re-categorize all items (clears and re-runs auto-categorize with trade-specific logic)
+  app.post("/api/cost-library/recategorize-all", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      // Get all items
+      const allItems = await db.select().from(costLibraryItems);
+      
+      if (allItems.length === 0) {
+        return res.json({ affectedCount: 0, message: "No items found" });
+      }
+      
+      let recategorizedCount = 0;
+      const results: { itemId: string; itemName: string; oldCategoryId: string | null; newCategoryId: string | null }[] = [];
+      
+      for (const item of allItems) {
+        const suggestedCategoryId = await autoCategorize(item.name, item.description || undefined, item.tags || undefined);
+        
+        // Update if the suggested category is different (including null -> category or category -> null)
+        const newCategoryId = suggestedCategoryId || null;
+        if (newCategoryId !== item.categoryId) {
+          await db.update(costLibraryItems)
+            .set({ categoryId: newCategoryId, updatedAt: new Date() })
+            .where(eq(costLibraryItems.id, item.id));
+          recategorizedCount++;
+          results.push({ 
+            itemId: item.id, 
+            itemName: item.name, 
+            oldCategoryId: item.categoryId,
+            newCategoryId 
+          });
+        }
+      }
+      
+      res.json({ 
+        affectedCount: recategorizedCount,
+        total: allItems.length,
+        results,
+        message: `Re-categorized ${recategorizedCount} of ${allItems.length} items`
+      });
+    } catch (error) {
+      console.error("Error re-categorizing items:", error);
+      res.status(500).json({ message: "Failed to re-categorize items" });
+    }
+  });
+
   // Update cost library item
   app.patch("/api/cost-library/:id", isAuthenticated, async (req: any, res) => {
     try {

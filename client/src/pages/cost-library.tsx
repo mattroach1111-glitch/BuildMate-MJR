@@ -236,6 +236,47 @@ export default function CostLibraryPage() {
     },
   });
 
+  const recategorizeAll = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/cost-library/recategorize-all", {});
+      return response.json();
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cost-library"] });
+      toast({ 
+        title: "Re-categorize complete", 
+        description: result.affectedCount > 0 
+          ? `Fixed ${result.affectedCount} items (moved to correct trade categories)` 
+          : "All items are already correctly categorized"
+      });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to re-categorize", variant: "destructive" });
+    },
+  });
+
+  const bulkMove = useMutation({
+    mutationFn: async (data: { itemIds: string[]; toCategoryId: string }) => {
+      const response = await apiRequest("POST", "/api/cost-library/bulk-move", data);
+      return response.json();
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cost-library"] });
+      toast({ 
+        title: "Items moved", 
+        description: `Moved ${result.affectedCount} items to new category`
+      });
+      setShowMoveDialog(false);
+      setMoveToCategoryId("");
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to move items", variant: "destructive" });
+    },
+  });
+
+  const [showMoveDialog, setShowMoveDialog] = useState(false);
+  const [moveToCategoryId, setMoveToCategoryId] = useState<string>("");
+
   const getCategoryName = (categoryId: string | null) => {
     if (!categoryId) return "Uncategorized";
     const cat = categories.find(c => c.id === categoryId);
@@ -276,6 +317,30 @@ export default function CostLibraryPage() {
               <Wand2 className="h-4 w-4 mr-2" />
               {autoCategorize.isPending ? "Matching..." : "Auto-Categorize"}
             </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" disabled={recategorizeAll.isPending}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {recategorizeAll.isPending ? "Fixing..." : "Fix Categories"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Fix Miscategorized Items?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will re-check all items and move them to the correct trade category. 
+                    For example, plumber items will be moved from Carpentry to Plumbing.
+                    Items that are already correctly categorized will not change.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => recategorizeAll.mutate()}>
+                    Fix Categories
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <Button variant="outline" onClick={() => {
               // Pre-fill with currently selected category
               if (selectedCategory !== "all") {
@@ -383,8 +448,8 @@ export default function CostLibraryPage() {
           </div>
 
           <div className="lg:col-span-3">
-            <div className="mb-4">
-              <div className="relative">
+            <div className="mb-4 flex gap-2 items-center">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Search items..."
@@ -393,6 +458,15 @@ export default function CostLibraryPage() {
                   className="pl-10"
                 />
               </div>
+              {(searchTerm || selectedCategory !== "all") && items.length > 0 && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowMoveDialog(true)}
+                >
+                  Move {items.length} items
+                </Button>
+              )}
             </div>
 
             {isLoading ? (
@@ -950,6 +1024,64 @@ export default function CostLibraryPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Move Items Dialog */}
+      <Dialog open={showMoveDialog} onOpenChange={setShowMoveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Move Items to Category</DialogTitle>
+            <DialogDescription>
+              Move {items.length} filtered item{items.length !== 1 ? 's' : ''} to a different category.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Move to Category</Label>
+              <Select value={moveToCategoryId} onValueChange={setMoveToCategoryId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select target category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: cat.color || "#3b82f6" }}
+                        />
+                        {cat.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex gap-2 pt-4">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => {
+                  setShowMoveDialog(false);
+                  setMoveToCategoryId("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                className="flex-1"
+                disabled={!moveToCategoryId || bulkMove.isPending}
+                onClick={() => bulkMove.mutate({
+                  itemIds: items.map(item => item.id),
+                  toCategoryId: moveToCategoryId,
+                })}
+              >
+                {bulkMove.isPending ? "Moving..." : `Move ${items.length} Items`}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
