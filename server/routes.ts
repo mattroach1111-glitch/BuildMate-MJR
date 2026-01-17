@@ -6320,6 +6320,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // QUOTING SYSTEM ROUTES
   // =============================================================================
 
+  // Get count of unacknowledged accepted quotes (for notification badge)
+  app.get("/api/quotes/unacknowledged-count", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      const count = await storage.getUnacknowledgedAcceptedQuotesCount();
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching unacknowledged quotes count:", error);
+      res.status(500).json({ message: "Failed to fetch count" });
+    }
+  });
+
+  // Acknowledge all accepted quotes (marks them as seen by admin)
+  app.post("/api/quotes/acknowledge-accepted", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      await storage.acknowledgeAcceptedQuotes();
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error acknowledging quotes:", error);
+      res.status(500).json({ message: "Failed to acknowledge quotes" });
+    }
+  });
+
   // Get all quotes
   app.get("/api/quotes", isAuthenticated, async (req: any, res) => {
     try {

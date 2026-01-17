@@ -939,6 +939,7 @@ export const quotes = pgTable("quotes", {
   viewedAt: timestamp("viewed_at"),
   acceptedAt: timestamp("accepted_at"),
   declinedAt: timestamp("declined_at"),
+  adminAcknowledgedAt: timestamp("admin_acknowledged_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -1032,6 +1033,7 @@ export const insertQuoteSchema = createInsertSchema(quotes).omit({
   viewedAt: true,
   acceptedAt: true,
   declinedAt: true,
+  adminAcknowledgedAt: true,
 });
 
 export const insertQuoteItemSchema = createInsertSchema(quoteItems).omit({

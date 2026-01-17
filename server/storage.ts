@@ -3268,6 +3268,37 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getUnacknowledgedAcceptedQuotesCount(): Promise<number> {
+    try {
+      const result = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(quotes)
+        .where(and(
+          eq(quotes.status, "accepted"),
+          isNull(quotes.adminAcknowledgedAt)
+        ));
+      return result[0]?.count || 0;
+    } catch (error) {
+      console.error("Error getting unacknowledged quotes count:", error);
+      throw error;
+    }
+  }
+
+  async acknowledgeAcceptedQuotes(): Promise<void> {
+    try {
+      await db
+        .update(quotes)
+        .set({ adminAcknowledgedAt: new Date() })
+        .where(and(
+          eq(quotes.status, "accepted"),
+          isNull(quotes.adminAcknowledgedAt)
+        ));
+    } catch (error) {
+      console.error("Error acknowledging quotes:", error);
+      throw error;
+    }
+  }
+
   async updateQuoteTotals(quoteId: string): Promise<Quote> {
     try {
       // Get current quote for margin
