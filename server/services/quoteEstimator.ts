@@ -153,6 +153,8 @@ Be practical and realistic. This is an estimate to give the user a starting poin
     }];
 
     console.log('🖼️ Sending request to AI with', request.images?.length || 0, 'images');
+    console.log('📝 Using model:', DEFAULT_MODEL);
+    console.log('🔑 API key configured:', !!process.env.ANTHROPIC_API_KEY);
 
     let response;
     try {
@@ -161,8 +163,12 @@ Be practical and realistic. This is an estimate to give the user a starting poin
         max_tokens: 4096,
         messages,
       });
+      console.log('✅ AI response received successfully');
     } catch (apiError: any) {
-      console.error('Anthropic API error:', apiError?.message || apiError);
+      console.error('❌ Anthropic API error:', apiError?.message || apiError);
+      console.error('❌ Error status:', apiError?.status);
+      console.error('❌ Error type:', apiError?.error?.type);
+      console.error('❌ Error details:', JSON.stringify(apiError?.error || {}));
       throw new Error(`AI API error: ${apiError?.message || 'Unknown error'}`);
     }
 
