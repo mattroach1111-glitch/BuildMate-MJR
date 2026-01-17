@@ -7068,11 +7068,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { fileName, fileType, fileSize, fileContent, notes } = req.body;
       
-      // Create document record
+      // Store document permanently to Object Storage
+      let storageKey = null;
+      try {
+        const objectStorage = new ObjectStorageService();
+        const base64Data = fileContent.replace(/^data:[^;]+;base64,/, '');
+        const buffer = Buffer.from(base64Data, 'base64');
+        storageKey = await objectStorage.saveBuffer(buffer, fileName, fileType);
+        console.log(`Document stored to Object Storage: ${storageKey}`);
+      } catch (storageError) {
+        console.error("Object storage error (continuing without storage):", storageError);
+      }
+      
+      // Create document record with storage key
       const [document] = await db.insert(costSourceDocuments).values({
         fileName,
         fileType,
         fileSize,
+        storageKey,
         notes,
         uploadedBy: req.user?.claims?.sub,
         extractionStatus: "processing"
@@ -7107,7 +7120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         res.json({ 
           success: true, 
-          document,
+          document: { ...document, storageKey },
           extractedCount: extracted.items.length,
           items: extracted.items
         });
@@ -7119,7 +7132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         res.json({ 
           success: true, 
-          document,
+          document: { ...document, storageKey },
           extractedCount: 0,
           error: "AI extraction failed, document saved for manual review"
         });
@@ -7130,14 +7143,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete cost document
+  // Delete cost document (preserves extracted library items)
   app.delete("/api/cost-documents/:id", isAuthenticated, async (req: any, res) => {
     try {
+      // Get document to check for storage key
+      const [document] = await db.select().from(costSourceDocuments).where(eq(costSourceDocuments.id, req.params.id));
+      
+      // Delete from object storage if stored
+      if (document?.storageKey) {
+        try {
+          const objectStorage = new ObjectStorageService();
+          await objectStorage.delete(document.storageKey);
+        } catch (storageError) {
+          console.error("Error deleting from storage:", storageError);
+        }
+      }
+      
+      // Clear sourceDocumentId on library items (preserve the items)
+      await db.update(costLibraryItems)
+        .set({ sourceDocumentId: null })
+        .where(eq(costLibraryItems.sourceDocumentId, req.params.id));
+      
+      // Delete document record
       await db.delete(costSourceDocuments).where(eq(costSourceDocuments.id, req.params.id));
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting cost document:", error);
       res.status(500).json({ message: "Failed to delete document" });
+    }
+  });
+  
+  // Backup document to Google Drive
+  app.post("/api/cost-documents/:id/backup", isAuthenticated, async (req: any, res) => {
+    try {
+      const [document] = await db.select().from(costSourceDocuments).where(eq(costSourceDocuments.id, req.params.id));
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+      
+      // Check for system Google Drive tokens
+      const tokens = await storage.getSystemGoogleDriveTokens();
+      if (!tokens) {
+        return res.status(400).json({ message: "Google Drive not connected. Please connect Google Drive first." });
+      }
+      
+      // Get file from object storage
+      if (!document.storageKey) {
+        return res.status(400).json({ message: "Document file not stored. Cannot backup." });
+      }
+      
+      const objectStorage = new ObjectStorageService();
+      const fileBuffer = await objectStorage.getFileAsBuffer(document.storageKey);
+      
+      // Upload to Google Drive
+      const googleDrive = new GoogleDriveService();
+      const driveFileId = await googleDrive.uploadFile(
+        fileBuffer,
+        document.fileName,
+        document.fileType || 'application/octet-stream',
+        tokens
+      );
+      
+      res.json({ success: true, driveFileId });
+    } catch (error) {
+      console.error("Error backing up to Google Drive:", error);
+      res.status(500).json({ message: "Failed to backup document" });
     }
   });
 

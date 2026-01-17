@@ -265,6 +265,26 @@ export class ObjectStorageService {
     // Return the normalized object path for storage in database
     return `/objects/uploads/${objectId}_${sanitizedFileName}`;
   }
+
+  // Get a file as buffer from object storage
+  async getFileAsBuffer(objectPath: string): Promise<Buffer> {
+    const objectFile = await this.getObjectEntityFile(objectPath);
+    const [buffer] = await objectFile.download();
+    return buffer;
+  }
+
+  // Delete a file from object storage
+  async delete(objectPath: string): Promise<void> {
+    try {
+      const objectFile = await this.getObjectEntityFile(objectPath);
+      await objectFile.delete();
+    } catch (error) {
+      if (error instanceof ObjectNotFoundError) {
+        return; // Already deleted, ignore
+      }
+      throw error;
+    }
+  }
 }
 
 function parseObjectPath(path: string): {
