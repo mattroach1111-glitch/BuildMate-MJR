@@ -135,11 +135,31 @@ Return a JSON object with this structure:
 
 Be practical and realistic. This is an estimate to give the user a starting point - they will review and adjust.`;
 
-    const validImages = (request.images || []).filter(img => {
-      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-      const normalizedType = img.mimeType === 'image/jpg' ? 'image/jpeg' : img.mimeType;
-      return validTypes.includes(normalizedType) && img.data && img.data.length > 0;
-    });
+    // Detect actual image type from base64 data
+    const detectImageType = (base64Data: string): "image/jpeg" | "image/png" | "image/gif" | "image/webp" | null => {
+      const signatures: Record<string, "image/jpeg" | "image/png" | "image/gif" | "image/webp"> = {
+        '/9j/': 'image/jpeg',
+        'iVBORw0KGgo': 'image/png',
+        'R0lGOD': 'image/gif',
+        'UklGR': 'image/webp',
+      };
+      for (const [sig, type] of Object.entries(signatures)) {
+        if (base64Data.startsWith(sig)) return type;
+      }
+      return null;
+    };
+
+    const validImages = (request.images || [])
+      .map(img => {
+        const detectedType = detectImageType(img.data);
+        if (!detectedType) {
+          console.warn('⚠️ Could not detect image type, skipping');
+          return null;
+        }
+        console.log(`📷 Image detected as ${detectedType} (declared: ${img.mimeType})`);
+        return { data: img.data, mimeType: detectedType };
+      })
+      .filter((img): img is { data: string; mimeType: "image/jpeg" | "image/png" | "image/gif" | "image/webp" } => img !== null);
 
     console.log('🖼️ Valid images after filtering:', validImages.length);
 
@@ -149,13 +169,12 @@ Be practical and realistic. This is an estimate to give the user a starting poin
         ? [
             { type: "text", text: prompt },
             ...validImages.map(img => {
-              const normalizedType = img.mimeType === 'image/jpg' ? 'image/jpeg' : img.mimeType;
-              console.log('📷 Adding image with type:', normalizedType, 'data length:', img.data.length);
+              console.log('📷 Adding image with type:', img.mimeType, 'data length:', img.data.length);
               return {
                 type: "image" as const,
                 source: {
                   type: "base64" as const,
-                  media_type: normalizedType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+                  media_type: img.mimeType,
                   data: img.data,
                 },
               };
