@@ -251,6 +251,15 @@ export default function AdminDashboard() {
     enabled: !isUsingBackup, // Don't query if using backup auth
   });
 
+  // Get count of unacknowledged accepted quotes for notification badge
+  const { data: unacknowledgedQuotesData } = useQuery<{ count: number }>({
+    queryKey: ["/api/quotes/unacknowledged-count"],
+    retry: false,
+    enabled: !isUsingBackup,
+    refetchInterval: 60000, // Refresh every minute
+  });
+  const unacknowledgedQuotesCount = unacknowledgedQuotesData?.count || 0;
+
   // Safely filter valid staff members
   const validStaff = staffForTimesheets?.filter(staff => 
     staff && 
@@ -1736,11 +1745,16 @@ export default function AdminDashboard() {
               variant="outline"
               size="sm"
               onClick={() => navigate("/quotes")}
-              className="flex items-center gap-2 transition-all duration-200 border-cyan-200 text-cyan-600 hover:bg-cyan-50 hover:border-cyan-300 hover:shadow-md"
+              className="flex items-center gap-2 transition-all duration-200 border-cyan-200 text-cyan-600 hover:bg-cyan-50 hover:border-cyan-300 hover:shadow-md relative"
               data-testid="tab-quotes"
             >
               <FileText className="h-4 w-4" />
               <span className="hidden sm:inline font-medium">Quotes</span>
+              {unacknowledgedQuotesCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                  {unacknowledgedQuotesCount > 9 ? '9+' : unacknowledgedQuotesCount}
+                </span>
+              )}
             </Button>
           </div>
 

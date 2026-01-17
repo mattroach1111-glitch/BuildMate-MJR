@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -103,6 +103,20 @@ export default function QuotesPage() {
   const { data: quotes = [], isLoading } = useQuery<Quote[]>({
     queryKey: ["/api/quotes"],
   });
+
+  // Acknowledge any unread accepted quotes when the page loads
+  useEffect(() => {
+    const acknowledgeQuotes = async () => {
+      try {
+        await apiRequest("POST", "/api/quotes/acknowledge-accepted");
+        // Invalidate the count query so the badge updates
+        queryClient.invalidateQueries({ queryKey: ["/api/quotes/unacknowledged-count"] });
+      } catch (error) {
+        // Silently fail - not critical
+      }
+    };
+    acknowledgeQuotes();
+  }, []);
 
   const createQuoteMutation = useMutation({
     mutationFn: async (data: typeof newQuoteData) => {
