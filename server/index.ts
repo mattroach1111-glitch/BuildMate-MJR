@@ -54,11 +54,13 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
-// Request timeout middleware with special handling for email processing
+// Request timeout middleware with special handling for AI processing
 app.use((req: any, res, next) => {
-  // Email processing needs longer timeout due to AI document processing
-  const isEmailProcessing = req.path === '/api/email-inbox/process';
-  const timeoutDuration = isEmailProcessing ? 300000 : 30000; // 5 minutes for email processing, 30 seconds for others
+  // AI processing endpoints need longer timeout
+  const isLongRunning = req.path === '/api/email-inbox/process' || 
+                        req.path === '/api/quotes/ai-estimate' ||
+                        req.path === '/api/quotes/ai-suggest';
+  const timeoutDuration = isLongRunning ? 120000 : 30000; // 2 minutes for AI processing, 30 seconds for others
   
   console.log(`⏰ Setting timeout: ${timeoutDuration/1000}s for ${req.method} ${req.path}`);
   
