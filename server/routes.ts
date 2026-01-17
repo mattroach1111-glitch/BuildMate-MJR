@@ -6855,22 +6855,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Auto-categorize function
+  // Auto-categorize function with trade-specific matching
   async function autoCategorize(itemName: string, itemDescription?: string, itemTags?: string): Promise<string | null> {
     const categories = await db.select().from(costCategories);
     if (categories.length === 0) return null;
     
     const searchText = `${itemName} ${itemDescription || ""} ${itemTags || ""}`.toLowerCase();
     
+    // Trade-specific terms that should be prioritized and mutually exclusive
+    const tradeTerms: Record<string, string[]> = {
+      'plumber': ['plumber', 'plumbing', 'pipe', 'drain', 'tap', 'toilet', 'shower', 'bath', 'sewage', 'water heater'],
+      'carpenter': ['carpenter', 'carpentry', 'timber', 'wood', 'framing', 'joinery', 'cabinet'],
+      'electrician': ['electrician', 'electrical', 'wiring', 'power point', 'switchboard', 'light fitting'],
+      'painter': ['painter', 'painting', 'paint', 'wallpaper', 'coating'],
+      'tiler': ['tiler', 'tiling', 'tile', 'grout'],
+      'bricklayer': ['bricklayer', 'brickwork', 'brick', 'masonry', 'render'],
+      'plasterer': ['plasterer', 'plastering', 'plaster', 'gyprock', 'drywall', 'cornice'],
+      'roofer': ['roofer', 'roofing', 'roof', 'gutter', 'fascia'],
+      'concreter': ['concreter', 'concrete', 'slab', 'footing'],
+      'demolition': ['demolition', 'demo', 'strip out', 'removal'],
+    };
+    
+    // Detect which trade the item belongs to
+    let detectedTrade: string | null = null;
+    for (const [trade, terms] of Object.entries(tradeTerms)) {
+      for (const term of terms) {
+        if (searchText.includes(term)) {
+          detectedTrade = trade;
+          break;
+        }
+      }
+      if (detectedTrade) break;
+    }
+    
     let bestMatch: { categoryId: string; score: number } | null = null;
     
     for (const cat of categories) {
       let score = 0;
+      const catNameLower = cat.name.toLowerCase();
+      const catKeywords = cat.keywords?.toLowerCase() || "";
       
-      // Check category name match
-      const catNameWords = cat.name.toLowerCase().split(/\s+/);
+      // If item has a detected trade, check if category matches that trade
+      if (detectedTrade) {
+        const tradeMatches = tradeTerms[detectedTrade];
+        const categoryContainsTrade = tradeMatches.some(term => 
+          catNameLower.includes(term) || catKeywords.includes(term)
+        );
+        
+        // Check if category contains a DIFFERENT trade (should exclude)
+        let categoryHasDifferentTrade = false;
+        for (const [otherTrade, otherTerms] of Object.entries(tradeTerms)) {
+          if (otherTrade !== detectedTrade) {
+            if (otherTerms.some(term => catNameLower.includes(term) || catKeywords.includes(term))) {
+              categoryHasDifferentTrade = true;
+              break;
+            }
+          }
+        }
+        
+        // If category has a different trade, skip it entirely
+        if (categoryHasDifferentTrade) {
+          continue;
+        }
+        
+        // Boost score significantly if category matches detected trade
+        if (categoryContainsTrade) {
+          score += 50;
+        }
+      }
+      
+      // Check category name match (but exclude generic terms like "labour", "rate")
+      const genericTerms = ['labour', 'labor', 'rate', 'cost', 'price', 'fee', 'charge'];
+      const catNameWords = catNameLower.split(/\s+/);
       for (const word of catNameWords) {
-        if (word.length > 2 && searchText.includes(word)) {
+        if (word.length > 2 && !genericTerms.includes(word) && searchText.includes(word)) {
           score += 10;
         }
       }
@@ -6879,7 +6937,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (cat.keywords) {
         const keywords = cat.keywords.toLowerCase().split(",").map(k => k.trim());
         for (const keyword of keywords) {
-          if (keyword.length > 2 && searchText.includes(keyword)) {
+          if (keyword.length > 2 && !genericTerms.includes(keyword) && searchText.includes(keyword)) {
             score += 15;
           }
         }

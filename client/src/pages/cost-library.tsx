@@ -58,6 +58,7 @@ export default function CostLibraryPage() {
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showUploadDoc, setShowUploadDoc] = useState(false);
   const [editingItem, setEditingItem] = useState<CostLibraryItem | null>(null);
+  const [editingCategory, setEditingCategory] = useState<CostCategory | null>(null);
   const [showBulkUpdate, setShowBulkUpdate] = useState(false);
   const [bulkUpdate, setBulkUpdate] = useState({
     categoryId: "",
@@ -182,6 +183,21 @@ export default function CostLibraryPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cost-categories"] });
       toast({ title: "Category deleted" });
+    },
+  });
+
+  const updateCategoryMutation = useMutation({
+    mutationFn: async (data: { id: string; name: string; description?: string; color?: string; keywords?: string }) => {
+      const response = await apiRequest("PATCH", `/api/cost-categories/${data.id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cost-categories"] });
+      setEditingCategory(null);
+      toast({ title: "Category updated" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update category", variant: "destructive" });
     },
   });
 
@@ -312,6 +328,14 @@ export default function CostLibraryPage() {
                         style={{ backgroundColor: cat.color || "#3b82f6" }}
                       />
                       {cat.name}
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600"
+                      onClick={() => setEditingCategory(cat)}
+                    >
+                      <Edit className="h-3 w-3" />
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
@@ -844,6 +868,88 @@ export default function CostLibraryPage() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Category Dialog */}
+      <Dialog open={!!editingCategory} onOpenChange={(open) => !open && setEditingCategory(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Category</DialogTitle>
+          </DialogHeader>
+          {editingCategory && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Category Name</Label>
+                <Input
+                  value={editingCategory.name}
+                  onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                  placeholder="e.g. Carpentry Labour"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Description (optional)</Label>
+                <Textarea
+                  value={editingCategory.description || ""}
+                  onChange={(e) => setEditingCategory({ ...editingCategory, description: e.target.value })}
+                  placeholder="Describe this category..."
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Color</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="color"
+                    value={editingCategory.color || "#3b82f6"}
+                    onChange={(e) => setEditingCategory({ ...editingCategory, color: e.target.value })}
+                    className="w-16 h-10 p-1"
+                  />
+                  <Input
+                    value={editingCategory.color || "#3b82f6"}
+                    onChange={(e) => setEditingCategory({ ...editingCategory, color: e.target.value })}
+                    placeholder="#3b82f6"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Keywords (comma-separated)</Label>
+                <Input
+                  value={editingCategory.keywords || ""}
+                  onChange={(e) => setEditingCategory({ ...editingCategory, keywords: e.target.value })}
+                  placeholder="e.g. timber, framing, joinery"
+                />
+                <p className="text-xs text-gray-500">
+                  Keywords help auto-categorize new items
+                </p>
+              </div>
+              
+              <div className="flex gap-2 pt-4">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => setEditingCategory(null)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  className="flex-1"
+                  disabled={!editingCategory.name || updateCategoryMutation.isPending}
+                  onClick={() => updateCategoryMutation.mutate({
+                    id: editingCategory.id,
+                    name: editingCategory.name,
+                    description: editingCategory.description || undefined,
+                    color: editingCategory.color || undefined,
+                    keywords: editingCategory.keywords || undefined,
+                  })}
+                >
+                  {updateCategoryMutation.isPending ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
