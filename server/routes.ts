@@ -15,6 +15,7 @@ import { TimesheetPDFGenerator } from "./pdfGenerator";
 import { GoogleDriveService, GoogleDriveError } from "./googleDriveService";
 import { GoogleDriveAuth } from "./googleAuth";
 import { DocumentProcessor } from "./services/documentProcessor";
+import { quoteEstimator } from "./services/quoteEstimator";
 import { rewardsService } from "./services/rewardsService";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
@@ -7293,6 +7294,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating AI suggestions:", error);
       res.status(500).json({ message: "Failed to generate suggestions" });
+    }
+  });
+
+  // AI visual quote estimation with photos and measurements
+  app.post("/api/quotes/ai-estimate", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { scopeOfWorks, measurements, images, roomType } = req.body;
+      
+      if (!scopeOfWorks || typeof scopeOfWorks !== 'string' || scopeOfWorks.trim().length < 10) {
+        return res.status(400).json({ message: "Scope of works is required (minimum 10 characters)" });
+      }
+
+      if (scopeOfWorks.length > 5000) {
+        return res.status(400).json({ message: "Scope of works is too long (maximum 5000 characters)" });
+      }
+
+      const validatedImages: Array<{ data: string; mimeType: string }> = [];
+      if (images && Array.isArray(images)) {
+        const maxImages = 5;
+        const maxImageSize = 5 * 1024 * 1024; // 5MB per image in base64
+        
+        for (let i = 0; i < Math.min(images.length, maxImages); i++) {
+          const img = images[i];
+          if (img && typeof img.data === 'string' && typeof img.mimeType === 'string') {
+            if (img.data.length > maxImageSize) {
+              console.warn(`Image ${i + 1} exceeds size limit, skipping`);
+              continue;
+            }
+            if (!['image/jpeg', 'image/png', 'image/jpg'].includes(img.mimeType)) {
+              continue;
+            }
+            validatedImages.push({ data: img.data, mimeType: img.mimeType });
+          }
+        }
+      }
+
+      const validatedMeasurements = {
+        length: measurements?.length && !isNaN(Number(measurements.length)) ? Number(measurements.length) : undefined,
+        width: measurements?.width && !isNaN(Number(measurements.width)) ? Number(measurements.width) : undefined,
+        height: measurements?.height && !isNaN(Number(measurements.height)) ? Number(measurements.height) : undefined,
+        notes: typeof measurements?.notes === 'string' ? measurements.notes.slice(0, 500) : undefined,
+      };
+
+      console.log(`📐 AI Estimate request: ${validatedImages.length} images, measurements:`, validatedMeasurements);
+
+      const estimate = await quoteEstimator.generateEstimate({
+        scopeOfWorks: scopeOfWorks.trim(),
+        measurements: validatedMeasurements,
+        images: validatedImages,
+        roomType: typeof roomType === 'string' ? roomType : undefined,
+      });
+
+      res.json(estimate);
+    } catch (error) {
+      console.error("Error generating AI estimate:", error);
+      res.status(500).json({ message: "Failed to generate estimate. Please try again." });
     }
   });
 

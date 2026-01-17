@@ -679,6 +679,129 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
   const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
 
+  const [showAiEstimate, setShowAiEstimate] = useState(false);
+  const [estimateForm, setEstimateForm] = useState({
+    scopeOfWorks: "",
+    length: "",
+    width: "",
+    height: "",
+    notes: "",
+    roomType: "",
+  });
+  const [estimateImages, setEstimateImages] = useState<Array<{ data: string; mimeType: string; preview: string }>>([]);
+  const [estimateResult, setEstimateResult] = useState<any>(null);
+  const [isLoadingEstimate, setIsLoadingEstimate] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newImages: Array<{ data: string; mimeType: string; preview: string }> = [];
+    for (let i = 0; i < files.length && estimateImages.length + newImages.length < 5; i++) {
+      const file = files[i];
+      if (!file.type.startsWith('image/')) continue;
+      
+      const reader = new FileReader();
+      await new Promise<void>((resolve) => {
+        reader.onloadend = () => {
+          const base64 = (reader.result as string).split(',')[1];
+          newImages.push({
+            data: base64,
+            mimeType: file.type,
+            preview: reader.result as string,
+          });
+          resolve();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    setEstimateImages([...estimateImages, ...newImages]);
+  };
+
+  const runAiEstimate = async () => {
+    if (!estimateForm.scopeOfWorks.trim()) {
+      toast({ title: "Error", description: "Please enter a scope of works", variant: "destructive" });
+      return;
+    }
+
+    setIsLoadingEstimate(true);
+    try {
+      const response = await apiRequest("POST", "/api/quotes/ai-estimate", {
+        scopeOfWorks: estimateForm.scopeOfWorks,
+        measurements: {
+          length: estimateForm.length ? parseFloat(estimateForm.length) : undefined,
+          width: estimateForm.width ? parseFloat(estimateForm.width) : undefined,
+          height: estimateForm.height ? parseFloat(estimateForm.height) : undefined,
+          notes: estimateForm.notes,
+        },
+        images: estimateImages.map(img => ({ data: img.data, mimeType: img.mimeType })),
+        roomType: estimateForm.roomType,
+      });
+      const result = await response.json();
+      setEstimateResult(result);
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to generate estimate", variant: "destructive" });
+    } finally {
+      setIsLoadingEstimate(false);
+    }
+  };
+
+  const addEstimateItemMutation = useMutation({
+    mutationFn: async (item: any) => {
+      const totalPrice = (item.quantity * item.unitCost).toFixed(2);
+      await apiRequest("POST", `/api/quotes/${quote.id}/items`, {
+        itemType: item.category?.toLowerCase().includes('labour') ? 'labor' : 
+                 item.category?.toLowerCase().includes('material') ? 'materials' : 'other',
+        description: item.name,
+        quantity: item.quantity.toString(),
+        unitPrice: item.unitCost.toString(),
+        totalPrice,
+      });
+    },
+    onSuccess: () => {
+      onUpdate();
+      toast({ title: "Item added to quote" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to add item", variant: "destructive" });
+    },
+  });
+
+  const [isAddingAll, setIsAddingAll] = useState(false);
+
+  const addAllEstimateItems = async () => {
+    if (!estimateResult?.suggestedItems || estimateResult.suggestedItems.length === 0) return;
+    setIsAddingAll(true);
+    let successCount = 0;
+    let failCount = 0;
+    
+    for (const item of estimateResult.suggestedItems) {
+      try {
+        await addEstimateItemMutation.mutateAsync(item);
+        successCount++;
+      } catch (error) {
+        failCount++;
+        console.error('Failed to add item:', item.name, error);
+      }
+    }
+    
+    setIsAddingAll(false);
+    
+    if (failCount === 0) {
+      setShowAiEstimate(false);
+      setEstimateResult(null);
+      toast({ title: `All ${successCount} items added to quote` });
+    } else if (successCount > 0) {
+      toast({ 
+        title: "Partial success", 
+        description: `Added ${successCount} items, ${failCount} failed`,
+        variant: "destructive" 
+      });
+    } else {
+      toast({ title: "Error", description: "Failed to add items", variant: "destructive" });
+    }
+  };
+
   const getAiSuggestions = async () => {
     setIsLoadingAi(true);
     setShowAiSuggestions(true);
@@ -849,7 +972,11 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Line Items</CardTitle>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
+                  <Button size="sm" variant="outline" onClick={() => setShowAiEstimate(true)} className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 hover:border-purple-300">
+                    <Sparkles className="h-4 w-4 mr-1 text-purple-600" />
+                    AI Estimate
+                  </Button>
                   <Button size="sm" variant="outline" onClick={getAiSuggestions} disabled={isLoadingAi}>
                     {isLoadingAi ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
                     AI Suggest
@@ -1123,6 +1250,223 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
                 </Button>
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* AI Estimate Dialog */}
+        <Dialog open={showAiEstimate} onOpenChange={(open) => {
+          setShowAiEstimate(open);
+          if (!open) {
+            setEstimateResult(null);
+            setEstimateImages([]);
+            setEstimateForm({ scopeOfWorks: "", length: "", width: "", height: "", notes: "", roomType: "" });
+          }
+        }}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-purple-600" />
+                AI Quote Estimate
+              </DialogTitle>
+              <DialogDescription>
+                Upload photos and enter measurements to get an AI-generated quote estimate
+              </DialogDescription>
+            </DialogHeader>
+            
+            {!estimateResult ? (
+              <div className="space-y-6">
+                <div>
+                  <Label className="text-base font-medium">Scope of Works *</Label>
+                  <Textarea
+                    value={estimateForm.scopeOfWorks}
+                    onChange={(e) => setEstimateForm({ ...estimateForm, scopeOfWorks: e.target.value })}
+                    placeholder="Describe the work to be done, e.g.:&#10;- Remove existing flooring and prep substrate&#10;- Install new vinyl plank flooring&#10;- Replace skirting boards&#10;- Paint walls and ceiling (2 coats)"
+                    rows={5}
+                    className="mt-2"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Room Measurements (optional)</Label>
+                  <p className="text-sm text-gray-500 mb-2">Enter dimensions to calculate material quantities</p>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label className="text-xs">Length (m)</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={estimateForm.length}
+                        onChange={(e) => setEstimateForm({ ...estimateForm, length: e.target.value })}
+                        placeholder="e.g. 5.5"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Width (m)</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={estimateForm.width}
+                        onChange={(e) => setEstimateForm({ ...estimateForm, width: e.target.value })}
+                        placeholder="e.g. 4.0"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Height (m)</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={estimateForm.height}
+                        onChange={(e) => setEstimateForm({ ...estimateForm, height: e.target.value })}
+                        placeholder="e.g. 2.7"
+                      />
+                    </div>
+                  </div>
+                  {estimateForm.length && estimateForm.width && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      Floor area: {(parseFloat(estimateForm.length) * parseFloat(estimateForm.width)).toFixed(1)}m²
+                      {estimateForm.height && ` | Wall area: ${(2 * parseFloat(estimateForm.height) * (parseFloat(estimateForm.length) + parseFloat(estimateForm.width))).toFixed(1)}m²`}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-base font-medium">Photos (optional)</Label>
+                  <p className="text-sm text-gray-500 mb-2">Upload up to 5 photos of the space</p>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {estimateImages.map((img, idx) => (
+                      <div key={idx} className="relative">
+                        <img src={img.preview} alt={`Upload ${idx + 1}`} className="w-20 h-20 object-cover rounded border" />
+                        <button
+                          onClick={() => setEstimateImages(estimateImages.filter((_, i) => i !== idx))}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                    {estimateImages.length < 5 && (
+                      <label className="w-20 h-20 border-2 border-dashed border-gray-300 rounded flex items-center justify-center cursor-pointer hover:border-purple-400 transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={handleImageUpload}
+                        />
+                        <Plus className="h-6 w-6 text-gray-400" />
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs">Additional Notes</Label>
+                  <Input
+                    value={estimateForm.notes}
+                    onChange={(e) => setEstimateForm({ ...estimateForm, notes: e.target.value })}
+                    placeholder="e.g. Access via rear lane, 2nd floor unit"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  <Button variant="outline" onClick={() => setShowAiEstimate(false)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={runAiEstimate}
+                    disabled={!estimateForm.scopeOfWorks.trim() || isLoadingEstimate}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                  >
+                    {isLoadingEstimate ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating Estimate...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Generate Estimate
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg border">
+                  <h3 className="font-semibold text-lg text-purple-800">
+                    Estimated Total: ${estimateResult.totalEstimate?.toLocaleString('en-AU', { minimumFractionDigits: 2 })}
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">{estimateResult.summary}</p>
+                </div>
+
+                {estimateResult.notes?.length > 0 && (
+                  <div className="bg-yellow-50 p-3 rounded border border-yellow-200">
+                    <h4 className="font-medium text-sm text-yellow-800 mb-1">Notes & Assumptions:</h4>
+                    <ul className="text-xs text-yellow-700 list-disc list-inside space-y-1">
+                      {estimateResult.notes.map((note: string, idx: number) => (
+                        <li key={idx}>{note}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium">Suggested Line Items ({estimateResult.suggestedItems?.length || 0})</h4>
+                    <Button size="sm" variant="outline" onClick={addAllEstimateItems} disabled={isAddingAll}>
+                      {isAddingAll ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                          Adding...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="h-4 w-4 mr-1" />
+                          Add All to Quote
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto space-y-2">
+                    {estimateResult.suggestedItems?.map((item: any, idx: number) => (
+                      <div key={idx} className="flex items-start justify-between p-3 bg-white rounded border hover:border-purple-300 transition-colors">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-sm">{item.name}</span>
+                            <Badge variant="outline" className="text-xs">{item.category}</Badge>
+                          </div>
+                          <p className="text-xs text-gray-500">{item.reasoning}</p>
+                          <p className="text-sm mt-1">
+                            {item.quantity} {item.unit} × ${item.unitCost.toFixed(2)} = <span className="font-medium">${item.total.toFixed(2)}</span>
+                          </p>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => addEstimateItemMutation.mutate(item)}
+                          disabled={addEstimateItemMutation.isPending}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-between pt-4 border-t">
+                  <Button variant="outline" onClick={() => setEstimateResult(null)}>
+                    ← Back to Form
+                  </Button>
+                  <Button onClick={() => {
+                    setShowAiEstimate(false);
+                    setEstimateResult(null);
+                  }}>
+                    Done
+                  </Button>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </DialogContent>
