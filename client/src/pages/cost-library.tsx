@@ -260,7 +260,13 @@ export default function CostLibraryPage() {
               <Wand2 className="h-4 w-4 mr-2" />
               {autoCategorize.isPending ? "Matching..." : "Auto-Categorize"}
             </Button>
-            <Button variant="outline" onClick={() => setShowBulkUpdate(true)}>
+            <Button variant="outline" onClick={() => {
+              // Pre-fill with currently selected category
+              if (selectedCategory !== "all") {
+                setBulkUpdate(prev => ({ ...prev, categoryId: selectedCategory }));
+              }
+              setShowBulkUpdate(true);
+            }}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Bulk Update
             </Button>
