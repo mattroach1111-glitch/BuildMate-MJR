@@ -285,7 +285,12 @@ export default function PublicQuoteView() {
             <div className="space-y-3">
               <div className="flex justify-between text-lg">
                 <span className="text-gray-600">Subtotal (ex GST)</span>
-                <span className="font-medium">${parseFloat(quote.subtotal).toLocaleString('en-AU', { minimumFractionDigits: 2 })}</span>
+                <span className="font-medium">${(() => {
+                  const subtotal = parseFloat(quote.subtotal);
+                  const margin = parseFloat(quote.builderMargin) || 0;
+                  const subtotalWithMargin = subtotal * (1 + margin / 100);
+                  return subtotalWithMargin.toLocaleString('en-AU', { minimumFractionDigits: 2 });
+                })()}</span>
               </div>
               <div className="flex justify-between text-lg">
                 <span className="text-gray-600">GST (10%)</span>
