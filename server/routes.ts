@@ -7169,6 +7169,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const { itemIds, action, value } = req.body;
+      console.log("Bulk update request:", { itemIds: itemIds?.length, action, value });
       
       if (!Array.isArray(itemIds) || itemIds.length === 0) {
         return res.status(400).json({ message: "No items specified to update" });

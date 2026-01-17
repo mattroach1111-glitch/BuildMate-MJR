@@ -344,9 +344,15 @@ export default function CostLibraryPage() {
       toast({ title: "Items updated", description: `Updated ${result.affectedCount} items` });
       clearSelection();
       setBulkActionType(null);
+      setBulkUpdate(prev => ({ ...prev, value: "" }));
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to update items", variant: "destructive" });
+    onError: (error: any) => {
+      console.error("Bulk update error:", error);
+      toast({ 
+        title: "Error", 
+        description: error?.message || "Failed to update items", 
+        variant: "destructive" 
+      });
     },
   });
 
