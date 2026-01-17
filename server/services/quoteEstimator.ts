@@ -46,8 +46,12 @@ export class QuoteEstimatorService {
   private anthropic: Anthropic;
 
   constructor() {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      console.error('⚠️ ANTHROPIC_API_KEY is not set!');
+    }
     this.anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
+      apiKey: apiKey || '',
     });
   }
 
