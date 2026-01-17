@@ -40,8 +40,12 @@ function Router() {
 
   return (
     <Switch>
+      <Route path="/quote/view/:token" component={PublicQuoteView} />
       {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <>
+          <Route path="/" component={Landing} />
+          <Route component={Landing} />
+        </>
       ) : (user as any)?.role === "admin" ? (
         <>
           <Route path="/" component={AdminDashboard} />
@@ -56,6 +60,7 @@ function Router() {
           <Route path="/swms" component={SwmsDocuments} />
           <Route path="/admin/swms" component={AdminSwms} />
           <Route path="/quotes" component={QuotesPage} />
+          <Route component={NotFound} />
         </>
       ) : (
         <>
@@ -66,10 +71,9 @@ function Router() {
           <Route path="/rewards" component={RewardsDashboard} />
           <Route path="/rewards/rules" component={RewardsRules} />
           <Route path="/swms" component={SwmsDocuments} />
+          <Route component={NotFound} />
         </>
       )}
-      <Route path="/quote/view/:token" component={PublicQuoteView} />
-      <Route component={NotFound} />
     </Switch>
   );
 }
