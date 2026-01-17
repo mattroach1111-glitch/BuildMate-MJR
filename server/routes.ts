@@ -6384,7 +6384,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
       
-      const updatedQuote = await storage.updateQuote(req.params.id, req.body);
+      await storage.updateQuote(req.params.id, req.body);
+      
+      // Recalculate totals if margin was updated
+      if (req.body.builderMargin !== undefined) {
+        await storage.updateQuoteTotals(req.params.id);
+      }
+      
+      const updatedQuote = await storage.getQuote(req.params.id);
       res.json(updatedQuote);
     } catch (error) {
       console.error("Error updating quote:", error);

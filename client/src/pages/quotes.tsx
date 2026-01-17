@@ -563,10 +563,12 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
   const [showEditDetails, setShowEditDetails] = useState(false);
   const [showLibraryPicker, setShowLibraryPicker] = useState(false);
   const [librarySearch, setLibrarySearch] = useState("");
+  const [editingItem, setEditingItem] = useState<QuoteItem | null>(null);
   const [newItem, setNewItem] = useState({
     description: "",
     quantity: "1",
     unitPrice: "",
+    itemType: "other",
   });
   const [editDetails, setEditDetails] = useState({
     clientName: quote.clientName,
@@ -598,21 +600,39 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
     },
   });
 
-  const addItemMutation = useMutation({
-    mutationFn: async (item: typeof newItem) => {
-      const totalPrice = (parseFloat(item.quantity) * parseFloat(item.unitPrice)).toFixed(2);
-      const response = await apiRequest("POST", `/api/quotes/${quote.id}/items`, {
-        itemType: "other",
-        ...item,
-        totalPrice,
-      });
+  const updateMarginMutation = useMutation({
+    mutationFn: async (margin: string) => {
+      const response = await apiRequest("PATCH", `/api/quotes/${quote.id}`, { builderMargin: margin });
       return response.json();
     },
     onSuccess: () => {
       onUpdate();
+    },
+  });
+
+  const addItemMutation = useMutation({
+    mutationFn: async (item: typeof newItem) => {
+      const totalPrice = (parseFloat(item.quantity) * parseFloat(item.unitPrice)).toFixed(2);
+      if (editingItem) {
+        const response = await apiRequest("PATCH", `/api/quotes/${quote.id}/items/${editingItem.id}`, {
+          ...item,
+          totalPrice,
+        });
+        return response.json();
+      } else {
+        const response = await apiRequest("POST", `/api/quotes/${quote.id}/items`, {
+          ...item,
+          totalPrice,
+        });
+        return response.json();
+      }
+    },
+    onSuccess: () => {
+      onUpdate();
       setShowAddItem(false);
-      setNewItem({ description: "", quantity: "1", unitPrice: "" });
-      toast({ title: "Item added" });
+      setEditingItem(null);
+      setNewItem({ description: "", quantity: "1", unitPrice: "", itemType: "other" });
+      toast({ title: editingItem ? "Item updated" : "Item added" });
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to add item", variant: "destructive" });
@@ -951,6 +971,23 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
                         <Button
                           size="sm"
                           variant="ghost"
+                          className="h-8 w-8 p-0"
+                          onClick={() => {
+                            setEditingItem(item);
+                            setNewItem({
+                              description: item.description,
+                              quantity: item.quantity,
+                              unitPrice: item.unitPrice,
+                              itemType: item.itemType,
+                            });
+                            setShowAddItem(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
                           className="text-red-600 h-8 w-8 p-0"
                           onClick={() => deleteItemMutation.mutate(item.id)}
                         >
@@ -966,10 +1003,30 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
 
           <Card>
             <CardContent className="pt-6">
-              <div className="space-y-2 text-right">
-                <div className="flex justify-between">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
                   <span className="text-gray-600">Subtotal (ex GST):</span>
                   <span className="font-medium">${parseFloat(quote.subtotal).toLocaleString('en-AU', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-600">Margin:</span>
+                    <Input
+                      type="number"
+                      className="w-20 h-8 text-right"
+                      value={quote.builderMargin || "0"}
+                      onChange={(e) => {
+                        updateMarginMutation.mutate(e.target.value);
+                      }}
+                      min="0"
+                      max="100"
+                      step="0.5"
+                    />
+                    <span className="text-gray-600">%</span>
+                  </div>
+                  <span className="font-medium text-blue-600">
+                    +${((parseFloat(quote.subtotal) * parseFloat(quote.builderMargin || "0")) / 100).toLocaleString('en-AU', { minimumFractionDigits: 2 })}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">GST (10%):</span>
@@ -1012,10 +1069,16 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
           </Button>
         </div>
 
-        <Dialog open={showAddItem} onOpenChange={setShowAddItem}>
+        <Dialog open={showAddItem} onOpenChange={(open) => {
+          setShowAddItem(open);
+          if (!open) {
+            setEditingItem(null);
+            setNewItem({ description: "", quantity: "1", unitPrice: "", itemType: "other" });
+          }
+        }}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add Line Item</DialogTitle>
+              <DialogTitle>{editingItem ? "Edit Line Item" : "Add Line Item"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -1056,7 +1119,7 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
                   onClick={() => addItemMutation.mutate(newItem)}
                   disabled={!newItem.description || !newItem.unitPrice || addItemMutation.isPending}
                 >
-                  Add Item
+                  {editingItem ? "Save Changes" : "Add Item"}
                 </Button>
               </div>
             </div>

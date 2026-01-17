@@ -3270,11 +3270,17 @@ export class DatabaseStorage implements IStorage {
 
   async updateQuoteTotals(quoteId: string): Promise<Quote> {
     try {
+      // Get current quote for margin
+      const quote = await this.getQuote(quoteId);
+      const margin = quote ? parseFloat(quote.builderMargin || "0") : 0;
+      
       // Calculate totals from items
       const items = await this.getQuoteItems(quoteId);
       const subtotal = items.reduce((sum, item) => sum + parseFloat(item.totalPrice), 0);
-      const gstAmount = subtotal * 0.1; // 10% GST
-      const totalAmount = subtotal + gstAmount;
+      const marginAmount = subtotal * (margin / 100);
+      const subtotalWithMargin = subtotal + marginAmount;
+      const gstAmount = subtotalWithMargin * 0.1; // 10% GST
+      const totalAmount = subtotalWithMargin + gstAmount;
 
       return await this.updateQuote(quoteId, {
         subtotal: subtotal.toFixed(2),
