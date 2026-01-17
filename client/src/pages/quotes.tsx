@@ -724,6 +724,12 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
       return;
     }
 
+    console.log("Starting AI estimate with:", { 
+      scopeOfWorks: estimateForm.scopeOfWorks,
+      imageCount: estimateImages.length,
+      measurements: estimateForm
+    });
+    
     setIsLoadingEstimate(true);
     try {
       const response = await apiRequest("POST", "/api/quotes/ai-estimate", {
@@ -738,9 +744,16 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
         roomType: estimateForm.roomType,
       });
       const result = await response.json();
-      setEstimateResult(result);
-    } catch (error) {
-      toast({ title: "Error", description: "Failed to generate estimate", variant: "destructive" });
+      console.log("AI estimate result:", result);
+      if (result && result.suggestedItems) {
+        setEstimateResult(result);
+      } else {
+        console.error("Invalid estimate result:", result);
+        toast({ title: "Error", description: result.message || "Invalid response from AI", variant: "destructive" });
+      }
+    } catch (error: any) {
+      console.error("AI estimate error:", error);
+      toast({ title: "Error", description: error?.message || "Failed to generate estimate", variant: "destructive" });
     } finally {
       setIsLoadingEstimate(false);
     }
