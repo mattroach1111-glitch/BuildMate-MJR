@@ -135,19 +135,31 @@ Return a JSON object with this structure:
 
 Be practical and realistic. This is an estimate to give the user a starting point - they will review and adjust.`;
 
+    const validImages = (request.images || []).filter(img => {
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      const normalizedType = img.mimeType === 'image/jpg' ? 'image/jpeg' : img.mimeType;
+      return validTypes.includes(normalizedType) && img.data && img.data.length > 0;
+    });
+
+    console.log('🖼️ Valid images after filtering:', validImages.length);
+
     const messages: Anthropic.MessageParam[] = [{
       role: "user",
-      content: request.images && request.images.length > 0
+      content: validImages.length > 0
         ? [
             { type: "text", text: prompt },
-            ...request.images.map(img => ({
-              type: "image" as const,
-              source: {
-                type: "base64" as const,
-                media_type: (img.mimeType === 'image/jpg' ? 'image/jpeg' : img.mimeType) as "image/jpeg" | "image/png",
-                data: img.data,
-              },
-            })),
+            ...validImages.map(img => {
+              const normalizedType = img.mimeType === 'image/jpg' ? 'image/jpeg' : img.mimeType;
+              console.log('📷 Adding image with type:', normalizedType, 'data length:', img.data.length);
+              return {
+                type: "image" as const,
+                source: {
+                  type: "base64" as const,
+                  media_type: normalizedType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+                  data: img.data,
+                },
+              };
+            }),
           ]
         : prompt,
     }];
@@ -158,6 +170,7 @@ Be practical and realistic. This is an estimate to give the user a starting poin
 
     let response;
     try {
+      console.log('🚀 Making Anthropic API call...');
       response = await this.anthropic.messages.create({
         model: DEFAULT_MODEL,
         max_tokens: 4096,
@@ -165,11 +178,19 @@ Be practical and realistic. This is an estimate to give the user a starting poin
       });
       console.log('✅ AI response received successfully');
     } catch (apiError: any) {
-      console.error('❌ Anthropic API error:', apiError?.message || apiError);
-      console.error('❌ Error status:', apiError?.status);
-      console.error('❌ Error type:', apiError?.error?.type);
-      console.error('❌ Error details:', JSON.stringify(apiError?.error || {}));
-      throw new Error(`AI API error: ${apiError?.message || 'Unknown error'}`);
+      const errorMessage = apiError?.message || 'Unknown error';
+      const errorStatus = apiError?.status || 'no status';
+      const errorType = apiError?.error?.type || apiError?.type || 'unknown type';
+      const errorCode = apiError?.error?.error?.type || apiError?.code || 'no code';
+      
+      console.error('❌ Anthropic API error:', errorMessage);
+      console.error('❌ Error status:', errorStatus);
+      console.error('❌ Error type:', errorType);
+      console.error('❌ Error code:', errorCode);
+      console.error('❌ Full error:', JSON.stringify(apiError, Object.getOwnPropertyNames(apiError), 2));
+      
+      // Return specific error info for debugging
+      throw new Error(`Anthropic API Error [${errorStatus}/${errorType}]: ${errorMessage}`);
     }
 
     const textContent = response.content[0];

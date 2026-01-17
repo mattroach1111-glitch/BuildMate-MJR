@@ -7530,10 +7530,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error generating AI estimate:", error?.message || error);
       console.error("Full error details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+      
+      // Return the actual error message for debugging
+      const errorMsg = error?.message || 'Unknown error';
       res.status(500).json({ 
-        message: error?.message?.includes('API') || error?.message?.includes('Anthropic') 
-          ? "AI service error. Please try again."
-          : "Failed to generate estimate. Please try again."
+        message: errorMsg,
+        debug: process.env.NODE_ENV !== 'production' ? errorMsg : undefined
       });
     }
   });
