@@ -1394,11 +1394,6 @@ export async function generateQuotePDF(quote: QuoteForPDF, download: boolean = t
   const formattedTotal = `$${total.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   doc.text(`Estimate Quotation of: ${formattedTotal} + GST`, marginLeft, yPos);
   
-  yPos += 10;
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`(Subtotal: $${subtotal.toLocaleString('en-AU', { minimumFractionDigits: 2 })} | GST: $${parseFloat(quote.gstAmount).toLocaleString('en-AU', { minimumFractionDigits: 2 })} | Total inc. GST: $${total.toLocaleString('en-AU', { minimumFractionDigits: 2 })})`, marginLeft, yPos);
-  
   yPos += 20;
   
   // === NOTES (if any) ===
@@ -1448,7 +1443,8 @@ export async function generateQuotePDF(quote: QuoteForPDF, download: boolean = t
   doc.text('Director', marginLeft, yPos);
   yPos += 5;
   doc.setFont('helvetica', 'normal');
-  doc.text('Matthew Roach', marginLeft, yPos);
+  const directorName = (quote as any).director || 'Will Scott';
+  doc.text(directorName, marginLeft, yPos);
   
   // === CLIENT ACCEPTANCE SECTION (if signed) ===
   if (quote.signature) {

@@ -184,11 +184,6 @@ export async function generateQuotePDFBuffer(quote: QuoteForPDF): Promise<Buffer
   const formattedTotal = `$${total.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   doc.text(`Estimate Quotation of: ${formattedTotal} + GST`, marginLeft, yPos);
   
-  yPos += 10;
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`(Subtotal: $${subtotal.toLocaleString('en-AU', { minimumFractionDigits: 2 })} | GST: $${gst.toLocaleString('en-AU', { minimumFractionDigits: 2 })} | Total inc. GST: $${total.toLocaleString('en-AU', { minimumFractionDigits: 2 })})`, marginLeft, yPos);
-  
   yPos += 20;
   
   // Notes
