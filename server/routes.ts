@@ -6504,17 +6504,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get quote items for PDF
       const quoteItems = await storage.getQuoteItems(quote.id);
       
-      // Try to generate PDF attachment (may fail in some environments)
+      // Generate PDF attachment for email
       let pdfBuffer: Buffer | null = null;
       try {
+        console.log("Generating PDF for quote:", quote.quoteNumber);
         const { generateQuotePDFBuffer } = await import('./services/quotePdfService');
         pdfBuffer = await generateQuotePDFBuffer({
           ...quote,
           items: quoteItems,
           signature: null
         });
+        console.log("PDF generated successfully, size:", pdfBuffer?.length, "bytes");
       } catch (pdfError) {
-        console.error("PDF generation failed, sending email without attachment:", pdfError);
+        console.error("PDF generation failed:", pdfError);
+        console.error("PDF Error stack:", (pdfError as Error).stack);
       }
       
       // Send email with link and optional PDF attachment
