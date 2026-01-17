@@ -7128,6 +7128,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk delete cost library items
+  app.post("/api/cost-library/bulk-delete", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const { itemIds } = req.body;
+      
+      if (!Array.isArray(itemIds) || itemIds.length === 0) {
+        return res.status(400).json({ message: "No items specified to delete" });
+      }
+      
+      const validIds = itemIds.filter((id: any) => typeof id === 'string');
+      if (validIds.length === 0) {
+        return res.status(400).json({ message: "Invalid item IDs" });
+      }
+      
+      await db.delete(costLibraryItems)
+        .where(sql`${costLibraryItems.id} IN (${sql.join(validIds.map((id: string) => sql`${id}`), sql`, `)})`);
+      
+      res.json({ 
+        deletedCount: validIds.length,
+        message: `Deleted ${validIds.length} items`
+      });
+    } catch (error) {
+      console.error("Error bulk deleting cost library items:", error);
+      res.status(500).json({ message: "Failed to delete items" });
+    }
+  });
+
+  // Bulk update selected cost library items
+  app.patch("/api/cost-library/bulk-update-selected", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const { itemIds, action, value } = req.body;
+      
+      if (!Array.isArray(itemIds) || itemIds.length === 0) {
+        return res.status(400).json({ message: "No items specified to update" });
+      }
+      
+      if (!action || !value) {
+        return res.status(400).json({ message: "Action and value are required" });
+      }
+      
+      const validIds = itemIds.filter((id: any) => typeof id === 'string');
+      if (validIds.length === 0) {
+        return res.status(400).json({ message: "Invalid item IDs" });
+      }
+      
+      // Get selected items
+      const selectedItems = await db.select().from(costLibraryItems)
+        .where(sql`${costLibraryItems.id} IN (${sql.join(validIds.map((id: string) => sql`${id}`), sql`, `)})`);
+      
+      // Update each item
+      for (const item of selectedItems) {
+        let newCost: number;
+        const currentCost = parseFloat(item.defaultUnitCost);
+        
+        if (action === "set") {
+          newCost = parseFloat(value);
+        } else if (action === "percentage") {
+          const percentChange = parseFloat(value);
+          newCost = currentCost * (1 + percentChange / 100);
+        } else {
+          newCost = currentCost;
+        }
+        
+        await db.update(costLibraryItems)
+          .set({ 
+            defaultUnitCost: newCost.toFixed(2),
+            updatedAt: new Date()
+          })
+          .where(eq(costLibraryItems.id, item.id));
+      }
+      
+      res.json({ 
+        affectedCount: selectedItems.length,
+        message: `Updated ${selectedItems.length} items`
+      });
+    } catch (error) {
+      console.error("Error bulk updating selected items:", error);
+      res.status(500).json({ message: "Failed to update items" });
+    }
+  });
+
   // Delete cost library item
   app.delete("/api/cost-library/:id", isAuthenticated, async (req: any, res) => {
     try {

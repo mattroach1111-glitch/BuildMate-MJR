@@ -33,6 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Plus, 
   Search, 
@@ -45,7 +46,8 @@ import {
   FileUp,
   Sparkles,
   RefreshCw,
-  Wand2
+  Wand2,
+  CheckSquare
 } from "lucide-react";
 import { Link } from "wouter";
 import type { CostCategory, CostLibraryItem, CostSourceDocument } from "@shared/schema";
@@ -54,6 +56,17 @@ export default function CostLibraryPage() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  
+  // Clear selection when filters change
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setSelectedItems(new Set());
+  };
+  
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
+    setSelectedItems(new Set());
+  };
   const [showAddItem, setShowAddItem] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showUploadDoc, setShowUploadDoc] = useState(false);
@@ -276,6 +289,66 @@ export default function CostLibraryPage() {
 
   const [showMoveDialog, setShowMoveDialog] = useState(false);
   const [moveToCategoryId, setMoveToCategoryId] = useState<string>("");
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [showBulkActions, setShowBulkActions] = useState(false);
+  const [bulkActionType, setBulkActionType] = useState<"update" | "delete" | null>(null);
+
+  const toggleSelectItem = (id: string) => {
+    setSelectedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedItems.size === items.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(items.map(i => i.id)));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedItems(new Set());
+    setBulkActionType(null);
+  };
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (itemIds: string[]) => {
+      const response = await apiRequest("POST", "/api/cost-library/bulk-delete", { itemIds });
+      return response.json();
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cost-library"] });
+      toast({ title: "Items deleted", description: `Deleted ${result.deletedCount} items` });
+      clearSelection();
+      setBulkActionType(null);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete items", variant: "destructive" });
+    },
+  });
+
+  const bulkUpdateSelectedMutation = useMutation({
+    mutationFn: async (data: { itemIds: string[]; action: string; value: string }) => {
+      const response = await apiRequest("PATCH", "/api/cost-library/bulk-update-selected", data);
+      return response.json();
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cost-library"] });
+      toast({ title: "Items updated", description: `Updated ${result.affectedCount} items` });
+      clearSelection();
+      setBulkActionType(null);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update items", variant: "destructive" });
+    },
+  });
 
   const getCategoryName = (categoryId: string | null) => {
     if (!categoryId) return "Uncategorized";
@@ -376,7 +449,7 @@ export default function CostLibraryPage() {
                 <Button
                   variant={selectedCategory === "all" ? "secondary" : "ghost"}
                   className="w-full justify-start"
-                  onClick={() => setSelectedCategory("all")}
+                  onClick={() => handleCategoryChange("all")}
                 >
                   All Items
                   <Badge variant="outline" className="ml-auto">{items.length}</Badge>
@@ -386,7 +459,7 @@ export default function CostLibraryPage() {
                     <Button
                       variant={selectedCategory === cat.id ? "secondary" : "ghost"}
                       className="flex-1 justify-start"
-                      onClick={() => setSelectedCategory(cat.id)}
+                      onClick={() => handleCategoryChange(cat.id)}
                     >
                       <div 
                         className="w-3 h-3 rounded-full mr-2" 
@@ -454,7 +527,7 @@ export default function CostLibraryPage() {
                 <Input
                   placeholder="Search items..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -486,11 +559,74 @@ export default function CostLibraryPage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-3">
+              <div className="space-y-3">
+                {/* Bulk Action Bar */}
+                {selectedItems.size > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between sticky top-0 z-10">
+                    <div className="flex items-center gap-3">
+                      <CheckSquare className="h-5 w-5 text-blue-600" />
+                      <span className="font-medium text-blue-900">{selectedItems.size} item{selectedItems.size !== 1 ? 's' : ''} selected</span>
+                      <Button variant="ghost" size="sm" onClick={clearSelection}>
+                        Clear
+                      </Button>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setBulkActionType("update")}
+                      >
+                        <DollarSign className="h-4 w-4 mr-1" />
+                        Update Rates
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="sm">
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete Selected
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete {selectedItems.size} items?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete the selected items from your cost library. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => bulkDeleteMutation.mutate(Array.from(selectedItems))}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Delete {selectedItems.size} Items
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Select All Row */}
+                <div className="flex items-center gap-2 px-2 text-sm text-gray-600">
+                  <Checkbox 
+                    checked={items.length > 0 && selectedItems.size === items.length}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                  <span>Select all ({items.length} items)</span>
+                </div>
+
+                <div className="grid gap-3">
                 {items.map((item) => (
-                  <Card key={item.id} className="hover:shadow-md transition-shadow">
+                  <Card key={item.id} className={`hover:shadow-md transition-shadow ${selectedItems.has(item.id) ? 'ring-2 ring-blue-400 bg-blue-50/50' : ''}`}>
                     <CardContent className="p-4">
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3">
+                        <Checkbox 
+                          checked={selectedItems.has(item.id)}
+                          onCheckedChange={() => toggleSelectItem(item.id)}
+                          className="mt-1"
+                        />
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="font-medium">{item.name}</h3>
@@ -582,6 +718,7 @@ export default function CostLibraryPage() {
                     </CardContent>
                   </Card>
                 ))}
+                </div>
               </div>
             )}
           </div>
@@ -1079,6 +1216,77 @@ export default function CostLibraryPage() {
                 })}
               >
                 {bulkMove.isPending ? "Moving..." : `Move ${items.length} Items`}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Update Selected Dialog */}
+      <Dialog open={bulkActionType === "update"} onOpenChange={(open) => !open && setBulkActionType(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update {selectedItems.size} Selected Items</DialogTitle>
+            <DialogDescription>
+              Apply a rate change to the selected items only
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Action</Label>
+              <Select 
+                value={bulkUpdate.action} 
+                onValueChange={(v) => setBulkUpdate({...bulkUpdate, action: v})}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="set">Set Fixed Rate</SelectItem>
+                  <SelectItem value="percentage">Percentage Change</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>
+                {bulkUpdate.action === "set" ? "New Rate ($)" : "Percentage (+ or -)"}
+              </Label>
+              <Input
+                type="number"
+                step={bulkUpdate.action === "set" ? "0.01" : "1"}
+                placeholder={bulkUpdate.action === "set" ? "e.g. 85.00" : "e.g. 10 or -5"}
+                value={bulkUpdate.value}
+                onChange={(e) => setBulkUpdate({...bulkUpdate, value: e.target.value})}
+              />
+              {bulkUpdate.action === "percentage" && bulkUpdate.value && (
+                <p className="text-xs text-gray-500">
+                  {parseFloat(bulkUpdate.value) > 0 ? `+${bulkUpdate.value}%` : `${bulkUpdate.value}%`} change to all selected items
+                </p>
+              )}
+            </div>
+            
+            <div className="flex gap-2 pt-4">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => {
+                  setBulkActionType(null);
+                  setBulkUpdate(prev => ({ ...prev, value: "" }));
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                className="flex-1"
+                disabled={!bulkUpdate.value || bulkUpdateSelectedMutation.isPending}
+                onClick={() => bulkUpdateSelectedMutation.mutate({
+                  itemIds: Array.from(selectedItems),
+                  action: bulkUpdate.action,
+                  value: bulkUpdate.value,
+                })}
+              >
+                {bulkUpdateSelectedMutation.isPending ? "Updating..." : `Update ${selectedItems.size} Items`}
               </Button>
             </div>
           </div>
