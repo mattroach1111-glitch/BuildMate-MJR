@@ -84,10 +84,15 @@ export default function QuotesPage() {
     clientAddress: "",
     projectDescription: "",
     projectAddress: "",
+    projectManager: "",
     validUntil: "",
     notes: "",
     builderMargin: "10",
     director: "Will Scott",
+  });
+
+  const { data: employees = [] } = useQuery<any[]>({
+    queryKey: ["/api/employees"],
   });
 
   const { data: quotes = [], isLoading } = useQuery<Quote[]>({
@@ -109,6 +114,7 @@ export default function QuotesPage() {
         clientAddress: "",
         projectDescription: "",
         projectAddress: "",
+        projectManager: "",
         validUntil: "",
         notes: "",
         builderMargin: "10",
@@ -418,6 +424,23 @@ export default function QuotesPage() {
                   placeholder="10"
                 />
               </div>
+            </div>
+            <div>
+              <Label>Project Manager</Label>
+              <Select
+                value={newQuoteData.projectManager}
+                onValueChange={(value) => setNewQuoteData({ ...newQuoteData, projectManager: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select project manager (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  {employees.map((emp: any) => (
+                    <SelectItem key={emp.id} value={emp.name}>{emp.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Sending Director</Label>

@@ -918,6 +918,7 @@ export const quotes = pgTable("quotes", {
   clientAddress: varchar("client_address"),
   projectDescription: text("project_description").notNull(),
   projectAddress: varchar("project_address"),
+  projectManager: varchar("project_manager"),
   status: varchar("status", { 
     enum: ["draft", "sent", "viewed", "accepted", "declined", "expired", "converted"] 
   }).notNull().default("draft"),

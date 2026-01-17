@@ -3497,7 +3497,7 @@ export class DatabaseStorage implements IStorage {
           jobAddress: quote.projectAddress || quote.clientAddress || "",
           clientName: quote.clientName,
           projectName: quote.projectDescription,
-          projectManager: "",
+          projectManager: quote.projectManager || "",
           status: "new_job",
           builderMargin: quote.builderMargin,
           defaultHourlyRate: hourlyRate || "50",
