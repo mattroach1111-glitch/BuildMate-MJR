@@ -48,7 +48,9 @@ import {
   DollarSign,
   Building2,
   RefreshCw,
-  Download
+  Download,
+  Sparkles,
+  Loader2
 } from "lucide-react";
 import { Link } from "wouter";
 import { generateQuotePDF } from "@/lib/pdfGenerator";
@@ -559,6 +561,8 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
   const { toast } = useToast();
   const [showAddItem, setShowAddItem] = useState(false);
   const [showEditDetails, setShowEditDetails] = useState(false);
+  const [showLibraryPicker, setShowLibraryPicker] = useState(false);
+  const [librarySearch, setLibrarySearch] = useState("");
   const [newItem, setNewItem] = useState({
     description: "",
     quantity: "1",
@@ -572,6 +576,11 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
     projectDescription: quote.projectDescription,
     projectAddress: quote.projectAddress || "",
     notes: quote.notes || "",
+  });
+
+  const { data: libraryItems = [] } = useQuery<any[]>({
+    queryKey: ["/api/cost-library"],
+    enabled: showLibraryPicker,
   });
 
   const updateDetailsMutation = useMutation({
@@ -617,6 +626,73 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
     onSuccess: () => {
       onUpdate();
       toast({ title: "Item removed" });
+    },
+  });
+
+  const addFromLibraryMutation = useMutation({
+    mutationFn: async (libItem: any) => {
+      const totalPrice = (1 * parseFloat(libItem.defaultUnitCost)).toFixed(2);
+      await apiRequest("POST", `/api/quotes/${quote.id}/items`, {
+        itemType: "other",
+        description: libItem.name,
+        quantity: "1",
+        unitPrice: libItem.defaultUnitCost,
+        totalPrice,
+      });
+      await apiRequest("POST", `/api/cost-library/${libItem.id}/use`);
+    },
+    onSuccess: () => {
+      onUpdate();
+      toast({ title: "Item added from library" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to add item", variant: "destructive" });
+    },
+  });
+
+  const filteredLibraryItems = libraryItems.filter((item: any) =>
+    item.name.toLowerCase().includes(librarySearch.toLowerCase()) ||
+    (item.description && item.description.toLowerCase().includes(librarySearch.toLowerCase()))
+  );
+
+  const [showAiSuggestions, setShowAiSuggestions] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
+  const [isLoadingAi, setIsLoadingAi] = useState(false);
+
+  const getAiSuggestions = async () => {
+    setIsLoadingAi(true);
+    setShowAiSuggestions(true);
+    try {
+      const response = await apiRequest("POST", "/api/quotes/ai-suggest", {
+        projectDescription: quote.projectDescription,
+        projectAddress: quote.projectAddress,
+      });
+      const suggestions = await response.json();
+      setAiSuggestions(suggestions);
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to get AI suggestions", variant: "destructive" });
+    } finally {
+      setIsLoadingAi(false);
+    }
+  };
+
+  const addAiSuggestionMutation = useMutation({
+    mutationFn: async (suggestion: any) => {
+      const totalPrice = (suggestion.quantity * suggestion.unitCost).toFixed(2);
+      await apiRequest("POST", `/api/quotes/${quote.id}/items`, {
+        itemType: "other",
+        description: suggestion.description,
+        quantity: suggestion.quantity.toString(),
+        unitPrice: suggestion.unitCost.toString(),
+        totalPrice,
+      });
+    },
+    onSuccess: () => {
+      onUpdate();
+      toast({ title: "Suggested item added" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to add item", variant: "destructive" });
     },
   });
 
@@ -753,13 +829,111 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Line Items</CardTitle>
-                <Button size="sm" onClick={() => setShowAddItem(true)}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Item
-                </Button>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={getAiSuggestions} disabled={isLoadingAi}>
+                    {isLoadingAi ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
+                    AI Suggest
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setShowLibraryPicker(true)}>
+                    <DollarSign className="h-4 w-4 mr-1" />
+                    From Library
+                  </Button>
+                  <Button size="sm" onClick={() => setShowAddItem(true)}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Item
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
+              {showAiSuggestions && (
+                <div className="mb-4 p-4 border rounded-lg bg-purple-50">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium text-sm flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-purple-600" />
+                      AI Suggested Items
+                    </h4>
+                    <Button size="sm" variant="ghost" onClick={() => setShowAiSuggestions(false)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {isLoadingAi ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-purple-600" />
+                      <span className="ml-2 text-sm text-gray-600">Analyzing project and generating suggestions...</span>
+                    </div>
+                  ) : aiSuggestions.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4">
+                      No suggestions available. Try adding items to your cost library first.
+                    </p>
+                  ) : (
+                    <div className="max-h-64 overflow-y-auto space-y-2">
+                      {aiSuggestions.map((suggestion: any, idx: number) => (
+                        <div 
+                          key={idx} 
+                          className="flex items-start justify-between p-3 bg-white rounded border hover:border-purple-300 cursor-pointer"
+                          onClick={() => addAiSuggestionMutation.mutate(suggestion)}
+                        >
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{suggestion.description}</p>
+                            <p className="text-xs text-gray-500">
+                              {suggestion.quantity} x ${suggestion.unitCost.toFixed(2)} = ${(suggestion.quantity * suggestion.unitCost).toFixed(2)}
+                            </p>
+                            {suggestion.reason && (
+                              <p className="text-xs text-purple-600 mt-1">{suggestion.reason}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">
+                              {Math.round((suggestion.confidence || 0.5) * 100)}% match
+                            </Badge>
+                            <Plus className="h-4 w-4 text-purple-600" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              {showLibraryPicker && (
+                <div className="mb-4 p-4 border rounded-lg bg-blue-50">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium text-sm">Add from Cost Library</h4>
+                    <Button size="sm" variant="ghost" onClick={() => setShowLibraryPicker(false)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Input
+                    placeholder="Search library items..."
+                    value={librarySearch}
+                    onChange={(e) => setLibrarySearch(e.target.value)}
+                    className="mb-3"
+                  />
+                  <div className="max-h-48 overflow-y-auto space-y-2">
+                    {filteredLibraryItems.length === 0 ? (
+                      <p className="text-sm text-gray-500 text-center py-4">
+                        {libraryItems.length === 0 
+                          ? "No items in library yet. Add some from the Cost Library page." 
+                          : "No matching items found"}
+                      </p>
+                    ) : (
+                      filteredLibraryItems.slice(0, 10).map((item: any) => (
+                        <div 
+                          key={item.id} 
+                          className="flex items-center justify-between p-2 bg-white rounded border hover:border-blue-300 cursor-pointer"
+                          onClick={() => addFromLibraryMutation.mutate(item)}
+                        >
+                          <div>
+                            <p className="text-sm font-medium">{item.name}</p>
+                            <p className="text-xs text-gray-500">${parseFloat(item.defaultUnitCost).toFixed(2)} / {item.unit}</p>
+                          </div>
+                          <Plus className="h-4 w-4 text-blue-600" />
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
               {quote.items.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">No items yet. Add line items to build your quote.</p>
               ) : (
