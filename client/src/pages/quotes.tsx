@@ -428,14 +428,14 @@ export default function QuotesPage() {
             <div>
               <Label>Project Manager</Label>
               <Select
-                value={newQuoteData.projectManager}
-                onValueChange={(value) => setNewQuoteData({ ...newQuoteData, projectManager: value })}
+                value={newQuoteData.projectManager || "none"}
+                onValueChange={(value) => setNewQuoteData({ ...newQuoteData, projectManager: value === "none" ? "" : value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select project manager (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {employees.map((emp: any) => (
                     <SelectItem key={emp.id} value={emp.name}>{emp.name}</SelectItem>
                   ))}
