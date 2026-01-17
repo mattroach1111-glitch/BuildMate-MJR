@@ -453,4 +453,211 @@ export class DocumentProcessor {
       throw error;
     }
   }
+
+  async extractCostsFromDocument(fileContent: string, fileType: string): Promise<{
+    rawText: string;
+    items: Array<{
+      description: string;
+      quantity: number;
+      unit: string;
+      unitCost: number;
+      category: string;
+      notes?: string;
+    }>;
+  }> {
+    try {
+      console.log(`🤖 Extracting costs from document (type: ${fileType})`);
+
+      let imageData = fileContent;
+      let mediaType = fileType;
+
+      if (fileType === 'application/pdf') {
+        try {
+          const { convertPdfToImage } = await import('../utils/pdfConverter');
+          const imageBuffer = await convertPdfToImage(Buffer.from(fileContent, 'base64'));
+          imageData = imageBuffer.toString('base64');
+          mediaType = 'image/jpeg';
+        } catch (pdfError) {
+          console.error('PDF conversion error:', pdfError);
+          throw new Error('Failed to convert PDF for processing');
+        }
+      }
+
+      const prompt = `
+        Analyze this document and extract all line items with pricing information.
+        This could be a quote, invoice, scope of work, or price list.
+        
+        Extract each item as a cost/price entry. Return a JSON object with:
+        {
+          "rawText": "A brief summary of what this document contains",
+          "items": [
+            {
+              "description": "Item description",
+              "quantity": 1,
+              "unit": "each" or "m2" or "hours" or "lm" or other unit,
+              "unitCost": 123.45,
+              "category": "materials" or "labor" or "sub_trades" or "equipment" or "other",
+              "notes": "Any relevant notes about the item"
+            }
+          ]
+        }
+        
+        Guidelines:
+        - Extract ALL line items you can find with pricing
+        - Use realistic units (each, m2, lm, hours, days, etc.)
+        - Category should be: materials, labor, sub_trades, equipment, or other
+        - If quantity is not specified, assume 1
+        - Include any relevant notes about specifications or conditions
+        - Return valid JSON only
+      `;
+
+      const normalizedMediaType = mediaType === 'image/jpg' ? 'image/jpeg' : mediaType;
+
+      const response = await this.anthropic.messages.create({
+        model: DEFAULT_MODEL_STR,
+        max_tokens: 4096,
+        messages: [{
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: normalizedMediaType as "image/jpeg" | "image/png",
+                data: imageData
+              }
+            }
+          ]
+        }]
+      });
+
+      const textContent = response.content[0];
+      if (textContent.type !== 'text') {
+        throw new Error('Unexpected response type from AI');
+      }
+
+      let extractedData;
+      try {
+        extractedData = JSON.parse(textContent.text);
+      } catch (parseError) {
+        const jsonMatch = textContent.text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          extractedData = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error('AI response was not valid JSON');
+        }
+      }
+
+      console.log(`✅ Extracted ${extractedData.items?.length || 0} cost items`);
+
+      return {
+        rawText: extractedData.rawText || 'Document processed',
+        items: extractedData.items || []
+      };
+
+    } catch (error) {
+      console.error('Error extracting costs from document:', error);
+      throw error;
+    }
+  }
+
+  async suggestQuoteItems(
+    projectDescription: string,
+    projectAddress: string,
+    libraryItems: any[],
+    recentHistory: any[]
+  ): Promise<Array<{
+    description: string;
+    quantity: number;
+    unit: string;
+    unitCost: number;
+    confidence: number;
+    reason: string;
+    libraryItemId?: string;
+  }>> {
+    try {
+      console.log(`🤖 Generating AI quote suggestions for: ${projectDescription}`);
+
+      // Build context from library items
+      const libraryContext = libraryItems.slice(0, 50).map(item => ({
+        id: item.id,
+        name: item.name,
+        unit: item.unit,
+        cost: item.defaultUnitCost,
+        usageCount: item.usageCount
+      }));
+
+      // Build pricing history context
+      const historyContext = recentHistory.slice(0, 30).map(h => ({
+        item: h.itemName,
+        unitCost: h.unitCost,
+        quantity: h.quantity
+      }));
+
+      const prompt = `
+        You are a construction quoting assistant. Based on the project description and available cost data, suggest line items for a quote.
+        
+        PROJECT DESCRIPTION: ${projectDescription}
+        PROJECT ADDRESS: ${projectAddress || 'Not specified'}
+        
+        AVAILABLE COST LIBRARY ITEMS:
+        ${JSON.stringify(libraryContext, null, 2)}
+        
+        RECENT PRICING HISTORY:
+        ${JSON.stringify(historyContext, null, 2)}
+        
+        Generate 5-15 suggested line items for this project. For each item:
+        1. If a matching library item exists, use its ID and pricing
+        2. If not, suggest reasonable pricing based on construction industry standards
+        3. Estimate realistic quantities based on the project description
+        
+        Return a JSON array:
+        [
+          {
+            "description": "Item description",
+            "quantity": 1,
+            "unit": "each",
+            "unitCost": 100.00,
+            "confidence": 0.8,
+            "reason": "Why this item is suggested",
+            "libraryItemId": "id-if-from-library-or-null"
+          }
+        ]
+        
+        Return valid JSON array only.
+      `;
+
+      const response = await this.anthropic.messages.create({
+        model: DEFAULT_MODEL_STR,
+        max_tokens: 4096,
+        messages: [{ role: "user", content: prompt }]
+      });
+
+      const textContent = response.content[0];
+      if (textContent.type !== 'text') {
+        throw new Error('Unexpected response type from AI');
+      }
+
+      let suggestions;
+      try {
+        suggestions = JSON.parse(textContent.text);
+      } catch (parseError) {
+        const jsonMatch = textContent.text.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          suggestions = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error('AI response was not valid JSON');
+        }
+      }
+
+      console.log(`✅ Generated ${suggestions.length} quote suggestions`);
+
+      return suggestions;
+
+    } catch (error) {
+      console.error('Error generating quote suggestions:', error);
+      throw error;
+    }
+  }
 }

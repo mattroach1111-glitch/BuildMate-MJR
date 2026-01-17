@@ -6,7 +6,8 @@ import { db, checkDbHealth } from "./db";
 import { 
   timesheetEntries, laborEntries, users, staffNotes, employees, staffMembers, 
   staffNotesEntries, rewardCatalog, rewardSettings, jobs, materials, subTrades, otherCosts, 
-  tipFees, jobFiles, jobNotes, jobUpdateNotes, quotes
+  tipFees, jobFiles, jobNotes, jobUpdateNotes, quotes, costCategories, costLibraryItems, 
+  costSourceDocuments, costHistory
 } from "@shared/schema";
 import { eq, sql, desc } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
@@ -6760,6 +6761,270 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error converting quote to job:", error);
       res.status(500).json({ message: "Failed to convert quote to job" });
+    }
+  });
+
+  // =============================================================================
+  // COST LIBRARY API ROUTES
+  // =============================================================================
+
+  // Get all cost categories
+  app.get("/api/cost-categories", isAuthenticated, async (req: any, res) => {
+    try {
+      const categories = await db.select().from(costCategories).orderBy(costCategories.sortOrder);
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching cost categories:", error);
+      res.status(500).json({ message: "Failed to fetch categories" });
+    }
+  });
+
+  // Create cost category
+  app.post("/api/cost-categories", isAuthenticated, async (req: any, res) => {
+    try {
+      const [category] = await db.insert(costCategories).values(req.body).returning();
+      res.json(category);
+    } catch (error) {
+      console.error("Error creating cost category:", error);
+      res.status(500).json({ message: "Failed to create category" });
+    }
+  });
+
+  // Update cost category
+  app.patch("/api/cost-categories/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const [category] = await db.update(costCategories)
+        .set(req.body)
+        .where(eq(costCategories.id, req.params.id))
+        .returning();
+      res.json(category);
+    } catch (error) {
+      console.error("Error updating cost category:", error);
+      res.status(500).json({ message: "Failed to update category" });
+    }
+  });
+
+  // Delete cost category
+  app.delete("/api/cost-categories/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      await db.delete(costCategories).where(eq(costCategories.id, req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting cost category:", error);
+      res.status(500).json({ message: "Failed to delete category" });
+    }
+  });
+
+  // Get all cost library items with optional category filter
+  app.get("/api/cost-library", isAuthenticated, async (req: any, res) => {
+    try {
+      const { categoryId, search } = req.query;
+      
+      let items;
+      if (categoryId) {
+        items = await db.select().from(costLibraryItems)
+          .where(eq(costLibraryItems.categoryId, categoryId))
+          .orderBy(desc(costLibraryItems.usageCount));
+      } else {
+        items = await db.select().from(costLibraryItems)
+          .orderBy(desc(costLibraryItems.usageCount));
+      }
+      
+      // Filter by search term if provided
+      let filteredItems = items;
+      if (search) {
+        const searchLower = (search as string).toLowerCase();
+        filteredItems = items.filter((item: any) => 
+          item.name.toLowerCase().includes(searchLower) ||
+          (item.description && item.description.toLowerCase().includes(searchLower)) ||
+          (item.tags && item.tags.toLowerCase().includes(searchLower))
+        );
+      }
+      
+      res.json(filteredItems);
+    } catch (error) {
+      console.error("Error fetching cost library items:", error);
+      res.status(500).json({ message: "Failed to fetch items" });
+    }
+  });
+
+  // Create cost library item
+  app.post("/api/cost-library", isAuthenticated, async (req: any, res) => {
+    try {
+      const [item] = await db.insert(costLibraryItems).values(req.body).returning();
+      res.json(item);
+    } catch (error) {
+      console.error("Error creating cost library item:", error);
+      res.status(500).json({ message: "Failed to create item" });
+    }
+  });
+
+  // Update cost library item
+  app.patch("/api/cost-library/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const [item] = await db.update(costLibraryItems)
+        .set({ ...req.body, updatedAt: new Date() })
+        .where(eq(costLibraryItems.id, req.params.id))
+        .returning();
+      res.json(item);
+    } catch (error) {
+      console.error("Error updating cost library item:", error);
+      res.status(500).json({ message: "Failed to update item" });
+    }
+  });
+
+  // Delete cost library item
+  app.delete("/api/cost-library/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      await db.delete(costLibraryItems).where(eq(costLibraryItems.id, req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting cost library item:", error);
+      res.status(500).json({ message: "Failed to delete item" });
+    }
+  });
+
+  // Increment usage count when item is used in a quote
+  app.post("/api/cost-library/:id/use", isAuthenticated, async (req: any, res) => {
+    try {
+      const [item] = await db.update(costLibraryItems)
+        .set({ 
+          usageCount: sql`${costLibraryItems.usageCount} + 1`,
+          lastUsedAt: new Date()
+        })
+        .where(eq(costLibraryItems.id, req.params.id))
+        .returning();
+      res.json(item);
+    } catch (error) {
+      console.error("Error updating usage count:", error);
+      res.status(500).json({ message: "Failed to update usage" });
+    }
+  });
+
+  // Get cost source documents
+  app.get("/api/cost-documents", isAuthenticated, async (req: any, res) => {
+    try {
+      const documents = await db.select().from(costSourceDocuments).orderBy(desc(costSourceDocuments.createdAt));
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching cost documents:", error);
+      res.status(500).json({ message: "Failed to fetch documents" });
+    }
+  });
+
+  // Upload and process cost document with AI extraction
+  app.post("/api/cost-documents/upload", isAuthenticated, async (req: any, res) => {
+    try {
+      const { fileName, fileType, fileSize, fileContent, notes } = req.body;
+      
+      // Create document record
+      const [document] = await db.insert(costSourceDocuments).values({
+        fileName,
+        fileType,
+        fileSize,
+        notes,
+        uploadedBy: req.user?.claims?.sub,
+        extractionStatus: "processing"
+      }).returning();
+
+      // Process with AI to extract costs
+      try {
+        const processor = new DocumentProcessor();
+        const extracted = await processor.extractCostsFromDocument(fileContent, fileType);
+        
+        // Update document with extraction results
+        await db.update(costSourceDocuments)
+          .set({
+            extractedText: extracted.rawText,
+            extractionStatus: "completed",
+            extractedItemsCount: extracted.items.length,
+            processedAt: new Date()
+          })
+          .where(eq(costSourceDocuments.id, document.id));
+
+        // Create cost library items from extracted data
+        for (const item of extracted.items) {
+          await db.insert(costLibraryItems).values({
+            name: item.description,
+            description: item.notes || null,
+            unit: item.unit || "each",
+            defaultUnitCost: item.unitCost.toString(),
+            sourceDocumentId: document.id,
+            tags: item.category || null
+          });
+        }
+
+        res.json({ 
+          success: true, 
+          document,
+          extractedCount: extracted.items.length,
+          items: extracted.items
+        });
+      } catch (aiError) {
+        console.error("AI extraction error:", aiError);
+        await db.update(costSourceDocuments)
+          .set({ extractionStatus: "failed" })
+          .where(eq(costSourceDocuments.id, document.id));
+        
+        res.json({ 
+          success: true, 
+          document,
+          extractedCount: 0,
+          error: "AI extraction failed, document saved for manual review"
+        });
+      }
+    } catch (error) {
+      console.error("Error uploading cost document:", error);
+      res.status(500).json({ message: "Failed to upload document" });
+    }
+  });
+
+  // Delete cost document
+  app.delete("/api/cost-documents/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      await db.delete(costSourceDocuments).where(eq(costSourceDocuments.id, req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting cost document:", error);
+      res.status(500).json({ message: "Failed to delete document" });
+    }
+  });
+
+  // AI-assisted quote suggestions
+  app.post("/api/quotes/ai-suggest", isAuthenticated, async (req: any, res) => {
+    try {
+      const { projectDescription, projectAddress } = req.body;
+      
+      // Get all cost library items for context
+      const libraryItems = await db.select().from(costLibraryItems).orderBy(desc(costLibraryItems.usageCount));
+      
+      // Get recent quote history for pricing context
+      const recentHistory = await db.select().from(costHistory).orderBy(desc(costHistory.recordedAt)).limit(100);
+      
+      // Use AI to suggest items
+      const processor = new DocumentProcessor();
+      const suggestions = await processor.suggestQuoteItems(
+        projectDescription,
+        projectAddress,
+        libraryItems,
+        recentHistory
+      );
+      
+      res.json(suggestions);
+    } catch (error) {
+      console.error("Error generating AI suggestions:", error);
+      res.status(500).json({ message: "Failed to generate suggestions" });
+    }
+  });
+
+  // Record cost history when quote item is added
+  app.post("/api/cost-history", isAuthenticated, async (req: any, res) => {
+    try {
+      const [record] = await db.insert(costHistory).values(req.body).returning();
+      res.json(record);
+    } catch (error) {
+      console.error("Error recording cost history:", error);
+      res.status(500).json({ message: "Failed to record history" });
     }
   });
 

@@ -1056,3 +1056,129 @@ export type QuoteSignature = typeof quoteSignatures.$inferSelect;
 export type InsertQuoteSignature = z.infer<typeof insertQuoteSignatureSchema>;
 export type QuoteAccessToken = typeof quoteAccessTokens.$inferSelect;
 export type InsertQuoteAccessToken = z.infer<typeof insertQuoteAccessTokenSchema>;
+
+// =============================================================================
+// COST LIBRARY SYSTEM
+// =============================================================================
+
+// Categories for organizing cost library items
+export const costCategories = pgTable("cost_categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  color: varchar("color").default("#3b82f6"),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Reusable cost library items
+export const costLibraryItems = pgTable("cost_library_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  categoryId: varchar("category_id").references(() => costCategories.id, { onDelete: "set null" }),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  unit: varchar("unit").default("each"),
+  defaultUnitCost: decimal("default_unit_cost", { precision: 10, scale: 2 }).notNull(),
+  supplier: varchar("supplier"),
+  tags: text("tags"),
+  notes: text("notes"),
+  sourceDocumentId: varchar("source_document_id"),
+  usageCount: integer("usage_count").default(0),
+  lastUsedAt: timestamp("last_used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Source documents (uploaded scopes, past quotes, etc.)
+export const costSourceDocuments = pgTable("cost_source_documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fileName: varchar("file_name").notNull(),
+  fileType: varchar("file_type"),
+  fileSize: integer("file_size"),
+  storageKey: varchar("storage_key"),
+  extractedText: text("extracted_text"),
+  extractionStatus: varchar("extraction_status").default("pending"),
+  extractedItemsCount: integer("extracted_items_count").default(0),
+  notes: text("notes"),
+  uploadedBy: varchar("uploaded_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+  processedAt: timestamp("processed_at"),
+});
+
+// Cost history - tracks actual usage in quotes/jobs for price learning
+export const costHistory = pgTable("cost_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  libraryItemId: varchar("library_item_id").references(() => costLibraryItems.id, { onDelete: "cascade" }),
+  quoteId: varchar("quote_id").references(() => quotes.id, { onDelete: "set null" }),
+  jobId: varchar("job_id").references(() => jobs.id, { onDelete: "set null" }),
+  itemName: varchar("item_name").notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
+  unitCost: decimal("unit_cost", { precision: 10, scale: 2 }).notNull(),
+  totalCost: decimal("total_cost", { precision: 10, scale: 2 }).notNull(),
+  recordedAt: timestamp("recorded_at").defaultNow(),
+});
+
+// Relations for cost library
+export const costCategoriesRelations = relations(costCategories, ({ many }) => ({
+  items: many(costLibraryItems),
+}));
+
+export const costLibraryItemsRelations = relations(costLibraryItems, ({ one, many }) => ({
+  category: one(costCategories, {
+    fields: [costLibraryItems.categoryId],
+    references: [costCategories.id],
+  }),
+  history: many(costHistory),
+}));
+
+export const costHistoryRelations = relations(costHistory, ({ one }) => ({
+  libraryItem: one(costLibraryItems, {
+    fields: [costHistory.libraryItemId],
+    references: [costLibraryItems.id],
+  }),
+  quote: one(quotes, {
+    fields: [costHistory.quoteId],
+    references: [quotes.id],
+  }),
+  job: one(jobs, {
+    fields: [costHistory.jobId],
+    references: [jobs.id],
+  }),
+}));
+
+// Insert schemas for cost library
+export const insertCostCategorySchema = createInsertSchema(costCategories).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCostLibraryItemSchema = createInsertSchema(costLibraryItems).omit({
+  id: true,
+  usageCount: true,
+  lastUsedAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCostSourceDocumentSchema = createInsertSchema(costSourceDocuments).omit({
+  id: true,
+  extractionStatus: true,
+  extractedItemsCount: true,
+  createdAt: true,
+  processedAt: true,
+});
+
+export const insertCostHistorySchema = createInsertSchema(costHistory).omit({
+  id: true,
+  recordedAt: true,
+});
+
+// Types for cost library
+export type CostCategory = typeof costCategories.$inferSelect;
+export type InsertCostCategory = z.infer<typeof insertCostCategorySchema>;
+export type CostLibraryItem = typeof costLibraryItems.$inferSelect;
+export type InsertCostLibraryItem = z.infer<typeof insertCostLibraryItemSchema>;
+export type CostSourceDocument = typeof costSourceDocuments.$inferSelect;
+export type InsertCostSourceDocument = z.infer<typeof insertCostSourceDocumentSchema>;
+export type CostHistory = typeof costHistory.$inferSelect;
+export type InsertCostHistory = z.infer<typeof insertCostHistorySchema>;
