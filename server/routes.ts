@@ -6669,7 +6669,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Only accepted quotes can be converted to jobs" });
       }
 
+      // Convert quote to job
       const job = await storage.convertQuoteToJob(req.params.id);
+      
+      // Generate the accepted quote PDF with customer signature and upload to Google Drive
+      try {
+        console.log(`📄 Generating signed quote PDF for job conversion: ${quote.quoteNumber}`);
+        
+        // Get quote items and signature
+        const quoteItems = await storage.getQuoteItems(quote.id);
+        const signatures = await storage.getQuoteSignatures(quote.id);
+        const signature = signatures.length > 0 ? signatures[0] : null;
+        
+        // Generate PDF with signature
+        const { generateQuotePDFBuffer } = await import('./services/quotePdfService');
+        const pdfBuffer = await generateQuotePDFBuffer({
+          ...quote,
+          items: quoteItems,
+          signature: signature && signature.signedAt ? {
+            signerName: signature.signerName,
+            signatureData: signature.signatureData || '',
+            signedAt: signature.signedAt,
+          } : null
+        });
+        
+        console.log(`✅ Quote PDF generated, size: ${pdfBuffer.length} bytes`);
+        
+        // Upload to Google Drive if tokens are available
+        const driveTokensJson = await storage.getSystemGoogleDriveTokens();
+        if (driveTokensJson) {
+          try {
+            const driveTokens = JSON.parse(driveTokensJson);
+            const { GoogleDriveService } = await import('./googleDriveService');
+            const googleDriveService = new GoogleDriveService();
+            googleDriveService.setUserTokens(
+              driveTokens,
+              'system',
+              async (newTokens) => {
+                await storage.setSystemGoogleDriveTokens(JSON.stringify(newTokens), 'system');
+              }
+            );
+            
+            // Get or create job folder
+            const jobFolderName = job.jobAddress || job.clientName || 'Unknown Job';
+            
+            // Find or create BuildFlow Pro folder and job folder
+            const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
+            const jobFolderId = await googleDriveService.findOrCreateFolder(`Job - ${jobFolderName}`, mainFolderId);
+            
+            // Upload PDF to Google Drive
+            const pdfFileName = `${quote.quoteNumber}-Accepted-Quote.pdf`;
+            const uploadResult = await googleDriveService.uploadFile(
+              pdfFileName,
+              pdfBuffer,
+              'application/pdf',
+              jobFolderId
+            );
+            
+            console.log(`☁️ Signed quote PDF uploaded to Google Drive: ${pdfFileName}`);
+            
+            // Create job file record linking to the uploaded PDF
+            await storage.createJobFile({
+              jobId: job.id,
+              fileName: pdfFileName,
+              originalName: pdfFileName,
+              mimeType: 'application/pdf',
+              fileSize: pdfBuffer.length,
+              uploadedById: user.id,
+              googleDriveLink: uploadResult.webViewLink,
+              googleDriveFileId: uploadResult.fileId,
+            });
+            
+            console.log(`📎 Job file record created for signed quote PDF`);
+          } catch (driveError) {
+            console.error('Error uploading quote PDF to Google Drive:', driveError);
+            // Continue without Drive upload - job was still created successfully
+          }
+        } else {
+          console.log('⚠️ Google Drive not connected - skipping quote PDF upload');
+        }
+      } catch (pdfError) {
+        console.error('Error generating/uploading quote PDF:', pdfError);
+        // Continue - job was still created successfully
+      }
+      
       res.json({ success: true, job });
     } catch (error) {
       console.error("Error converting quote to job:", error);
