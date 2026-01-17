@@ -227,10 +227,18 @@ export default function QuotesPage() {
               </Link>
               <h1 className="text-xl font-bold">Quotes</h1>
             </div>
-            <Button onClick={() => setShowNewQuoteDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Quote
-            </Button>
+            <div className="flex gap-2">
+              <Link href="/cost-library">
+                <Button variant="outline">
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Cost Library
+                </Button>
+              </Link>
+              <Button onClick={() => setShowNewQuoteDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Quote
+              </Button>
+            </div>
           </div>
         </div>
       </div>
