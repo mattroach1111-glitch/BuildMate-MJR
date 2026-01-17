@@ -6848,10 +6848,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Auto-categorize function
+  async function autoCategorize(itemName: string, itemDescription?: string, itemTags?: string): Promise<string | null> {
+    const categories = await db.select().from(costCategories);
+    if (categories.length === 0) return null;
+    
+    const searchText = `${itemName} ${itemDescription || ""} ${itemTags || ""}`.toLowerCase();
+    
+    let bestMatch: { categoryId: string; score: number } | null = null;
+    
+    for (const cat of categories) {
+      let score = 0;
+      
+      // Check category name match
+      const catNameWords = cat.name.toLowerCase().split(/\s+/);
+      for (const word of catNameWords) {
+        if (word.length > 2 && searchText.includes(word)) {
+          score += 10;
+        }
+      }
+      
+      // Check keywords match
+      if (cat.keywords) {
+        const keywords = cat.keywords.toLowerCase().split(",").map(k => k.trim());
+        for (const keyword of keywords) {
+          if (keyword.length > 2 && searchText.includes(keyword)) {
+            score += 15;
+          }
+        }
+      }
+      
+      if (score > 0 && (!bestMatch || score > bestMatch.score)) {
+        bestMatch = { categoryId: cat.id, score };
+      }
+    }
+    
+    return bestMatch?.categoryId || null;
+  }
+
   // Create cost library item
   app.post("/api/cost-library", isAuthenticated, async (req: any, res) => {
     try {
-      const [item] = await db.insert(costLibraryItems).values(req.body).returning();
+      let data = { ...req.body };
+      
+      // Auto-categorize if no category provided
+      if (!data.categoryId) {
+        const suggestedCategoryId = await autoCategorize(data.name, data.description, data.tags);
+        if (suggestedCategoryId) {
+          data.categoryId = suggestedCategoryId;
+        }
+      }
+      
+      const [item] = await db.insert(costLibraryItems).values(data).returning();
       res.json(item);
     } catch (error) {
       console.error("Error creating cost library item:", error);
@@ -6956,6 +7004,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error bulk updating cost library:", error);
       res.status(500).json({ message: "Failed to bulk update items" });
+    }
+  });
+
+  // Auto-categorize uncategorized items
+  app.post("/api/cost-library/auto-categorize", isAuthenticated, async (req: any, res) => {
+    try {
+      // Get all uncategorized items
+      const uncategorizedItems = await db.select()
+        .from(costLibraryItems)
+        .where(sql`${costLibraryItems.categoryId} IS NULL`);
+      
+      if (uncategorizedItems.length === 0) {
+        return res.json({ affectedCount: 0, message: "No uncategorized items found" });
+      }
+      
+      let categorizedCount = 0;
+      const results: { itemId: string; itemName: string; categoryId: string }[] = [];
+      
+      for (const item of uncategorizedItems) {
+        const suggestedCategoryId = await autoCategorize(item.name, item.description || undefined, item.tags || undefined);
+        if (suggestedCategoryId) {
+          await db.update(costLibraryItems)
+            .set({ categoryId: suggestedCategoryId, updatedAt: new Date() })
+            .where(eq(costLibraryItems.id, item.id));
+          categorizedCount++;
+          results.push({ itemId: item.id, itemName: item.name, categoryId: suggestedCategoryId });
+        }
+      }
+      
+      res.json({ 
+        affectedCount: categorizedCount,
+        total: uncategorizedItems.length,
+        results,
+        message: `Categorized ${categorizedCount} of ${uncategorizedItems.length} items`
+      });
+    } catch (error) {
+      console.error("Error auto-categorizing items:", error);
+      res.status(500).json({ message: "Failed to auto-categorize items" });
     }
   });
 

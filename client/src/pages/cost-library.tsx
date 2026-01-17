@@ -44,7 +44,8 @@ import {
   ArrowLeft,
   FileUp,
   Sparkles,
-  RefreshCw
+  RefreshCw,
+  Wand2
 } from "lucide-react";
 import { Link } from "wouter";
 import type { CostCategory, CostLibraryItem, CostSourceDocument } from "@shared/schema";
@@ -80,6 +81,7 @@ export default function CostLibraryPage() {
     name: "",
     description: "",
     color: "#3b82f6",
+    keywords: "",
   });
 
   const { data: categories = [] } = useQuery<CostCategory[]>({
@@ -165,7 +167,7 @@ export default function CostLibraryPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cost-categories"] });
       setShowAddCategory(false);
-      setNewCategory({ name: "", description: "", color: "#3b82f6" });
+      setNewCategory({ name: "", description: "", color: "#3b82f6", keywords: "" });
       toast({ title: "Category created" });
     },
     onError: () => {
@@ -196,6 +198,25 @@ export default function CostLibraryPage() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to update items", variant: "destructive" });
+    },
+  });
+
+  const autoCategorize = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/cost-library/auto-categorize", {});
+      return response.json();
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cost-library"] });
+      toast({ 
+        title: "Auto-categorize complete", 
+        description: result.affectedCount > 0 
+          ? `Matched ${result.affectedCount} of ${result.total} uncategorized items` 
+          : "No items could be matched to categories"
+      });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to auto-categorize", variant: "destructive" });
     },
   });
 
@@ -230,7 +251,15 @@ export default function CostLibraryPage() {
               <p className="text-gray-500 text-sm">Save and reuse costs for faster quoting</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button 
+              variant="outline" 
+              onClick={() => autoCategorize.mutate()}
+              disabled={autoCategorize.isPending}
+            >
+              <Wand2 className="h-4 w-4 mr-2" />
+              {autoCategorize.isPending ? "Matching..." : "Auto-Categorize"}
+            </Button>
             <Button variant="outline" onClick={() => setShowBulkUpdate(true)}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Bulk Update
@@ -603,6 +632,17 @@ export default function CostLibraryPage() {
                 onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
                 placeholder="Optional description"
               />
+            </div>
+            <div>
+              <Label>Keywords (comma separated)</Label>
+              <Input
+                value={newCategory.keywords}
+                onChange={(e) => setNewCategory({ ...newCategory, keywords: e.target.value })}
+                placeholder="e.g., carpenter, joinery, woodwork"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Items with matching keywords will be auto-assigned to this category
+              </p>
             </div>
             <div>
               <Label>Color</Label>

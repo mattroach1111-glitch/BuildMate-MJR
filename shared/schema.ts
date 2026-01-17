@@ -1067,6 +1067,7 @@ export const costCategories = pgTable("cost_categories", {
   name: varchar("name").notNull(),
   description: text("description"),
   color: varchar("color").default("#3b82f6"),
+  keywords: text("keywords"),
   sortOrder: integer("sort_order").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
