@@ -91,6 +91,9 @@ export default function QuotesPage() {
     notes: "",
     builderMargin: "10",
     director: "Will Scott",
+    depositRequired: false,
+    depositType: "percentage" as "percentage" | "fixed",
+    depositValue: "10",
   });
 
   const { data: employees = [] } = useQuery<any[]>({
@@ -121,6 +124,9 @@ export default function QuotesPage() {
         notes: "",
         builderMargin: "10",
         director: "Will Scott",
+        depositRequired: false,
+        depositType: "percentage" as "percentage" | "fixed",
+        depositValue: "10",
       });
       toast({ title: "Success", description: "Quote created successfully" });
       fetchQuoteDetails(newQuote.id);
@@ -451,6 +457,46 @@ export default function QuotesPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="border rounded-lg p-4 bg-gray-50">
+              <div className="flex items-center gap-3 mb-3">
+                <input
+                  type="checkbox"
+                  id="depositRequired"
+                  checked={newQuoteData.depositRequired}
+                  onChange={(e) => setNewQuoteData({ ...newQuoteData, depositRequired: e.target.checked })}
+                  className="h-4 w-4"
+                />
+                <Label htmlFor="depositRequired" className="font-medium">Require Deposit</Label>
+              </div>
+              {newQuoteData.depositRequired && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Deposit Type</Label>
+                    <Select
+                      value={newQuoteData.depositType}
+                      onValueChange={(value) => setNewQuoteData({ ...newQuoteData, depositType: value as "percentage" | "fixed" })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="percentage">Percentage (%)</SelectItem>
+                        <SelectItem value="fixed">Fixed Amount ($)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>{newQuoteData.depositType === "percentage" ? "Deposit %" : "Deposit Amount"}</Label>
+                    <Input
+                      type="number"
+                      value={newQuoteData.depositValue}
+                      onChange={(e) => setNewQuoteData({ ...newQuoteData, depositValue: e.target.value })}
+                      placeholder={newQuoteData.depositType === "percentage" ? "10" : "1000"}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
             <div>
               <Label>Sending Director</Label>
