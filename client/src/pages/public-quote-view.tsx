@@ -259,18 +259,13 @@ export default function PublicQuoteView() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {Object.entries(itemsByType).map(([type, items]) => (
-              <div key={type} className="mb-4 last:mb-0">
-                <h4 className="font-medium text-sm text-gray-600 mb-2">{itemTypeLabels[type] || type}</h4>
-                <div className="space-y-2">
-                  {items.map((item) => (
-                    <div key={item.id} className="p-3 bg-gray-50 rounded-lg">
-                      <p className="font-medium">{item.description}</p>
-                    </div>
-                  ))}
+            <div className="space-y-2">
+              {quote.items.map((item) => (
+                <div key={item.id} className="p-3 bg-gray-50 rounded-lg">
+                  <p className="font-medium">{item.description}</p>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </CardContent>
         </Card>
 
