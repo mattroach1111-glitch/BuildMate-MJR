@@ -3485,7 +3485,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Convert quote to job
-  async convertQuoteToJob(quoteId: string): Promise<Job> {
+  async convertQuoteToJob(quoteId: string, hourlyRate?: string): Promise<Job> {
     try {
       const quote = await this.getQuote(quoteId);
       if (!quote) throw new Error("Quote not found");
@@ -3500,7 +3500,7 @@ export class DatabaseStorage implements IStorage {
           projectManager: "",
           status: "new_job",
           builderMargin: quote.builderMargin,
-          defaultHourlyRate: "50",
+          defaultHourlyRate: hourlyRate || "50",
           sourceQuoteId: quoteId,
         })
         .returning();

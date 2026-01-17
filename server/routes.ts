@@ -6669,8 +6669,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Only accepted quotes can be converted to jobs" });
       }
 
-      // Convert quote to job
-      const job = await storage.convertQuoteToJob(req.params.id);
+      // Get hourly rate from request body (optional)
+      const { hourlyRate } = req.body || {};
+
+      // Convert quote to job with optional hourly rate
+      const job = await storage.convertQuoteToJob(req.params.id, hourlyRate);
       
       // Generate the accepted quote PDF with customer signature and upload to Google Drive
       try {

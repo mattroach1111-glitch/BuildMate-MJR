@@ -73,6 +73,9 @@ export default function QuotesPage() {
   const [showQuoteEditor, setShowQuoteEditor] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [showConvertDialog, setShowConvertDialog] = useState(false);
+  const [convertQuoteId, setConvertQuoteId] = useState<string | null>(null);
+  const [convertHourlyRate, setConvertHourlyRate] = useState("50");
 
   const [newQuoteData, setNewQuoteData] = useState({
     clientName: "",
@@ -147,13 +150,16 @@ export default function QuotesPage() {
   });
 
   const convertQuoteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await apiRequest("POST", `/api/quotes/${id}/convert`);
+    mutationFn: async ({ id, hourlyRate }: { id: string; hourlyRate: string }) => {
+      const response = await apiRequest("POST", `/api/quotes/${id}/convert`, { hourlyRate });
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/quotes"] });
       toast({ title: "Success", description: "Quote converted to job" });
+      setShowConvertDialog(false);
+      setConvertQuoteId(null);
+      setConvertHourlyRate("50");
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to convert quote", variant: "destructive" });
@@ -298,7 +304,10 @@ export default function QuotesPage() {
                       </>
                     )}
                     {quote.status === "accepted" && (
-                      <Button size="sm" onClick={() => convertQuoteMutation.mutate(quote.id)} disabled={convertQuoteMutation.isPending}>
+                      <Button size="sm" onClick={() => {
+                        setConvertQuoteId(quote.id);
+                        setShowConvertDialog(true);
+                      }}>
                         <Building2 className="h-3 w-3 mr-1" />
                         Convert to Job
                       </Button>
@@ -461,6 +470,56 @@ export default function QuotesPage() {
           }}
         />
       )}
+
+      <Dialog open={showConvertDialog} onOpenChange={setShowConvertDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Convert Quote to Job</DialogTitle>
+            <DialogDescription>
+              Set the hourly rate for the new job sheet.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Hourly Rate ($)</Label>
+              <Select value={convertHourlyRate} onValueChange={setConvertHourlyRate}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="45">$45/hr</SelectItem>
+                  <SelectItem value="50">$50/hr</SelectItem>
+                  <SelectItem value="55">$55/hr</SelectItem>
+                  <SelectItem value="60">$60/hr</SelectItem>
+                  <SelectItem value="65">$65/hr</SelectItem>
+                  <SelectItem value="70">$70/hr</SelectItem>
+                  <SelectItem value="75">$75/hr</SelectItem>
+                  <SelectItem value="80">$80/hr</SelectItem>
+                  <SelectItem value="85">$85/hr</SelectItem>
+                  <SelectItem value="90">$90/hr</SelectItem>
+                  <SelectItem value="95">$95/hr</SelectItem>
+                  <SelectItem value="100">$100/hr</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setShowConvertDialog(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (convertQuoteId) {
+                    convertQuoteMutation.mutate({ id: convertQuoteId, hourlyRate: convertHourlyRate });
+                  }
+                }}
+                disabled={convertQuoteMutation.isPending}
+              >
+                {convertQuoteMutation.isPending ? "Converting..." : "Convert to Job"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
