@@ -1448,16 +1448,44 @@ export async function generateQuotePDF(quote: QuoteForPDF, download: boolean = t
   
   // === CLIENT ACCEPTANCE SECTION (if signed) ===
   if (quote.signature) {
-    yPos += 25;
-    doc.setFontSize(10);
+    // Draw a separator line before acceptance section
+    yPos += 15;
+    doc.setDrawColor(150, 150, 150);
+    doc.setLineWidth(0.3);
+    doc.line(marginLeft, yPos, pageWidth - marginRight, yPos);
+    yPos += 15;
+    
+    // Check if we need a new page for the acceptance section
+    if (yPos > pageHeight - 100) {
+      doc.addPage();
+      yPos = 30;
+    }
+    
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.text('CLIENT ACCEPTANCE', marginLeft, yPos);
-    yPos += 10;
+    yPos += 12;
+    
+    // Add signature image first for visual prominence
+    if (quote.signature.signatureData && quote.signature.signatureData.startsWith('data:image')) {
+      try {
+        doc.addImage(quote.signature.signatureData, 'PNG', marginLeft, yPos, 70, 25);
+        yPos += 30;
+      } catch (e) {
+        console.error('Failed to add signature image to PDF:', e);
+      }
+    }
+    
+    // Signature line under the signature
+    doc.setDrawColor(100, 100, 100);
+    doc.setLineWidth(0.3);
+    doc.line(marginLeft, yPos, marginLeft + 70, yPos);
+    yPos += 8;
     
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.text(`Signed by: ${quote.signature.signerName}`, marginLeft, yPos);
-    yPos += 5;
+    yPos += 6;
     
     const signedDate = new Date(quote.signature.signedAt).toLocaleDateString('en-AU', {
       day: 'numeric',
@@ -1467,17 +1495,6 @@ export async function generateQuotePDF(quote: QuoteForPDF, download: boolean = t
       minute: '2-digit'
     });
     doc.text(`Date: ${signedDate}`, marginLeft, yPos);
-    yPos += 15;
-    
-    // Add the actual signature image if available
-    if (quote.signature.signatureData && quote.signature.signatureData.startsWith('data:image')) {
-      try {
-        doc.addImage(quote.signature.signatureData, 'PNG', marginLeft, yPos, 60, 20);
-        yPos += 25;
-      } catch (e) {
-        console.error('Failed to add signature image to PDF:', e);
-      }
-    }
   }
   
   // === FOOTER ===
