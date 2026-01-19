@@ -7350,13 +7350,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload spreadsheet to cost library (xlsx, csv)
+  // Upload spreadsheet to cost library (xlsx, xls)
   app.post("/api/cost-library/upload-spreadsheet", isAuthenticated, async (req: any, res) => {
     try {
       const { fileName, fileContent, categoryId } = req.body;
       
       if (!fileContent) {
         return res.status(400).json({ message: "No file content provided" });
+      }
+      
+      // Verify file extension
+      const ext = fileName.toLowerCase().split('.').pop();
+      if (!['xlsx', 'xls'].includes(ext || '')) {
+        return res.status(400).json({ message: "Please upload an Excel file (.xlsx or .xls)" });
       }
       
       // Import xlsx dynamically
@@ -7368,18 +7374,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Read workbook
       const workbook = XLSX.read(buffer, { type: 'buffer' });
+      if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+        return res.status(400).json({ message: "No worksheets found in the Excel file" });
+      }
+      
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const data: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
       
       // Parse the rapid_QS_Estimate format
+      // Format: [null, Category, Description, Unit, Qty, Rate, Amount, Margin, Total, Notes]
       const items: { name: string; description: string; unit: string; rate: number; category: string }[] = [];
       let currentZone = '';
       let currentCategory = '';
+      let skippedRows = 0;
       
       for (let i = 0; i < data.length; i++) {
         const row = data[i];
-        if (!row || row.length === 0) continue;
+        if (!row || row.length < 4) continue;
         
         // Detect zone headers (e.g., "Zone 1.0", "SITE SET & P&G")
         const cell1 = String(row[1] || '').trim();
@@ -7387,53 +7399,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (cell1.toLowerCase().startsWith('zone')) {
           currentZone = cell2 || cell1;
+          currentCategory = ''; // Reset category on zone change
           continue;
         }
         
-        // Detect category rows (first column has category name, second has item description)
-        // Format: [null, Category, Description, Unit, Qty, Rate, Amount, Margin, Total]
-        if (row[1] && row[2] && row[3] && row[5]) {
-          const categoryOrItem = String(row[1]).trim();
-          const description = String(row[2]).trim();
-          const unit = String(row[3]).trim();
-          const rate = parseFloat(row[5]) || 0;
-          
-          // Skip header rows
-          if (unit.toLowerCase() === 'unit' || categoryOrItem.toLowerCase() === 'unit') continue;
-          if (description.toLowerCase() === 'rate' || description.toLowerCase() === 'amount') continue;
-          
-          // Check if this is a new category or an item
-          if (categoryOrItem && categoryOrItem.length > 0 && !categoryOrItem.includes(',')) {
-            currentCategory = categoryOrItem;
-          }
-          
-          // Only add items with valid rates
-          if (rate > 0 && description.length > 2) {
-            items.push({
-              name: description,
-              description: currentZone ? `${currentZone} - ${currentCategory}` : currentCategory,
-              unit: unit.toLowerCase() === 'item' ? 'each' : unit.toLowerCase(),
-              rate,
-              category: currentCategory || currentZone
-            });
-          }
+        // Skip header rows and metadata
+        if (cell1.toLowerCase().includes('project:') || 
+            cell1.toLowerCase().includes('client:') ||
+            cell1.toLowerCase().includes('foreman rate') ||
+            cell1.toLowerCase().includes('cost per m2') ||
+            cell2.toLowerCase() === 'unit' ||
+            cell2.toLowerCase() === 'rate') {
+          continue;
         }
-        // Handle rows where item is in second column (continuation of category)
-        else if (!row[1] && row[2] && row[3] && row[5]) {
-          const description = String(row[2]).trim();
-          const unit = String(row[3]).trim();
-          const rate = parseFloat(row[5]) || 0;
-          
-          if (rate > 0 && description.length > 2) {
-            items.push({
-              name: description,
-              description: currentZone ? `${currentZone} - ${currentCategory}` : currentCategory,
-              unit: unit.toLowerCase() === 'item' ? 'each' : unit.toLowerCase(),
-              rate,
-              category: currentCategory || currentZone
-            });
+        
+        // Look for rows with rate values - try multiple column positions
+        // Format can vary: [null, Category, Description, Unit, Qty, Rate, Amount, Margin, Total]
+        // Or: [null, null, Description, Unit, Qty, Rate, Amount, Margin, Total]
+        
+        let description = '';
+        let unit = '';
+        let rate = 0;
+        
+        // Try to extract rate from column 5 or 6 (0-indexed)
+        const possibleRate5 = parseFloat(row[5]) || 0;
+        const possibleRate6 = parseFloat(row[6]) || 0;
+        
+        // Check if we have a category in column 1 and description in column 2
+        if (cell1 && cell2 && row[3]) {
+          // This is likely a category row with an item
+          if (!cell1.toLowerCase().includes('zone') && 
+              !['unit', 'qty', 'rate', 'amount', 'total'].includes(cell1.toLowerCase())) {
+            currentCategory = cell1;
           }
+          description = cell2;
+          unit = String(row[3] || '').trim();
+          rate = possibleRate5 > 0 ? possibleRate5 : possibleRate6;
         }
+        // Check if description is in column 2, category already set
+        else if (!cell1 && cell2 && row[3]) {
+          description = cell2;
+          unit = String(row[3] || '').trim();
+          rate = possibleRate5 > 0 ? possibleRate5 : possibleRate6;
+        }
+        
+        // Validate and normalize unit
+        const normalizedUnit = unit.toLowerCase();
+        if (['unit', 'qty', 'rate', 'amount'].includes(normalizedUnit)) {
+          skippedRows++;
+          continue;
+        }
+        
+        // Map common units
+        let finalUnit = normalizedUnit;
+        if (normalizedUnit === 'item' || normalizedUnit === 'no' || normalizedUnit === 'no.') {
+          finalUnit = 'each';
+        } else if (normalizedUnit === 'm' || normalizedUnit === 'lm' || normalizedUnit === 'l.m') {
+          finalUnit = 'lm';
+        }
+        
+        // Only add items with valid data
+        if (rate > 0 && description.length > 2) {
+          items.push({
+            name: description,
+            description: currentZone ? `${currentZone}${currentCategory ? ' - ' + currentCategory : ''}` : currentCategory,
+            unit: finalUnit || 'each',
+            rate,
+            category: currentCategory || currentZone
+          });
+        } else if (description.length > 2 && row[3]) {
+          skippedRows++;
+        }
+      }
+      
+      // Warn if no items were parsed
+      if (items.length === 0) {
+        return res.status(400).json({ 
+          message: `Could not extract any items from the spreadsheet. The file may use a different format than expected. Skipped ${skippedRows} rows that had descriptions but no valid rates.`
+        });
       }
       
       // Get existing categories for matching

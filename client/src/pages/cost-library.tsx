@@ -920,20 +920,85 @@ export default function CostLibraryPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-purple-500" />
-              Upload Document for AI Extraction
+              Upload Document
             </DialogTitle>
             <DialogDescription>
-              Upload a quote, invoice, or scope document. AI will extract costs automatically.
+              Upload a spreadsheet or document to import cost items.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-              <FileUp className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-500 mb-2">
-                Drag and drop a PDF, JPG, or PNG file here
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <FileUp className="h-10 w-10 mx-auto text-gray-400 mb-3" />
+              <p className="text-gray-600 font-medium mb-1">
+                Spreadsheet Import
               </p>
-              <p className="text-xs text-gray-400">
-                Supported: PDF, JPEG, PNG (max 10MB)
+              <p className="text-xs text-gray-400 mb-3">
+                Excel files (.xlsx, .xls) - automatically parses rates and items
+              </p>
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                id="spreadsheet-upload"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  
+                  const reader = new FileReader();
+                  reader.onload = async () => {
+                    try {
+                      const response = await apiRequest("POST", "/api/cost-library/upload-spreadsheet", {
+                        fileName: file.name,
+                        fileContent: reader.result as string,
+                      });
+                      const result = await response.json();
+                      queryClient.invalidateQueries({ queryKey: ["/api/cost-library"] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/cost-documents"] });
+                      setShowUploadDoc(false);
+                      toast({ 
+                        title: "Spreadsheet imported", 
+                        description: `Added ${result.importedCount} items from ${result.sheetName || 'spreadsheet'}`
+                      });
+                    } catch (error: any) {
+                      let errorMsg = "Failed to process spreadsheet";
+                      try {
+                        const errData = await error?.response?.json?.();
+                        if (errData?.message) errorMsg = errData.message;
+                      } catch {}
+                      toast({ 
+                        title: "Error", 
+                        description: errorMsg, 
+                        variant: "destructive" 
+                      });
+                    }
+                  };
+                  reader.readAsDataURL(file);
+                }}
+              />
+              <Button 
+                variant="default" 
+                onClick={() => document.getElementById("spreadsheet-upload")?.click()}
+              >
+                Upload Spreadsheet
+              </Button>
+            </div>
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-500">or</span>
+              </div>
+            </div>
+            
+            <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center">
+              <Sparkles className="h-10 w-10 mx-auto text-purple-400 mb-3" />
+              <p className="text-gray-600 font-medium mb-1">
+                AI Document Extraction
+              </p>
+              <p className="text-xs text-gray-400 mb-3">
+                PDF, JPEG, PNG - AI will extract costs automatically
               </p>
               <input
                 type="file"
@@ -974,11 +1039,10 @@ export default function CostLibraryPage() {
                 }}
               />
               <Button 
-                variant="outline" 
-                className="mt-4"
+                variant="outline"
                 onClick={() => document.getElementById("doc-upload")?.click()}
               >
-                Select File
+                Upload Document
               </Button>
             </div>
           </div>
