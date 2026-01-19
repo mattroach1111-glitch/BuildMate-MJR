@@ -7350,6 +7350,145 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upload spreadsheet to cost library (xlsx, csv)
+  app.post("/api/cost-library/upload-spreadsheet", isAuthenticated, async (req: any, res) => {
+    try {
+      const { fileName, fileContent, categoryId } = req.body;
+      
+      if (!fileContent) {
+        return res.status(400).json({ message: "No file content provided" });
+      }
+      
+      // Import xlsx dynamically
+      const XLSX = require('xlsx');
+      
+      // Parse base64 file content
+      const base64Data = fileContent.replace(/^data:[^;]+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+      
+      // Read workbook
+      const workbook = XLSX.read(buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const data: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      
+      // Parse the rapid_QS_Estimate format
+      const items: { name: string; description: string; unit: string; rate: number; category: string }[] = [];
+      let currentZone = '';
+      let currentCategory = '';
+      
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        if (!row || row.length === 0) continue;
+        
+        // Detect zone headers (e.g., "Zone 1.0", "SITE SET & P&G")
+        const cell1 = String(row[1] || '').trim();
+        const cell2 = String(row[2] || '').trim();
+        
+        if (cell1.toLowerCase().startsWith('zone')) {
+          currentZone = cell2 || cell1;
+          continue;
+        }
+        
+        // Detect category rows (first column has category name, second has item description)
+        // Format: [null, Category, Description, Unit, Qty, Rate, Amount, Margin, Total]
+        if (row[1] && row[2] && row[3] && row[5]) {
+          const categoryOrItem = String(row[1]).trim();
+          const description = String(row[2]).trim();
+          const unit = String(row[3]).trim();
+          const rate = parseFloat(row[5]) || 0;
+          
+          // Skip header rows
+          if (unit.toLowerCase() === 'unit' || categoryOrItem.toLowerCase() === 'unit') continue;
+          if (description.toLowerCase() === 'rate' || description.toLowerCase() === 'amount') continue;
+          
+          // Check if this is a new category or an item
+          if (categoryOrItem && categoryOrItem.length > 0 && !categoryOrItem.includes(',')) {
+            currentCategory = categoryOrItem;
+          }
+          
+          // Only add items with valid rates
+          if (rate > 0 && description.length > 2) {
+            items.push({
+              name: description,
+              description: currentZone ? `${currentZone} - ${currentCategory}` : currentCategory,
+              unit: unit.toLowerCase() === 'item' ? 'each' : unit.toLowerCase(),
+              rate,
+              category: currentCategory || currentZone
+            });
+          }
+        }
+        // Handle rows where item is in second column (continuation of category)
+        else if (!row[1] && row[2] && row[3] && row[5]) {
+          const description = String(row[2]).trim();
+          const unit = String(row[3]).trim();
+          const rate = parseFloat(row[5]) || 0;
+          
+          if (rate > 0 && description.length > 2) {
+            items.push({
+              name: description,
+              description: currentZone ? `${currentZone} - ${currentCategory}` : currentCategory,
+              unit: unit.toLowerCase() === 'item' ? 'each' : unit.toLowerCase(),
+              rate,
+              category: currentCategory || currentZone
+            });
+          }
+        }
+      }
+      
+      // Get existing categories for matching
+      const categories = await db.select().from(costCategories);
+      
+      // Insert items into cost library
+      let insertedCount = 0;
+      for (const item of items) {
+        // Try to match category
+        let matchedCategoryId = categoryId || null;
+        if (!matchedCategoryId && item.category) {
+          const match = categories.find(c => 
+            c.name.toLowerCase().includes(item.category.toLowerCase()) ||
+            item.category.toLowerCase().includes(c.name.toLowerCase()) ||
+            (c.keywords && c.keywords.toLowerCase().includes(item.category.toLowerCase()))
+          );
+          if (match) matchedCategoryId = match.id;
+        }
+        
+        await db.insert(costLibraryItems).values({
+          name: item.name,
+          description: item.description,
+          unit: item.unit,
+          defaultUnitCost: item.rate.toString(),
+          categoryId: matchedCategoryId,
+          tags: item.category
+        });
+        insertedCount++;
+      }
+      
+      // Create source document record
+      const [document] = await db.insert(costSourceDocuments).values({
+        fileName,
+        fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        fileSize: buffer.length,
+        notes: `Spreadsheet import: ${insertedCount} items from ${sheetName}`,
+        uploadedBy: req.user?.claims?.sub,
+        extractionStatus: "completed",
+        extractedItemsCount: insertedCount,
+        processedAt: new Date()
+      }).returning();
+      
+      res.json({ 
+        success: true,
+        document,
+        importedCount: insertedCount,
+        sheetName,
+        message: `Successfully imported ${insertedCount} items from spreadsheet`
+      });
+    } catch (error) {
+      console.error("Error uploading spreadsheet:", error);
+      res.status(500).json({ message: "Failed to process spreadsheet: " + (error as Error).message });
+    }
+  });
+
   // Get cost source documents
   app.get("/api/cost-documents", isAuthenticated, async (req: any, res) => {
     try {
