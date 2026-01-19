@@ -18,6 +18,7 @@ import { DocumentProcessor } from "./services/documentProcessor";
 import { quoteEstimator } from "./services/quoteEstimator";
 import { rewardsService } from "./services/rewardsService";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import * as XLSX from "xlsx";
 
 // Database-backed reward settings helper functions
 async function initializeRewardSettings() {
@@ -7364,9 +7365,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!['xlsx', 'xls'].includes(ext || '')) {
         return res.status(400).json({ message: "Please upload an Excel file (.xlsx or .xls)" });
       }
-      
-      // Import xlsx dynamically
-      const XLSX = require('xlsx');
       
       // Parse base64 file content
       const base64Data = fileContent.replace(/^data:[^;]+;base64,/, '');
