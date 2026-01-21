@@ -1512,8 +1512,12 @@ export default function AdminDashboard() {
   }, [groupBy]);
 
   // Get unique project managers and clients from existing jobs
+  // Permanent clients that always show in dropdown
+  const permanentClients = ["Market Ready"];
   const projectManagers = jobs ? Array.from(new Set(jobs.map(job => job.projectManager || job.projectName).filter(Boolean))) : [];
-  const clientNames = jobs ? Array.from(new Set(jobs.map(job => job.clientName).filter(Boolean))) : [];
+  const clientNames = jobs 
+    ? Array.from(new Set([...permanentClients, ...jobs.map(job => job.clientName).filter(Boolean)])) 
+    : permanentClients;
 
   const handleAddProjectManager = () => {
     if (newProjectManagerName.trim()) {
