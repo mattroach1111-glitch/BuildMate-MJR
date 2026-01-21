@@ -167,8 +167,12 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   });
 
   // Get unique project managers and clients from existing jobs
+  // Permanent clients that always show in dropdown
+  const permanentClients = ["Market Ready"];
   const projectManagers = allJobs ? Array.from(new Set(allJobs.map(job => job.projectManager || job.projectName).filter(Boolean))) : [];
-  const clientNames = allJobs ? Array.from(new Set(allJobs.map(job => job.clientName).filter(Boolean))) : [];
+  const clientNames = allJobs 
+    ? Array.from(new Set([...permanentClients, ...allJobs.map(job => job.clientName).filter(Boolean)])) 
+    : permanentClients;
 
   // Get all employees for management
   const { data: allEmployees = [] } = useQuery<any[]>({
