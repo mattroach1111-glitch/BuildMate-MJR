@@ -19,6 +19,8 @@ interface QuoteForPDF {
   createdAt: Date | string | null;
   acceptedAt: Date | string | null;
   items: QuoteItem[];
+  quoteType?: string | null;
+  scopeText?: string | null;
   signature?: {
     signerName: string;
     signatureData: string;
@@ -147,24 +149,55 @@ export async function generateQuotePDFBuffer(quote: QuoteForPDF): Promise<Buffer
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   
-  quote.items.forEach((item) => {
-    if (yPos > pageHeight - 80) {
-      doc.addPage();
-      yPos = 30;
-    }
+  // Check if this is a lump sum quote with scope text
+  if (quote.quoteType === 'lump_sum' && quote.scopeText) {
+    // Render scope text for lump sum quotes
+    doc.setFont('helvetica', 'bold');
+    doc.text('Scope of Works:', marginLeft, yPos);
+    yPos += 8;
+    doc.setFont('helvetica', 'normal');
     
-    doc.text('-', marginLeft, yPos);
-    
-    const lines = doc.splitTextToSize(item.description, contentWidth - 10);
-    lines.forEach((line: string, lineIndex: number) => {
-      if (lineIndex > 0 && yPos > pageHeight - 50) {
+    // Split scope text into paragraphs and lines
+    const paragraphs = quote.scopeText.split('\n');
+    paragraphs.forEach((paragraph) => {
+      if (paragraph.trim()) {
+        if (yPos > pageHeight - 50) {
+          doc.addPage();
+          yPos = 30;
+        }
+        const lines = doc.splitTextToSize(paragraph, contentWidth);
+        lines.forEach((line: string, lineIndex: number) => {
+          if (yPos > pageHeight - 50) {
+            doc.addPage();
+            yPos = 30;
+          }
+          doc.text(line, marginLeft, yPos);
+          yPos += 5;
+        });
+        yPos += 3; // Extra space between paragraphs
+      }
+    });
+  } else {
+    // Render line items for itemized quotes
+    quote.items.forEach((item) => {
+      if (yPos > pageHeight - 80) {
         doc.addPage();
         yPos = 30;
       }
-      doc.text(line, marginLeft + 8, yPos + (lineIndex * 5));
+      
+      doc.text('-', marginLeft, yPos);
+      
+      const lines = doc.splitTextToSize(item.description, contentWidth - 10);
+      lines.forEach((line: string, lineIndex: number) => {
+        if (lineIndex > 0 && yPos > pageHeight - 50) {
+          doc.addPage();
+          yPos = 30;
+        }
+        doc.text(line, marginLeft + 8, yPos + (lineIndex * 5));
+      });
+      yPos += Math.max(lines.length * 5, 8) + 4;
     });
-    yPos += Math.max(lines.length * 5, 8) + 4;
-  });
+  }
   
   yPos += 15;
   

@@ -6619,15 +6619,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || "quotes@mjrbuilders.com.au";
       
+      // Build scope section for email if it's a lump sum quote
+      const scopeSection = quote.quoteType === 'lump_sum' && quote.scopeText 
+        ? `<h3>Scope of Works:</h3><div style="white-space: pre-wrap; background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">${quote.scopeText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`
+        : '';
+      
       const emailOptions: any = {
         from: fromEmail,
         to: quote.clientEmail,
         subject: `Quote ${quote.quoteNumber} - ${quote.projectDescription}`,
-        text: `You have received a quote from MJR Builders.\n\nQuote Number: ${quote.quoteNumber}\nProject: ${quote.projectDescription}\nTotal: $${quote.totalAmount} (inc. GST)\n\nView and accept your quote here: ${viewUrl}\n\nThis link expires in 30 days.`,
+        text: `You have received a quote from MJR Builders.\n\nQuote Number: ${quote.quoteNumber}\nProject: ${quote.projectDescription}\n${quote.quoteType === 'lump_sum' && quote.scopeText ? `\nScope of Works:\n${quote.scopeText}\n` : ''}Total: $${quote.totalAmount} (inc. GST)\n\nView and accept your quote here: ${viewUrl}\n\nThis link expires in 30 days.`,
         html: `
           <h2>Quote from MJR Builders</h2>
           <p><strong>Quote Number:</strong> ${quote.quoteNumber}</p>
           <p><strong>Project:</strong> ${quote.projectDescription}</p>
+          ${scopeSection}
           <p><strong>Total:</strong> $${parseFloat(quote.totalAmount).toLocaleString('en-AU', { minimumFractionDigits: 2 })} (inc. GST)</p>
           <p><a href="${viewUrl}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 6px;">View & Accept Quote</a></p>
           <p><small>This link expires in 30 days.</small></p>
