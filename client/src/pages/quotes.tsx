@@ -94,6 +94,10 @@ export default function QuotesPage() {
     depositRequired: false,
     depositType: "percentage" as "percentage" | "fixed",
     depositValue: "10",
+    quoteType: "itemized" as "itemized" | "lump_sum",
+    lumpSumTotal: "",
+    scopeDocumentName: "",
+    scopeDocumentContent: "",
   });
 
   const { data: employees = [] } = useQuery<any[]>({
@@ -141,6 +145,10 @@ export default function QuotesPage() {
         depositRequired: false,
         depositType: "percentage" as "percentage" | "fixed",
         depositValue: "10",
+        quoteType: "itemized" as "itemized" | "lump_sum",
+        lumpSumTotal: "",
+        scopeDocumentName: "",
+        scopeDocumentContent: "",
       });
       toast({ title: "Success", description: "Quote created successfully" });
       fetchQuoteDetails(newQuote.id);
@@ -419,6 +427,75 @@ export default function QuotesPage() {
                 />
               </div>
             </div>
+
+            {/* Quote Type Toggle */}
+            <div className="border rounded-lg p-4 bg-blue-50">
+              <Label className="font-medium mb-3 block">Quote Type</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={newQuoteData.quoteType === "itemized" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setNewQuoteData({ ...newQuoteData, quoteType: "itemized" })}
+                  className="flex-1"
+                >
+                  Itemized (Line Items)
+                </Button>
+                <Button
+                  type="button"
+                  variant={newQuoteData.quoteType === "lump_sum" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setNewQuoteData({ ...newQuoteData, quoteType: "lump_sum" })}
+                  className="flex-1"
+                >
+                  Lump Sum (Single Total)
+                </Button>
+              </div>
+              {newQuoteData.quoteType === "lump_sum" && (
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <Label>Upload Scope Document (Optional)</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            setNewQuoteData({
+                              ...newQuoteData,
+                              scopeDocumentName: file.name,
+                              scopeDocumentContent: ev.target?.result as string,
+                            });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="mt-1"
+                    />
+                    {newQuoteData.scopeDocumentName && (
+                      <p className="text-sm text-green-600 mt-1">Uploaded: {newQuoteData.scopeDocumentName}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Total Quote Amount (ex GST) *</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                      <Input
+                        type="number"
+                        value={newQuoteData.lumpSumTotal}
+                        onChange={(e) => setNewQuoteData({ ...newQuoteData, lumpSumTotal: e.target.value })}
+                        placeholder="0.00"
+                        className="pl-7"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">GST will be calculated automatically</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div>
               <Label>Project Description *</Label>
               <Textarea

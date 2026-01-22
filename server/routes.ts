@@ -6415,11 +6415,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Handle lump sum quote with scope document
+      let scopeDocumentKey = null;
+      if (req.body.quoteType === "lump_sum" && req.body.scopeDocumentContent) {
+        try {
+          const objectStorage = new ObjectStorageService();
+          const base64Data = req.body.scopeDocumentContent.replace(/^data:[^;]+;base64,/, '');
+          const buffer = Buffer.from(base64Data, 'base64');
+          const fileName = `quote-scopes/${Date.now()}-${req.body.scopeDocumentName}`;
+          const mimeType = req.body.scopeDocumentName?.endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream';
+          scopeDocumentKey = await objectStorage.saveBuffer(buffer, fileName, mimeType);
+        } catch (uploadError) {
+          console.error("Error uploading scope document:", uploadError);
+        }
+      }
+      
+      // For lump sum quotes, calculate totals from the lump sum amount
+      let subtotal = "0";
+      let gstAmount = "0";
+      let totalAmount = "0";
+      if (req.body.quoteType === "lump_sum" && req.body.lumpSumTotal) {
+        const lumpSum = parseFloat(req.body.lumpSumTotal) || 0;
+        const margin = parseFloat(req.body.builderMargin) || 0;
+        const subtotalWithMargin = lumpSum * (1 + margin / 100);
+        subtotal = subtotalWithMargin.toFixed(2);
+        gstAmount = (subtotalWithMargin * 0.1).toFixed(2);
+        totalAmount = (subtotalWithMargin * 1.1).toFixed(2);
+      }
+      
       const quoteNumber = await storage.getNextQuoteNumber();
       const newQuote = await storage.createQuote({
         ...req.body,
         quoteNumber,
         createdById: req.user.claims.sub,
+        scopeDocumentKey,
+        scopeDocumentName: req.body.scopeDocumentName || null,
+        quoteType: req.body.quoteType || "itemized",
+        ...(req.body.quoteType === "lump_sum" ? { subtotal, gstAmount, totalAmount } : {}),
       });
       
       res.status(201).json(newQuote);

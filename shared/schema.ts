@@ -940,6 +940,10 @@ export const quotes = pgTable("quotes", {
   acceptedAt: timestamp("accepted_at"),
   declinedAt: timestamp("declined_at"),
   adminAcknowledgedAt: timestamp("admin_acknowledged_at"),
+  // Lump sum quoting: upload scope document and enter single total
+  quoteType: varchar("quote_type", { enum: ["itemized", "lump_sum"] }).notNull().default("itemized"),
+  scopeDocumentKey: varchar("scope_document_key"), // Object storage key for scope PDF
+  scopeDocumentName: varchar("scope_document_name"), // Original filename
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
