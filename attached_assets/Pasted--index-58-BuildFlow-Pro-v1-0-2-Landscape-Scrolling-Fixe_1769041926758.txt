@@ -1,0 +1,42 @@
+(index):58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+(index):70 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+ 💓 Session keepalive successful
+ 🔄 Session backup stored successfully
+ 🔄 Session backup stored successfully
+ 🔄 Session backup stored successfully
+ 🔄 Session backup stored successfully
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully
+ User management API response: Array(11)
+ Is userData an array? true
+ userData length: 11
+ Rendering users: Array(11)
+ Is users array? true
+ Users length: 11
+ Rendering users: Array(11)
+ Is users array? true
+ Users length: 11
+ Rendering users: Array(11)
+ Is users array? true
+ Users length: 11
+ 🔵 Google Drive auth URL response: Object
+ 🔵 Opening Google OAuth window with URL: https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive.file&prompt=consent&response_type=code&client_id=1085575960116-a1oujafavurk7lus6urfhbikepp75hh8.apps.googleusercontent.com&redirect_uri=https%3A%2F%2Fbuild-mate-mattroach1111.replit.app%2Fapi%2Fgoogle-drive%2Fcallback
+  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ /assets/index-Cy1rcEbK.js:808
+  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ /assets/index-Cy1rcEbK.js:808
+  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ /assets/index-Cy1rcEbK.js:808
+  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ /assets/index-Cy1rcEbK.js:808
+  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ /assets/index-Cy1rcEbK.js:808
+  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ /assets/index-Cy1rcEbK.js:808
+  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ /assets/index-Cy1rcEbK.js:808
+  Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ /assets/index-Cy1rcEbK.js:808
+ 🔵 Google OAuth window closed, refreshing status...
+ Rendering users: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+ Is users array? true
+ Users length: 11
