@@ -259,13 +259,19 @@ export default function PublicQuoteView() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {quote.items.map((item) => (
-                <div key={item.id} className="p-3 bg-gray-50 rounded-lg">
-                  <p className="font-medium">{item.description}</p>
-                </div>
-              ))}
-            </div>
+            {quote.quoteType === 'lump_sum' && quote.scopeText ? (
+              <div className="p-4 bg-gray-50 rounded-lg whitespace-pre-wrap">
+                {quote.scopeText}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {quote.items.map((item) => (
+                  <div key={item.id} className="p-3 bg-gray-50 rounded-lg">
+                    <p className="font-medium">{item.description}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
