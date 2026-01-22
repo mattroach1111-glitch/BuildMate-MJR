@@ -260,6 +260,23 @@ export default function AdminDashboard() {
   });
   const unacknowledgedQuotesCount = unacknowledgedQuotesData?.count || 0;
 
+  // Check Google Drive connection status for expiry warning
+  const { data: googleDriveStatus } = useQuery<{ connected: boolean; connectedAt: string | null }>({
+    queryKey: ["/api/google-drive/status"],
+    retry: false,
+    enabled: !isUsingBackup,
+    refetchInterval: 3600000, // Refresh every hour
+  });
+
+  // Calculate if Google Drive token is expiring soon (6+ days since connection)
+  const googleDriveExpiryWarning = useMemo(() => {
+    if (!googleDriveStatus?.connected || !googleDriveStatus?.connectedAt) return false;
+    const connectedDate = new Date(googleDriveStatus.connectedAt);
+    const now = new Date();
+    const daysSinceConnection = (now.getTime() - connectedDate.getTime()) / (1000 * 60 * 60 * 24);
+    return daysSinceConnection >= 6;
+  }, [googleDriveStatus]);
+
   // Safely filter valid staff members
   const validStaff = staffForTimesheets?.filter(staff => 
     staff && 
@@ -1666,6 +1683,33 @@ export default function AdminDashboard() {
                 You're viewing cached data while the server reconnects. Some features may be limited.
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Google Drive Token Expiry Warning Banner */}
+      {googleDriveExpiryWarning && (
+        <div className="bg-orange-50 border border-orange-300 rounded-lg p-3 mb-4 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <RefreshCw className="h-5 w-5 text-orange-600" />
+              <div>
+                <span className="text-sm font-medium text-orange-800">
+                  Google Drive reconnection needed
+                </span>
+                <p className="text-xs text-orange-600">
+                  Your Google Drive connection expires soon. Please reconnect in Settings to continue automatic backups.
+                </p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-orange-400 text-orange-700 hover:bg-orange-100 whitespace-nowrap"
+              onClick={() => setActiveTab("settings")}
+            >
+              Go to Settings
+            </Button>
           </div>
         </div>
       )}

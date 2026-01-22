@@ -348,6 +348,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store tokens in system settings (system-wide, not per-user)
       const userId = req.user.claims.sub;
       await storage.setSystemGoogleDriveTokens(JSON.stringify(tokens), userId);
+      // Track when Google Drive was connected for expiry notifications
+      await storage.setSystemSetting('google_drive_connected_at', new Date().toISOString(), userId);
       
       console.log(`✅ System-wide Google Drive tokens saved by user ${userId}`);
       
@@ -382,8 +384,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const tokens = await storage.getSystemGoogleDriveTokens();
       const isConnected = !!tokens;
+      const connectedAtSetting = await storage.getSystemSetting('google_drive_connected_at');
+      const connectedAt = connectedAtSetting?.settingValue || null;
       console.log(`System-wide Google Drive status check by user ${userId}: connected=${isConnected}`);
-      res.json({ connected: isConnected });
+      res.json({ connected: isConnected, connectedAt });
     } catch (error) {
       console.error("Error checking Google Drive status:", error);
       res.status(500).json({ message: "Failed to check Google Drive status" });
