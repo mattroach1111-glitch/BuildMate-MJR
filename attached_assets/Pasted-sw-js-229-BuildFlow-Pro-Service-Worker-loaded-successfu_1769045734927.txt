@@ -1,0 +1,61 @@
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully
+VM6:2 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+VM6:14 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-RS7GfUu_.js:513 💓 Session keepalive successful
+index-RS7GfUu_.js:48 🔄 Session backup stored successfully
+index-RS7GfUu_.js:48 🔄 Session backup stored successfully
+index-RS7GfUu_.js:48 🔄 Session backup stored successfully
+index-RS7GfUu_.js:48 🔄 Session backup stored successfully
+api/quotes:1   Failed to load resource: the server responded with a status of 500 ()
+api/quotes:1   Failed to load resource: the server responded with a status of 500 ()
+api/quotes:1   Failed to load resource: the server responded with a status of 500 ()
+api/quotes:1   Failed to load resource: the server responded with a status of 500 ()
+index-RS7GfUu_.js:48   POST https://build-mate-mattroach1111.replit.app/api/quotes 500 (Internal Server Error)
+St @ index-RS7GfUu_.js:48
+mutationFn @ index-RS7GfUu_.js:988
+fn @ index-RS7GfUu_.js:48
+A @ index-RS7GfUu_.js:48
+start @ index-RS7GfUu_.js:48
+execute @ index-RS7GfUu_.js:48
+await in execute
+mutate @ index-RS7GfUu_.js:48
+(anonymous) @ index-RS7GfUu_.js:48
+onClick @ index-RS7GfUu_.js:988
+_J @ index-RS7GfUu_.js:37
+PJ @ index-RS7GfUu_.js:37
+EJ @ index-RS7GfUu_.js:37
+Fk @ index-RS7GfUu_.js:37
+pR @ index-RS7GfUu_.js:37
+(anonymous) @ index-RS7GfUu_.js:37
+LC @ index-RS7GfUu_.js:40
+$I @ index-RS7GfUu_.js:37
+Wj @ index-RS7GfUu_.js:37
+aC @ index-RS7GfUu_.js:37
+HJ @ index-RS7GfUu_.js:37
+index-RS7GfUu_.js:48   POST https://build-mate-mattroach1111.replit.app/api/quotes 500 (Internal Server Error)
+St @ index-RS7GfUu_.js:48
+mutationFn @ index-RS7GfUu_.js:988
+fn @ index-RS7GfUu_.js:48
+A @ index-RS7GfUu_.js:48
+(anonymous) @ index-RS7GfUu_.js:48
+Promise.then
+(anonymous) @ index-RS7GfUu_.js:48
+Promise.catch
+A @ index-RS7GfUu_.js:48
+start @ index-RS7GfUu_.js:48
+execute @ index-RS7GfUu_.js:48
+await in execute
+mutate @ index-RS7GfUu_.js:48
+(anonymous) @ index-RS7GfUu_.js:48
+onClick @ index-RS7GfUu_.js:988
+_J @ index-RS7GfUu_.js:37
+PJ @ index-RS7GfUu_.js:37
+EJ @ index-RS7GfUu_.js:37
+Fk @ index-RS7GfUu_.js:37
+pR @ index-RS7GfUu_.js:37
+(anonymous) @ index-RS7GfUu_.js:37
+LC @ index-RS7GfUu_.js:40
+$I @ index-RS7GfUu_.js:37
+Wj @ index-RS7GfUu_.js:37
+aC @ index-RS7GfUu_.js:37
+HJ @ index-RS7GfUu_.js:37

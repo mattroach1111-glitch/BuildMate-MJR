@@ -94,10 +94,6 @@ export default function QuotesPage() {
     depositRequired: false,
     depositType: "percentage" as "percentage" | "fixed",
     depositValue: "10",
-    quoteType: "itemized" as "itemized" | "lump_sum",
-    lumpSumTotal: "",
-    scopeDocumentName: "",
-    scopeDocumentContent: "",
   });
 
   const { data: employees = [] } = useQuery<any[]>({
@@ -145,10 +141,6 @@ export default function QuotesPage() {
         depositRequired: false,
         depositType: "percentage" as "percentage" | "fixed",
         depositValue: "10",
-        quoteType: "itemized" as "itemized" | "lump_sum",
-        lumpSumTotal: "",
-        scopeDocumentName: "",
-        scopeDocumentContent: "",
       });
       toast({ title: "Success", description: "Quote created successfully" });
       fetchQuoteDetails(newQuote.id);
