@@ -940,9 +940,11 @@ export const quotes = pgTable("quotes", {
   acceptedAt: timestamp("accepted_at"),
   declinedAt: timestamp("declined_at"),
   adminAcknowledgedAt: timestamp("admin_acknowledged_at"),
-  // Lump sum quoting: upload scope document and enter single total
+  // Lump sum quoting: type scope text and enter single total amount
   quoteType: varchar("quote_type", { enum: ["itemized", "lump_sum"] }).notNull().default("itemized"),
-  scopeDocumentKey: varchar("scope_document_key"), // Object storage key for scope PDF
+  scopeText: text("scope_text"), // Full scope description text
+  lumpSumTotal: decimal("lump_sum_total", { precision: 10, scale: 2 }), // Base amount before margin (ex GST)
+  scopeDocumentKey: varchar("scope_document_key"), // Object storage key for scope PDF (optional)
   scopeDocumentName: varchar("scope_document_name"), // Original filename
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

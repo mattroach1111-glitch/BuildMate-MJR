@@ -428,74 +428,6 @@ export default function QuotesPage() {
               </div>
             </div>
 
-            {/* Quote Type Toggle */}
-            <div className="border rounded-lg p-4 bg-blue-50">
-              <Label className="font-medium mb-3 block">Quote Type</Label>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant={newQuoteData.quoteType === "itemized" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setNewQuoteData({ ...newQuoteData, quoteType: "itemized" })}
-                  className="flex-1"
-                >
-                  Itemized (Line Items)
-                </Button>
-                <Button
-                  type="button"
-                  variant={newQuoteData.quoteType === "lump_sum" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setNewQuoteData({ ...newQuoteData, quoteType: "lump_sum" })}
-                  className="flex-1"
-                >
-                  Lump Sum (Single Total)
-                </Button>
-              </div>
-              {newQuoteData.quoteType === "lump_sum" && (
-                <div className="mt-4 space-y-3">
-                  <div>
-                    <Label>Upload Scope Document (Optional)</Label>
-                    <Input
-                      type="file"
-                      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (ev) => {
-                            setNewQuoteData({
-                              ...newQuoteData,
-                              scopeDocumentName: file.name,
-                              scopeDocumentContent: ev.target?.result as string,
-                            });
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                      className="mt-1"
-                    />
-                    {newQuoteData.scopeDocumentName && (
-                      <p className="text-sm text-green-600 mt-1">Uploaded: {newQuoteData.scopeDocumentName}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label>Total Quote Amount (ex GST) *</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                      <Input
-                        type="number"
-                        value={newQuoteData.lumpSumTotal}
-                        onChange={(e) => setNewQuoteData({ ...newQuoteData, lumpSumTotal: e.target.value })}
-                        placeholder="0.00"
-                        className="pl-7"
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">GST will be calculated automatically</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
             <div>
               <Label>Project Description *</Label>
               <Textarea
@@ -720,6 +652,11 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
     depositValue: quote.depositValue || "10",
   });
 
+  // Lump Sum Scope state
+  const [showLumpSumEditor, setShowLumpSumEditor] = useState(quote.quoteType === "lump_sum");
+  const [lumpSumScope, setLumpSumScope] = useState(quote.scopeText || "");
+  const [lumpSumAmount, setLumpSumAmount] = useState(quote.lumpSumTotal || "");
+
   const { data: libraryItems = [] } = useQuery<any[]>({
     queryKey: ["/api/cost-library"],
     enabled: showLibraryPicker,
@@ -747,6 +684,51 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
     },
     onSuccess: () => {
       onUpdate();
+    },
+  });
+
+  const saveLumpSumMutation = useMutation({
+    mutationFn: async ({ scope, amount }: { scope: string; amount: string }) => {
+      const margin = parseFloat(quote.builderMargin || "0") || 0;
+      const baseAmount = parseFloat(amount) || 0;
+      const subtotalWithMargin = baseAmount * (1 + margin / 100);
+      const gst = subtotalWithMargin * 0.1;
+      const total = subtotalWithMargin + gst;
+      
+      const response = await apiRequest("PATCH", `/api/quotes/${quote.id}`, { 
+        quoteType: "lump_sum",
+        scopeText: scope,
+        lumpSumTotal: amount,
+        subtotal: subtotalWithMargin.toFixed(2),
+        gstAmount: gst.toFixed(2),
+        totalAmount: total.toFixed(2),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      onUpdate();
+      toast({ title: "Scope saved successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to save scope", variant: "destructive" });
+    },
+  });
+
+  const switchToItemizedMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("PATCH", `/api/quotes/${quote.id}`, { 
+        quoteType: "itemized",
+        scopeText: null,
+        lumpSumTotal: null,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      onUpdate();
+      setShowLumpSumEditor(false);
+      setLumpSumScope("");
+      setLumpSumAmount("");
+      toast({ title: "Switched to itemized quote" });
     },
   });
 
@@ -1172,28 +1154,106 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Line Items</CardTitle>
+                <CardTitle className="text-base">{showLumpSumEditor ? "Scope" : "Line Items"}</CardTitle>
                 <div className="flex gap-2 flex-wrap">
-                  <Button size="sm" variant="outline" onClick={() => setShowAiEstimate(true)} className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 hover:border-purple-300">
-                    <Sparkles className="h-4 w-4 mr-1 text-purple-600" />
-                    AI Estimate
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={getAiSuggestions} disabled={isLoadingAi}>
-                    {isLoadingAi ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
-                    AI Suggest
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => setShowLibraryPicker(true)}>
-                    <DollarSign className="h-4 w-4 mr-1" />
-                    From Library
-                  </Button>
-                  <Button size="sm" onClick={() => setShowAddItem(true)}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Item
-                  </Button>
+                  {!showLumpSumEditor ? (
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => setShowLumpSumEditor(true)} className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:border-green-300">
+                        <FileText className="h-4 w-4 mr-1 text-green-600" />
+                        Create Scope
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setShowAiEstimate(true)} className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 hover:border-purple-300">
+                        <Sparkles className="h-4 w-4 mr-1 text-purple-600" />
+                        AI Estimate
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={getAiSuggestions} disabled={isLoadingAi}>
+                        {isLoadingAi ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
+                        AI Suggest
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setShowLibraryPicker(true)}>
+                        <DollarSign className="h-4 w-4 mr-1" />
+                        From Library
+                      </Button>
+                      <Button size="sm" onClick={() => setShowAddItem(true)}>
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add Item
+                      </Button>
+                    </>
+                  ) : (
+                    <Button size="sm" variant="outline" onClick={() => switchToItemizedMutation.mutate()}>
+                      <X className="h-4 w-4 mr-1" />
+                      Switch to Line Items
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardHeader>
             <CardContent>
+              {showLumpSumEditor ? (
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-medium">Scope of Works</Label>
+                    <Textarea
+                      value={lumpSumScope}
+                      onChange={(e) => setLumpSumScope(e.target.value)}
+                      placeholder="Type your full scope of works here..."
+                      rows={10}
+                      className="mt-1 font-mono text-sm"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium">Total Amount (ex GST)</Label>
+                      <div className="relative mt-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                        <Input
+                          type="number"
+                          value={lumpSumAmount}
+                          onChange={(e) => setLumpSumAmount(e.target.value)}
+                          placeholder="0.00"
+                          className="pl-7"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Margin and GST will be applied automatically</p>
+                    </div>
+                    <div className="flex items-end">
+                      <Button 
+                        onClick={() => saveLumpSumMutation.mutate({ scope: lumpSumScope, amount: lumpSumAmount })}
+                        disabled={!lumpSumAmount || saveLumpSumMutation.isPending}
+                        className="w-full"
+                      >
+                        {saveLumpSumMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
+                        Save Scope
+                      </Button>
+                    </div>
+                  </div>
+                  {lumpSumAmount && (
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="flex justify-between text-sm">
+                        <span>Base Amount:</span>
+                        <span>${parseFloat(lumpSumAmount || "0").toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Margin ({quote.builderMargin || 0}%):</span>
+                        <span>${(parseFloat(lumpSumAmount || "0") * parseFloat(quote.builderMargin || "0") / 100).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Subtotal (ex GST):</span>
+                        <span>${(parseFloat(lumpSumAmount || "0") * (1 + parseFloat(quote.builderMargin || "0") / 100)).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>GST (10%):</span>
+                        <span>${(parseFloat(lumpSumAmount || "0") * (1 + parseFloat(quote.builderMargin || "0") / 100) * 0.1).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-semibold mt-1 pt-1 border-t">
+                        <span>Total (inc GST):</span>
+                        <span>${(parseFloat(lumpSumAmount || "0") * (1 + parseFloat(quote.builderMargin || "0") / 100) * 1.1).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
               {showAiSuggestions && (
                 <div className="mb-4 p-4 border rounded-lg bg-purple-50">
                   <div className="flex items-center justify-between mb-3">
@@ -1325,6 +1385,8 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
                     </div>
                   ))}
                 </div>
+              )}
+              </>
               )}
             </CardContent>
           </Card>
