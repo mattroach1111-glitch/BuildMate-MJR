@@ -1233,6 +1233,8 @@ type QuoteForPDF = {
   notes: string | null;
   createdAt: string;
   acceptedAt: string | null;
+  quoteType?: string | null;
+  scopeText?: string | null;
   items: Array<{
     id: string;
     itemType: string;
@@ -1343,38 +1345,68 @@ export async function generateQuotePDF(quote: QuoteForPDF, download: boolean = t
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   
-  // Group items by type
-  const itemsByType: Record<string, typeof quote.items> = {};
-  quote.items.forEach(item => {
-    if (!itemsByType[item.itemType]) {
-      itemsByType[item.itemType] = [];
-    }
-    itemsByType[item.itemType].push(item);
-  });
-  
-  // Render items as bullet list (matching the template style)
-  const allItems = quote.items;
-  allItems.forEach((item) => {
-    // Check for page break
-    if (yPos > pageHeight - 80) {
-      doc.addPage();
-      yPos = 30;
-    }
+  // Check if this is a lump sum quote with scope text
+  if (quote.quoteType === 'lump_sum' && quote.scopeText) {
+    // Render scope text for lump sum quotes
+    doc.setFont('helvetica', 'bold');
+    doc.text('Scope of Works:', marginLeft, yPos);
+    yPos += 8;
+    doc.setFont('helvetica', 'normal');
     
-    // Bullet point
-    doc.text('-', marginLeft, yPos);
+    // Split scope text into paragraphs and lines
+    const paragraphs = quote.scopeText.split('\n');
+    paragraphs.forEach((paragraph) => {
+      if (paragraph.trim()) {
+        if (yPos > pageHeight - 50) {
+          doc.addPage();
+          yPos = 30;
+        }
+        const lines = doc.splitTextToSize(paragraph, contentWidth);
+        lines.forEach((line: string) => {
+          if (yPos > pageHeight - 50) {
+            doc.addPage();
+            yPos = 30;
+          }
+          doc.text(line, marginLeft, yPos);
+          yPos += 5;
+        });
+        yPos += 3; // Extra space between paragraphs
+      }
+    });
+  } else {
+    // Group items by type
+    const itemsByType: Record<string, typeof quote.items> = {};
+    quote.items.forEach(item => {
+      if (!itemsByType[item.itemType]) {
+        itemsByType[item.itemType] = [];
+      }
+      itemsByType[item.itemType].push(item);
+    });
     
-    // Description with word wrap
-    const lines = doc.splitTextToSize(item.description, contentWidth - 10);
-    lines.forEach((line: string, lineIndex: number) => {
-      if (lineIndex > 0 && yPos > pageHeight - 50) {
+    // Render items as bullet list (matching the template style)
+    const allItems = quote.items;
+    allItems.forEach((item) => {
+      // Check for page break
+      if (yPos > pageHeight - 80) {
         doc.addPage();
         yPos = 30;
       }
-      doc.text(line, marginLeft + 8, yPos + (lineIndex * 5));
+      
+      // Bullet point
+      doc.text('-', marginLeft, yPos);
+      
+      // Description with word wrap
+      const lines = doc.splitTextToSize(item.description, contentWidth - 10);
+      lines.forEach((line: string, lineIndex: number) => {
+        if (lineIndex > 0 && yPos > pageHeight - 50) {
+          doc.addPage();
+          yPos = 30;
+        }
+        doc.text(line, marginLeft + 8, yPos + (lineIndex * 5));
+      });
+      yPos += Math.max(lines.length * 5, 8) + 4;
     });
-    yPos += Math.max(lines.length * 5, 8) + 4;
-  });
+  }
   
   yPos += 15;
   
