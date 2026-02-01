@@ -7,7 +7,7 @@ import {
   timesheetEntries, laborEntries, users, staffNotes, employees, staffMembers, 
   staffNotesEntries, rewardCatalog, rewardSettings, jobs, materials, subTrades, otherCosts, 
   tipFees, jobFiles, jobNotes, jobUpdateNotes, quotes, costCategories, costLibraryItems, 
-  costSourceDocuments, costHistory
+  costSourceDocuments, costHistory, swmsSignatures
 } from "@shared/schema";
 import { eq, sql, desc, and } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
@@ -6318,6 +6318,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error reactivating SWMS template:", error);
       res.status(500).json({ message: "Failed to reactivate SWMS template" });
+    }
+  });
+
+  // Admin: Update SWMS signature occupation
+  app.patch("/api/swms/admin/signatures/:id/occupation", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { occupation } = req.body;
+      
+      if (!occupation || typeof occupation !== 'string') {
+        return res.status(400).json({ message: "Occupation is required" });
+      }
+
+      const result = await db.update(swmsSignatures)
+        .set({ occupation: occupation.trim() })
+        .where(eq(swmsSignatures.id, id))
+        .returning();
+      
+      if (result.length === 0) {
+        return res.status(404).json({ message: "Signature not found" });
+      }
+
+      console.log(`📋 Admin updated SWMS signature occupation for ID ${id} to: ${occupation.trim()}`);
+      res.json({ success: true, signature: result[0] });
+    } catch (error) {
+      console.error("Error updating SWMS signature occupation:", error);
+      res.status(500).json({ message: "Failed to update occupation" });
     }
   });
 

@@ -17,7 +17,7 @@ import { generateJobPDF } from "@/lib/pdfGenerator";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { OrientationToggle } from "@/components/orientation-toggle";
 import { debounce } from "lodash";
-import { Upload, Download, Trash2, FileText, Clock, X, Edit, Mail, Users, RefreshCw, MessageSquare, Plus, Shield, CheckCircle2, FileSignature } from "lucide-react";
+import { Upload, Download, Trash2, FileText, Clock, X, Edit, Mail, Users, RefreshCw, MessageSquare, Plus, Shield, CheckCircle2, FileSignature, Check, Pencil } from "lucide-react";
 import { SwmsSigningModal } from "@/components/SwmsSigningModal";
 import type { Job, LaborEntry, Material, SubTrade, OtherCost, TipFee, JobFile, JobNote, Quote, QuoteItem, QuoteSignature } from "@shared/schema";
 
@@ -97,6 +97,10 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
   
   // SWMS signing state for admins (voluntary signing)
   const [showSwmsSigningModal, setShowSwmsSigningModal] = useState(false);
+  
+  // SWMS occupation editing state (admin only)
+  const [editingOccupation, setEditingOccupation] = useState<string | null>(null);
+  const [editOccupationValue, setEditOccupationValue] = useState("");
   
   // Get the deletion password from localStorage (set in admin settings)
   const DELETION_PASSWORD = localStorage.getItem('buildflow-deletion-password') || 'Festool1!';
@@ -959,6 +963,30 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       toast({
         title: "Error",
         description: error.message || "Failed to delete employee",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // SWMS occupation update mutation (admin only)
+  const updateOccupationMutation = useMutation({
+    mutationFn: async ({ signatureId, occupation }: { signatureId: string; occupation: string }) => {
+      const response = await apiRequest("PATCH", `/api/swms/admin/signatures/${signatureId}/occupation`, { occupation });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/swms/job", jobId, "signatures"] });
+      setEditingOccupation(null);
+      setEditOccupationValue("");
+      toast({
+        title: "Success",
+        description: "Role updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update role",
         variant: "destructive",
       });
     },
@@ -3283,7 +3311,64 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                             </div>
                             <div>
                               <span className="text-gray-500 text-xs">Role:</span>
-                              <p className="text-gray-700">{sig.occupation}</p>
+                              {isAdmin && editingOccupation === sig.id ? (
+                                <div className="flex items-center gap-1 mt-1">
+                                  <Input
+                                    value={editOccupationValue}
+                                    onChange={(e) => setEditOccupationValue(e.target.value)}
+                                    className="h-7 text-sm"
+                                    placeholder="Enter role"
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' && editOccupationValue.trim()) {
+                                        updateOccupationMutation.mutate({ signatureId: sig.id, occupation: editOccupationValue.trim() });
+                                      } else if (e.key === 'Escape') {
+                                        setEditingOccupation(null);
+                                        setEditOccupationValue("");
+                                      }
+                                    }}
+                                  />
+                                  <Button
+                                    size="sm"
+                                    className="h-7 px-2"
+                                    onClick={() => {
+                                      if (editOccupationValue.trim()) {
+                                        updateOccupationMutation.mutate({ signatureId: sig.id, occupation: editOccupationValue.trim() });
+                                      }
+                                    }}
+                                    disabled={updateOccupationMutation.isPending}
+                                  >
+                                    <Check className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 px-2"
+                                    onClick={() => {
+                                      setEditingOccupation(null);
+                                      setEditOccupationValue("");
+                                    }}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1">
+                                  <p className="text-gray-700">{sig.occupation}</p>
+                                  {isAdmin && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-5 w-5 p-0 hover:bg-gray-100"
+                                      onClick={() => {
+                                        setEditingOccupation(sig.id);
+                                        setEditOccupationValue(sig.occupation);
+                                      }}
+                                    >
+                                      <Pencil className="h-3 w-3 text-gray-400" />
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
                             </div>
                             <div className="col-span-2 mt-1">
                               <span className="text-gray-500 text-xs">Date:</span>
