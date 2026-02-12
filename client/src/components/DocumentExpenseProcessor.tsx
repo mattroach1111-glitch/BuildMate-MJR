@@ -866,6 +866,9 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
           <div>• Review and confirm extracted information before adding to job sheet</div>
           <div>• Change category if needed, then click "Add to Job Sheet" to approve</div>
         </div>
+
+        {/* Recent Approved Expenses for duplicate checking */}
+        <RecentExpenses />
             </CardContent>
           </Card>
         </TabsContent>
@@ -1074,6 +1077,55 @@ export function DocumentExpenseProcessor({ onSuccess }: DocumentExpenseProcessor
         title="Google Drive Connection Expired"
         description="Your Google Drive connection has expired. Reconnect to continue uploading documents automatically with clickable links in job sheet PDFs."
       />
+    </div>
+  );
+}
+
+function RecentExpenses() {
+  const { data: recentExpenses = [] } = useQuery<Array<{
+    id: string;
+    jobAddress: string;
+    supplier: string;
+    description: string;
+    amount: string;
+    type: string;
+    createdAt: string;
+  }>>({
+    queryKey: ["/api/recent-expenses"],
+  });
+
+  if (recentExpenses.length === 0) return null;
+
+  const typeLabels: Record<string, string> = {
+    materials: "Material",
+    sub_trades: "Sub-trade",
+    other_costs: "Other",
+    tip_fees: "Tip Fee",
+  };
+
+  return (
+    <div className="mt-4 pt-4 border-t border-gray-200">
+      <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1">
+        <Receipt className="h-3 w-3" />
+        Recent Approved Items (last 10)
+      </p>
+      <div className="space-y-1">
+        {recentExpenses.map((item) => (
+          <div key={`${item.type}-${item.id}`} className="flex items-center justify-between text-xs bg-gray-50 rounded px-2 py-1.5 gap-2">
+            <div className="flex-1 min-w-0">
+              <span className="font-medium text-gray-800 truncate block">{item.jobAddress}</span>
+              <span className="text-gray-500 truncate block">
+                {item.supplier || item.description}
+                {item.supplier && item.description ? ` - ${item.description}` : ''}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Badge variant="outline" className="text-[10px] px-1 py-0">{typeLabels[item.type] || item.type}</Badge>
+              <span className="font-semibold text-gray-700">${parseFloat(item.amount).toLocaleString('en-AU', { minimumFractionDigits: 2 })}</span>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

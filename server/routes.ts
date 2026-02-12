@@ -7569,6 +7569,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get cost source documents
+  // Get last 10 recently added expenses across all jobs (for duplicate checking)
+  app.get("/api/recent-expenses", isAuthenticated, async (req: any, res) => {
+    try {
+      const result = await db.execute(sql`
+        (SELECT m.id, j.job_address AS "jobAddress", m.supplier, m.description, m.amount::text, 'materials' AS type, m.created_at AS "createdAt"
+         FROM materials m JOIN jobs j ON m.job_id = j.id
+         ORDER BY m.created_at DESC LIMIT 10)
+        UNION ALL
+        (SELECT s.id, j.job_address AS "jobAddress", s.contractor AS supplier, s.trade AS description, s.amount::text, 'sub_trades' AS type, s.created_at AS "createdAt"
+         FROM sub_trades s JOIN jobs j ON s.job_id = j.id
+         ORDER BY s.created_at DESC LIMIT 10)
+        UNION ALL
+        (SELECT o.id, j.job_address AS "jobAddress", '' AS supplier, o.description, o.amount::text, 'other_costs' AS type, o.created_at AS "createdAt"
+         FROM other_costs o JOIN jobs j ON o.job_id = j.id
+         ORDER BY o.created_at DESC LIMIT 10)
+        UNION ALL
+        (SELECT t.id, j.job_address AS "jobAddress", '' AS supplier, t.description, t.total_amount::text AS amount, 'tip_fees' AS type, t.created_at AS "createdAt"
+         FROM tip_fees t JOIN jobs j ON t.job_id = j.id
+         ORDER BY t.created_at DESC LIMIT 10)
+        ORDER BY "createdAt" DESC
+        LIMIT 10
+      `);
+      res.json(result.rows);
+    } catch (error) {
+      console.error("Error fetching recent expenses:", error);
+      res.status(500).json({ message: "Failed to fetch recent expenses" });
+    }
+  });
+
   app.get("/api/cost-documents", isAuthenticated, async (req: any, res) => {
     try {
       const documents = await db.select().from(costSourceDocuments).orderBy(desc(costSourceDocuments.createdAt));
