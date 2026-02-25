@@ -1759,7 +1759,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
               const fileName = `timesheet-${targetEmployee.name}-${fortnightStart}-${fortnightEnd}.pdf`;
               const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
-              const timesheetsFolderId = await googleDriveService.findOrCreateFolder('Timesheets', mainFolderId);
+              const timesheetsFolderId = await googleDriveService.findOrCreateFolder('MJR Timesheets', mainFolderId);
 
               const existingFileId = await storage.getTimesheetDriveFileId(staffId, fortnightStart, fortnightEnd);
               if (existingFileId) {
@@ -2317,7 +2317,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
               const fileName = `timesheet-${targetEmployee.name}-${fortnightStart}-${fortnightEnd}.pdf`;
               const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
-              const timesheetsFolderId = await googleDriveService.findOrCreateFolder('Timesheets', mainFolderId);
+              const timesheetsFolderId = await googleDriveService.findOrCreateFolder('MJR Timesheets', mainFolderId);
 
               // Check if a Drive file already exists for this period — update it rather than creating a new one
               const existingFileId = await storage.getTimesheetDriveFileId(targetStaffId, fortnightStart, fortnightEnd);
