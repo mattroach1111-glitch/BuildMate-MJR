@@ -4085,6 +4085,49 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   
+                  {/* Bulk Timesheet Export Section */}
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">Export All Timesheets to Drive</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Save every submitted/approved timesheet as a PDF to your MJR Timesheets folder in Google Drive
+                        </p>
+                      </div>
+                      <Button
+                        variant="default"
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 shrink-0"
+                        onClick={async () => {
+                          try {
+                            const response = await fetch('/api/admin/timesheets/bulk-export-to-drive', {
+                              method: 'POST',
+                              credentials: 'include',
+                              headers: { 'Content-Type': 'application/json' },
+                            });
+                            const data = await response.json();
+                            if (response.ok) {
+                              toast({
+                                title: "Timesheets Exported",
+                                description: data.message,
+                              });
+                            } else {
+                              throw new Error(data.error || 'Export failed');
+                            }
+                          } catch (error: any) {
+                            toast({
+                              title: "Export Failed",
+                              description: error.message || "Failed to export timesheets to Google Drive",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      >
+                        <Download className="h-4 w-4" />
+                        Export All Timesheets
+                      </Button>
+                    </div>
+                  </div>
+
                   {/* Import Data Section */}
                   <div className="border-t pt-4">
                     <div className="flex items-center justify-between">

@@ -5092,6 +5092,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auto-backup data to Google Drive
+  app.post("/api/admin/timesheets/bulk-export-to-drive", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      console.log("📋 Starting bulk timesheet export to Google Drive...");
+
+      const systemTokens = await storage.getSystemGoogleDriveTokens();
+      if (!systemTokens) {
+        return res.status(401).json({ error: "Google Drive not connected. Please connect Google Drive in Settings first." });
+      }
+
+      const { GoogleDriveService } = await import('./googleDriveService');
+      const { TimesheetPDFGenerator } = await import('./pdfGenerator');
+      const driveService = new GoogleDriveService();
+      const tokens = JSON.parse(systemTokens);
+      const tokenRefreshCallback = async (newTokens: any) => {
+        await storage.setSystemGoogleDriveTokens(JSON.stringify(newTokens), userId);
+      };
+      driveService.setUserTokens(tokens, userId, tokenRefreshCallback);
+
+      // Fortnight base: August 11, 2025
+      const FORTNIGHT_BASE = new Date(Date.UTC(2025, 7, 11));
+      const DAY_MS = 1000 * 60 * 60 * 24;
+
+      function getFortnightBounds(dateStr: string): { start: string; end: string } {
+        const d = new Date(dateStr + 'T00:00:00Z');
+        const daysDiff = Math.round((d.getTime() - FORTNIGHT_BASE.getTime()) / DAY_MS);
+        const index = Math.max(0, Math.floor(daysDiff / 14));
+        const startMs = FORTNIGHT_BASE.getTime() + index * 14 * DAY_MS;
+        const endMs = startMs + 13 * DAY_MS;
+        return {
+          start: new Date(startMs).toISOString().split('T')[0],
+          end: new Date(endMs).toISOString().split('T')[0],
+        };
+      }
+
+      // Get all entries (submitted or approved)
+      const allEntries = await db.select().from(timesheetEntries)
+        .where(sql`(${timesheetEntries.submitted} = true OR ${timesheetEntries.approved} = true)`);
+
+      // Group into unique staffId + fortnight period combos
+      const periodMap = new Map<string, { staffId: string; start: string; end: string }>();
+      for (const entry of allEntries) {
+        if (!entry.staffId || !entry.date) continue;
+        const bounds = getFortnightBounds(entry.date);
+        const key = `${entry.staffId}|${bounds.start}|${bounds.end}`;
+        if (!periodMap.has(key)) {
+          periodMap.set(key, { staffId: entry.staffId, start: bounds.start, end: bounds.end });
+        }
+      }
+
+      const allEmployees = await storage.getAllEmployees();
+      const pdfGenerator = new TimesheetPDFGenerator();
+      const mainFolderId = await driveService.findOrCreateFolder('BuildFlow Pro');
+      const timesheetsFolderId = await driveService.findOrCreateFolder('MJR Timesheets', mainFolderId);
+
+      let uploaded = 0;
+      let skipped = 0;
+
+      for (const { staffId, start, end } of periodMap.values()) {
+        try {
+          const employee = allEmployees.find((e: any) => e.id === staffId);
+          if (!employee) { skipped++; continue; }
+
+          const entries = await storage.getTimesheetEntriesByPeriod(staffId, start, end);
+          if (!entries.length) { skipped++; continue; }
+
+          const employeeData = {
+            id: employee.id,
+            name: employee.name,
+            hourlyRate: parseFloat(employee.defaultHourlyRate) || 50
+          };
+          const pdfBuffer = pdfGenerator.generateTimesheetPDF(employeeData, entries, start, end);
+          const fileName = `timesheet-${employee.name}-${start}-${end}.pdf`;
+
+          await driveService.uploadFile(fileName, pdfBuffer, 'application/pdf', timesheetsFolderId || undefined);
+          await storage.setTimesheetDriveFileId(staffId, start, end, 'bulk-export');
+          uploaded++;
+          console.log(`✅ Exported timesheet: ${fileName}`);
+        } catch (err) {
+          console.error(`Failed to export timesheet for period ${start}-${end}:`, err);
+          skipped++;
+        }
+      }
+
+      console.log(`📋 Bulk export complete: ${uploaded} uploaded, ${skipped} skipped`);
+      res.json({
+        success: true,
+        uploaded,
+        skipped,
+        message: `${uploaded} timesheet PDF${uploaded !== 1 ? 's' : ''} saved to Google Drive in 'MJR Timesheets' folder.`
+      });
+    } catch (error) {
+      console.error("Error bulk exporting timesheets:", error);
+      res.status(500).json({ error: "Failed to export timesheets to Google Drive" });
+    }
+  });
+
   app.post("/api/export-data-to-drive", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       console.log("🔄 Starting Google Drive data backup...");
