@@ -752,6 +752,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Job is already deleted" });
       }
 
+      // Generate PDF and back up to Google Drive before archiving
+      try {
+        const jobData = await storage.getJobWithCompleteDetails(jobId);
+        if (jobData) {
+          const { TimesheetPDFGenerator } = await import('./pdfGenerator');
+          const pdfGenerator = new TimesheetPDFGenerator();
+          const pdfBuffer = pdfGenerator.generateJobSheetPDF(jobData);
+
+          const systemTokens = await storage.getSystemGoogleDriveTokens();
+          if (systemTokens) {
+            const { GoogleDriveService } = await import('./googleDriveService');
+            const driveService = new GoogleDriveService();
+            const tokens = JSON.parse(systemTokens);
+            const tokenRefreshCallback = async (newTokens: any) => {
+              await storage.setSystemGoogleDriveTokens(JSON.stringify(newTokens), req.user.claims.sub);
+            };
+            driveService.setUserTokens(tokens, req.user.claims.sub, tokenRefreshCallback);
+
+            if (driveService.isReady()) {
+              const mainFolderId = await driveService.findOrCreateFolder('BuildFlow Pro');
+              if (mainFolderId) {
+                const jobFolderId = await driveService.findOrCreateFolder(`Job - ${jobData.jobAddress}`, mainFolderId);
+                if (jobFolderId) {
+                  const sanitizedAddress = jobData.jobAddress.replace(/[^a-zA-Z0-9\s-]/g, '');
+                  const dateStr = new Date().toISOString().split('T')[0];
+                  const fileName = `JobSheet_${sanitizedAddress}_archived_${dateStr}.pdf`;
+                  await driveService.uploadFile(fileName, pdfBuffer, 'application/pdf', jobFolderId);
+                  console.log(`☁️ Archived job sheet PDF saved to Google Drive: ${fileName}`);
+                }
+              }
+            }
+          }
+        }
+      } catch (driveErr) {
+        console.error('Non-critical: Could not save archive PDF to Drive:', driveErr);
+        // Don't block the archive if Drive upload fails
+      }
+
       await storage.softDeleteJob(jobId);
       console.log(`Successfully deleted job: ${jobId}`);
       res.json({ message: "Job moved to deleted folder" });
