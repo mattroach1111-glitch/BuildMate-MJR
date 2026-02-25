@@ -1,5 +1,7 @@
 import { storage } from '../storage';
 import { insertNotificationSchema } from '@shared/schema';
+import { db } from '../db';
+import { jobs, employees, users, timesheetEntries, laborEntries, materials, subTrades, otherCosts, tipFees, jobFiles } from '@shared/schema';
 
 export class NotificationScheduler {
   private static instance: NotificationScheduler;
@@ -15,7 +17,7 @@ export class NotificationScheduler {
   }
 
   /**
-   * Initialize notification scheduler - sets up recurring Monday reminders
+   * Initialize notification scheduler - sets up recurring Monday reminders and weekly backup
    */
   async initialize() {
     console.log('🔔 Initializing notification scheduler...');
@@ -24,11 +26,17 @@ export class NotificationScheduler {
     const checkInterval = setInterval(() => {
       this.checkAndCreateMondayReminders();
     }, 1000 * 60 * 60); // Check every hour
-
     this.intervals.set('monday-reminders', checkInterval);
     
+    // Check for weekly backup every hour
+    const backupInterval = setInterval(() => {
+      this.checkAndRunWeeklyBackup();
+    }, 1000 * 60 * 60); // Check every hour
+    this.intervals.set('weekly-backup', backupInterval);
+
     // Also check immediately on startup
     await this.checkAndCreateMondayReminders();
+    await this.checkAndRunWeeklyBackup();
     
     console.log('✅ Notification scheduler initialized successfully');
   }
@@ -120,6 +128,96 @@ export class NotificationScheduler {
       }
     } catch (error) {
       console.error('❌ Error creating initial notifications:', error);
+    }
+  }
+
+  /**
+   * Check if a weekly backup is due (every Sunday) and run it automatically
+   */
+  private async checkAndRunWeeklyBackup() {
+    try {
+      const now = new Date();
+      const isSunday = now.getDay() === 0;
+      const currentHour = now.getHours();
+
+      // Run once on Sunday between 2 AM and 3 AM
+      if (!isSunday || currentHour !== 2) return;
+
+      // Check if we already ran this backup today
+      const todayKey = `weekly_backup_last_run`;
+      const lastRunSetting = await storage.getSystemSetting(todayKey);
+      const today = now.toISOString().split('T')[0];
+      if (lastRunSetting?.settingValue === today) {
+        return; // Already backed up today
+      }
+
+      console.log('📦 Starting automatic weekly MJR backup to Google Drive...');
+
+      const systemTokens = await storage.getSystemGoogleDriveTokens();
+      if (!systemTokens) {
+        console.log('⚠️ Weekly backup skipped: Google Drive not connected');
+        return;
+      }
+
+      // Gather all data
+      const jobsData = await db.select().from(jobs);
+      const employeesData = await db.select().from(employees);
+      const usersData = await db.select().from(users);
+      const timesheetEntriesData = await db.select().from(timesheetEntries);
+      const laborEntriesData = await db.select().from(laborEntries);
+      const materialsData = await db.select().from(materials);
+      const subTradesData = await db.select().from(subTrades);
+      const otherCostsData = await db.select().from(otherCosts);
+      const tipFeesData = await db.select().from(tipFees);
+      const jobFilesData = await db.select().from(jobFiles);
+
+      const exportData = {
+        exportDate: now.toISOString(),
+        exportType: 'MJR Automatic Weekly Backup',
+        version: '1.0',
+        summary: {
+          jobs: jobsData.length,
+          employees: employeesData.length,
+          timesheetEntries: timesheetEntriesData.length,
+          laborEntries: laborEntriesData.length,
+          materials: materialsData.length,
+        },
+        data: {
+          jobs: jobsData,
+          employees: employeesData,
+          users: usersData.map((u: any) => ({ id: u.id, email: u.email, firstName: u.firstName, lastName: u.lastName, role: u.role })),
+          timesheetEntries: timesheetEntriesData,
+          laborEntries: laborEntriesData,
+          materials: materialsData,
+          subTrades: subTradesData,
+          otherCosts: otherCostsData,
+          tipFees: tipFeesData,
+          jobFiles: jobFilesData,
+        }
+      };
+
+      const jsonContent = JSON.stringify(exportData, null, 2);
+      const fileName = `MJR-BuildFlow-Backup-${today}.json`;
+      const fileBuffer = Buffer.from(jsonContent, 'utf-8');
+
+      const { GoogleDriveService } = await import('../googleDriveService');
+      const googleDriveService = new GoogleDriveService();
+      const tokens = JSON.parse(systemTokens);
+      const tokenRefreshCallback = async (newTokens: any) => {
+        await storage.setSystemGoogleDriveTokens(JSON.stringify(newTokens));
+      };
+      googleDriveService.setUserTokens(tokens, 'system', tokenRefreshCallback);
+
+      const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
+      const backupsFolderId = await googleDriveService.findOrCreateFolder('MJR Backups', mainFolderId);
+      await googleDriveService.uploadFile(fileName, fileBuffer, 'application/json', backupsFolderId || undefined);
+
+      // Record that we ran the backup today
+      await storage.setSystemSetting(todayKey, today);
+
+      console.log(`✅ Weekly MJR backup completed: ${fileName}`);
+    } catch (error) {
+      console.error('❌ Error running weekly backup:', error);
     }
   }
 

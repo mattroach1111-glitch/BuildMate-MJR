@@ -102,6 +102,8 @@ export interface IStorage {
   setSystemSetting(key: string, value: string | null, updatedBy?: string): Promise<void>;
   getSystemGoogleDriveTokens(): Promise<string | null>;
   setSystemGoogleDriveTokens(tokens: string | null, updatedBy?: string): Promise<void>;
+  getTimesheetDriveFileId(staffId: string, fortnightStart: string, fortnightEnd: string): Promise<string | null>;
+  setTimesheetDriveFileId(staffId: string, fortnightStart: string, fortnightEnd: string, fileId: string): Promise<void>;
   
   // Employee operations
   getEmployees(): Promise<Employee[]>;
@@ -448,6 +450,17 @@ export class DatabaseStorage implements IStorage {
 
   async setSystemGoogleDriveTokens(tokens: string | null, updatedBy?: string): Promise<void> {
     await this.setSystemSetting('google_drive_tokens', tokens, updatedBy);
+  }
+
+  async getTimesheetDriveFileId(staffId: string, fortnightStart: string, fortnightEnd: string): Promise<string | null> {
+    const key = `timesheet_drive:${staffId}:${fortnightStart}:${fortnightEnd}`;
+    const setting = await this.getSystemSetting(key);
+    return setting?.settingValue || null;
+  }
+
+  async setTimesheetDriveFileId(staffId: string, fortnightStart: string, fortnightEnd: string, fileId: string): Promise<void> {
+    const key = `timesheet_drive:${staffId}:${fortnightStart}:${fortnightEnd}`;
+    await this.setSystemSetting(key, fileId);
   }
 
   // Employee operations

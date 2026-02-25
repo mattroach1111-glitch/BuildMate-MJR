@@ -1675,7 +1675,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return dayOfWeek === 0 || dayOfWeek === 6;
       });
       console.log(`🌴 AFTER APPROVAL: ${weekendEntriesAfter.length} weekend entries found:`, weekendEntriesAfter.map(e => ({ date: e.date, hours: e.hours, approved: e.approved, jobId: e.jobId })));
-      
+
+      // When approving, regenerate the timesheet PDF and save/update in Google Drive
+      if (approved) {
+        try {
+          const allEmployees = await storage.getAllEmployees();
+          const targetEmployee = allEmployees.find((emp: any) => emp.id === staffId) ||
+            (() => {
+              // Also try by user ID
+              return null;
+            })();
+
+          if (targetEmployee) {
+            const { TimesheetPDFGenerator } = await import('./pdfGenerator');
+            const pdfGenerator = new TimesheetPDFGenerator();
+            const employeeData = {
+              id: targetEmployee.id,
+              name: targetEmployee.name,
+              hourlyRate: parseFloat(targetEmployee.defaultHourlyRate) || 50
+            };
+            const pdfBuffer = pdfGenerator.generateTimesheetPDF(employeeData, entriesAfterApproval, fortnightStart, fortnightEnd);
+
+            const systemTokens = await storage.getSystemGoogleDriveTokens();
+            if (systemTokens) {
+              const { GoogleDriveService } = await import('./googleDriveService');
+              const googleDriveService = new GoogleDriveService();
+              const tokens = JSON.parse(systemTokens);
+              const tokenRefreshCallback = async (newTokens: any) => {
+                await storage.setSystemGoogleDriveTokens(JSON.stringify(newTokens), userId);
+              };
+              googleDriveService.setUserTokens(tokens, userId, tokenRefreshCallback);
+
+              const fileName = `timesheet-${targetEmployee.name}-${fortnightStart}-${fortnightEnd}.pdf`;
+              const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
+              const timesheetsFolderId = await googleDriveService.findOrCreateFolder('Timesheets', mainFolderId);
+
+              const existingFileId = await storage.getTimesheetDriveFileId(staffId, fortnightStart, fortnightEnd);
+              if (existingFileId) {
+                try {
+                  await googleDriveService.updateFilePDF(existingFileId, pdfBuffer);
+                  console.log(`📝 Admin approval: Updated timesheet PDF in Drive for ${targetEmployee.name}`);
+                } catch {
+                  const result = await googleDriveService.uploadPDFWithId(fileName, pdfBuffer, timesheetsFolderId || undefined);
+                  await storage.setTimesheetDriveFileId(staffId, fortnightStart, fortnightEnd, result.fileId);
+                  console.log(`📤 Admin approval: Created new timesheet PDF in Drive for ${targetEmployee.name}`);
+                }
+              } else {
+                const result = await googleDriveService.uploadPDFWithId(fileName, pdfBuffer, timesheetsFolderId || undefined);
+                await storage.setTimesheetDriveFileId(staffId, fortnightStart, fortnightEnd, result.fileId);
+                console.log(`📤 Admin approval: Uploaded timesheet PDF to Drive for ${targetEmployee.name}`);
+              }
+            }
+          }
+        } catch (pdfErr) {
+          console.error('Non-critical: Could not save approval PDF to Drive:', pdfErr);
+        }
+      }
+
       const action = approved ? "approved" : "unapproved";
       res.status(200).json({ 
         message: `Fortnight timesheet ${action} successfully`,
@@ -2161,71 +2217,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let driveLink = null;
       let googleDriveConnected = false;
-      
-      // Only generate PDF to Google Drive when admin approves hours
-      // For staff submissions, just confirm the timesheet without PDF generation
       const isAdmin = user && user.role === 'admin';
-      
-      if (isAdmin) {
-        // Generate and save PDF to Google Drive if admin has connected their account
-        try {
-          if (!userEmployee) {
-            throw new Error('Employee not found');
+
+      // Generate PDF for ALL submissions (staff and admin) and save to Google Drive
+      try {
+        // Resolve the employee for the TARGET staff (not necessarily the logged-in user)
+        let targetEmployee = userEmployee;
+        if (requestedStaffId && requestedStaffId !== userId) {
+          // Admin submitting for another staff member — find their employee record
+          const foundByEmpId = employees.find((emp: any) => emp.id === requestedStaffId);
+          if (foundByEmpId) {
+            targetEmployee = foundByEmpId;
+          } else {
+            const targetUser = await storage.getUser(requestedStaffId);
+            if (targetUser?.employeeId) {
+              const foundByUser = employees.find((emp: any) => emp.id === targetUser.employeeId);
+              if (foundByUser) targetEmployee = foundByUser;
+            }
           }
-          
+        }
+
+        if (!targetEmployee) {
+          console.warn('No employee record found for PDF generation — skipping Drive upload');
+        } else {
           const pdfGenerator = new TimesheetPDFGenerator();
-          
           const employeeData = {
-            id: userEmployee.id,
-            name: userEmployee.name,
-            hourlyRate: parseFloat(userEmployee.defaultHourlyRate) || 50
+            id: targetEmployee.id,
+            name: targetEmployee.name,
+            hourlyRate: parseFloat(targetEmployee.defaultHourlyRate) || 50
           };
-          
+
           const pdfBuffer = pdfGenerator.generateTimesheetPDF(
             employeeData,
             entries,
             fortnightStart,
             fortnightEnd
           );
-          
-          // Try to upload to Google Drive if system has connected Google Drive
+
           const systemTokens = await storage.getSystemGoogleDriveTokens();
           if (systemTokens) {
             try {
               const googleDriveService = new GoogleDriveService();
               const tokens = JSON.parse(systemTokens);
-              
-              // Set up token refresh callback to save updated tokens to system settings
               const tokenRefreshCallback = async (newTokens: any) => {
                 await storage.setSystemGoogleDriveTokens(JSON.stringify(newTokens), user.id);
               };
-              
               googleDriveService.setUserTokens(tokens, user.id, tokenRefreshCallback);
-              
-              const fileName = `timesheet-${userEmployee.name}-${fortnightStart}-${fortnightEnd}.pdf`;
-              
-              // Create main BuildFlow Pro folder first
+
+              const fileName = `timesheet-${targetEmployee.name}-${fortnightStart}-${fortnightEnd}.pdf`;
               const mainFolderId = await googleDriveService.findOrCreateFolder('BuildFlow Pro');
-              
-              // Create or find Timesheets folder inside BuildFlow Pro
-              const buildFlowFolderId = await googleDriveService.findOrCreateFolder('Timesheets', mainFolderId);
-              
-              // Upload PDF to Google Drive
-              driveLink = await googleDriveService.uploadPDF(fileName, pdfBuffer, buildFlowFolderId || undefined);
-              googleDriveConnected = true;
-              
-              if (driveLink) {
-                console.log(`PDF saved to Google Drive: ${driveLink}`);
+              const timesheetsFolderId = await googleDriveService.findOrCreateFolder('Timesheets', mainFolderId);
+
+              // Check if a Drive file already exists for this period — update it rather than creating a new one
+              const existingFileId = await storage.getTimesheetDriveFileId(targetStaffId, fortnightStart, fortnightEnd);
+              if (existingFileId) {
+                try {
+                  driveLink = await googleDriveService.updateFilePDF(existingFileId, pdfBuffer);
+                  console.log(`📝 Updated existing timesheet PDF in Google Drive for ${targetEmployee.name}`);
+                } catch (updateErr: any) {
+                  // File may have been deleted — fall through to create new
+                  console.warn('Could not update existing Drive file, creating new one:', updateErr?.message);
+                  const result = await googleDriveService.uploadPDFWithId(fileName, pdfBuffer, timesheetsFolderId || undefined);
+                  driveLink = result.webViewLink;
+                  await storage.setTimesheetDriveFileId(targetStaffId, fortnightStart, fortnightEnd, result.fileId);
+                }
+              } else {
+                const result = await googleDriveService.uploadPDFWithId(fileName, pdfBuffer, timesheetsFolderId || undefined);
+                driveLink = result.webViewLink;
+                await storage.setTimesheetDriveFileId(targetStaffId, fortnightStart, fortnightEnd, result.fileId);
+                console.log(`📤 Uploaded new timesheet PDF to Google Drive for ${targetEmployee.name}`);
               }
+
+              googleDriveConnected = true;
             } catch (driveError) {
               console.error('Google Drive upload failed:', driveError);
-              // Don't fail the whole request if Google Drive upload fails
             }
           }
-        } catch (pdfError) {
-          console.error('Error generating PDF:', pdfError);
-          // Don't fail the whole request if PDF generation fails
         }
+      } catch (pdfError) {
+        console.error('Error generating timesheet PDF:', pdfError);
       }
       
       // Mark all timesheet entries for this period as confirmed/approved
