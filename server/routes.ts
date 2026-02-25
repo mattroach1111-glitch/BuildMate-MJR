@@ -15,6 +15,7 @@ import { TimesheetPDFGenerator } from "./pdfGenerator";
 import { GoogleDriveService, GoogleDriveError } from "./googleDriveService";
 import { GoogleDriveAuth } from "./googleAuth";
 import { DocumentProcessor } from "./services/documentProcessor";
+import { BackupService } from "./services/backupService";
 import { quoteEstimator } from "./services/quoteEstimator";
 import { rewardsService } from "./services/rewardsService";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
@@ -288,6 +289,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await storage.migrateLaborEntryHours();
   // Auth middleware
   await setupAuth(app);
+
+  // Auto-backup middleware: schedule a Drive backup 3 minutes after any successful data mutation
+  app.use((req, res, next) => {
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+      res.on('finish', () => {
+        if (res.statusCode < 400) {
+          BackupService.getInstance().scheduleBackup();
+        }
+      });
+    }
+    next();
+  });
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {

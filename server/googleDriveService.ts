@@ -211,6 +211,24 @@ export class GoogleDriveService {
     return await this.uploadFile(fileName, pdfBuffer, 'application/pdf', folderId);
   }
 
+  async updateFileContent(fileId: string, fileBuffer: Buffer, mimeType: string): Promise<string> {
+    if (!this.isReady()) {
+      throw new GoogleDriveError('Google Drive not connected.', 'AUTH_REQUIRED', false);
+    }
+    return await this.executeWithTokenRefresh(async () => {
+      const stream = new Readable();
+      stream.push(fileBuffer);
+      stream.push(null);
+      const response = await this.drive.files.update({
+        fileId,
+        media: { mimeType, body: stream },
+        fields: 'id,webViewLink',
+      });
+      console.log(`File content updated in Google Drive: ${fileId}`);
+      return response.data.webViewLink;
+    });
+  }
+
   async updateFilePDF(fileId: string, pdfBuffer: Buffer): Promise<string> {
     if (!this.isReady()) {
       throw new GoogleDriveError('Google Drive not connected.', 'AUTH_REQUIRED', false);
