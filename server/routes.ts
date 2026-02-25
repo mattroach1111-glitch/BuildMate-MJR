@@ -5143,6 +5143,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const allEmployees = await storage.getAllEmployees();
+      const allUsers = await storage.getAllUsers();
+
+      // Build a map from staffId (user ID) → employee record
+      // staffId in timesheetEntries is the user's auth ID, not the employee UUID
+      const staffToEmployee = new Map<string, any>();
+      for (const user of allUsers) {
+        // Primary: user is linked to an employee via employeeId
+        if (user.employeeId) {
+          const emp = allEmployees.find((e: any) => e.id === user.employeeId);
+          if (emp) { staffToEmployee.set(user.id, emp); continue; }
+        }
+        // Fallback: try matching user ID directly to employee ID
+        const empDirect = allEmployees.find((e: any) => e.id === user.id);
+        if (empDirect) { staffToEmployee.set(user.id, empDirect); continue; }
+        // Last resort: use user name from user record
+        if (user.firstName) {
+          staffToEmployee.set(user.id, {
+            id: user.id,
+            name: `${user.firstName} ${user.lastName || ''}`.trim(),
+            defaultHourlyRate: '50'
+          });
+        }
+      }
+
       const pdfGenerator = new TimesheetPDFGenerator();
       const mainFolderId = await driveService.findOrCreateFolder('BuildFlow Pro');
       const timesheetsFolderId = await driveService.findOrCreateFolder('MJR Timesheets', mainFolderId);
@@ -5152,8 +5176,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       for (const { staffId, start, end } of periodMap.values()) {
         try {
-          const employee = allEmployees.find((e: any) => e.id === staffId);
-          if (!employee) { skipped++; continue; }
+          const employee = staffToEmployee.get(staffId);
+          if (!employee) {
+            console.warn(`No employee found for staffId: ${staffId} — skipping`);
+            skipped++; continue;
+          }
 
           const entries = await storage.getTimesheetEntriesByPeriod(staffId, start, end);
           if (!entries.length) { skipped++; continue; }
