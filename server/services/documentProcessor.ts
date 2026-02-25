@@ -1,6 +1,33 @@
 import Anthropic from '@anthropic-ai/sdk';
+import sharp from 'sharp';
 
 const DEFAULT_MODEL_STR = "claude-sonnet-4-20250514";
+const MAX_IMAGE_DIMENSION = 7000;
+
+async function resizeImageIfNeeded(base64Data: string, mediaType: string): Promise<{ data: string; mediaType: string }> {
+  try {
+    const buffer = Buffer.from(base64Data, 'base64');
+    const image = sharp(buffer);
+    const metadata = await image.metadata();
+    const width = metadata.width ?? 0;
+    const height = metadata.height ?? 0;
+
+    if (width <= MAX_IMAGE_DIMENSION && height <= MAX_IMAGE_DIMENSION) {
+      return { data: base64Data, mediaType };
+    }
+
+    console.log(`🔄 Resizing image from ${width}x${height} to fit within ${MAX_IMAGE_DIMENSION}px`);
+    const resizedBuffer = await image
+      .resize(MAX_IMAGE_DIMENSION, MAX_IMAGE_DIMENSION, { fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 85 })
+      .toBuffer();
+
+    return { data: resizedBuffer.toString('base64'), mediaType: 'image/jpeg' };
+  } catch (err) {
+    console.warn('Image resize failed, using original:', err);
+    return { data: base64Data, mediaType };
+  }
+}
 
 export class DocumentProcessor {
   private anthropic: Anthropic;
@@ -87,7 +114,12 @@ export class DocumentProcessor {
       }
 
       // Normalize media type
-      const normalizedMediaType = mediaType === 'image/jpg' ? 'image/jpeg' : mediaType;
+      let normalizedMediaType = mediaType === 'image/jpg' ? 'image/jpeg' : mediaType;
+
+      // Resize if image exceeds Anthropic's 8000px limit
+      const resized = await resizeImageIfNeeded(imageData, normalizedMediaType);
+      imageData = resized.data;
+      normalizedMediaType = resized.mediaType;
 
       console.log(`🖼️ Sending ${normalizedMediaType} image to AI for processing`);
 
@@ -191,6 +223,11 @@ export class DocumentProcessor {
           throw new Error('Failed to convert PDF for processing');
         }
       }
+
+      // Resize if image exceeds Anthropic's 8000px limit
+      const resized1 = await resizeImageIfNeeded(imageData, mediaType);
+      imageData = resized1.data;
+      mediaType = resized1.mediaType;
 
       const prompt = `
         Analyze this complete job cost sheet document and extract ALL information to create a new job.
@@ -349,6 +386,11 @@ export class DocumentProcessor {
           throw new Error('Failed to convert PDF for processing');
         }
       }
+
+      // Resize if image exceeds Anthropic's 8000px limit
+      const resized2 = await resizeImageIfNeeded(imageData, mediaType);
+      imageData = resized2.data;
+      mediaType = resized2.mediaType;
 
       const prompt = `
         Analyze this expense document/invoice and extract the information.
@@ -511,7 +553,10 @@ export class DocumentProcessor {
         - Return valid JSON only
       `;
 
-      const normalizedMediaType = mediaType === 'image/jpg' ? 'image/jpeg' : mediaType;
+      // Resize if image exceeds Anthropic's 8000px limit
+      const resized3 = await resizeImageIfNeeded(imageData, mediaType);
+      imageData = resized3.data;
+      const normalizedMediaType = resized3.mediaType === 'image/jpg' ? 'image/jpeg' : resized3.mediaType;
 
       const response = await this.anthropic.messages.create({
         model: DEFAULT_MODEL_STR,

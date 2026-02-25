@@ -1,0 +1,40 @@
+sw.js:229 📱 BuildFlow Pro Service Worker loaded successfully
+(index):58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+(index):70 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-BTvt1veY.js:518 💓 Session keepalive successful
+index-BTvt1veY.js:48 🔄 Session backup stored successfully
+index-BTvt1veY.js:48 🔄 Session backup stored successfully
+index-BTvt1veY.js:48 🔄 Session backup stored successfully
+index-BTvt1veY.js:48 🔄 Session backup stored successfully
+index-BTvt1veY.js:824 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+index-BTvt1veY.js:824 🔵 Job selection changed: 
+index-BTvt1veY.js:824 🔵 Job address changed: 
+index-BTvt1veY.js:824 🔵 Client name changed: 
+index-BTvt1veY.js:824 🔵 Project manager changed: 
+index-BTvt1veY.js:824 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+index-BTvt1veY.js:824 🔵 Job selection changed: 50519d05-e656-456b-beee-7f66b365bf5e
+index-BTvt1veY.js:571  Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-BTvt1veY.js:571
+index-BTvt1veY.js:824 🔵 UPLOAD DEBUG: Getting upload parameters for file: File
+index-BTvt1veY.js:824 🔵 Making API request to /api/documents/upload
+index-BTvt1veY.js:824 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+index-BTvt1veY.js:824 🔵 API response status: 200
+index-BTvt1veY.js:824 🔵 API response data: Object
+index-BTvt1veY.js:824 🔵 UPLOAD DEBUG: Upload URL response: Object
+index-BTvt1veY.js:824 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+index-BTvt1veY.js:824 🟢 UPLOAD COMPLETE: Object
+index-BTvt1veY.js:824 🔵 Selected Job ID: 50519d05-e656-456b-beee-7f66b365bf5e
+index-BTvt1veY.js:824 🟢 PROCESSING FILES: 1
+index-BTvt1veY.js:824 🟢 PROCESSING FILE: Object
+index-BTvt1veY.js:824 🔵 Document URL: https://storage.googleapis.com/replit-objstore-24d4ec2f-e1e3-47ea-be49-d2813cd4465c/.private/uploads/c31cd02f-0b44-4f11-9c02-ed7c217c2869?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=heimdall-production%40replit-user-deployments.iam.gserviceaccount.com%2F20260225%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260225T010228Z&X-Goog-Expires=899&X-Goog-Signature=109d95cae136e9fac14d8ad9bdc8d3f410879d41b12cb5b0063555a6cd561948efa182c78023191cb4a087c15512fcc3f261a9511441483c0fa3af1e8a4936fa03dc97e78ef1c99ce67653e548618f4337df27abaa8025d27fc91e1da02933472716aec6d1c1772d14e954488119f74ae65bd4d984514a0786a6f764a29fe0843262dd8b4e242aef9380a9133869b7c3ccc6d5a6ffd851fe7246e62d84fafce31e4ce6ab5a6ebc936379fe51819e51aa4b3e64ce69ec68eab0fb0c61d78a6aa30d2a0c799583e61b72b1ecf9da6a0cbb7a2a84cfeee94a2eaa66995eb01e06f1892c3ee36d5683ee94b70638ff5a5e194acc8b7cea356a57bf22302dee806405&X-Goog-SignedHeaders=host
+index-BTvt1veY.js:824 🔵 Job ID: 50519d05-e656-456b-beee-7f66b365bf5e
+index-BTvt1veY.js:824 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+/api/documents/process:1   Failed to load resource: the server responded with a status of 500 ()
+index-BTvt1veY.js:824 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
+/api/documents/process:1   Failed to load resource: the server responded with a status of 500 ()
+index-BTvt1veY.js:824  🔴 PROCESSING ERROR: Error: 500: {"error":"Failed to process document","details":"400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"messages.0.content.1.image.source.base64.data: At least one of the image dimensions exceed max allowed size: 8000 pixels\"},\"request_id\":\"req_011CYTtKZQXK2e8PoWcqxiNb\"}"}
+    at W8 (index-BTvt1veY.js:48:44655)
+    at async wt (index-BTvt1veY.js:48:44863)
+    at async Object.mutationFn (index-BTvt1veY.js:824:20141)
+qe @ index-BTvt1veY.js:824
+index-BTvt1veY.js:824 🔵 GoogleDriveReconnectDialog - open: false isReconnecting: false
