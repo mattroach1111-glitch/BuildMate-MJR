@@ -5216,6 +5216,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/admin/jobs/bulk-export-archived-to-drive", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      console.log("📁 Starting bulk archived jobs export to Google Drive...");
+
+      const systemTokens = await storage.getSystemGoogleDriveTokens();
+      if (!systemTokens) {
+        return res.status(401).json({ error: "Google Drive not connected. Please connect Google Drive in Settings first." });
+      }
+
+      const { GoogleDriveService } = await import('./googleDriveService');
+      const { TimesheetPDFGenerator } = await import('./pdfGenerator');
+      const driveService = new GoogleDriveService();
+      const tokens = JSON.parse(systemTokens);
+      const tokenRefreshCallback = async (newTokens: any) => {
+        await storage.setSystemGoogleDriveTokens(JSON.stringify(newTokens), userId);
+      };
+      driveService.setUserTokens(tokens, userId, tokenRefreshCallback);
+
+      const archivedJobs = await storage.getDeletedJobs();
+      const pdfGenerator = new TimesheetPDFGenerator();
+      const mainFolderId = await driveService.findOrCreateFolder('BuildFlow Pro');
+
+      let uploaded = 0;
+      let skipped = 0;
+
+      for (const job of archivedJobs) {
+        try {
+          const jobData = await storage.getJobWithCompleteDetails(job.id);
+          if (!jobData) { skipped++; continue; }
+
+          const pdfBuffer = pdfGenerator.generateJobSheetPDF(jobData);
+          const jobFolderId = await driveService.findOrCreateFolder(`Job - ${jobData.jobAddress}`, mainFolderId || undefined);
+          if (!jobFolderId) { skipped++; continue; }
+
+          const sanitizedAddress = (jobData.jobAddress || job.id).replace(/[^a-zA-Z0-9\s-]/g, '');
+          const dateStr = new Date().toISOString().split('T')[0];
+          const fileName = `JobSheet_${sanitizedAddress}_archived_${dateStr}.pdf`;
+          await driveService.uploadFile(fileName, pdfBuffer, 'application/pdf', jobFolderId);
+          uploaded++;
+          console.log(`☁️ Exported archived job PDF: ${fileName}`);
+        } catch (err) {
+          console.error(`Failed to export archived job ${job.id}:`, err);
+          skipped++;
+        }
+      }
+
+      console.log(`📁 Archived jobs export complete: ${uploaded} uploaded, ${skipped} skipped`);
+      res.json({
+        success: true,
+        uploaded,
+        skipped,
+        message: `${uploaded} archived job PDF${uploaded !== 1 ? 's' : ''} saved to Google Drive job folders.`
+      });
+    } catch (error) {
+      console.error("Error bulk exporting archived jobs:", error);
+      res.status(500).json({ error: "Failed to export archived jobs to Google Drive" });
+    }
+  });
+
   app.post("/api/export-data-to-drive", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       console.log("🔄 Starting Google Drive data backup...");

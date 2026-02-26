@@ -4128,6 +4128,49 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
+                  {/* Bulk Archived Jobs Export Section */}
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">Export Archived Jobs to Drive</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Save every archived job sheet as a PDF into its own Job folder in Google Drive
+                        </p>
+                      </div>
+                      <Button
+                        variant="default"
+                        className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 shrink-0"
+                        onClick={async () => {
+                          try {
+                            const response = await fetch('/api/admin/jobs/bulk-export-archived-to-drive', {
+                              method: 'POST',
+                              credentials: 'include',
+                              headers: { 'Content-Type': 'application/json' },
+                            });
+                            const data = await response.json();
+                            if (response.ok) {
+                              toast({
+                                title: "Archived Jobs Exported",
+                                description: data.message,
+                              });
+                            } else {
+                              throw new Error(data.error || 'Export failed');
+                            }
+                          } catch (error: any) {
+                            toast({
+                              title: "Export Failed",
+                              description: error.message || "Failed to export archived jobs to Google Drive",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      >
+                        <Download className="h-4 w-4" />
+                        Export Archived Jobs
+                      </Button>
+                    </div>
+                  </div>
+
                   {/* Import Data Section */}
                   <div className="border-t pt-4">
                     <div className="flex items-center justify-between">
