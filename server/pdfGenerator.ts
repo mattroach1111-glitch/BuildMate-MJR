@@ -240,11 +240,11 @@ export class TimesheetPDFGenerator {
         totalLaborCost += cost;
 
         doc.text(format(parseISO(entry.date), 'dd/MM'), 20, yPos);
-        doc.text(entry.employee.name.substring(0, 15), 55, yPos);
+        doc.text((entry.employee?.name || 'Unknown').substring(0, 15), 55, yPos);
         doc.text(entry.hours.toString(), 100, yPos);
         doc.text(`$${entry.hourlyRate}`, 125, yPos);
         doc.text(`$${cost.toFixed(2)}`, 150, yPos);
-        doc.text(entry.description.substring(0, 25), 175, yPos);
+        doc.text((entry.description || '').substring(0, 25), 175, yPos);
         yPos += 7;
       }
 
@@ -288,7 +288,7 @@ export class TimesheetPDFGenerator {
 
         totalMaterialsCost += material.cost;
         
-        doc.text(material.name.substring(0, 30), 20, yPos);
+        doc.text((material.name || '').substring(0, 30), 20, yPos);
         doc.text(material.quantity.toString(), 100, yPos);
         doc.text(`$${(material.cost / material.quantity).toFixed(2)}`, 125, yPos);
         doc.text(`$${material.cost.toFixed(2)}`, 155, yPos);
@@ -334,7 +334,7 @@ export class TimesheetPDFGenerator {
 
         totalSubTradesCost += subTrade.cost;
         
-        doc.text(subTrade.name.substring(0, 40), 20, yPos);
+        doc.text((subTrade.name || '').substring(0, 40), 20, yPos);
         doc.text(`$${subTrade.cost.toFixed(2)}`, 150, yPos);
         doc.text((subTrade.description || '').substring(0, 20), 180, yPos);
         yPos += 7;
@@ -378,7 +378,7 @@ export class TimesheetPDFGenerator {
 
         totalOtherCosts += otherCost.cost;
         
-        doc.text(otherCost.name.substring(0, 40), 20, yPos);
+        doc.text((otherCost.name || '').substring(0, 40), 20, yPos);
         doc.text(`$${otherCost.cost.toFixed(2)}`, 150, yPos);
         doc.text((otherCost.description || '').substring(0, 20), 180, yPos);
         yPos += 7;
