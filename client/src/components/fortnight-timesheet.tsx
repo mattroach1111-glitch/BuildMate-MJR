@@ -1222,10 +1222,14 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
             
             // Handle custom addresses specially - set jobId to null and store address in description
             if (isCustomAddress) {
-              // Get address from materials field first, then from description if materials is empty
-              let fullAddress = entry.materials;
-              if (!fullAddress && entry.description && entry.description.startsWith('CUSTOM_ADDRESS:')) {
-                fullAddress = entry.description.replace('CUSTOM_ADDRESS: ', '');
+              // Priority: description with CUSTOM_ADDRESS: prefix (set by dialog, most reliable)
+              // Fallback: materials field (older entries or alternative flows)
+              let fullAddress = '';
+              if (entry.description && entry.description.startsWith('CUSTOM_ADDRESS:')) {
+                fullAddress = entry.description.replace('CUSTOM_ADDRESS: ', '').trim();
+              }
+              if (!fullAddress && entry.materials) {
+                fullAddress = entry.materials;
               }
               // Fallback to 'Custom Address' only if no address found anywhere
               fullAddress = fullAddress || 'Custom Address';
@@ -1915,7 +1919,10 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                               if (jobId === 'no-job') return 'No job';
                               if (jobId === 'other-address') return 'Other Address';
                               if (jobId === 'custom-address') {
-                                return entry?.description ? entry.description.replace('CUSTOM_ADDRESS: ', '') : 'Custom Address';
+                                const addr = entry?.description
+                                  ? entry.description.replace('CUSTOM_ADDRESS: ', '').trim()
+                                  : '';
+                                return addr && addr !== 'Custom Address' ? addr : '⚠️ Enter address';
                               }
                               if (['tafe', 'rdo', 'sick-leave', 'personal-leave', 'annual-leave', 'public-holiday', 'leave-without-pay'].includes(jobId)) {
                                 const leaveTypes: {[key: string]: string} = {
@@ -2004,17 +2011,19 @@ export function FortnightTimesheet({ selectedEmployeeId, isAdminView = false }: 
                                         {(entry?.jobId === 'custom-address' || (entry?.description && entry?.description.startsWith('CUSTOM_ADDRESS:'))) && (
                                           <CommandItem
                                             key="custom-address"
-                                            value={entry?.description ? entry.description.replace('CUSTOM_ADDRESS: ', '') : 'Custom Address'}
+                                            value={entry?.description ? entry.description.replace('CUSTOM_ADDRESS: ', '').trim() : 'Custom Address'}
                                             onSelect={() => {
                                               const dateKey = format(day, 'yyyy-MM-dd');
                                               handleCellChange(day, entryIndex, 'jobId', 'custom-address');
                                               setJobSearchOpen(prev => ({ ...prev, [cellKey]: false }));
                                             }}
                                           >
-                                            {entry?.description 
-                                              ? entry.description.replace('CUSTOM_ADDRESS: ', '')
-                                              : 'Custom Address'
-                                            }
+                                            {(() => {
+                                              const addr = entry?.description
+                                                ? entry.description.replace('CUSTOM_ADDRESS: ', '').trim()
+                                                : '';
+                                              return addr && addr !== 'Custom Address' ? `📍 ${addr}` : '⚠️ Custom Address (re-enter)';
+                                            })()}
                                           </CommandItem>
                                         )}
                                         

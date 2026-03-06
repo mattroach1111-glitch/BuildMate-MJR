@@ -3352,7 +3352,11 @@ export default function AdminDashboard() {
                                   {(() => {
                                     // Handle custom addresses - display with CUSTOM_ADDRESS: prefix
                                     if (entry.description && entry.description.startsWith('CUSTOM_ADDRESS:')) {
-                                      return entry.description.replace('CUSTOM_ADDRESS: ', 'Custom Address: ');
+                                      const addr = entry.description.replace('CUSTOM_ADDRESS: ', '').trim();
+                                      if (!addr || addr === 'Custom Address') {
+                                        return '⚠️ Custom Address (not captured — click Edit)';
+                                      }
+                                      return `📍 ${addr}`;
                                     }
                                     // Handle leave types stored in description field (uppercase format)
                                     const descriptionLeaveTypes: { [key: string]: string } = {
@@ -3704,7 +3708,11 @@ export default function AdminDashboard() {
                                                         {(() => {
                                                           // Handle custom addresses - display with CUSTOM_ADDRESS: prefix
                                                           if (entry.description && entry.description.startsWith('CUSTOM_ADDRESS:')) {
-                                                            return entry.description.replace('CUSTOM_ADDRESS: ', 'Custom Address: ');
+                                                            const addr = entry.description.replace('CUSTOM_ADDRESS: ', '').trim();
+                                                            if (!addr || addr === 'Custom Address') {
+                                                              return '⚠️ Custom Address (not captured)';
+                                                            }
+                                                            return `📍 ${addr}`;
                                                           }
                                                           // Handle leave types stored in description field (uppercase format)
                                                           const descriptionLeaveTypes: { [key: string]: string } = {
