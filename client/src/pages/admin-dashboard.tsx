@@ -1099,7 +1099,9 @@ export default function AdminDashboard() {
   });
 
   const editCustomAddress = (entryId: string, currentAddress: string) => {
-    setEditAddressData({ entryId, currentAddress });
+    // Auto-clear the placeholder fallback value so admin gets a blank field
+    const cleanedAddress = (!currentAddress || currentAddress === 'Custom Address') ? '' : currentAddress;
+    setEditAddressData({ entryId, currentAddress: cleanedAddress });
     setShowEditAddressDialog(true);
   };
 
@@ -4440,6 +4442,11 @@ export default function AdminDashboard() {
           <DialogContent className="max-w-md mx-4 sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>Edit Custom Address</DialogTitle>
+              {!editAddressData.currentAddress && (
+                <p className="text-sm text-orange-600 mt-1">
+                  The address wasn't captured when submitted. Enter the correct address below.
+                </p>
+              )}
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -4448,7 +4455,8 @@ export default function AdminDashboard() {
                   id="edit-address"
                   value={editAddressData.currentAddress}
                   onChange={(e) => setEditAddressData(prev => ({ ...prev, currentAddress: e.target.value }))}
-                  placeholder="Enter address"
+                  placeholder="e.g. 12 Brown Street, Glenorchy"
+                  autoFocus
                   data-testid="input-edit-address"
                 />
               </div>
