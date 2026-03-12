@@ -79,7 +79,7 @@ export class ImapEmailService {
 
             const fetch = this.imap.fetch(results, {
               bodies: '',
-              markSeen: true,  // Mark as read on the server when fetched so they don't reappear
+              markSeen: false,
               struct: true
             });
 
