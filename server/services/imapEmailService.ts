@@ -58,25 +58,15 @@ export class ImapEmailService {
 
           console.log(`📧 Inbox opened. Total messages: ${box.messages.total}, New: ${box.messages.new}`);
 
-          // Search for ALL emails first to see what's there
-          this.imap.search(['ALL'], (err: any, allResults: any) => {
-            if (err) {
-              console.error('Error searching all emails:', err);
-              reject(err);
-              return;
-            }
-
-            console.log(`📧 Total emails in inbox: ${allResults ? allResults.length : 0}`);
-
-            // Now search for unread emails
-            this.imap.search(['UNSEEN'], (err: any, results: any) => {
+          // Search only for UNSEEN (unread) emails — no full-mailbox scan needed
+          this.imap.search(['UNSEEN'], (err: any, results: any) => {
               if (err) {
                 console.error('Error searching unread emails:', err);
                 reject(err);
                 return;
               }
 
-              console.log(`📧 Unread emails found: ${results ? results.length : 0}`);
+              console.log(`📧 Unread emails found: ${results ? results.length : 0} (total in inbox: ${box.messages.total})`);
 
               if (!results || results.length === 0) {
                 console.log('📧 No unread emails found');
@@ -89,7 +79,7 @@ export class ImapEmailService {
 
             const fetch = this.imap.fetch(results, {
               bodies: '',
-              markSeen: false,
+              markSeen: true,  // Mark as read on the server when fetched so they don't reappear
               struct: true
             });
 
@@ -182,11 +172,9 @@ export class ImapEmailService {
     });
   }
 
-  // Mark email as read
+  // Mark email as read — now handled automatically via markSeen: true in fetch
   async markAsRead(messageId: string): Promise<void> {
-    // This would require additional IMAP operations
-    // For now, we'll handle this in the main processing loop
-    console.log(`📧 Would mark email ${messageId} as read`);
+    console.log(`📧 Email ${messageId} was marked as read during fetch`);
   }
 
   // Check if document type can be processed
