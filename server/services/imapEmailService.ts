@@ -145,7 +145,6 @@ export class ImapEmailService {
               console.log(`📧 Finished processing ${emails.length} emails with attachments`);
               this.imap.end();
               resolve(emails);
-              });
             });
           });
         });
