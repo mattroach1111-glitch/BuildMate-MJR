@@ -1360,6 +1360,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Tip fee cartage % setting
+  app.get("/api/settings/tip-fee-cartage", isAuthenticated, async (req: any, res) => {
+    try {
+      const setting = await storage.getSystemSetting('tip_fee_cartage_percent');
+      const percent = setting ? parseFloat(setting.settingValue || '20') : 20;
+      res.json({ percent });
+    } catch (error) {
+      console.error("Error getting cartage setting:", error);
+      res.status(500).json({ message: "Failed to get cartage setting" });
+    }
+  });
+
+  app.post("/api/settings/tip-fee-cartage", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      const { percent } = req.body;
+      if (typeof percent !== 'number' || percent < 0 || percent > 200) {
+        return res.status(400).json({ message: "Percent must be a number between 0 and 200" });
+      }
+      await storage.setSystemSetting('tip_fee_cartage_percent', percent.toString(), req.user.claims.sub);
+      res.json({ percent });
+    } catch (error) {
+      console.error("Error saving cartage setting:", error);
+      res.status(500).json({ message: "Failed to save cartage setting" });
+    }
+  });
+
   // Sub trade routes
   app.post("/api/jobs/:jobId/subtrades", isAuthenticated, async (req: any, res) => {
     try {

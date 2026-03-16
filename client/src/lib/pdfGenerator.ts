@@ -270,7 +270,11 @@ export async function generateJobPDF(job: JobWithRelations, attachedFiles?: Arra
     checkPageBreak(30);
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('TIP FEES (inc. 20% cartage)', 20, yPos);
+    const firstTipFee = job.tipFees[0];
+    const cartageDisplayPct = firstTipFee && parseFloat(firstTipFee.amount) > 0
+      ? Math.round((parseFloat(firstTipFee.cartageAmount) / parseFloat(firstTipFee.amount)) * 100)
+      : 20;
+    doc.text(`TIP FEES (inc. ${cartageDisplayPct}% cartage)`, 20, yPos);
     yPos += 10;
 
     doc.setFontSize(9);
@@ -877,7 +881,11 @@ export async function generateJobPDFBase64(job: JobWithRelations, attachedFiles?
   checkPageBreak(50);
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.text('TIP FEES (inc. 20% cartage)', 20, yPos);
+  const tipFeeForPct = job.tipFees && job.tipFees.length > 0 ? job.tipFees[0] : null;
+  const tipCartagePct = tipFeeForPct && parseFloat(tipFeeForPct.amount) > 0
+    ? Math.round((parseFloat(tipFeeForPct.cartageAmount) / parseFloat(tipFeeForPct.amount)) * 100)
+    : 20;
+  doc.text(`TIP FEES (inc. ${tipCartagePct}% cartage)`, 20, yPos);
   yPos += 15;
 
   if (job.tipFees && job.tipFees.length > 0) {

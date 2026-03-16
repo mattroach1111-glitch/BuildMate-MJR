@@ -76,6 +76,102 @@ const adminTimesheetFormSchema = insertTimesheetEntrySchema.extend({
   approved: true,
 });
 
+function JobCostingSettings() {
+  const { toast } = useToast();
+  const [inputValue, setInputValue] = useState<string>('');
+
+  const { data, isLoading } = useQuery<{ percent: number }>({
+    queryKey: ['/api/settings/tip-fee-cartage'],
+  });
+
+  // Sync input when data loads
+  useEffect(() => {
+    if (data?.percent !== undefined) setInputValue(data.percent.toString());
+  }, [data?.percent]);
+
+  const saveMutation = useMutation({
+    mutationFn: async (percent: number) => {
+      const res = await fetch('/api/settings/tip-fee-cartage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ percent }),
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      return res.json();
+    },
+    onSuccess: (savedData) => {
+      setInputValue(savedData.percent.toString());
+      queryClient.invalidateQueries({ queryKey: ['/api/settings/tip-fee-cartage'] });
+      toast({ title: "Saved", description: `Cartage set to ${savedData.percent}%` });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to save cartage percentage", variant: "destructive" });
+    },
+  });
+
+  const currentPercent = data?.percent ?? 20;
+  const displayValue = inputValue !== '' ? inputValue : currentPercent.toString();
+
+  const handleSave = () => {
+    const val = parseFloat(displayValue);
+    if (isNaN(val) || val < 0 || val > 200) {
+      toast({ title: "Invalid value", description: "Enter a number between 0 and 200", variant: "destructive" });
+      return;
+    }
+    saveMutation.mutate(val);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <DollarSign className="h-5 w-5 text-orange-500" />
+          Job Costing Settings
+        </CardTitle>
+        <CardDescription>
+          Adjust the cartage percentage automatically added to tip fees
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+            <div className="space-y-1 flex-1 max-w-xs">
+              <Label htmlFor="cartage-percent">Tip Fee Cartage %</Label>
+              <p className="text-xs text-muted-foreground">
+                Currently: tip fee amount + {isLoading ? '...' : currentPercent}% cartage added automatically
+              </p>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="cartage-percent"
+                  type="number"
+                  min="0"
+                  max="200"
+                  step="0.5"
+                  value={displayValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  className="w-28"
+                />
+                <span className="text-sm text-muted-foreground">%</span>
+              </div>
+            </div>
+            <Button
+              onClick={handleSave}
+              disabled={saveMutation.isPending || isLoading}
+              className="self-end"
+            >
+              {saveMutation.isPending ? "Saving..." : "Save"}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground bg-orange-50 border border-orange-200 rounded p-2">
+            Example: a $100 tip fee at {isLoading ? '...' : currentPercent}% cartage = ${isLoading ? '...' : (100 + currentPercent).toFixed(2)} total on the job sheet
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function AdminDashboard() {
   const { user, isAuthenticated, isLoading, isUsingBackup } = useAuth();
   const { toast } = useToast();
@@ -4391,23 +4487,8 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            {/* Placeholder for future integrations */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-muted-foreground" />
-                  PDF Settings
-                </CardTitle>
-                <CardDescription>
-                  Configure PDF generation preferences
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  PDF customization options coming soon.
-                </p>
-              </CardContent>
-            </Card>
+            {/* Job Costing Settings */}
+            <JobCostingSettings />
           </div>
           </TabsContent>
 

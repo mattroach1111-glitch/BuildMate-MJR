@@ -1345,7 +1345,9 @@ export class DatabaseStorage implements IStorage {
 
   async createTipFee(tipFee: InsertTipFee): Promise<TipFee> {
     const amount = parseFloat(tipFee.amount);
-    const cartageAmount = amount * 0.20; // 20% cartage fee
+    const cartageSetting = await this.getSystemSetting('tip_fee_cartage_percent');
+    const cartagePercent = cartageSetting ? parseFloat(cartageSetting.settingValue || '20') : 20;
+    const cartageAmount = amount * (cartagePercent / 100);
     const totalAmount = amount + cartageAmount;
 
     const [createdTipFee] = await db
@@ -1365,7 +1367,9 @@ export class DatabaseStorage implements IStorage {
     // If amount is being updated, recalculate cartage and total
     if (tipFee.amount) {
       const amount = parseFloat(tipFee.amount);
-      const cartageAmount = amount * 0.20;
+      const cartageSetting = await this.getSystemSetting('tip_fee_cartage_percent');
+      const cartagePercent = cartageSetting ? parseFloat(cartageSetting.settingValue || '20') : 20;
+      const cartageAmount = amount * (cartagePercent / 100);
       const totalAmount = amount + cartageAmount;
       
       updateData = {
