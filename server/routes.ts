@@ -1405,8 +1405,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await db.execute(sql`
         UPDATE tip_fees
         SET
-          cartage_amount = ROUND((amount::numeric * ${multiplier})::numeric, 2)::text,
-          total_amount   = ROUND((amount::numeric * ${1 + multiplier})::numeric, 2)::text
+          cartage_amount = ROUND((amount::numeric * ${multiplier})::numeric, 2),
+          total_amount   = ROUND((amount::numeric * ${1 + multiplier})::numeric, 2)
       `);
 
       // Count affected rows for feedback
