@@ -110,6 +110,25 @@ function JobCostingSettings() {
     },
   });
 
+  const recalculateMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/admin/tipfees/recalculate-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to recalculate');
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
+      toast({ title: "Done", description: `Recalculated ${data.updated} tip fee entries at ${data.cartagePercent}% cartage` });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to recalculate tip fees", variant: "destructive" });
+    },
+  });
+
   const currentPercent = data?.percent ?? 20;
   const displayValue = inputValue !== '' ? inputValue : currentPercent.toString();
 
@@ -166,6 +185,26 @@ function JobCostingSettings() {
           <p className="text-xs text-muted-foreground bg-orange-50 border border-orange-200 rounded p-2">
             Example: a $100 tip fee at {isLoading ? '...' : currentPercent}% cartage = ${isLoading ? '...' : (100 + currentPercent).toFixed(2)} total on the job sheet
           </p>
+          <div className="border-t pt-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium">Recalculate Existing Entries</p>
+                <p className="text-xs text-muted-foreground">
+                  Updates all tip fees already on job sheets to use the current cartage %.
+                  Save your new % first, then click this.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => recalculateMutation.mutate()}
+                disabled={recalculateMutation.isPending}
+                className="border-orange-300 text-orange-700 hover:bg-orange-50 shrink-0"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${recalculateMutation.isPending ? 'animate-spin' : ''}`} />
+                {recalculateMutation.isPending ? "Recalculating..." : "Recalculate All"}
+              </Button>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

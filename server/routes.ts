@@ -1390,6 +1390,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk recalculate all existing tip fees with current cartage %
+  app.post("/api/admin/tipfees/recalculate-all", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      const cartageSetting = await storage.getSystemSetting('tip_fee_cartage_percent');
+      const cartagePercent = cartageSetting ? parseFloat(cartageSetting.settingValue || '20') : 20;
+      const multiplier = cartagePercent / 100;
+
+      // Bulk update all tip fees using the current cartage % from the base amount
+      await db.execute(sql`
+        UPDATE tip_fees
+        SET
+          cartage_amount = ROUND((amount::numeric * ${multiplier})::numeric, 2)::text,
+          total_amount   = ROUND((amount::numeric * ${1 + multiplier})::numeric, 2)::text
+      `);
+
+      // Count affected rows for feedback
+      const rows = await db.select({ id: tipFees.id }).from(tipFees);
+      res.json({ updated: rows.length, cartagePercent });
+    } catch (error) {
+      console.error("Error recalculating tip fees:", error);
+      res.status(500).json({ message: "Failed to recalculate tip fees" });
+    }
+  });
+
   // Sub trade routes
   app.post("/api/jobs/:jobId/subtrades", isAuthenticated, async (req: any, res) => {
     try {
