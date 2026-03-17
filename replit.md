@@ -43,7 +43,7 @@ Data backup strategy: Comprehensive multi-location backup approach with automate
 - **User Management**: Admins can assign roles, link user accounts to employee records, and manage assignment status. Automatic user account creation for employees.
 
 ## Feature Specifications
-- **Tip Fees**: Automatic 20% cartage calculation.
+- **Tip Fees**: Flat truck & fuel delivery charge added to every tip fee (configurable dollar amount in Settings → Job Costing Settings, defaults to $50).
 - **Inline Editing**: For job sheet items with CRUD operations and confirmation dialogs.
 - **AI Document Processing**: AI-powered expense extraction from various document types (PDF, JPG, PNG) with drag-and-drop upload, intelligent categorization, vendor/amount extraction, and document review system.
 - **Job Creation from PDF**: Automated job creation from PDF documents with authentic data extraction for labor, materials, sub-trades, tip fees, and consumables, including fuzzy employee and client matching.

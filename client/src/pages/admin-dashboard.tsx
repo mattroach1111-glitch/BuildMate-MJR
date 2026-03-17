@@ -80,33 +80,33 @@ function JobCostingSettings() {
   const { toast } = useToast();
   const [inputValue, setInputValue] = useState<string>('');
 
-  const { data, isLoading } = useQuery<{ percent: number }>({
+  const { data, isLoading } = useQuery<{ amount: number }>({
     queryKey: ['/api/settings/tip-fee-cartage'],
   });
 
   // Sync input when data loads
   useEffect(() => {
-    if (data?.percent !== undefined) setInputValue(data.percent.toString());
-  }, [data?.percent]);
+    if (data?.amount !== undefined) setInputValue(data.amount.toString());
+  }, [data?.amount]);
 
   const saveMutation = useMutation({
-    mutationFn: async (percent: number) => {
+    mutationFn: async (amount: number) => {
       const res = await fetch('/api/settings/tip-fee-cartage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ percent }),
+        body: JSON.stringify({ amount }),
       });
       if (!res.ok) throw new Error('Failed to save');
       return res.json();
     },
     onSuccess: (savedData) => {
-      setInputValue(savedData.percent.toString());
+      setInputValue(savedData.amount.toString());
       queryClient.invalidateQueries({ queryKey: ['/api/settings/tip-fee-cartage'] });
-      toast({ title: "Saved", description: `Cartage set to ${savedData.percent}%` });
+      toast({ title: "Saved", description: `Truck & fuel delivery set to $${savedData.amount.toFixed(2)}` });
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to save cartage percentage", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to save cartage amount", variant: "destructive" });
     },
   });
 
@@ -120,22 +120,22 @@ function JobCostingSettings() {
       if (!res.ok) throw new Error('Failed to recalculate');
       return res.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
-      toast({ title: "Done", description: `Recalculated ${data.updated} tip fee entries at ${data.cartagePercent}% cartage` });
+      toast({ title: "Done", description: `Updated ${result.updated} tip fee entries with $${result.cartageAmount.toFixed(2)} truck & fuel delivery` });
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to recalculate tip fees", variant: "destructive" });
     },
   });
 
-  const currentPercent = data?.percent ?? 20;
-  const displayValue = inputValue !== '' ? inputValue : currentPercent.toString();
+  const currentAmount = data?.amount ?? 50;
+  const displayValue = inputValue !== '' ? inputValue : currentAmount.toString();
 
   const handleSave = () => {
     const val = parseFloat(displayValue);
-    if (isNaN(val) || val < 0 || val > 200) {
-      toast({ title: "Invalid value", description: "Enter a number between 0 and 200", variant: "destructive" });
+    if (isNaN(val) || val < 0) {
+      toast({ title: "Invalid value", description: "Enter a positive dollar amount", variant: "destructive" });
       return;
     }
     saveMutation.mutate(val);
@@ -149,29 +149,28 @@ function JobCostingSettings() {
           Job Costing Settings
         </CardTitle>
         <CardDescription>
-          Adjust the cartage percentage automatically added to tip fees
+          Set the flat truck &amp; fuel delivery charge added to every tip fee
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-end gap-4">
             <div className="space-y-1 flex-1 max-w-xs">
-              <Label htmlFor="cartage-percent">Tip Fee Cartage %</Label>
+              <Label htmlFor="cartage-amount">Truck &amp; Fuel Delivery Charge</Label>
               <p className="text-xs text-muted-foreground">
-                Currently: tip fee amount + {isLoading ? '...' : currentPercent}% cartage added automatically
+                Currently: ${isLoading ? '...' : currentAmount.toFixed(2)} added to every tip fee automatically
               </p>
               <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">$</span>
                 <Input
-                  id="cartage-percent"
+                  id="cartage-amount"
                   type="number"
                   min="0"
-                  max="200"
-                  step="0.5"
+                  step="0.50"
                   value={displayValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   className="w-28"
                 />
-                <span className="text-sm text-muted-foreground">%</span>
               </div>
             </div>
             <Button
@@ -183,15 +182,15 @@ function JobCostingSettings() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground bg-orange-50 border border-orange-200 rounded p-2">
-            Example: a $100 tip fee at {isLoading ? '...' : currentPercent}% cartage = ${isLoading ? '...' : (100 + currentPercent).toFixed(2)} total on the job sheet
+            Example: a $15 tip fee + ${isLoading ? '...' : currentAmount.toFixed(2)} delivery = ${isLoading ? '...' : (15 + currentAmount).toFixed(2)} total on the job sheet
           </p>
           <div className="border-t pt-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <p className="text-sm font-medium">Recalculate Existing Entries</p>
                 <p className="text-xs text-muted-foreground">
-                  Updates all tip fees already on job sheets to use the current cartage %.
-                  Save your new % first, then click this.
+                  Updates all tip fees already on job sheets to use the current delivery charge.
+                  Save your new amount first, then click this.
                 </p>
               </div>
               <Button

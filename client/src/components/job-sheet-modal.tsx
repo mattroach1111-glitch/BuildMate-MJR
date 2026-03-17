@@ -185,12 +185,12 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
     retry: false,
   });
 
-  // Get current cartage % setting for tip fee prompts
-  const { data: cartageData } = useQuery<{ percent: number }>({
+  // Get current cartage flat $ delivery charge for tip fee prompts
+  const { data: cartageData } = useQuery<{ amount: number }>({
     queryKey: ["/api/settings/tip-fee-cartage"],
     retry: false,
   });
-  const cartagePercent = cartageData?.percent ?? 20;
+  const cartageAmount = cartageData?.amount ?? 50;
 
   const handleAddClient = () => {
     if (newClientName.trim()) {
@@ -643,7 +643,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       queryClient.invalidateQueries({ queryKey: ["/api/jobs", jobId] });
       toast({
         title: "Success",
-        description: `Tip fee added successfully (includes ${cartagePercent}% cartage)`,
+        description: `Tip fee added successfully (includes $${cartageAmount.toFixed(2)} truck & fuel delivery)`,
       });
     },
     onError: (error) => {
@@ -839,7 +839,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
       setEditingTipFee(null);
       toast({
         title: "Success",
-        description: `Tip fee updated successfully (includes ${cartagePercent}% cartage)`,
+        description: `Tip fee updated successfully (includes $${cartageAmount.toFixed(2)} truck & fuel delivery)`,
       });
     },
     onError: (error) => {
@@ -2675,7 +2675,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     size="sm"
                     onClick={() => {
                       const description = prompt("Enter tip fee description:");
-                      const amount = prompt(`Enter tip fee amount (${cartagePercent}% cartage will be added automatically):`);
+                      const amount = prompt(`Enter tip fee amount ($${cartageAmount.toFixed(2)} truck & fuel delivery will be added automatically):`);
                       if (description && amount && !isNaN(parseFloat(amount))) {
                         addTipFeeMutation.mutate({
                           description: description.trim(),
@@ -2740,7 +2740,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                         <div className="flex flex-col">
                           <span data-testid={`text-tip-fee-description-${tipFee.id}`}>{tipFee.description}</span>
                           <div className="text-xs text-gray-500">
-                            Base: ${parseFloat(tipFee.amount).toFixed(2)} + {Math.round((parseFloat(tipFee.cartageAmount) / parseFloat(tipFee.amount)) * 100) || cartagePercent}% cartage: ${parseFloat(tipFee.cartageAmount).toFixed(2)}
+                            Base: ${parseFloat(tipFee.amount).toFixed(2)} + truck & fuel: ${parseFloat(tipFee.cartageAmount).toFixed(2)}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">

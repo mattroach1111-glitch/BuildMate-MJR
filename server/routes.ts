@@ -1360,12 +1360,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Tip fee cartage % setting
+  // Tip fee cartage flat $ amount setting
   app.get("/api/settings/tip-fee-cartage", isAuthenticated, async (req: any, res) => {
     try {
-      const setting = await storage.getSystemSetting('tip_fee_cartage_percent');
-      const percent = setting ? parseFloat(setting.settingValue || '20') : 20;
-      res.json({ percent });
+      const setting = await storage.getSystemSetting('tip_fee_cartage_amount');
+      const amount = setting ? parseFloat(setting.settingValue || '50') : 50;
+      res.json({ amount });
     } catch (error) {
       console.error("Error getting cartage setting:", error);
       res.status(500).json({ message: "Failed to get cartage setting" });
@@ -1378,40 +1378,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (user?.role !== "admin") {
         return res.status(403).json({ message: "Admin access required" });
       }
-      const { percent } = req.body;
-      if (typeof percent !== 'number' || percent < 0 || percent > 200) {
-        return res.status(400).json({ message: "Percent must be a number between 0 and 200" });
+      const { amount } = req.body;
+      if (typeof amount !== 'number' || amount < 0) {
+        return res.status(400).json({ message: "Amount must be a positive number" });
       }
-      await storage.setSystemSetting('tip_fee_cartage_percent', percent.toString(), req.user.claims.sub);
-      res.json({ percent });
+      await storage.setSystemSetting('tip_fee_cartage_amount', amount.toString(), req.user.claims.sub);
+      res.json({ amount });
     } catch (error) {
       console.error("Error saving cartage setting:", error);
       res.status(500).json({ message: "Failed to save cartage setting" });
     }
   });
 
-  // Bulk recalculate all existing tip fees with current cartage %
+  // Bulk recalculate all existing tip fees with current flat cartage $
   app.post("/api/admin/tipfees/recalculate-all", isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);
       if (user?.role !== "admin") {
         return res.status(403).json({ message: "Admin access required" });
       }
-      const cartageSetting = await storage.getSystemSetting('tip_fee_cartage_percent');
-      const cartagePercent = cartageSetting ? parseFloat(cartageSetting.settingValue || '20') : 20;
-      const multiplier = cartagePercent / 100;
+      const cartageSetting = await storage.getSystemSetting('tip_fee_cartage_amount');
+      const cartageAmount = cartageSetting ? parseFloat(cartageSetting.settingValue || '50') : 50;
 
-      // Bulk update all tip fees using the current cartage % from the base amount
+      // Bulk update: cartage_amount = flat fee, total_amount = base amount + flat fee
       await db.execute(sql`
         UPDATE tip_fees
         SET
-          cartage_amount = ROUND((amount::numeric * ${multiplier})::numeric, 2),
-          total_amount   = ROUND((amount::numeric * ${1 + multiplier})::numeric, 2)
+          cartage_amount = ${cartageAmount},
+          total_amount   = ROUND((amount::numeric + ${cartageAmount})::numeric, 2)
       `);
 
-      // Count affected rows for feedback
       const rows = await db.select({ id: tipFees.id }).from(tipFees);
-      res.json({ updated: rows.length, cartagePercent });
+      res.json({ updated: rows.length, cartageAmount });
     } catch (error) {
       console.error("Error recalculating tip fees:", error);
       res.status(500).json({ message: "Failed to recalculate tip fees" });
