@@ -17,8 +17,9 @@ import { generateJobPDF } from "@/lib/pdfGenerator";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { OrientationToggle } from "@/components/orientation-toggle";
 import { debounce } from "lodash";
-import { Upload, Download, Trash2, FileText, Clock, X, Edit, Mail, Users, RefreshCw, MessageSquare, Plus, Shield, CheckCircle2, FileSignature, Check, Pencil } from "lucide-react";
+import { Upload, Download, Trash2, FileText, Clock, X, Edit, Mail, Users, RefreshCw, MessageSquare, Plus, Shield, CheckCircle2, FileSignature, Check, Pencil, BarChart3 } from "lucide-react";
 import { SwmsSigningModal } from "@/components/SwmsSigningModal";
+import { ProjectScheduler } from "@/components/ProjectScheduler";
 import type { Job, LaborEntry, Material, SubTrade, OtherCost, TipFee, JobFile, JobNote, Quote, QuoteItem, QuoteSignature } from "@shared/schema";
 
 interface JobSheetModalProps {
@@ -3259,6 +3260,23 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     )
                   )}
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Project Timeline Section */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-indigo-600" />
+                  <CardTitle className="text-lg font-semibold text-gray-800">Project Timeline</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ProjectScheduler
+                  jobId={jobId}
+                  jobAddress={jobDetails?.jobAddress}
+                  compact
+                />
               </CardContent>
             </Card>
 

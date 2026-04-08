@@ -23,7 +23,7 @@ import { z } from "zod";
 import JobSheetModal from "@/components/job-sheet-modal";
 
 import StaffDashboard from "@/pages/staff-dashboard";
-import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, Settings, UserPlus, Download, Edit, DollarSign, TrendingUp, Building2, Bell, RotateCcw, Shield, Lock, RefreshCw, Trophy, Upload, User, Copy, Link } from "lucide-react";
+import { Plus, Users, Briefcase, Trash2, Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Clock, Calendar, CheckCircle, XCircle, Eye, FileText, Search, Filter, Palette, Settings, UserPlus, Download, Edit, DollarSign, TrendingUp, Building2, Bell, RotateCcw, Shield, Lock, RefreshCw, Trophy, Upload, User, Copy, Link, BarChart3 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import type { Job, Employee, TimesheetEntry } from "@shared/schema";
@@ -2940,6 +2940,21 @@ export default function AdminDashboard() {
                   </div>
                   <h3 className="font-medium text-sm">Quotes</h3>
                   <p className="text-xs text-muted-foreground mt-1">Create & send quotes</p>
+                </CardContent>
+              </Card>
+
+              {/* Project Planner App */}
+              <Card
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-indigo-50 to-indigo-100 border-indigo-200"
+                onClick={() => window.location.href = '/project-planner'}
+                data-testid="app-project-planner"
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-indigo-600 rounded-full flex items-center justify-center">
+                    <BarChart3 className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-medium text-sm">Project Planner</h3>
+                  <p className="text-xs text-muted-foreground mt-1">AI Gantt timelines</p>
                 </CardContent>
               </Card>
 

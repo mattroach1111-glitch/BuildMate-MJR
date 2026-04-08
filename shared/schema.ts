@@ -1194,3 +1194,56 @@ export type CostSourceDocument = typeof costSourceDocuments.$inferSelect;
 export type InsertCostSourceDocument = z.infer<typeof insertCostSourceDocumentSchema>;
 export type CostHistory = typeof costHistory.$inferSelect;
 export type InsertCostHistory = z.infer<typeof insertCostHistorySchema>;
+
+// ─── Project Timelines ────────────────────────────────────────────────────────
+
+export const projectTimelines = pgTable("project_timelines", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobId: varchar("job_id").references(() => jobs.id, { onDelete: "cascade" }),
+  title: varchar("title").notNull().default("Project Timeline"),
+  startDate: varchar("start_date").notNull(),
+  durationWeeks: integer("duration_weeks").notNull().default(12),
+  scopeText: text("scope_text"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const timelineTasks = pgTable("timeline_tasks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  timelineId: varchar("timeline_id").notNull().references(() => projectTimelines.id, { onDelete: "cascade" }),
+  title: varchar("title").notNull(),
+  trade: varchar("trade").notNull().default("General"),
+  color: varchar("color").notNull().default("#6366f1"),
+  startWeek: integer("start_week").notNull().default(0),
+  durationWeeks: integer("duration_weeks").notNull().default(1),
+  isMilestone: boolean("is_milestone").notNull().default(false),
+  notes: text("notes"),
+  orderIndex: integer("order_index").notNull().default(0),
+  dependencies: text("dependencies").array().default([]),
+});
+
+export const projectTimelinesRelations = relations(projectTimelines, ({ many }) => ({
+  tasks: many(timelineTasks),
+}));
+
+export const timelineTasksRelations = relations(timelineTasks, ({ one }) => ({
+  timeline: one(projectTimelines, {
+    fields: [timelineTasks.timelineId],
+    references: [projectTimelines.id],
+  }),
+}));
+
+export const insertProjectTimelineSchema = createInsertSchema(projectTimelines).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTimelineTaskSchema = createInsertSchema(timelineTasks).omit({
+  id: true,
+});
+
+export type ProjectTimeline = typeof projectTimelines.$inferSelect;
+export type InsertProjectTimeline = z.infer<typeof insertProjectTimelineSchema>;
+export type TimelineTask = typeof timelineTasks.$inferSelect;
+export type InsertTimelineTask = z.infer<typeof insertTimelineTaskSchema>;

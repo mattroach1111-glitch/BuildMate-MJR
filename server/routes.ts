@@ -8223,6 +8223,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ─── Project Timeline Routes ─────────────────────────────────────────────────
+
+  app.get('/api/project-timelines', isAuthenticated, async (req, res) => {
+    try {
+      const timelines = await storage.getAllProjectTimelines();
+      res.json(timelines);
+    } catch (error) {
+      console.error('Error fetching project timelines:', error);
+      res.status(500).json({ error: 'Failed to fetch timelines' });
+    }
+  });
+
+  app.get('/api/jobs/:jobId/timeline', isAuthenticated, async (req, res) => {
+    try {
+      const timeline = await storage.getProjectTimeline(req.params.jobId);
+      res.json(timeline);
+    } catch (error) {
+      console.error('Error fetching timeline:', error);
+      res.status(500).json({ error: 'Failed to fetch timeline' });
+    }
+  });
+
+  app.post('/api/jobs/:jobId/timeline', isAuthenticated, async (req, res) => {
+    try {
+      const { tasks, ...timelineData } = req.body;
+      const existing = await storage.getProjectTimeline(req.params.jobId);
+      let timeline;
+      if (existing) {
+        timeline = await storage.updateProjectTimeline(existing.id, timelineData);
+      } else {
+        timeline = await storage.createProjectTimeline({ ...timelineData, jobId: req.params.jobId });
+      }
+      if (tasks && Array.isArray(tasks)) {
+        await storage.replaceTimelineTasks(timeline.id, tasks);
+      }
+      const full = await storage.getProjectTimeline(req.params.jobId);
+      res.json(full);
+    } catch (error) {
+      console.error('Error saving timeline:', error);
+      res.status(500).json({ error: 'Failed to save timeline' });
+    }
+  });
+
+  app.delete('/api/jobs/:jobId/timeline', isAuthenticated, async (req, res) => {
+    try {
+      const existing = await storage.getProjectTimeline(req.params.jobId);
+      if (existing) await storage.deleteProjectTimeline(existing.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting timeline:', error);
+      res.status(500).json({ error: 'Failed to delete timeline' });
+    }
+  });
+
+  app.post('/api/jobs/:jobId/timeline/generate', isAuthenticated, async (req, res) => {
+    try {
+      const { scopeText, durationWeeks, startDate, title } = req.body;
+      if (!scopeText || !durationWeeks) {
+        return res.status(400).json({ error: 'scopeText and durationWeeks are required' });
+      }
+
+      const Anthropic = (await import('@anthropic-ai/sdk')).default;
+      const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+      const systemPrompt = `You are an expert Australian construction project scheduler. Given a scope of works, generate a detailed, realistic project timeline broken into tasks by trade.
+
+Return ONLY a valid JSON array of tasks (no markdown, no explanation). Each task must have:
+- title: string (concise task name)
+- trade: string (one of: Earthworks, Concrete, Framing, Roofing, Electrical, Plumbing, HVAC, Insulation, Plastering, Painting, Tiling, Joinery, Landscaping, Site Manager, Inspections, General)
+- startWeek: number (0-indexed week offset from project start)
+- durationWeeks: number (minimum 1)
+- isMilestone: boolean (true only for key milestones like Frame Inspection, Lock-up, Practical Completion)
+- notes: string (brief notes)
+- orderIndex: number
+
+Rules:
+- All tasks must fit within ${durationWeeks} weeks total
+- Use realistic Australian construction sequencing
+- Overlap tasks where realistic (electrical and plumbing rough-in run concurrently)
+- Include 2-4 milestone markers
+- Generate 8-20 tasks based on project complexity`;
+
+      const response = await client.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 4000,
+        messages: [{
+          role: 'user',
+          content: `Generate a project timeline.\n\nProject Duration: ${durationWeeks} weeks\nStart Date: ${startDate || 'TBD'}\n\nScope of Works:\n${scopeText}`,
+        }],
+        system: systemPrompt,
+      });
+
+      const rawText = response.content[0].type === 'text' ? response.content[0].text : '';
+      let tasksJson = rawText.trim();
+      if (tasksJson.startsWith('```')) {
+        tasksJson = tasksJson.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '').trim();
+      }
+      const tasks = JSON.parse(tasksJson);
+
+      const tradeColors: Record<string, string> = {
+        'Earthworks': '#92400e', 'Concrete': '#78716c', 'Framing': '#b45309',
+        'Roofing': '#1e40af', 'Electrical': '#eab308', 'Plumbing': '#0891b2',
+        'HVAC': '#7c3aed', 'Insulation': '#d97706', 'Plastering': '#6b7280',
+        'Painting': '#ec4899', 'Tiling': '#14b8a6', 'Joinery': '#f97316',
+        'Landscaping': '#16a34a', 'Site Manager': '#dc2626', 'Inspections': '#8b5cf6',
+        'General': '#6366f1',
+      };
+
+      const enrichedTasks = tasks.map((t: any, i: number) => ({
+        ...t,
+        color: tradeColors[t.trade] || '#6366f1',
+        orderIndex: t.orderIndex ?? i,
+        dependencies: t.dependencies || [],
+      }));
+
+      const existing = await storage.getProjectTimeline(req.params.jobId);
+      let timeline;
+      if (existing) {
+        timeline = await storage.updateProjectTimeline(existing.id, {
+          title: title || 'Project Timeline',
+          startDate: startDate || new Date().toISOString().split('T')[0],
+          durationWeeks: Number(durationWeeks),
+          scopeText,
+        });
+      } else {
+        timeline = await storage.createProjectTimeline({
+          jobId: req.params.jobId,
+          title: title || 'Project Timeline',
+          startDate: startDate || new Date().toISOString().split('T')[0],
+          durationWeeks: Number(durationWeeks),
+          scopeText,
+        });
+      }
+      await storage.replaceTimelineTasks(timeline.id, enrichedTasks);
+      const full = await storage.getProjectTimeline(req.params.jobId);
+      res.json(full);
+    } catch (error: any) {
+      console.error('Error generating timeline:', error);
+      res.status(500).json({ error: error.message || 'Failed to generate timeline' });
+    }
+  });
+
   // Health check endpoint
   app.get("/api/health", async (req, res) => {
     try {

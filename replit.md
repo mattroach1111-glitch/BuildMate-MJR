@@ -59,6 +59,7 @@ Data backup strategy: Comprehensive multi-location backup approach with automate
 - **System-Wide Google Drive Integration**: Centralized Google Drive OAuth tokens for company-wide access, shared by all admins.
 - **Admin Custom Address Job Assignment**: Admins can manually assign jobs to custom address timesheet entries.
 - **Quoting System**: Full quoting workflow with quote creation, line items (labor, materials, sub-trades, other, tip fees), Australian GST calculation, email delivery with access tokens, client-facing quote view, digital signature acceptance, status tracking (draft, sent, viewed, accepted, declined, converted), and quote-to-job conversion for accepted quotes.
+- **Project Planner / Gantt Scheduler**: AI-powered project timeline generation from scope of works text. Upload or paste scope, set project duration (weeks) and start date, and Claude generates a trade-sequenced Gantt chart. Timeline is accessible via a "Project Timeline" section inside each job sheet and globally via the "Project Planner" card in the More apps grid at `/project-planner`. Features include: colour-coded trade bars, milestone diamonds, zoom in/out, SVG export, manual task add/edit/delete, and persistent storage per job.
 
 # External Dependencies
 

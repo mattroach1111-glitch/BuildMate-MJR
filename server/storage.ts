@@ -83,6 +83,12 @@ import {
   type InsertQuoteSignature,
   type QuoteAccessToken,
   type InsertQuoteAccessToken,
+  projectTimelines,
+  timelineTasks,
+  type ProjectTimeline,
+  type InsertProjectTimeline,
+  type TimelineTask,
+  type InsertTimelineTask,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sum, ne, gte, lte, lt, sql, isNull, or, ilike, inArray } from "drizzle-orm";
@@ -285,6 +291,17 @@ export interface IStorage {
   createSwmsSignature(signature: InsertSwmsSignature): Promise<SwmsSignature>;
   getUnsignedSwmsTemplatesForJob(jobId: string, userId: string): Promise<SwmsTemplate[]>;
   hasUserSignedAllSwmsForJob(jobId: string, userId: string): Promise<boolean>;
+
+  // Project Timeline operations
+  getProjectTimeline(jobId: string): Promise<(ProjectTimeline & { tasks: TimelineTask[] }) | null>;
+  getAllProjectTimelines(): Promise<(ProjectTimeline & { tasks: TimelineTask[]; jobAddress?: string })[]>;
+  createProjectTimeline(data: InsertProjectTimeline): Promise<ProjectTimeline>;
+  updateProjectTimeline(id: string, data: Partial<InsertProjectTimeline>): Promise<ProjectTimeline>;
+  deleteProjectTimeline(id: string): Promise<void>;
+  createTimelineTask(data: InsertTimelineTask): Promise<TimelineTask>;
+  updateTimelineTask(id: string, data: Partial<InsertTimelineTask>): Promise<TimelineTask>;
+  deleteTimelineTask(id: string): Promise<void>;
+  replaceTimelineTasks(timelineId: string, tasks: Omit<InsertTimelineTask, 'timelineId'>[]): Promise<TimelineTask[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3532,6 +3549,119 @@ export class DatabaseStorage implements IStorage {
       };
     } catch (error) {
       console.error("Error getting historical cost data:", error);
+      throw error;
+    }
+  }
+
+  // ─── Project Timeline implementation ─────────────────────────────────────────
+
+  async getProjectTimeline(jobId: string): Promise<(ProjectTimeline & { tasks: TimelineTask[] }) | null> {
+    try {
+      const [timeline] = await db.select().from(projectTimelines).where(eq(projectTimelines.jobId, jobId));
+      if (!timeline) return null;
+      const tasks = await db.select().from(timelineTasks)
+        .where(eq(timelineTasks.timelineId, timeline.id))
+        .orderBy(timelineTasks.orderIndex);
+      return { ...timeline, tasks };
+    } catch (error) {
+      console.error("Error getting project timeline:", error);
+      return null;
+    }
+  }
+
+  async getAllProjectTimelines(): Promise<(ProjectTimeline & { tasks: TimelineTask[]; jobAddress?: string })[]> {
+    try {
+      const timelines = await db.select().from(projectTimelines).orderBy(desc(projectTimelines.createdAt));
+      const result = await Promise.all(timelines.map(async (timeline) => {
+        const tasks = await db.select().from(timelineTasks)
+          .where(eq(timelineTasks.timelineId, timeline.id))
+          .orderBy(timelineTasks.orderIndex);
+        let jobAddress: string | undefined;
+        if (timeline.jobId) {
+          const [job] = await db.select({ jobAddress: jobs.jobAddress, projectName: jobs.projectName })
+            .from(jobs).where(eq(jobs.id, timeline.jobId));
+          jobAddress = job?.projectName || job?.jobAddress;
+        }
+        return { ...timeline, tasks, jobAddress };
+      }));
+      return result;
+    } catch (error) {
+      console.error("Error getting all project timelines:", error);
+      return [];
+    }
+  }
+
+  async createProjectTimeline(data: InsertProjectTimeline): Promise<ProjectTimeline> {
+    try {
+      const [timeline] = await db.insert(projectTimelines).values(data).returning();
+      return timeline;
+    } catch (error) {
+      console.error("Error creating project timeline:", error);
+      throw error;
+    }
+  }
+
+  async updateProjectTimeline(id: string, data: Partial<InsertProjectTimeline>): Promise<ProjectTimeline> {
+    try {
+      const [timeline] = await db.update(projectTimelines)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(projectTimelines.id, id))
+        .returning();
+      return timeline;
+    } catch (error) {
+      console.error("Error updating project timeline:", error);
+      throw error;
+    }
+  }
+
+  async deleteProjectTimeline(id: string): Promise<void> {
+    try {
+      await db.delete(projectTimelines).where(eq(projectTimelines.id, id));
+    } catch (error) {
+      console.error("Error deleting project timeline:", error);
+      throw error;
+    }
+  }
+
+  async createTimelineTask(data: InsertTimelineTask): Promise<TimelineTask> {
+    try {
+      const [task] = await db.insert(timelineTasks).values(data).returning();
+      return task;
+    } catch (error) {
+      console.error("Error creating timeline task:", error);
+      throw error;
+    }
+  }
+
+  async updateTimelineTask(id: string, data: Partial<InsertTimelineTask>): Promise<TimelineTask> {
+    try {
+      const [task] = await db.update(timelineTasks).set(data).where(eq(timelineTasks.id, id)).returning();
+      return task;
+    } catch (error) {
+      console.error("Error updating timeline task:", error);
+      throw error;
+    }
+  }
+
+  async deleteTimelineTask(id: string): Promise<void> {
+    try {
+      await db.delete(timelineTasks).where(eq(timelineTasks.id, id));
+    } catch (error) {
+      console.error("Error deleting timeline task:", error);
+      throw error;
+    }
+  }
+
+  async replaceTimelineTasks(timelineId: string, tasks: Omit<InsertTimelineTask, 'timelineId'>[]): Promise<TimelineTask[]> {
+    try {
+      await db.delete(timelineTasks).where(eq(timelineTasks.timelineId, timelineId));
+      if (tasks.length === 0) return [];
+      const inserted = await db.insert(timelineTasks)
+        .values(tasks.map((t, i) => ({ ...t, timelineId, orderIndex: t.orderIndex ?? i })))
+        .returning();
+      return inserted;
+    } catch (error) {
+      console.error("Error replacing timeline tasks:", error);
       throw error;
     }
   }
