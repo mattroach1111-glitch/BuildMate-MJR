@@ -1,8 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, ZoomIn, ZoomOut } from "lucide-react";
-import { format, addWeeks, parseISO, startOfWeek } from "date-fns";
+import { Download, ZoomIn, ZoomOut, FileText } from "lucide-react";
+import { format, addWeeks, parseISO } from "date-fns";
 
 export interface GanttTask {
   id: string;
@@ -58,6 +58,8 @@ export function GanttChart({ tasks, startDate, durationWeeks, title, compact }: 
     return groups;
   }, [projectStart, durationWeeks]);
 
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+
   const handleDownloadSVG = () => {
     const svgEl = containerRef.current?.querySelector("svg");
     if (!svgEl) return;
@@ -70,6 +72,70 @@ export function GanttChart({ tasks, startDate, durationWeeks, title, compact }: 
     a.download = `${title || "project-timeline"}.svg`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadPDF = async () => {
+    const svgEl = containerRef.current?.querySelector("svg");
+    if (!svgEl) return;
+    setIsExportingPDF(true);
+    try {
+      const { jsPDF } = await import("jspdf");
+      const svgWidth = totalWidth;
+      const svgHeight = chartHeight;
+
+      // Serialize SVG with explicit styles
+      const clone = svgEl.cloneNode(true) as SVGElement;
+      clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      clone.setAttribute("width", String(svgWidth));
+      clone.setAttribute("height", String(svgHeight));
+
+      const svgData = new XMLSerializer().serializeToString(clone);
+      const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+      const svgUrl = URL.createObjectURL(svgBlob);
+
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const scale = 2; // retina quality
+        canvas.width = svgWidth * scale;
+        canvas.height = svgHeight * scale;
+        const ctx = canvas.getContext("2d")!;
+        ctx.scale(scale, scale);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, svgWidth, svgHeight);
+        ctx.drawImage(img, 0, 0, svgWidth, svgHeight);
+        URL.revokeObjectURL(svgUrl);
+
+        // Landscape A4 PDF
+        const pdfW = 297; // mm
+        const pdfH = 210; // mm
+        const margin = 10;
+        const usableW = pdfW - margin * 2;
+        const usableH = pdfH - margin * 2 - 14; // space for title
+        const imgRatio = svgWidth / svgHeight;
+        let drawW = usableW;
+        let drawH = drawW / imgRatio;
+        if (drawH > usableH) { drawH = usableH; drawW = drawH * imgRatio; }
+
+        const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+        pdf.setFontSize(13);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(title || "Project Timeline", margin, margin + 7);
+        pdf.setFontSize(8);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(`Generated ${format(new Date(), "d MMM yyyy")}`, pdfW - margin, margin + 7, { align: "right" });
+
+        const imgData = canvas.toDataURL("image/png");
+        pdf.addImage(imgData, "PNG", margin, margin + 12, drawW, drawH);
+        pdf.save(`${title || "project-timeline"}.pdf`);
+        setIsExportingPDF(false);
+      };
+      img.onerror = () => { URL.revokeObjectURL(svgUrl); setIsExportingPDF(false); };
+      img.src = svgUrl;
+    } catch (e) {
+      console.error("PDF export error", e);
+      setIsExportingPDF(false);
+    }
   };
 
   return (
@@ -85,9 +151,23 @@ export function GanttChart({ tasks, startDate, durationWeeks, title, compact }: 
             <ZoomIn className="h-4 w-4" />
           </Button>
         </div>
-        <Button variant="outline" size="sm" onClick={handleDownloadSVG} className="gap-1.5">
-          <Download className="h-4 w-4" /> Export SVG
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            onClick={handleDownloadPDF}
+            disabled={isExportingPDF}
+            className="gap-1.5 bg-orange-500 hover:bg-orange-600 text-white"
+          >
+            {isExportingPDF ? (
+              <><div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white" /> Generating…</>
+            ) : (
+              <><FileText className="h-4 w-4" /> Export PDF</>
+            )}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleDownloadSVG} className="gap-1.5">
+            <Download className="h-4 w-4" /> SVG
+          </Button>
+        </div>
       </div>
 
       {/* Trade legend */}
