@@ -8223,6 +8223,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ─── Scope Text Extraction (PDF → text for AI timeline) ──────────────────────
+
+  app.post('/api/timeline/extract-text', isAuthenticated, async (req, res) => {
+    try {
+      const { fileBase64, mimeType, fileName } = req.body;
+      if (!fileBase64) return res.status(400).json({ error: 'fileBase64 is required' });
+
+      const buffer = Buffer.from(fileBase64, 'base64');
+
+      if (mimeType === 'application/pdf' || (fileName || '').toLowerCase().endsWith('.pdf')) {
+        const pdfParse = (await import('pdf-parse')).default;
+        const data = await pdfParse(buffer);
+        return res.json({ text: data.text.trim() });
+      }
+
+      if (mimeType === 'text/plain' || (fileName || '').toLowerCase().endsWith('.txt')) {
+        return res.json({ text: buffer.toString('utf-8').trim() });
+      }
+
+      // For Word docs or anything else, return raw text attempt
+      return res.json({ text: buffer.toString('utf-8').trim() });
+    } catch (error: any) {
+      console.error('Error extracting PDF text:', error);
+      res.status(500).json({ error: 'Failed to extract text from file' });
+    }
+  });
+
   // ─── Project Timeline Routes ─────────────────────────────────────────────────
 
   app.get('/api/project-timelines', isAuthenticated, async (req, res) => {

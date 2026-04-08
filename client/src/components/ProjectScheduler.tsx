@@ -13,8 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { GanttChart, GanttTask } from "./GanttChart";
 import {
-  Sparkles, Plus, Trash2, Edit2, Calendar, Clock,
-  Save, RotateCcw, ChevronDown, ChevronUp, AlertCircle, Upload
+  Sparkles, Plus, Trash2, Edit2, Calendar,
+  Save, RotateCcw, AlertCircle, Upload, FileText, X
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -84,6 +84,8 @@ export function ProjectScheduler({ jobId, jobAddress, compact }: ProjectSchedule
   const [showSetup, setShowSetup] = useState(false);
   const [localTasks, setLocalTasks] = useState<GanttTask[] | null>(null);
   const [localMeta, setLocalMeta] = useState<{ title: string; startDate: string; durationWeeks: number } | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
 
   const { data: timeline, isLoading } = useQuery<TimelineData | null>({
     queryKey: ["/api/jobs", jobId, "timeline"],
@@ -136,6 +138,42 @@ export function ProjectScheduler({ jobId, jobAddress, compact }: ProjectSchedule
     startDate: timeline.startDate,
     durationWeeks: timeline.durationWeeks,
   } : null);
+
+  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsExtracting(true);
+    setUploadedFileName(file.name);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(",")[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const res = await fetch("/api/timeline/extract-text", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileBase64: base64, mimeType: file.type, fileName: file.name }),
+      });
+      const data = await res.json();
+      if (data.text) {
+        setScopeText(data.text);
+        toast({ title: "Text extracted!", description: `${file.name} — ready to generate timeline.` });
+      } else {
+        toast({ title: "Could not extract text", description: "Try copying and pasting the scope manually.", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Upload failed", description: "Try copying and pasting the scope manually.", variant: "destructive" });
+    } finally {
+      setIsExtracting(false);
+      e.target.value = "";
+    }
+  }, [toast]);
 
   const handleGenerate = () => {
     if (!scopeText.trim()) {
@@ -295,11 +333,37 @@ export function ProjectScheduler({ jobId, jobAddress, compact }: ProjectSchedule
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-medium">Scope of Works</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-medium">Scope of Works</Label>
+                <label className={`flex items-center gap-1.5 text-xs font-medium cursor-pointer px-3 py-1.5 rounded-lg border transition-colors
+                  ${isExtracting ? "border-indigo-300 bg-indigo-50 text-indigo-400" : "border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"}`}>
+                  <input
+                    type="file"
+                    accept=".pdf,.txt,.doc,.docx"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                    disabled={isExtracting}
+                  />
+                  {isExtracting ? (
+                    <><div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-indigo-500" /> Extracting…</>
+                  ) : (
+                    <><Upload className="h-3.5 w-3.5" /> Upload PDF</>
+                  )}
+                </label>
+              </div>
+              {uploadedFileName && !isExtracting && (
+                <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5">
+                  <FileText className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="truncate">{uploadedFileName} — text extracted</span>
+                  <button onClick={() => { setScopeText(""); setUploadedFileName(null); }} className="ml-auto flex-shrink-0 text-green-500 hover:text-green-700">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
               <Textarea
                 value={scopeText}
                 onChange={e => setScopeText(e.target.value)}
-                placeholder="Paste your scope of works here… e.g. 'Demolish existing structure, excavate and pour new slab, erect timber frame, install metal roofing, complete electrical and plumbing rough-in, insulate and plaster, install kitchen and bathrooms, painting, tiling, landscaping and handover.'"
+                placeholder="Upload a PDF above, or paste your scope of works here… e.g. 'Demolish existing structure, excavate and pour new slab, erect timber frame, install metal roofing, complete electrical and plumbing rough-in, insulate and plaster, install kitchen and bathrooms, painting, tiling, landscaping and handover.'"
                 className="min-h-[120px] text-sm resize-y"
               />
               <p className="text-xs text-indigo-600 flex items-center gap-1">
