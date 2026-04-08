@@ -8308,9 +8308,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/jobs/:jobId/timeline/generate', isAuthenticated, async (req, res) => {
     try {
-      const { scopeText, durationWeeks, startDate, title } = req.body;
-      if (!scopeText || !durationWeeks) {
-        return res.status(400).json({ error: 'scopeText and durationWeeks are required' });
+      const { scopeText, pdfBase64, pdfMimeType, durationWeeks, startDate, title } = req.body;
+      if (!durationWeeks) {
+        return res.status(400).json({ error: 'durationWeeks is required' });
+      }
+      if (!scopeText && !pdfBase64) {
+        return res.status(400).json({ error: 'Either scopeText or a PDF upload is required' });
       }
 
       const Anthropic = (await import('@anthropic-ai/sdk')).default;
@@ -8320,10 +8323,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 Return ONLY a valid JSON array of tasks (no markdown, no explanation). Each task must have:
 - title: string (concise task name)
-- trade: string (one of: Earthworks, Concrete, Framing, Roofing, Electrical, Plumbing, HVAC, Insulation, Plastering, Painting, Tiling, Joinery, Landscaping, Site Manager, Inspections, General)
+- trade: string (one of: Earthworks, Concrete, Framing, Roofing, Electrical, Plumbing, HVAC, Insulation, Plastering, Painting, Tiling, Joinery, Landscaping, Site Manager, Inspections, General, Demolition, Flooring, Carpentry, Cleaning)
 - startWeek: number (0-indexed week offset from project start)
 - durationWeeks: number (minimum 1)
-- isMilestone: boolean (true only for key milestones like Frame Inspection, Lock-up, Practical Completion)
+- isMilestone: boolean (true only for key milestones like Site Ready, Lock-up, Practical Completion)
 - notes: string (brief notes)
 - orderIndex: number
 
@@ -8332,15 +8335,37 @@ Rules:
 - Use realistic Australian construction sequencing
 - Overlap tasks where realistic (electrical and plumbing rough-in run concurrently)
 - Include 2-4 milestone markers
-- Generate 8-20 tasks based on project complexity`;
+- Generate 8-20 tasks based on project complexity
+- Group similar small items into logical trade tasks rather than listing every line item`;
+
+      let messageContent: any[];
+
+      if (pdfBase64) {
+        messageContent = [
+          {
+            type: 'document',
+            source: {
+              type: 'base64',
+              media_type: pdfMimeType || 'application/pdf',
+              data: pdfBase64,
+            },
+          },
+          {
+            type: 'text',
+            text: `Generate a project timeline from the scope of works in this document.\n\nProject Duration: ${durationWeeks} weeks\nStart Date: ${startDate || 'TBD'}\n\nRead the full scope and produce a realistic Gantt timeline.`,
+          },
+        ];
+      } else {
+        messageContent = [{
+          type: 'text',
+          text: `Generate a project timeline.\n\nProject Duration: ${durationWeeks} weeks\nStart Date: ${startDate || 'TBD'}\n\nScope of Works:\n${scopeText}`,
+        }];
+      }
 
       const response = await client.messages.create({
         model: 'claude-opus-4-5',
         max_tokens: 4000,
-        messages: [{
-          role: 'user',
-          content: `Generate a project timeline.\n\nProject Duration: ${durationWeeks} weeks\nStart Date: ${startDate || 'TBD'}\n\nScope of Works:\n${scopeText}`,
-        }],
+        messages: [{ role: 'user', content: messageContent }],
         system: systemPrompt,
       });
 
@@ -8357,7 +8382,8 @@ Rules:
         'HVAC': '#7c3aed', 'Insulation': '#d97706', 'Plastering': '#6b7280',
         'Painting': '#ec4899', 'Tiling': '#14b8a6', 'Joinery': '#f97316',
         'Landscaping': '#16a34a', 'Site Manager': '#dc2626', 'Inspections': '#8b5cf6',
-        'General': '#6366f1',
+        'General': '#6366f1', 'Demolition': '#ef4444', 'Flooring': '#a16207',
+        'Carpentry': '#b45309', 'Cleaning': '#0d9488',
       };
 
       const enrichedTasks = tasks.map((t: any, i: number) => ({

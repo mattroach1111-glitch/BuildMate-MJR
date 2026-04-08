@@ -85,7 +85,9 @@ export function ProjectScheduler({ jobId, jobAddress, compact }: ProjectSchedule
   const [localTasks, setLocalTasks] = useState<GanttTask[] | null>(null);
   const [localMeta, setLocalMeta] = useState<{ title: string; startDate: string; durationWeeks: number } | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
-  const [isExtracting, setIsExtracting] = useState(false);
+  const [uploadedPdfBase64, setUploadedPdfBase64] = useState<string | null>(null);
+  const [uploadedPdfMimeType, setUploadedPdfMimeType] = useState<string>("application/pdf");
+  const [isReading, setIsReading] = useState(false);
 
   const { data: timeline, isLoading } = useQuery<TimelineData | null>({
     queryKey: ["/api/jobs", jobId, "timeline"],
@@ -101,6 +103,9 @@ export function ProjectScheduler({ jobId, jobAddress, compact }: ProjectSchedule
       setLocalTasks(null);
       setLocalMeta(null);
       setShowAIPanel(false);
+      setUploadedPdfBase64(null);
+      setUploadedFileName(null);
+      setScopeText("");
       toast({ title: "Timeline generated!", description: `${data?.tasks?.length || 0} tasks created from your scope of works.` });
     },
     onError: (e: any) => toast({ title: "Generation failed", description: e.message, variant: "destructive" }),
@@ -142,7 +147,7 @@ export function ProjectScheduler({ jobId, jobAddress, compact }: ProjectSchedule
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setIsExtracting(true);
+    setIsReading(true);
     setUploadedFileName(file.name);
     try {
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -154,38 +159,36 @@ export function ProjectScheduler({ jobId, jobAddress, compact }: ProjectSchedule
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-      const res = await fetch("/api/timeline/extract-text", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileBase64: base64, mimeType: file.type, fileName: file.name }),
-      });
-      const data = await res.json();
-      if (data.text) {
-        setScopeText(data.text);
-        toast({ title: "Text extracted!", description: `${file.name} — ready to generate timeline.` });
-      } else {
-        toast({ title: "Could not extract text", description: "Try copying and pasting the scope manually.", variant: "destructive" });
-      }
+      setUploadedPdfBase64(base64);
+      setUploadedPdfMimeType(file.type || "application/pdf");
+      setScopeText("");
+      toast({ title: "PDF ready", description: `${file.name} will be sent directly to AI for reading.` });
     } catch {
       toast({ title: "Upload failed", description: "Try copying and pasting the scope manually.", variant: "destructive" });
+      setUploadedFileName(null);
     } finally {
-      setIsExtracting(false);
+      setIsReading(false);
       e.target.value = "";
     }
   }, [toast]);
 
   const handleGenerate = () => {
-    if (!scopeText.trim()) {
-      toast({ title: "Please paste your scope of works first", variant: "destructive" });
+    if (!uploadedPdfBase64 && !scopeText.trim()) {
+      toast({ title: "Please upload a PDF or paste your scope of works", variant: "destructive" });
       return;
     }
-    generateMutation.mutate({
-      scopeText,
+    const payload: any = {
       durationWeeks: parseInt(durationInput) || 12,
       startDate: startDateInput,
       title: titleInput,
-    });
+    };
+    if (uploadedPdfBase64) {
+      payload.pdfBase64 = uploadedPdfBase64;
+      payload.pdfMimeType = uploadedPdfMimeType;
+    } else {
+      payload.scopeText = scopeText;
+    }
+    generateMutation.mutate(payload);
   };
 
   const handleAddTask = () => {
@@ -332,42 +335,54 @@ export function ProjectScheduler({ jobId, jobAddress, compact }: ProjectSchedule
                 <Input value={titleInput} onChange={e => setTitleInput(e.target.value)} placeholder="Project Timeline" className="text-sm" />
               </div>
             </div>
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-medium">Scope of Works</Label>
-                <label className={`flex items-center gap-1.5 text-xs font-medium cursor-pointer px-3 py-1.5 rounded-lg border transition-colors
-                  ${isExtracting ? "border-indigo-300 bg-indigo-50 text-indigo-400" : "border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"}`}>
-                  <input
-                    type="file"
-                    accept=".pdf,.txt,.doc,.docx"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                    disabled={isExtracting}
-                  />
-                  {isExtracting ? (
-                    <><div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-indigo-500" /> Extracting…</>
-                  ) : (
-                    <><Upload className="h-3.5 w-3.5" /> Upload PDF</>
-                  )}
-                </label>
+            <div className="flex flex-col gap-3">
+              {/* PDF Upload — primary method */}
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs font-medium">Upload Scope of Works PDF</Label>
+                {uploadedPdfBase64 && uploadedFileName ? (
+                  <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                    <FileText className="h-5 w-5 text-green-600 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-green-800 truncate">{uploadedFileName}</p>
+                      <p className="text-xs text-green-600">PDF will be sent directly to AI — no text extraction needed</p>
+                    </div>
+                    <button onClick={() => { setUploadedPdfBase64(null); setUploadedFileName(null); }}
+                      className="flex-shrink-0 text-green-400 hover:text-green-700">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className={`flex items-center justify-center gap-2 cursor-pointer border-2 border-dashed rounded-xl px-4 py-5 transition-colors
+                    ${isReading ? "border-indigo-300 bg-indigo-50/50 text-indigo-400" : "border-indigo-200 bg-indigo-50/30 text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50"}`}>
+                    <input type="file" accept=".pdf" className="hidden" onChange={handleFileUpload} disabled={isReading} />
+                    {isReading ? (
+                      <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" /> Reading file…</>
+                    ) : (
+                      <><Upload className="h-5 w-5" /> <span className="font-medium text-sm">Tap to upload PDF</span></>
+                    )}
+                  </label>
+                )}
               </div>
-              {uploadedFileName && !isExtracting && (
-                <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5">
-                  <FileText className="h-3.5 w-3.5 flex-shrink-0" />
-                  <span className="truncate">{uploadedFileName} — text extracted</span>
-                  <button onClick={() => { setScopeText(""); setUploadedFileName(null); }} className="ml-auto flex-shrink-0 text-green-500 hover:text-green-700">
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+
+              {/* Manual scope — secondary/optional */}
+              {!uploadedPdfBase64 && (
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-px bg-gray-200" />
+                    <span className="text-xs text-gray-400 font-medium">or type / paste scope manually</span>
+                    <div className="flex-1 h-px bg-gray-200" />
+                  </div>
+                  <Textarea
+                    value={scopeText}
+                    onChange={e => setScopeText(e.target.value)}
+                    placeholder="e.g. Demolish existing structure, excavate and pour new slab, erect timber frame, install metal roofing, complete electrical and plumbing rough-in, insulate and plaster, install kitchen and bathrooms, painting, tiling, landscaping and handover."
+                    className="min-h-[100px] text-sm resize-y"
+                  />
                 </div>
               )}
-              <Textarea
-                value={scopeText}
-                onChange={e => setScopeText(e.target.value)}
-                placeholder="Upload a PDF above, or paste your scope of works here… e.g. 'Demolish existing structure, excavate and pour new slab, erect timber frame, install metal roofing, complete electrical and plumbing rough-in, insulate and plaster, install kitchen and bathrooms, painting, tiling, landscaping and handover.'"
-                className="min-h-[120px] text-sm resize-y"
-              />
+
               <p className="text-xs text-indigo-600 flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" /> AI will generate a realistic trade sequence based on your scope and duration.
+                <AlertCircle className="h-3 w-3" /> AI reads your full scope and generates a realistic trade-sequenced timeline.
               </p>
             </div>
             <div className="flex gap-2">
