@@ -8233,7 +8233,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const buffer = Buffer.from(fileBase64, 'base64');
 
       if (mimeType === 'application/pdf' || (fileName || '').toLowerCase().endsWith('.pdf')) {
-        const pdfParse = (await import('pdf-parse')).default;
+        const { createRequire } = await import('module');
+        const require = createRequire(import.meta.url);
+        const pdfParse = require('pdf-parse/lib/pdf-parse.js');
         const data = await pdfParse(buffer);
         return res.json({ text: data.text.trim() });
       }
