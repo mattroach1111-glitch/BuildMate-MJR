@@ -47,6 +47,7 @@ interface ProjectSchedulerProps {
   jobId: string;
   jobAddress?: string;
   compact?: boolean;
+  allowDelete?: boolean;
 }
 
 interface TaskForm {
@@ -72,7 +73,7 @@ const emptyTask = (): TaskForm => ({
   orderIndex: 0,
 });
 
-export function ProjectScheduler({ jobId, jobAddress, compact }: ProjectSchedulerProps) {
+export function ProjectScheduler({ jobId, jobAddress, compact, allowDelete = false }: ProjectSchedulerProps) {
   const { toast } = useToast();
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [scopeText, setScopeText] = useState("");
@@ -509,8 +510,8 @@ export function ProjectScheduler({ jobId, jobAddress, compact }: ProjectSchedule
         </div>
       )}
 
-      {/* Delete timeline */}
-      {displayTimeline && !hasUnsavedChanges && (
+      {/* Delete timeline — only shown when allowDelete is explicitly enabled (project planner page) */}
+      {allowDelete && displayTimeline && !hasUnsavedChanges && (
         <div className="flex justify-end pt-2">
           <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50"
             onClick={() => { if (confirm("Delete this timeline?")) deleteMutation.mutate(); }}>

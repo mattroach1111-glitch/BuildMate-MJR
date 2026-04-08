@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GanttChart } from "@/components/GanttChart";
-import { ArrowLeft, Calendar, BarChart3, Search, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, Calendar, BarChart3, Search, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 interface TimelineData {
   id: string;
@@ -22,10 +24,23 @@ interface TimelineData {
 export default function ProjectPlanner() {
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const { data: timelines = [], isLoading } = useQuery<TimelineData[]>({
     queryKey: ["/api/project-timelines"],
     queryFn: () => fetch("/api/project-timelines", { credentials: "include" }).then(r => r.json()),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (jobId: string) => apiRequest("DELETE", `/api/jobs/${jobId}/timeline`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/project-timelines"] });
+      setConfirmDeleteId(null);
+      if (expanded) setExpanded(null);
+      toast({ title: "Timeline deleted" });
+    },
+    onError: () => toast({ title: "Failed to delete timeline", variant: "destructive" }),
   });
 
   const filtered = timelines.filter(t =>
@@ -126,6 +141,32 @@ export default function ProjectPlanner() {
                       <Link href={`/jobs`} onClick={e => e.stopPropagation()}>
                         <Button variant="outline" size="sm" className="text-xs gap-1">Open Job</Button>
                       </Link>
+                    )}
+                    {confirmDeleteId === timeline.id ? (
+                      <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                        <span className="text-xs text-red-600 font-medium">Delete?</span>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="h-7 text-xs px-2"
+                          disabled={deleteMutation.isPending}
+                          onClick={() => timeline.jobId && deleteMutation.mutate(timeline.jobId)}
+                        >
+                          {deleteMutation.isPending ? "…" : "Yes"}
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs px-2"
+                          onClick={() => setConfirmDeleteId(null)}>
+                          No
+                        </Button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={e => { e.stopPropagation(); setConfirmDeleteId(timeline.id); }}
+                        className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        title="Delete timeline"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     )}
                     {expanded === timeline.id
                       ? <ChevronDown className="h-5 w-5 text-gray-400" />
