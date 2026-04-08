@@ -96,11 +96,9 @@ export function GanttChart({ tasks, startDate, durationWeeks, title, compact }: 
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        const scale = 2; // retina quality
-        canvas.width = svgWidth * scale;
-        canvas.height = svgHeight * scale;
+        canvas.width = svgWidth;
+        canvas.height = svgHeight;
         const ctx = canvas.getContext("2d")!;
-        ctx.scale(scale, scale);
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, svgWidth, svgHeight);
         ctx.drawImage(img, 0, 0, svgWidth, svgHeight);
@@ -125,8 +123,8 @@ export function GanttChart({ tasks, startDate, durationWeeks, title, compact }: 
         pdf.setFont("helvetica", "normal");
         pdf.text(`Generated ${format(new Date(), "d MMM yyyy")}`, pdfW - margin, margin + 7, { align: "right" });
 
-        const imgData = canvas.toDataURL("image/png");
-        pdf.addImage(imgData, "PNG", margin, margin + 12, drawW, drawH);
+        const imgData = canvas.toDataURL("image/jpeg", 0.82);
+        pdf.addImage(imgData, "JPEG", margin, margin + 12, drawW, drawH);
         pdf.save(`${title || "project-timeline"}.pdf`);
         setIsExportingPDF(false);
       };
