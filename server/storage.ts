@@ -3701,10 +3701,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getHistoricalCostSummaries(): Promise<any[]> {
+    // Include ALL jobs (active + soft-deleted/archived) — permanently deleted jobs are already gone from the DB
     const allJobs = await db
       .select({ id: jobs.id, jobAddress: jobs.jobAddress, clientName: jobs.clientName, status: jobs.status, createdAt: jobs.createdAt })
       .from(jobs)
-      .where(eq(jobs.isDeleted, false))
       .orderBy(jobs.createdAt);
 
     if (allJobs.length === 0) return [];
