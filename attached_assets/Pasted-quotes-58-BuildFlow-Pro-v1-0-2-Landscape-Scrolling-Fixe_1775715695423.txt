@@ -1,0 +1,191 @@
+quotes:58 BuildFlow Pro v1.0.2 - Landscape Scrolling Fixed
+quotes:70 ✅ BuildFlow Pro Service Worker registered: https://build-mate-mattroach1111.replit.app/
+index-C0B-PEzW.js:533 💓 Session keepalive successful
+index-C0B-PEzW.js:48 🔄 Session backup stored successfully
+index-C0B-PEzW.js:48  GET https://build-mate-mattroach1111.replit.app/api/quotes 500 (Internal Server Error)
+(anonymous) @ index-C0B-PEzW.js:48
+a @ index-C0B-PEzW.js:48
+C @ index-C0B-PEzW.js:48
+start @ index-C0B-PEzW.js:48
+fetch @ index-C0B-PEzW.js:48
+S0 @ index-C0B-PEzW.js:48
+onSubscribe @ index-C0B-PEzW.js:48
+subscribe @ index-C0B-PEzW.js:48
+(anonymous) @ index-C0B-PEzW.js:48
+BR @ index-C0B-PEzW.js:38
+G2 @ index-C0B-PEzW.js:40
+Ag @ index-C0B-PEzW.js:40
+CX @ index-C0B-PEzW.js:40
+um @ index-C0B-PEzW.js:40
+wP @ index-C0B-PEzW.js:40
+Oh @ index-C0B-PEzW.js:38
+(anonymous) @ index-C0B-PEzW.js:40
+setTimeout
+i @ index-C0B-PEzW.js:48
+o @ index-C0B-PEzW.js:48
+batch @ index-C0B-PEzW.js:48
+Mu @ index-C0B-PEzW.js:48
+setData @ index-C0B-PEzW.js:48
+onSuccess @ index-C0B-PEzW.js:48
+m @ index-C0B-PEzW.js:48
+Promise.then
+C @ index-C0B-PEzW.js:48
+start @ index-C0B-PEzW.js:48
+fetch @ index-C0B-PEzW.js:48
+S0 @ index-C0B-PEzW.js:48
+onSubscribe @ index-C0B-PEzW.js:48
+subscribe @ index-C0B-PEzW.js:48
+(anonymous) @ index-C0B-PEzW.js:48
+BR @ index-C0B-PEzW.js:38
+G2 @ index-C0B-PEzW.js:40
+Ag @ index-C0B-PEzW.js:40
+wP @ index-C0B-PEzW.js:40
+Oh @ index-C0B-PEzW.js:38
+CX @ index-C0B-PEzW.js:40
+um @ index-C0B-PEzW.js:40
+y8 @ index-C0B-PEzW.js:40
+E @ index-C0B-PEzW.js:25
+R @ index-C0B-PEzW.js:25
+index-C0B-PEzW.js:48  GET https://build-mate-mattroach1111.replit.app/api/quotes 500 (Internal Server Error)
+(anonymous) @ index-C0B-PEzW.js:48
+a @ index-C0B-PEzW.js:48
+C @ index-C0B-PEzW.js:48
+(anonymous) @ index-C0B-PEzW.js:48
+Promise.then
+(anonymous) @ index-C0B-PEzW.js:48
+Promise.catch
+C @ index-C0B-PEzW.js:48
+start @ index-C0B-PEzW.js:48
+fetch @ index-C0B-PEzW.js:48
+S0 @ index-C0B-PEzW.js:48
+onSubscribe @ index-C0B-PEzW.js:48
+subscribe @ index-C0B-PEzW.js:48
+(anonymous) @ index-C0B-PEzW.js:48
+BR @ index-C0B-PEzW.js:38
+G2 @ index-C0B-PEzW.js:40
+Ag @ index-C0B-PEzW.js:40
+CX @ index-C0B-PEzW.js:40
+um @ index-C0B-PEzW.js:40
+wP @ index-C0B-PEzW.js:40
+Oh @ index-C0B-PEzW.js:38
+(anonymous) @ index-C0B-PEzW.js:40
+setTimeout
+i @ index-C0B-PEzW.js:48
+o @ index-C0B-PEzW.js:48
+batch @ index-C0B-PEzW.js:48
+Mu @ index-C0B-PEzW.js:48
+setData @ index-C0B-PEzW.js:48
+onSuccess @ index-C0B-PEzW.js:48
+m @ index-C0B-PEzW.js:48
+Promise.then
+C @ index-C0B-PEzW.js:48
+start @ index-C0B-PEzW.js:48
+fetch @ index-C0B-PEzW.js:48
+S0 @ index-C0B-PEzW.js:48
+onSubscribe @ index-C0B-PEzW.js:48
+subscribe @ index-C0B-PEzW.js:48
+(anonymous) @ index-C0B-PEzW.js:48
+BR @ index-C0B-PEzW.js:38
+G2 @ index-C0B-PEzW.js:40
+Ag @ index-C0B-PEzW.js:40
+wP @ index-C0B-PEzW.js:40
+Oh @ index-C0B-PEzW.js:38
+CX @ index-C0B-PEzW.js:40
+um @ index-C0B-PEzW.js:40
+y8 @ index-C0B-PEzW.js:40
+E @ index-C0B-PEzW.js:25
+R @ index-C0B-PEzW.js:25
+index-C0B-PEzW.js:48  GET https://build-mate-mattroach1111.replit.app/api/quotes 500 (Internal Server Error)
+(anonymous) @ index-C0B-PEzW.js:48
+a @ index-C0B-PEzW.js:48
+C @ index-C0B-PEzW.js:48
+start @ index-C0B-PEzW.js:48
+fetch @ index-C0B-PEzW.js:48
+S0 @ index-C0B-PEzW.js:48
+fetch @ index-C0B-PEzW.js:48
+refetch @ index-C0B-PEzW.js:48
+onFocus @ index-C0B-PEzW.js:48
+(anonymous) @ index-C0B-PEzW.js:48
+(anonymous) @ index-C0B-PEzW.js:48
+batch @ index-C0B-PEzW.js:48
+onFocus @ index-C0B-PEzW.js:48
+(anonymous) @ index-C0B-PEzW.js:48
+await in (anonymous)
+(anonymous) @ index-C0B-PEzW.js:48
+onFocus @ index-C0B-PEzW.js:48
+(anonymous) @ index-C0B-PEzW.js:48
+n @ index-C0B-PEzW.js:48
+index-C0B-PEzW.js:48  GET https://build-mate-mattroach1111.replit.app/api/quotes 500 (Internal Server Error)
+(anonymous) @ index-C0B-PEzW.js:48
+a @ index-C0B-PEzW.js:48
+C @ index-C0B-PEzW.js:48
+(anonymous) @ index-C0B-PEzW.js:48
+Promise.then
+(anonymous) @ index-C0B-PEzW.js:48
+Promise.catch
+C @ index-C0B-PEzW.js:48
+start @ index-C0B-PEzW.js:48
+fetch @ index-C0B-PEzW.js:48
+S0 @ index-C0B-PEzW.js:48
+fetch @ index-C0B-PEzW.js:48
+refetch @ index-C0B-PEzW.js:48
+onFocus @ index-C0B-PEzW.js:48
+(anonymous) @ index-C0B-PEzW.js:48
+(anonymous) @ index-C0B-PEzW.js:48
+batch @ index-C0B-PEzW.js:48
+onFocus @ index-C0B-PEzW.js:48
+(anonymous) @ index-C0B-PEzW.js:48
+await in (anonymous)
+(anonymous) @ index-C0B-PEzW.js:48
+onFocus @ index-C0B-PEzW.js:48
+(anonymous) @ index-C0B-PEzW.js:48
+n @ index-C0B-PEzW.js:48
+index-C0B-PEzW.js:48  POST https://build-mate-mattroach1111.replit.app/api/quotes 500 (Internal Server Error)
+wt @ index-C0B-PEzW.js:48
+mutationFn @ index-C0B-PEzW.js:1011
+fn @ index-C0B-PEzW.js:48
+C @ index-C0B-PEzW.js:48
+start @ index-C0B-PEzW.js:48
+execute @ index-C0B-PEzW.js:48
+await in execute
+mutate @ index-C0B-PEzW.js:48
+(anonymous) @ index-C0B-PEzW.js:48
+F @ index-C0B-PEzW.js:1011
+qJ @ index-C0B-PEzW.js:37
+HJ @ index-C0B-PEzW.js:37
+GJ @ index-C0B-PEzW.js:37
+Wk @ index-C0B-PEzW.js:37
+CR @ index-C0B-PEzW.js:37
+(anonymous) @ index-C0B-PEzW.js:37
+qC @ index-C0B-PEzW.js:40
+QI @ index-C0B-PEzW.js:37
+nN @ index-C0B-PEzW.js:37
+vC @ index-C0B-PEzW.js:37
+cZ @ index-C0B-PEzW.js:37
+index-C0B-PEzW.js:48  POST https://build-mate-mattroach1111.replit.app/api/quotes 500 (Internal Server Error)
+wt @ index-C0B-PEzW.js:48
+mutationFn @ index-C0B-PEzW.js:1011
+fn @ index-C0B-PEzW.js:48
+C @ index-C0B-PEzW.js:48
+(anonymous) @ index-C0B-PEzW.js:48
+Promise.then
+(anonymous) @ index-C0B-PEzW.js:48
+Promise.catch
+C @ index-C0B-PEzW.js:48
+start @ index-C0B-PEzW.js:48
+execute @ index-C0B-PEzW.js:48
+await in execute
+mutate @ index-C0B-PEzW.js:48
+(anonymous) @ index-C0B-PEzW.js:48
+F @ index-C0B-PEzW.js:1011
+qJ @ index-C0B-PEzW.js:37
+HJ @ index-C0B-PEzW.js:37
+GJ @ index-C0B-PEzW.js:37
+Wk @ index-C0B-PEzW.js:37
+CR @ index-C0B-PEzW.js:37
+(anonymous) @ index-C0B-PEzW.js:37
+qC @ index-C0B-PEzW.js:40
+QI @ index-C0B-PEzW.js:37
+nN @ index-C0B-PEzW.js:37
+vC @ index-C0B-PEzW.js:37
+cZ @ index-C0B-PEzW.js:37

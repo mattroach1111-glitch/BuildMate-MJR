@@ -148,6 +148,21 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Run startup migrations to ensure production DB has all required columns
+  try {
+    const { pool } = await import('./db');
+    await pool.query(`
+      ALTER TABLE quotes ADD COLUMN IF NOT EXISTS scope_document_key varchar;
+      ALTER TABLE quotes ADD COLUMN IF NOT EXISTS scope_document_name varchar;
+      ALTER TABLE quotes ADD COLUMN IF NOT EXISTS scope_text text;
+      ALTER TABLE quotes ADD COLUMN IF NOT EXISTS lump_sum_total decimal(10,2);
+      ALTER TABLE quotes ADD COLUMN IF NOT EXISTS quote_type varchar DEFAULT 'itemized';
+    `);
+    console.log('✅ Startup migrations applied');
+  } catch (err: any) {
+    console.error('⚠️ Startup migration warning:', err.message);
+  }
+
   const server = await registerRoutes(app);
 
   // Migrate existing user Google Drive tokens to system-wide storage
