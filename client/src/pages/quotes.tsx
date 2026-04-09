@@ -489,8 +489,23 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
     onError: () => toast({ title: "Failed to update", variant: "destructive" }),
   });
 
+  const [localMargin, setLocalMargin] = useState(quote.builderMargin || "0");
+
   const updateMarginMutation = useMutation({
-    mutationFn: (margin: string) => apiRequest("PATCH", `/api/quotes/${quote.id}`, { builderMargin: margin }).then(r => r.json()),
+    mutationFn: (margin: string) => {
+      const marginPct = parseFloat(margin) || 0;
+      // For lump sum quotes, recalculate all totals from lumpSumTotal
+      // For itemised quotes, recalculate from the stored subtotal base
+      const base = parseFloat(quote.lumpSumTotal || quote.subtotal || "0") || 0;
+      const sub = base * (1 + marginPct / 100);
+      const gst = sub * 0.1;
+      return apiRequest("PATCH", `/api/quotes/${quote.id}`, {
+        builderMargin: margin,
+        subtotal: sub.toFixed(2),
+        gstAmount: gst.toFixed(2),
+        totalAmount: (sub + gst).toFixed(2),
+      }).then(r => r.json());
+    },
     onSuccess: () => onUpdate(),
   });
 
@@ -673,27 +688,47 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
           <Card>
             <CardContent className="pt-4">
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Subtotal ex GST:</span>
-                  <span>${parseFloat(quote.subtotal).toLocaleString("en-AU", { minimumFractionDigits: 2 })}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-500">Margin:</span>
-                    <Input type="number" className="w-16 h-7 text-right text-xs" value={quote.builderMargin || "0"}
-                      onChange={e => updateMarginMutation.mutate(e.target.value)} min="0" max="100" step="0.5" />
-                    <span className="text-gray-500">%</span>
-                  </div>
-                  <span className="text-blue-600">+${((parseFloat(quote.subtotal) * parseFloat(quote.builderMargin || "0")) / 100).toLocaleString("en-AU", { minimumFractionDigits: 2 })}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">GST (10%):</span>
-                  <span>${parseFloat(quote.gstAmount).toLocaleString("en-AU", { minimumFractionDigits: 2 })}</span>
-                </div>
-                <div className="flex justify-between font-bold text-base pt-2 border-t">
-                  <span>Total inc GST:</span>
-                  <span className="text-green-600">${parseFloat(quote.totalAmount).toLocaleString("en-AU", { minimumFractionDigits: 2 })}</span>
-                </div>
+                {(() => {
+                  const base = parseFloat(quote.lumpSumTotal || "0") || parseFloat(quote.subtotal || "0") || 0;
+                  const marginPct = parseFloat(localMargin || "0") || 0;
+                  const marginAmt = base * marginPct / 100;
+                  const sub = base + marginAmt;
+                  const gst = sub * 0.1;
+                  const total = sub + gst;
+                  return (<>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500">Cost of Works ex GST:</span>
+                      <span>${base.toLocaleString("en-AU", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500">Margin:</span>
+                        <Input
+                          type="number"
+                          className="w-16 h-7 text-right text-xs"
+                          value={localMargin}
+                          onChange={e => setLocalMargin(e.target.value)}
+                          onBlur={e => { if (e.target.value !== quote.builderMargin) updateMarginMutation.mutate(e.target.value); }}
+                          min="0" max="100" step="0.5"
+                        />
+                        <span className="text-gray-500">%</span>
+                      </div>
+                      <span className="text-blue-600">+${marginAmt.toLocaleString("en-AU", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500">Subtotal ex GST:</span>
+                      <span>${sub.toLocaleString("en-AU", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">GST (10%):</span>
+                      <span>${gst.toLocaleString("en-AU", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-base pt-2 border-t">
+                      <span>Total inc GST:</span>
+                      <span className="text-green-600">${total.toLocaleString("en-AU", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  </>);
+                })()}
               </div>
             </CardContent>
           </Card>
