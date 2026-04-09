@@ -7,8 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   Sparkles, Upload, FileText, X, ChevronDown, ChevronUp,
-  AlertCircle, TrendingUp, Building2, Hammer, Package, MoreHorizontal,
-  Car, ShoppingCart, ClipboardList
+  AlertCircle, TrendingUp, Building2, Hammer, Package, MoreHorizontal
 } from "lucide-react";
 
 interface CostBreakdownItem {
@@ -29,9 +28,6 @@ interface CostEstimate {
   totalEstimateIncGst: number;
   confidence: "low" | "medium" | "high";
   confidenceReason: string;
-  travelCost?: number;
-  materialCollectionCost?: number;
-  supervisionAdminCost?: number;
   breakdown: CostBreakdownItem[];
   lineItems: LineItem[];
   assumptions: string[];
@@ -276,36 +272,6 @@ export function CostEstimator({ jobId }: CostEstimatorProps) {
             <p className="text-xs text-gray-500 italic border-l-2 border-purple-200 pl-3">
               {estimate.confidenceReason}
             </p>
-          )}
-
-          {/* Mandatory overhead costs */}
-          {(estimate.travelCost || estimate.materialCollectionCost || estimate.supervisionAdminCost) && (
-            <div className="flex flex-col gap-1.5">
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Overhead Costs Included</p>
-              <div className="grid grid-cols-3 gap-2">
-                {estimate.travelCost != null && (
-                  <div className="flex flex-col items-center gap-1 bg-blue-50 border border-blue-100 rounded-xl p-2.5 text-center">
-                    <Car className="h-4 w-4 text-blue-500" />
-                    <span className="text-xs font-bold text-blue-800">{fmtCurrency(estimate.travelCost)}</span>
-                    <span className="text-xs text-blue-600 leading-tight">Travel</span>
-                  </div>
-                )}
-                {estimate.materialCollectionCost != null && (
-                  <div className="flex flex-col items-center gap-1 bg-amber-50 border border-amber-100 rounded-xl p-2.5 text-center">
-                    <ShoppingCart className="h-4 w-4 text-amber-500" />
-                    <span className="text-xs font-bold text-amber-800">{fmtCurrency(estimate.materialCollectionCost)}</span>
-                    <span className="text-xs text-amber-600 leading-tight">Material Runs</span>
-                  </div>
-                )}
-                {estimate.supervisionAdminCost != null && (
-                  <div className="flex flex-col items-center gap-1 bg-green-50 border border-green-100 rounded-xl p-2.5 text-center">
-                    <ClipboardList className="h-4 w-4 text-green-500" />
-                    <span className="text-xs font-bold text-green-800">{fmtCurrency(estimate.supervisionAdminCost)}</span>
-                    <span className="text-xs text-green-600 leading-tight">Supervision & Admin</span>
-                  </div>
-                )}
-              </div>
-            </div>
           )}
 
           {/* Cost breakdown */}

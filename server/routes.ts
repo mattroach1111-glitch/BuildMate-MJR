@@ -8418,18 +8418,15 @@ SUPERVISION & ADMIN COST CALCULATION:
 Respond ONLY with valid JSON (no other text):
 {
   "jobSizeClassification": "minor" | "medium" | "major" | "large",
-  "totalEstimateExGst": <number — MUST equal the sum of all breakdown category amounts>,
+  "totalEstimateExGst": <number — MUST equal the sum of all four breakdown category amounts>,
   "totalEstimateIncGst": <number — totalEstimateExGst × 1.1>,
   "confidence": "low" | "medium" | "high",
   "confidenceReason": "<brief 1-2 sentence explanation>",
-  "travelCost": <number — your calculated travel cost, respecting the size-band minimum>,
-  "materialCollectionCost": <number — your calculated material collection cost, respecting the size-band minimum>,
-  "supervisionAdminCost": <number — your calculated supervision and admin cost, respecting the size-band minimum>,
   "breakdown": [
-    { "category": "Labour", "amount": <number — includes carpenter labour AND supervision hours>, "notes": "<hours × rate for each labour type, including X hrs supervision @ $120/hr>" },
-    { "category": "Materials", "amount": <number>, "notes": "<key materials listed with amounts>" },
-    { "category": "Sub-trades", "amount": <number>, "notes": "<each trade: Painter $X, Plasterer $X, etc.>" },
-    { "category": "Other / Preliminaries", "amount": <number — includes travel, material collection runs, admin, waste, access>, "notes": "<travel $X, material collection $X, admin $X, scaffolding $X, waste $X, etc.>" }
+    { "category": "Labour", "amount": <number — includes carpenter labour AND supervision/PM hours priced at $120/hr>, "notes": "<e.g. 320hrs carpentry @ $100/hr + 45hrs supervision @ $120/hr>" },
+    { "category": "Materials", "amount": <number>, "notes": "<key materials with individual amounts>" },
+    { "category": "Sub-trades", "amount": <number>, "notes": "<each sub-trade with amount: Painter $X, Plasterer $X, etc.>" },
+    { "category": "Other / Preliminaries", "amount": <number — MUST include travel, material collection runs, admin, waste, access, and any other prelims>, "notes": "<travel $X, material collection runs $X, admin $X, scaffolding $X, skip bins $X, etc. — itemise all>" }
   ],
   "lineItems": [
     { "trade": "<trade name>", "description": "<specific scope item>", "estimatedCost": <number> }
@@ -8468,30 +8465,25 @@ Instead: read the scope items only, then price every single scope item from scra
           .map((i: number) => ({ address: historicalJobs[i].jobAddress, total: historicalJobs[i].totalCostExGst }));
       }
 
-      // Server-side safety net: enforce minimum overhead costs by job size
-      const sizeMins: Record<string, { travel: number; materials: number; supervision: number }> = {
-        minor:  { travel:   600, materials:   600, supervision:   800 },
-        medium: { travel:  2500, materials:  2000, supervision:  3000 },
-        major:  { travel:  6000, materials:  4500, supervision:  7500 },
-        large:  { travel:  9000, materials:  6500, supervision: 12000 },
+      // Server-side safety net: enforce minimum "Other / Preliminaries" by job size
+      // This ensures travel, material collection, and supervision/admin are always adequately costed
+      const otherPrelimMins: Record<string, number> = {
+        minor:  2000,   // travel $600 + collection $600 + supervision $800
+        medium: 7500,   // travel $2500 + collection $2000 + supervision $3000
+        major:  18000,  // travel $6000 + collection $4500 + supervision $7500
+        large:  27500,  // travel $9000 + collection $6500 + supervision $12000
       };
-      const mins = sizeMins[estimate.jobSizeClassification] || sizeMins.medium;
-      const origTravel      = Number(estimate.travelCost)           || 0;
-      const origCollection  = Number(estimate.materialCollectionCost) || 0;
-      const origSupervision = Number(estimate.supervisionAdminCost)  || 0;
-      estimate.travelCost            = Math.max(origTravel,      mins.travel);
-      estimate.materialCollectionCost = Math.max(origCollection, mins.materials);
-      estimate.supervisionAdminCost  = Math.max(origSupervision, mins.supervision);
-
-      // If AI undershot the mandatory overheads, add the difference to the total and Other/Prelim category
-      const overhead = (estimate.travelCost + estimate.materialCollectionCost + estimate.supervisionAdminCost);
-      const aiOverhead = (origTravel + origCollection + origSupervision);
-      const shortfall = overhead - aiOverhead;
-      if (shortfall > 0) {
-        estimate.totalEstimateExGst = (Number(estimate.totalEstimateExGst) || 0) + shortfall;
-        estimate.totalEstimateIncGst = estimate.totalEstimateExGst * 1.1;
-        const otherCat = estimate.breakdown?.find((b: any) => b.category === 'Other / Preliminaries');
-        if (otherCat) otherCat.amount = (Number(otherCat.amount) || 0) + shortfall;
+      const minOtherPrelim = otherPrelimMins[estimate.jobSizeClassification] || otherPrelimMins.medium;
+      const otherCat = estimate.breakdown?.find((b: any) => b.category === 'Other / Preliminaries');
+      if (otherCat) {
+        const currentOther = Number(otherCat.amount) || 0;
+        if (currentOther < minOtherPrelim) {
+          const shortfall = minOtherPrelim - currentOther;
+          otherCat.amount = minOtherPrelim;
+          otherCat.notes = (otherCat.notes || '') + ` (adjusted to include full travel, material collection & supervision costs)`;
+          estimate.totalEstimateExGst = (Number(estimate.totalEstimateExGst) || 0) + shortfall;
+          estimate.totalEstimateIncGst = estimate.totalEstimateExGst * 1.1;
+        }
       }
 
       res.json(estimate);
