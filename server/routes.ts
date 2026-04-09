@@ -8237,43 +8237,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const historicalJobs = await storage.getHistoricalCostSummaries();
 
-      const historyText = historicalJobs.length > 0
-        ? `You have access to ${historicalJobs.length} real completed/active jobs from this builder's history:\n` +
-          historicalJobs.map(j =>
-            `• ${j.jobAddress} (${j.status}, ${j.year}): $${j.totalCostExGst.toLocaleString()} ex-GST — Labour $${j.labor.toLocaleString()}, Materials $${j.materials.toLocaleString()}, Sub-trades $${j.subTrades.toLocaleString()}, Other $${j.other.toLocaleString()}${j.subTradeTypes.length ? ` [Sub-trades: ${j.subTradeTypes.join(', ')}]` : ''}`
-          ).join('\n')
-        : 'No historical job data is available yet. Use your knowledge of Australian construction costs (Tasmania region).';
+      // Separate jobs into size bands so we can give Claude better context
+      const smallJobs   = historicalJobs.filter(j => j.totalCostExGst < 15000);
+      const mediumJobs  = historicalJobs.filter(j => j.totalCostExGst >= 15000 && j.totalCostExGst < 60000);
+      const largeJobs   = historicalJobs.filter(j => j.totalCostExGst >= 60000 && j.totalCostExGst < 120000);
+      const majorJobs   = historicalJobs.filter(j => j.totalCostExGst >= 120000);
 
-      const systemPrompt = `You are an expert Australian construction cost estimator with deep knowledge of residential and insurance repair pricing in Tasmania.
+      const formatJobList = (list: any[]) => list.map(j =>
+        `  • ${j.jobAddress} (${j.status}, ${j.year}): $${j.totalCostExGst.toLocaleString()} ex-GST` +
+        ` [Labour $${j.labor.toLocaleString()}, Materials $${j.materials.toLocaleString()}, Sub-trades $${j.subTrades.toLocaleString()}, Other $${j.other.toLocaleString()}]` +
+        (j.subTradeTypes.length ? ` — Trades: ${j.subTradeTypes.join(', ')}` : '')
+      ).join('\n');
+
+      const historyText = historicalJobs.length > 0
+        ? `HISTORICAL JOB DATA (${historicalJobs.length} jobs, split by size):
+
+Small jobs under $15k (${smallJobs.length} jobs):
+${smallJobs.length ? formatJobList(smallJobs) : '  (none)'}
+
+Medium jobs $15k–$60k (${mediumJobs.length} jobs):
+${mediumJobs.length ? formatJobList(mediumJobs) : '  (none)'}
+
+Large jobs $60k–$120k (${largeJobs.length} jobs):
+${largeJobs.length ? formatJobList(largeJobs) : '  (none)'}
+
+Major jobs $120k+ (${majorJobs.length} jobs):
+${majorJobs.length ? formatJobList(majorJobs) : '  (none)'}
+
+CRITICAL: Only use jobs in a similar size band as your calibration reference. Do NOT let small make-safe or minor repair jobs pull down your estimate for a major restoration. Match the scale of work first.`
+        : 'No historical job data available. Use your knowledge of Australian construction costs (Tasmania region, 2025 rates).';
+
+      const systemPrompt = `You are a senior Australian quantity surveyor and construction cost estimator specialising in residential insurance restoration and renovation work in Tasmania. You have 20+ years experience pricing insurance claims and builder quotes.
+
 ${historyText}
 
-Given a scope of works, estimate the total cost to complete the works. Break it down by trade category. Be realistic and grounded in the historical pricing above.
+## ESTIMATION METHODOLOGY — FOLLOW THIS EXACTLY:
 
-Respond ONLY with valid JSON in this exact format:
+**STEP 1 — CLASSIFY the job:**
+Count the number of distinct trades involved and the total scope. Classify as:
+- Minor (<5 trades, <$30k): small make-safes, minor repairs
+- Medium (5-8 trades, $30k–$80k): moderate renovations, partial restorations  
+- Major (8-12 trades, $80k–$150k): full room-by-room restorations, fire/flood damage
+- Large (12+ trades, $150k+): whole-house rebuild or extensive multi-area restorations
+
+**STEP 2 — PRICE EACH LINE ITEM individually** using current 2025 Tasmanian market rates:
+- Carpenter/builder labour: $90–$110/hr
+- Site manager/supervisor: $120/hr
+- Electrician (sub-trade): $1,500–$4,000 per visit scope; full rewire $8,000–$15,000
+- Plumber (sub-trade): $1,500–$5,000 per scope item
+- Painter — walls: $30–$45/m², ceilings: $20–$30/m², full house: $12,000–$25,000
+- Plasterer (sub-trade): $55–$75/m² supply & fix
+- Tiler (sub-trade): $70–$120/m² supply & lay
+- Roofer (sub-trade): $80–$120/m² re-roof or $150–$250/hr repairs
+- Kitchen supply & install: $18,000–$35,000 (budget–mid-range full replacement)
+- Bathroom renovation (full): $15,000–$30,000
+- Aluminium double-glazed windows: $1,200–$2,500 each supply + $400–$600 install + reveals
+- Particleboard flooring: $50–$90/m² supply & install
+- Insulation (wall/underfloor): $18–$35/m² supply & install
+- Plasterboard (supply & fix): $45–$70/m²
+- Sliding wardrobe (supply & install): $2,500–$4,500 per unit
+- Roller blinds: $200–$400 per blind
+- Skirting/architrave (supply & fix): $25–$40/lm
+- External doors (supply & hang): $1,500–$3,500 each
+- Scaffolding/access: $2,000–$6,000
+- Demolition/strip-out (full house): $5,000–$15,000
+- Final clean: $500–$2,000
+- Skip bins/waste: $600–$2,000
+
+**STEP 3 — SUM all line items** to get your raw total.
+
+**STEP 4 — CALIBRATE against history**: Compare your raw total to similar-scale historical jobs. If your total is within 20% of comparable jobs, it's likely correct. If it's wildly different, explain why in confidenceReason.
+
+**STEP 5 — NEVER second-guess a work order value by anchoring to small jobs.** If the scope has 10+ trades and room-by-room detailed repairs across a whole house, the total will be $100k+. Insurance restoration scopes are comprehensive and expensive — they include all labour, materials, and specialist trade costs.
+
+## IMPORTANT RULES:
+- Do NOT deflate estimates to match small jobs if the scope is clearly large
+- If a work order or PC sum value is mentioned in the scope, use it as a pricing signal, not an anchor to argue against
+- Always price optimistically for completeness — it's better to estimate slightly high than to undersell a complex job
+- The builder charges for all their own carpenter/builder labour on top of sub-trade costs
+
+Respond ONLY with valid JSON (no other text):
 {
+  "jobSizeClassification": "minor" | "medium" | "major" | "large",
   "totalEstimateExGst": <number>,
   "totalEstimateIncGst": <number>,
   "confidence": "low" | "medium" | "high",
-  "confidenceReason": "<brief explanation>",
+  "confidenceReason": "<brief 1-2 sentence explanation>",
   "breakdown": [
-    { "category": "Labour", "amount": <number>, "notes": "<detail>" },
-    { "category": "Materials", "amount": <number>, "notes": "<detail>" },
-    { "category": "Sub-trades", "amount": <number>, "notes": "<detail>" },
-    { "category": "Other / Preliminaries", "amount": <number>, "notes": "<detail>" }
+    { "category": "Labour", "amount": <number>, "notes": "<what labour is included>" },
+    { "category": "Materials", "amount": <number>, "notes": "<key materials listed>" },
+    { "category": "Sub-trades", "amount": <number>, "notes": "<which trades and rough amounts>" },
+    { "category": "Other / Preliminaries", "amount": <number>, "notes": "<prelims, waste, access>" }
   ],
   "lineItems": [
-    { "trade": "<trade name>", "description": "<what needs doing>", "estimatedCost": <number> }
+    { "trade": "<trade name>", "description": "<specific scope item>", "estimatedCost": <number> }
   ],
-  "assumptions": ["<assumption 1>", "<assumption 2>"],
-  "similarJobs": [<index of similar historical jobs, 0-based>]
+  "assumptions": ["<key assumption>"],
+  "similarJobs": [<0-based index of most comparable historical jobs — only jobs of similar scale>]
 }`;
 
       const userContent: any[] = pdfBase64
         ? [
             { type: 'document', source: { type: 'base64', media_type: pdfMimeType || 'application/pdf', data: pdfBase64 } },
-            { type: 'text', text: 'Estimate the cost of the works described in this scope of works document.' }
+            { type: 'text', text: 'Read the full scope of works in this document. Follow the methodology exactly: classify the job, price every line item, then sum. Do not anchor to small historical jobs if this is clearly a major restoration.' }
           ]
-        : [{ type: 'text', text: `Estimate the cost of these works:\n\n${scopeText}` }];
+        : [{ type: 'text', text: `Estimate the cost of these works using the methodology above. Price every line item individually before summing:\n\n${scopeText}` }];
 
       const response = await anthropic.messages.create({
         model: 'claude-opus-4-5',

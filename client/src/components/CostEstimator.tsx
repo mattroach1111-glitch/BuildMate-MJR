@@ -23,6 +23,7 @@ interface LineItem {
 }
 
 interface CostEstimate {
+  jobSizeClassification?: "minor" | "medium" | "major" | "large";
   totalEstimateExGst: number;
   totalEstimateIncGst: number;
   confidence: "low" | "medium" | "high";
@@ -218,6 +219,11 @@ export function CostEstimator() {
               </div>
             </div>
             <div className="flex flex-col items-end gap-1.5">
+              {estimate.jobSizeClassification && (
+                <Badge variant="outline" className="text-xs font-semibold capitalize bg-gray-100 text-gray-600 border-gray-200">
+                  {estimate.jobSizeClassification} job
+                </Badge>
+              )}
               <Badge variant="outline" className={`text-xs font-semibold capitalize ${CONFIDENCE_COLORS[estimate.confidence]}`}>
                 {estimate.confidence} confidence
               </Badge>
