@@ -8270,11 +8270,14 @@ CRITICAL: Only use jobs in a similar size band as your calibration reference. Do
       const systemPrompt = `You are a senior Australian quantity surveyor and construction cost estimator specialising in residential insurance restoration and renovation work in Tasmania. You have 20+ years experience pricing insurance claims and builder quotes.
 
 ## CRITICAL — WHAT YOU ARE ESTIMATING:
-You are estimating the BUILDER'S ACTUAL COST to physically complete the works — meaning:
-- The builder's own carpenter/labourer hours × hourly rate
-- Actual cost of materials the builder purchases
-- Actual sub-trade invoices (electrician, plumber, painter, etc.)
-This is NOT the head contractor's charge, NOT the insurance claim value, NOT the work order contract price, and NOT what the client pays. Those figures may appear in the document but must be COMPLETELY IGNORED. Price only the physical work from scratch.
+You are estimating the BUILDER'S ACTUAL COST OF WORKS — what the builder physically spends to complete the job:
+- Their own carpenter/labourer hours × hourly rate
+- Actual cost of materials they purchase (supply cost)
+- Actual sub-trade invoices they pay (electrician, plumber, painter, plasterer, etc.)
+
+This is their COST, not their revenue. The quote price they charged the client will always be HIGHER than this (the difference is their profit margin, typically 15–30%).
+
+⚠️ Any dollar figure in a scope document (totals, subtotals, work order value, PC sums) is the QUOTED price — not the cost. NEVER use document dollar figures in your estimate. Act as if the document contains no prices at all.
 
 ${historyText}
 
@@ -8348,9 +8351,13 @@ Respond ONLY with valid JSON (no other text):
       const userContent: any[] = pdfBase64
         ? [
             { type: 'document', source: { type: 'base64', media_type: pdfMimeType || 'application/pdf', data: pdfBase64 } },
-            { type: 'text', text: 'Read the scope of works in this document. IMPORTANT: Any dollar figures, subtotals, work order values, PC sums, or contract prices printed in the document are the HEAD CONTRACTOR\'S price — completely ignore them. Price only the actual cost of labour, materials and sub-trades needed to physically complete each scope item. Follow the methodology exactly: classify the job, price every line item individually from scratch, then sum.' }
+            { type: 'text', text: `TASK: Estimate the builder's ACTUAL COST OF WORKS to physically complete this scope — i.e. what the builder will spend in total on their own labour hours, materials purchased, and sub-trade invoices.
+
+⚠️ IGNORE ALL DOLLAR FIGURES IN THE DOCUMENT. Every price, subtotal, total, PC allowance amount, or work order value shown in the document is our QUOTED PRICE to the client — not our cost. Do not reference or use any of those numbers. Pretend the document contains no dollar amounts at all.
+
+Instead: read the scope items only, then price every single scope item from scratch using 2025 Tasmanian market rates for the physical cost to complete that item. Sum those up. That is the estimate.` }
           ]
-        : [{ type: 'text', text: `Estimate the ACTUAL COST to complete these works (not any quoted or contract price). Price every line item individually before summing:\n\n${scopeText}` }];
+        : [{ type: 'text', text: `TASK: Estimate the builder's ACTUAL COST OF WORKS to complete these scope items — what will be spent on labour, materials, and sub-trades. Ignore any quoted prices or totals. Price every item individually from scratch:\n\n${scopeText}` }];
 
       const response = await anthropic.messages.create({
         model: 'claude-opus-4-5',
