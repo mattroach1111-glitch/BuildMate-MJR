@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useState, useCallback } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -57,39 +57,40 @@ interface CostEstimatorProps {
 
 export function CostEstimator({ jobId }: CostEstimatorProps) {
   const { toast } = useToast();
-  const storageKey = `cost_estimate_${jobId}`;
+  const estimateKey = [`/api/jobs/${jobId}/estimate`];
+
   const [isOpen, setIsOpen] = useState(false);
   const [scopeText, setScopeText] = useState("");
   const [pdfBase64, setPdfBase64] = useState<string | null>(null);
   const [pdfMimeType, setPdfMimeType] = useState("application/pdf");
   const [fileName, setFileName] = useState<string | null>(null);
   const [isReading, setIsReading] = useState(false);
-  const [estimate, setEstimate] = useState<CostEstimate | null>(null);
   const [showLineItems, setShowLineItems] = useState(false);
 
-  // Load persisted estimate when the component mounts / jobId changes
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) setEstimate(JSON.parse(saved));
-    } catch { /* ignore parse errors */ }
-  }, [storageKey]);
+  // Load estimate from database (shared across all admins)
+  const { data: estimate, isLoading: isLoadingEstimate } = useQuery<CostEstimate | null>({
+    queryKey: estimateKey,
+    queryFn: () =>
+      fetch(`/api/jobs/${jobId}/estimate`, { credentials: "include" })
+        .then(r => r.ok ? r.json() : null),
+  });
 
-  const saveEstimate = (data: CostEstimate) => {
-    setEstimate(data);
-    try { localStorage.setItem(storageKey, JSON.stringify(data)); } catch { /* storage full */ }
-  };
+  const saveMutation = useMutation({
+    mutationFn: (data: CostEstimate) =>
+      apiRequest("POST", `/api/jobs/${jobId}/estimate`, data).then(r => r.json()),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: estimateKey }),
+  });
 
-  const clearEstimate = () => {
-    setEstimate(null);
-    try { localStorage.removeItem(storageKey); } catch { /* ignore */ }
-  };
+  const clearMutation = useMutation({
+    mutationFn: () => apiRequest("DELETE", `/api/jobs/${jobId}/estimate`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: estimateKey }),
+  });
 
   const estimateMutation = useMutation({
     mutationFn: (body: any) =>
       apiRequest("POST", "/api/cost-estimate", body).then(r => r.json()),
     onSuccess: (data: CostEstimate) => {
-      saveEstimate(data);
+      saveMutation.mutate(data);
       toast({ title: "Cost estimate ready" });
     },
     onError: (e: any) => toast({ title: "Estimation failed", description: e.message, variant: "destructive" }),
@@ -119,17 +120,26 @@ export function CostEstimator({ jobId }: CostEstimatorProps) {
       toast({ title: "Upload a PDF or paste your scope first", variant: "destructive" });
       return;
     }
-    setEstimate(null);
     const body: any = {};
     if (pdfBase64) { body.pdfBase64 = pdfBase64; body.pdfMimeType = pdfMimeType; }
     else { body.scopeText = scopeText; }
     estimateMutation.mutate(body);
   };
 
+  const isPending = estimateMutation.isPending || saveMutation.isPending;
+
   return (
     <div className="flex flex-col gap-4">
+      {/* Loading state */}
+      {isLoadingEstimate && (
+        <div className="flex items-center gap-3 p-4 rounded-xl border border-purple-100 bg-purple-50/30">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-500" />
+          <span className="text-sm text-purple-600">Loading estimate…</span>
+        </div>
+      )}
+
       {/* Toggle / intro */}
-      {!isOpen && !estimate && (
+      {!isLoadingEstimate && !isOpen && !estimate && (
         <button
           onClick={() => setIsOpen(true)}
           className="flex items-center gap-3 w-full text-left p-4 rounded-xl border-2 border-dashed border-purple-200 bg-purple-50/40 hover:border-purple-300 hover:bg-purple-50 transition-colors"
@@ -145,14 +155,14 @@ export function CostEstimator({ jobId }: CostEstimatorProps) {
       )}
 
       {/* Input panel */}
-      {(isOpen || estimateMutation.isPending) && !estimate && (
+      {!isLoadingEstimate && (isOpen || isPending) && !estimate && (
         <div className="flex flex-col gap-4 p-4 rounded-xl border border-purple-100 bg-purple-50/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-purple-600" />
               <span className="font-semibold text-gray-800 text-sm">AI Cost Estimator</span>
             </div>
-            {!estimateMutation.isPending && (
+            {!isPending && (
               <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="h-4 w-4" />
               </button>
@@ -211,15 +221,15 @@ export function CostEstimator({ jobId }: CostEstimatorProps) {
             <Button
               className="flex-1 bg-purple-600 hover:bg-purple-700 text-white gap-2"
               onClick={handleEstimate}
-              disabled={estimateMutation.isPending}
+              disabled={isPending}
             >
-              {estimateMutation.isPending ? (
+              {isPending ? (
                 <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Analysing…</>
               ) : (
                 <><Sparkles className="h-4 w-4" /> Estimate Cost</>
               )}
             </Button>
-            {!estimateMutation.isPending && (
+            {!isPending && (
               <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
             )}
           </div>
@@ -227,7 +237,7 @@ export function CostEstimator({ jobId }: CostEstimatorProps) {
       )}
 
       {/* Results */}
-      {estimate && (
+      {!isLoadingEstimate && estimate && (
         <div className="flex flex-col gap-4 p-4 rounded-xl border border-purple-100 bg-white">
           {/* Header */}
           <div className="flex items-start justify-between gap-3">
@@ -319,7 +329,7 @@ export function CostEstimator({ jobId }: CostEstimatorProps) {
           )}
 
           {/* Similar jobs */}
-          {estimate.similarJobDetails?.length > 0 && (
+          {estimate.similarJobDetails && estimate.similarJobDetails.length > 0 && (
             <div className="flex flex-col gap-1.5">
               <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Similar Jobs Used</p>
               <div className="flex flex-col gap-1">
@@ -353,7 +363,8 @@ export function CostEstimator({ jobId }: CostEstimatorProps) {
             variant="outline"
             size="sm"
             className="gap-2 self-start"
-            onClick={() => { clearEstimate(); setIsOpen(true); }}
+            onClick={() => { clearMutation.mutate(); setIsOpen(true); }}
+            disabled={clearMutation.isPending}
           >
             <Sparkles className="h-3.5 w-3.5" /> New Estimate
           </Button>

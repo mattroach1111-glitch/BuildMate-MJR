@@ -71,6 +71,7 @@ export const jobs = pgTable("jobs", {
   isDeleted: boolean("is_deleted").default(false),
   deletedAt: timestamp("deleted_at"),
   sourceQuoteId: varchar("source_quote_id"),
+  costEstimateData: text("cost_estimate_data"), // JSON blob of AI cost estimate
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

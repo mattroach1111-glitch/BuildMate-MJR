@@ -742,6 +742,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ── Cost Estimate endpoints ──
+  app.get("/api/jobs/:id/estimate", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") return res.status(403).json({ message: "Admin access required" });
+      const estimate = await storage.getJobCostEstimate(req.params.id);
+      res.json(estimate || null);
+    } catch (error) {
+      console.error("Error getting job estimate:", error);
+      res.status(500).json({ message: "Failed to get estimate" });
+    }
+  });
+
+  app.post("/api/jobs/:id/estimate", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") return res.status(403).json({ message: "Admin access required" });
+      await storage.saveJobCostEstimate(req.params.id, req.body);
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Error saving job estimate:", error);
+      res.status(500).json({ message: "Failed to save estimate" });
+    }
+  });
+
+  app.delete("/api/jobs/:id/estimate", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") return res.status(403).json({ message: "Admin access required" });
+      await storage.clearJobCostEstimate(req.params.id);
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Error clearing job estimate:", error);
+      res.status(500).json({ message: "Failed to clear estimate" });
+    }
+  });
+
   app.delete("/api/jobs/:id", isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);

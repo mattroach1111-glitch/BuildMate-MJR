@@ -788,6 +788,20 @@ export class DatabaseStorage implements IStorage {
     return updatedJob;
   }
 
+  async getJobCostEstimate(jobId: string): Promise<any | null> {
+    const [job] = await db.select({ costEstimateData: jobs.costEstimateData }).from(jobs).where(eq(jobs.id, jobId));
+    if (!job?.costEstimateData) return null;
+    try { return JSON.parse(job.costEstimateData); } catch { return null; }
+  }
+
+  async saveJobCostEstimate(jobId: string, estimateData: any): Promise<void> {
+    await db.update(jobs).set({ costEstimateData: JSON.stringify(estimateData), updatedAt: new Date() }).where(eq(jobs.id, jobId));
+  }
+
+  async clearJobCostEstimate(jobId: string): Promise<void> {
+    await db.update(jobs).set({ costEstimateData: null, updatedAt: new Date() }).where(eq(jobs.id, jobId));
+  }
+
   async deleteJob(id: string): Promise<void> {
     // Delete all related data first
     await db.delete(laborEntries).where(eq(laborEntries.jobId, id));
