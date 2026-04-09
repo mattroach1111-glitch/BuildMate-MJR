@@ -8328,6 +8328,8 @@ Count the number of distinct trades involved and the total scope. Classify as:
 - Large (12+ trades, $150k+): whole-house rebuild or extensive multi-area restorations
 
 **STEP 2 — PRICE EACH LINE ITEM individually** using current 2025 Tasmanian market rates:
+
+TRADE LABOUR & SUBCONTRACTORS:
 - Carpenter/builder labour: $90–$110/hr
 - Site manager/supervisor: $120/hr
 - Electrician (sub-trade): $1,500–$4,000 per visit scope; full rewire $8,000–$15,000
@@ -8351,7 +8353,32 @@ Count the number of distinct trades involved and the total scope. Classify as:
 - Final clean: $500–$2,000
 - Skip bins/waste: $600–$2,000
 
-**STEP 3 — SUM all line items** to get your raw total.
+TRAVEL (MANDATORY — include for every job):
+Tasmania has limited local suppliers and most jobs require significant travel. You MUST include travel costs:
+- Site travel (crew driving to/from site each day): estimate number of site days × crew size × 1hr travel @ $95/hr + $0.85/km fuel (assume 30–80km round trip per day depending on job location)
+- For a minor job (3–5 site days, 1–2 crew): $500–$1,500 travel
+- For a medium job (2–4 weeks, 2–3 crew): $2,000–$5,000 travel
+- For a major/large job (6–16 weeks, 2–4 crew): $5,000–$15,000 travel
+- Include travel as a line item under "Other / Preliminaries"
+
+MATERIAL COLLECTION & DELIVERIES (MANDATORY — include for every job):
+Builders must physically collect materials from suppliers (Bunnings, Mitre 10, trade suppliers in Hobart/Launceston). You MUST include:
+- Collection trips: estimate number of supplier trips × 2–4hrs per trip × $95/hr labour + fuel
+- For a minor job: $400–$1,000 material collection
+- For a medium job: $1,500–$3,500 material collection
+- For a major/large job: $3,500–$8,000 material collection + consider delivery fees ($200–$500 per delivery)
+- Include as a line item under "Other / Preliminaries"
+
+SUPERVISION & PROJECT ADMINISTRATION (MANDATORY — include for every job):
+Every job requires a supervisor/project manager to coordinate trades, attend site, do take-offs, and handle admin. You MUST include:
+- Site supervision visits: number of trades × 1–2 visits per trade phase × $120/hr supervisor rate
+- Project administration (emails, scheduling, quoting variations, progress claims, defect rectification): 3–10% of total labour cost
+- For a minor job: $500–$1,500 supervision & admin
+- For a medium job: $2,000–$5,000 supervision & admin
+- For a major/large job: $6,000–$18,000 supervision & admin
+- Include supervision labour under "Labour" and admin under "Other / Preliminaries"
+
+**STEP 3 — SUM all line items** to get your raw total. Travel + material collection + supervision/admin typically add 10–20% to the direct trade costs — do not omit these.
 
 **STEP 4 — CALIBRATE against history**: Compare your raw total to similar-scale historical jobs. If your total is within 20% of comparable jobs, it's likely correct. If it's wildly different, explain why in confidenceReason.
 
@@ -8392,9 +8419,9 @@ Respond ONLY with valid JSON (no other text):
 
 ⚠️ IGNORE ALL DOLLAR FIGURES IN THE DOCUMENT. Every price, subtotal, total, PC allowance amount, or work order value shown in the document is our QUOTED PRICE to the client — not our cost. Do not reference or use any of those numbers. Pretend the document contains no dollar amounts at all.
 
-Instead: read the scope items only, then price every single scope item from scratch using 2025 Tasmanian market rates for the physical cost to complete that item. Sum those up. That is the estimate.` }
+Instead: read the scope items only, then price every single scope item from scratch using 2025 Tasmanian market rates for the physical cost to complete that item. MANDATORY: also include travel costs (site travel per day × crew size), material collection runs (supplier trips × time + fuel), and supervision/admin (project manager site visits + coordination time). Sum all of these up. That is the estimate.` }
           ]
-        : [{ type: 'text', text: `TASK: Estimate the builder's ACTUAL COST OF WORKS to complete these scope items — what will be spent on labour, materials, and sub-trades. Ignore any quoted prices or totals. Price every item individually from scratch:\n\n${scopeText}` }];
+        : [{ type: 'text', text: `TASK: Estimate the builder's ACTUAL COST OF WORKS to complete these scope items — what will be spent on labour, materials, sub-trades, travel, material collection runs, and supervision/admin. Ignore any quoted prices or totals. Price every item individually from scratch. Remember travel, material collection, and supervision/admin are MANDATORY inclusions:\n\n${scopeText}` }];
 
       const response = await anthropic.messages.create({
         model: 'claude-opus-4-5',
