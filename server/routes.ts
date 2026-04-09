@@ -8378,15 +8378,38 @@ Every job requires a supervisor/project manager to coordinate trades, attend sit
 - For a major/large job: $6,000–$18,000 supervision & admin
 - Include supervision labour under "Labour" and admin under "Other / Preliminaries"
 
-**STEP 3 — SUM all line items** to get your raw total. Travel + material collection + supervision/admin typically add 10–20% to the direct trade costs — do not omit these.
+**STEP 3 — CALCULATE MANDATORY OVERHEAD COSTS FIRST (before summing anything else):**
 
-**STEP 4 — CALIBRATE against history**: Compare your raw total to similar-scale historical jobs. If your total is within 20% of comparable jobs, it's likely correct. If it's wildly different, explain why in confidenceReason.
+You MUST compute all three of these as separate dollar figures before touching the total. These are not optional.
 
-**STEP 5 — VALIDATE scale, not anchor to documents.** If the scope has 10+ trades and room-by-room detailed repairs across a whole house, the total builder cost will be $100k–$150k+. Check that your per-trade line items add up to a realistic whole. Do not adjust your total to match any figure in the document.
+TRAVEL COST CALCULATION:
+- Estimate number of site days based on scope size
+- Crew size attending site (typically 2 for minor, 2-3 for medium, 3-4 for major/large)
+- Travel = (site days × crew size × 1hr @ $95) + (km driven × $0.85)
+- MINIMUM BY SIZE: minor=$600, medium=$2,500, major=$6,000, large=$9,000
+- If your calculated travel is below minimum, use the minimum
+
+MATERIAL COLLECTION COST CALCULATION:
+- Estimate number of supplier trips (each trade phase needs materials collected)
+- Each trip = 2-4 hours driving + collection time @ $95/hr + fuel
+- MINIMUM BY SIZE: minor=$600, medium=$2,000, major=$4,500, large=$6,500
+- If your calculated collection is below minimum, use the minimum
+
+SUPERVISION & ADMIN COST CALCULATION:
+- Supervision = number of trades × 2 site visits × 2hrs @ $120/hr
+- Admin = 5% of total direct labour cost (emails, scheduling, progress claims, coordination)
+- MINIMUM BY SIZE: minor=$800, medium=$3,000, major=$7,500, large=$12,000
+- If your calculated supervision is below minimum, use the minimum
+
+**STEP 4 — SUM all line items including the mandatory overhead costs** to get your raw total. The three mandatory costs (travel + material collection + supervision/admin) are part of your "Other / Preliminaries" and "Labour" categories.
+
+**STEP 5 — CALIBRATE against history**: Compare your raw total to similar-scale historical jobs. If your total is within 20% of comparable jobs, it's likely correct. If it's wildly different, explain why in confidenceReason.
+
+**STEP 6 — VALIDATE scale.** If the scope has 10+ trades and room-by-room repairs across a whole house, the total builder cost will be $100k–$180k+. Verify your three mandatory overhead fields meet their size-band minimums before outputting.
 
 ## IMPORTANT RULES:
 - Do NOT deflate estimates to match small jobs if the scope is clearly large
-- NEVER use any dollar figure from the document (work order total, subtotal, PC allowances as contract amounts) as your estimate — those are head contractor prices, not builder costs
+- NEVER use any dollar figure from the document as your estimate — those are head contractor prices, not builder costs
 - PC allowance figures (e.g. "$700 for oven") are supply-only costs; add installation labour on top
 - Always price optimistically for completeness — it's better to estimate slightly high than to undersell a complex job
 - The builder charges for all their own carpenter/builder labour PLUS pays sub-trade invoices
@@ -8395,15 +8418,18 @@ Every job requires a supervisor/project manager to coordinate trades, attend sit
 Respond ONLY with valid JSON (no other text):
 {
   "jobSizeClassification": "minor" | "medium" | "major" | "large",
-  "totalEstimateExGst": <number>,
-  "totalEstimateIncGst": <number>,
+  "totalEstimateExGst": <number — MUST equal the sum of all breakdown category amounts>,
+  "totalEstimateIncGst": <number — totalEstimateExGst × 1.1>,
   "confidence": "low" | "medium" | "high",
   "confidenceReason": "<brief 1-2 sentence explanation>",
+  "travelCost": <number — your calculated travel cost, respecting the size-band minimum>,
+  "materialCollectionCost": <number — your calculated material collection cost, respecting the size-band minimum>,
+  "supervisionAdminCost": <number — your calculated supervision and admin cost, respecting the size-band minimum>,
   "breakdown": [
-    { "category": "Labour", "amount": <number>, "notes": "<what labour is included>" },
-    { "category": "Materials", "amount": <number>, "notes": "<key materials listed>" },
-    { "category": "Sub-trades", "amount": <number>, "notes": "<which trades and rough amounts>" },
-    { "category": "Other / Preliminaries", "amount": <number>, "notes": "<prelims, waste, access>" }
+    { "category": "Labour", "amount": <number — includes carpenter labour AND supervision hours>, "notes": "<hours × rate for each labour type, including X hrs supervision @ $120/hr>" },
+    { "category": "Materials", "amount": <number>, "notes": "<key materials listed with amounts>" },
+    { "category": "Sub-trades", "amount": <number>, "notes": "<each trade: Painter $X, Plasterer $X, etc.>" },
+    { "category": "Other / Preliminaries", "amount": <number — includes travel, material collection runs, admin, waste, access>, "notes": "<travel $X, material collection $X, admin $X, scaffolding $X, waste $X, etc.>" }
   ],
   "lineItems": [
     { "trade": "<trade name>", "description": "<specific scope item>", "estimatedCost": <number> }
@@ -8440,6 +8466,32 @@ Instead: read the scope items only, then price every single scope item from scra
         estimate.similarJobDetails = estimate.similarJobs
           .filter((i: number) => historicalJobs[i])
           .map((i: number) => ({ address: historicalJobs[i].jobAddress, total: historicalJobs[i].totalCostExGst }));
+      }
+
+      // Server-side safety net: enforce minimum overhead costs by job size
+      const sizeMins: Record<string, { travel: number; materials: number; supervision: number }> = {
+        minor:  { travel:   600, materials:   600, supervision:   800 },
+        medium: { travel:  2500, materials:  2000, supervision:  3000 },
+        major:  { travel:  6000, materials:  4500, supervision:  7500 },
+        large:  { travel:  9000, materials:  6500, supervision: 12000 },
+      };
+      const mins = sizeMins[estimate.jobSizeClassification] || sizeMins.medium;
+      const origTravel      = Number(estimate.travelCost)           || 0;
+      const origCollection  = Number(estimate.materialCollectionCost) || 0;
+      const origSupervision = Number(estimate.supervisionAdminCost)  || 0;
+      estimate.travelCost            = Math.max(origTravel,      mins.travel);
+      estimate.materialCollectionCost = Math.max(origCollection, mins.materials);
+      estimate.supervisionAdminCost  = Math.max(origSupervision, mins.supervision);
+
+      // If AI undershot the mandatory overheads, add the difference to the total and Other/Prelim category
+      const overhead = (estimate.travelCost + estimate.materialCollectionCost + estimate.supervisionAdminCost);
+      const aiOverhead = (origTravel + origCollection + origSupervision);
+      const shortfall = overhead - aiOverhead;
+      if (shortfall > 0) {
+        estimate.totalEstimateExGst = (Number(estimate.totalEstimateExGst) || 0) + shortfall;
+        estimate.totalEstimateIncGst = estimate.totalEstimateExGst * 1.1;
+        const otherCat = estimate.breakdown?.find((b: any) => b.category === 'Other / Preliminaries');
+        if (otherCat) otherCat.amount = (Number(otherCat.amount) || 0) + shortfall;
       }
 
       res.json(estimate);
