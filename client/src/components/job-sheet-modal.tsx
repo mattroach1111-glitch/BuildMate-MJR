@@ -20,6 +20,7 @@ import { debounce } from "lodash";
 import { Upload, Download, Trash2, FileText, Clock, X, Edit, Mail, Users, RefreshCw, MessageSquare, Plus, Shield, CheckCircle2, FileSignature, Check, Pencil, BarChart3 } from "lucide-react";
 import { SwmsSigningModal } from "@/components/SwmsSigningModal";
 import { ProjectScheduler } from "@/components/ProjectScheduler";
+import { CostEstimator } from "@/components/CostEstimator";
 import type { Job, LaborEntry, Material, SubTrade, OtherCost, TipFee, JobFile, JobNote, Quote, QuoteItem, QuoteSignature } from "@shared/schema";
 
 interface JobSheetModalProps {
@@ -3260,6 +3261,21 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                     )
                   )}
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* AI Cost Estimator Section */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <svg className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <CardTitle className="text-lg font-semibold text-gray-800">Cost Estimator</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <CostEstimator />
               </CardContent>
             </Card>
 

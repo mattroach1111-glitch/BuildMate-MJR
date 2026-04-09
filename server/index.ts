@@ -60,7 +60,8 @@ app.use((req: any, res, next) => {
   const isLongRunning = req.path === '/api/email-inbox/process' || 
                         req.path === '/api/quotes/ai-estimate' ||
                         req.path === '/api/quotes/ai-suggest' ||
-                        req.path.includes('/timeline/generate');
+                        req.path.includes('/timeline/generate') ||
+                        req.path === '/api/cost-estimate';
   const isBulkExport = req.path === '/api/admin/timesheets/bulk-export-to-drive' ||
                        req.path === '/api/admin/jobs/bulk-export-archived-to-drive';
   const timeoutDuration = isBulkExport ? 600000 : isLongRunning ? 120000 : 30000; // 10 min for bulk exports, 2 min for AI, 30s for others

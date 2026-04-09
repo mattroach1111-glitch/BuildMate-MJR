@@ -3699,6 +3699,54 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+
+  async getHistoricalCostSummaries(): Promise<any[]> {
+    const allJobs = await db
+      .select({ id: jobs.id, jobAddress: jobs.jobAddress, clientName: jobs.clientName, status: jobs.status, createdAt: jobs.createdAt })
+      .from(jobs)
+      .where(eq(jobs.isDeleted, false))
+      .orderBy(jobs.createdAt);
+
+    if (allJobs.length === 0) return [];
+
+    const jobIds = allJobs.map(j => j.id);
+
+    const [laborRows, materialRows, subTradeRows, otherCostRows, tipFeeRows] = await Promise.all([
+      db.select({ jobId: laborEntries.jobId, cost: sql<string>`${laborEntries.hourlyRate} * ${laborEntries.hoursLogged}` }).from(laborEntries).where(inArray(laborEntries.jobId, jobIds)),
+      db.select({ jobId: materials.jobId, cost: materials.amount, description: materials.description }).from(materials).where(inArray(materials.jobId, jobIds)),
+      db.select({ jobId: subTrades.jobId, cost: subTrades.amount, trade: subTrades.trade }).from(subTrades).where(inArray(subTrades.jobId, jobIds)),
+      db.select({ jobId: otherCosts.jobId, cost: otherCosts.amount, description: otherCosts.description }).from(otherCosts).where(inArray(otherCosts.jobId, jobIds)),
+      db.select({ jobId: tipFees.jobId, cost: tipFees.totalAmount }).from(tipFees).where(inArray(tipFees.jobId, jobIds)),
+    ]);
+
+    const sum = (rows: any[], jId: string, key = 'cost') =>
+      rows.filter(r => r.jobId === jId).reduce((acc, r) => acc + Number(r[key] || 0), 0);
+
+    return allJobs
+      .map(j => {
+        const labor = sum(laborRows, j.id);
+        const mats = sum(materialRows, j.id);
+        const subs = sum(subTradeRows, j.id);
+        const other = sum(otherCostRows, j.id);
+        const tips = sum(tipFeeRows, j.id);
+        const total = labor + mats + subs + other + tips;
+        if (total === 0) return null;
+        return {
+          jobAddress: j.jobAddress,
+          clientName: j.clientName,
+          status: j.status,
+          year: j.createdAt ? new Date(j.createdAt).getFullYear() : null,
+          totalCostExGst: Math.round(total),
+          labor: Math.round(labor),
+          materials: Math.round(mats),
+          subTrades: Math.round(subs),
+          other: Math.round(other + tips),
+          subTradeTypes: [...new Set(subTradeRows.filter(r => r.jobId === j.id).map(r => r.trade).filter(Boolean))],
+          materialTypes: [...new Set(materialRows.filter(r => r.jobId === j.id).map(r => r.description).filter(Boolean))].slice(0, 10),
+        };
+      })
+      .filter(Boolean);
+  }
 }
 
 export const storage = new DatabaseStorage();

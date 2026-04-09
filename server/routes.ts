@@ -8223,6 +8223,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ─── AI Cost Estimator ────────────────────────────────────────────────────────
+
+  app.post('/api/cost-estimate', isAuthenticated, async (req, res) => {
+    try {
+      const { pdfBase64, pdfMimeType, scopeText } = req.body;
+      if (!pdfBase64 && !scopeText?.trim()) {
+        return res.status(400).json({ error: 'Provide pdfBase64 or scopeText' });
+      }
+
+      const Anthropic = (await import('@anthropic-ai/sdk')).default;
+      const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+      const historicalJobs = await storage.getHistoricalCostSummaries();
+
+      const historyText = historicalJobs.length > 0
+        ? `You have access to ${historicalJobs.length} real completed/active jobs from this builder's history:\n` +
+          historicalJobs.map(j =>
+            `• ${j.jobAddress} (${j.status}, ${j.year}): $${j.totalCostExGst.toLocaleString()} ex-GST — Labour $${j.labor.toLocaleString()}, Materials $${j.materials.toLocaleString()}, Sub-trades $${j.subTrades.toLocaleString()}, Other $${j.other.toLocaleString()}${j.subTradeTypes.length ? ` [Sub-trades: ${j.subTradeTypes.join(', ')}]` : ''}`
+          ).join('\n')
+        : 'No historical job data is available yet. Use your knowledge of Australian construction costs (Tasmania region).';
+
+      const systemPrompt = `You are an expert Australian construction cost estimator with deep knowledge of residential and insurance repair pricing in Tasmania.
+${historyText}
+
+Given a scope of works, estimate the total cost to complete the works. Break it down by trade category. Be realistic and grounded in the historical pricing above.
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "totalEstimateExGst": <number>,
+  "totalEstimateIncGst": <number>,
+  "confidence": "low" | "medium" | "high",
+  "confidenceReason": "<brief explanation>",
+  "breakdown": [
+    { "category": "Labour", "amount": <number>, "notes": "<detail>" },
+    { "category": "Materials", "amount": <number>, "notes": "<detail>" },
+    { "category": "Sub-trades", "amount": <number>, "notes": "<detail>" },
+    { "category": "Other / Preliminaries", "amount": <number>, "notes": "<detail>" }
+  ],
+  "lineItems": [
+    { "trade": "<trade name>", "description": "<what needs doing>", "estimatedCost": <number> }
+  ],
+  "assumptions": ["<assumption 1>", "<assumption 2>"],
+  "similarJobs": [<index of similar historical jobs, 0-based>]
+}`;
+
+      const userContent: any[] = pdfBase64
+        ? [
+            { type: 'document', source: { type: 'base64', media_type: pdfMimeType || 'application/pdf', data: pdfBase64 } },
+            { type: 'text', text: 'Estimate the cost of the works described in this scope of works document.' }
+          ]
+        : [{ type: 'text', text: `Estimate the cost of these works:\n\n${scopeText}` }];
+
+      const response = await anthropic.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userContent }],
+      });
+
+      const rawText = response.content.find(b => b.type === 'text')?.text || '';
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) return res.status(500).json({ error: 'AI did not return valid JSON', raw: rawText });
+
+      const estimate = JSON.parse(jsonMatch[0]);
+      estimate.historicalJobCount = historicalJobs.length;
+      if (estimate.similarJobs?.length) {
+        estimate.similarJobDetails = estimate.similarJobs
+          .filter((i: number) => historicalJobs[i])
+          .map((i: number) => ({ address: historicalJobs[i].jobAddress, total: historicalJobs[i].totalCostExGst }));
+      }
+
+      res.json(estimate);
+    } catch (error: any) {
+      console.error('Cost estimate error:', error);
+      res.status(500).json({ error: error.message || 'Failed to generate estimate' });
+    }
+  });
+
   // ─── Scope Text Extraction (PDF → text for AI timeline) ──────────────────────
 
   app.post('/api/timeline/extract-text', isAuthenticated, async (req, res) => {
