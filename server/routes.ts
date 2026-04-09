@@ -8269,6 +8269,13 @@ CRITICAL: Only use jobs in a similar size band as your calibration reference. Do
 
       const systemPrompt = `You are a senior Australian quantity surveyor and construction cost estimator specialising in residential insurance restoration and renovation work in Tasmania. You have 20+ years experience pricing insurance claims and builder quotes.
 
+## CRITICAL — WHAT YOU ARE ESTIMATING:
+You are estimating the BUILDER'S ACTUAL COST to physically complete the works — meaning:
+- The builder's own carpenter/labourer hours × hourly rate
+- Actual cost of materials the builder purchases
+- Actual sub-trade invoices (electrician, plumber, painter, etc.)
+This is NOT the head contractor's charge, NOT the insurance claim value, NOT the work order contract price, and NOT what the client pays. Those figures may appear in the document but must be COMPLETELY IGNORED. Price only the physical work from scratch.
+
 ${historyText}
 
 ## ESTIMATION METHODOLOGY — FOLLOW THIS EXACTLY:
@@ -8308,13 +8315,15 @@ Count the number of distinct trades involved and the total scope. Classify as:
 
 **STEP 4 — CALIBRATE against history**: Compare your raw total to similar-scale historical jobs. If your total is within 20% of comparable jobs, it's likely correct. If it's wildly different, explain why in confidenceReason.
 
-**STEP 5 — NEVER second-guess a work order value by anchoring to small jobs.** If the scope has 10+ trades and room-by-room detailed repairs across a whole house, the total will be $100k+. Insurance restoration scopes are comprehensive and expensive — they include all labour, materials, and specialist trade costs.
+**STEP 5 — VALIDATE scale, not anchor to documents.** If the scope has 10+ trades and room-by-room detailed repairs across a whole house, the total builder cost will be $100k–$150k+. Check that your per-trade line items add up to a realistic whole. Do not adjust your total to match any figure in the document.
 
 ## IMPORTANT RULES:
 - Do NOT deflate estimates to match small jobs if the scope is clearly large
-- If a work order or PC sum value is mentioned in the scope, use it as a pricing signal, not an anchor to argue against
+- NEVER use any dollar figure from the document (work order total, subtotal, PC allowances as contract amounts) as your estimate — those are head contractor prices, not builder costs
+- PC allowance figures (e.g. "$700 for oven") are supply-only costs; add installation labour on top
 - Always price optimistically for completeness — it's better to estimate slightly high than to undersell a complex job
-- The builder charges for all their own carpenter/builder labour on top of sub-trade costs
+- The builder charges for all their own carpenter/builder labour PLUS pays sub-trade invoices
+- For a major whole-house restoration the actual builder cost is typically 60–80% of the head contractor work order value
 
 Respond ONLY with valid JSON (no other text):
 {
@@ -8339,9 +8348,9 @@ Respond ONLY with valid JSON (no other text):
       const userContent: any[] = pdfBase64
         ? [
             { type: 'document', source: { type: 'base64', media_type: pdfMimeType || 'application/pdf', data: pdfBase64 } },
-            { type: 'text', text: 'Read the full scope of works in this document. Follow the methodology exactly: classify the job, price every line item, then sum. Do not anchor to small historical jobs if this is clearly a major restoration.' }
+            { type: 'text', text: 'Read the scope of works in this document. IMPORTANT: Any dollar figures, subtotals, work order values, PC sums, or contract prices printed in the document are the HEAD CONTRACTOR\'S price — completely ignore them. Price only the actual cost of labour, materials and sub-trades needed to physically complete each scope item. Follow the methodology exactly: classify the job, price every line item individually from scratch, then sum.' }
           ]
-        : [{ type: 'text', text: `Estimate the cost of these works using the methodology above. Price every line item individually before summing:\n\n${scopeText}` }];
+        : [{ type: 'text', text: `Estimate the ACTUAL COST to complete these works (not any quoted or contract price). Price every line item individually before summing:\n\n${scopeText}` }];
 
       const response = await anthropic.messages.create({
         model: 'claude-opus-4-5',

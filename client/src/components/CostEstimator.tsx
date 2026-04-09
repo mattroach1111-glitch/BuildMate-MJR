@@ -213,9 +213,10 @@ export function CostEstimator() {
                 <TrendingUp className="h-4 w-4 text-purple-600" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium">AI Cost Estimate</p>
+                <p className="text-xs text-gray-500 font-medium">Estimated Builder's Cost</p>
                 <p className="text-2xl font-bold text-gray-900">{fmtCurrency(estimate.totalEstimateExGst)}</p>
                 <p className="text-xs text-gray-400">ex GST · {fmtCurrency(estimate.totalEstimateIncGst)} inc GST</p>
+                <p className="text-xs text-purple-500 mt-0.5">Your labour, materials & sub-trades</p>
               </div>
             </div>
             <div className="flex flex-col items-end gap-1.5">
