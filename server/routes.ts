@@ -8353,59 +8353,32 @@ TRADE LABOUR & SUBCONTRACTORS:
 - Final clean: $500–$2,000
 - Skip bins/waste: $600–$2,000
 
-TRAVEL (MANDATORY — include for every job):
-Tasmania has limited local suppliers and most jobs require significant travel. You MUST include travel costs:
-- Site travel (crew driving to/from site each day): estimate number of site days × crew size × 1hr travel @ $95/hr + $0.85/km fuel (assume 30–80km round trip per day depending on job location)
-- For a minor job (3–5 site days, 1–2 crew): $500–$1,500 travel
-- For a medium job (2–4 weeks, 2–3 crew): $2,000–$5,000 travel
-- For a major/large job (6–16 weeks, 2–4 crew): $5,000–$15,000 travel
-- Include travel as a line item under "Other / Preliminaries"
-
-MATERIAL COLLECTION & DELIVERIES (MANDATORY — include for every job):
-Builders must physically collect materials from suppliers (Bunnings, Mitre 10, trade suppliers in Hobart/Launceston). You MUST include:
-- Collection trips: estimate number of supplier trips × 2–4hrs per trip × $95/hr labour + fuel
-- For a minor job: $400–$1,000 material collection
-- For a medium job: $1,500–$3,500 material collection
-- For a major/large job: $3,500–$8,000 material collection + consider delivery fees ($200–$500 per delivery)
+TRAVEL (include for every job, scaled to job size):
+Tasmania has spread-out suppliers and job sites. Include travel costs proportional to the work:
+- Site travel: site days × crew size × travel time @ $95/hr + fuel ($0.85/km, assume 30–80km round trip)
+- A quick 1-day job with 1 person might only be $80–$150 travel. A multi-week job with a crew will be much more.
+- Scale it honestly — don't inflate, don't ignore it.
 - Include as a line item under "Other / Preliminaries"
 
-SUPERVISION & PROJECT ADMINISTRATION (MANDATORY — include for every job):
-Every job requires a supervisor/project manager to coordinate trades, attend site, do take-offs, and handle admin. You MUST include:
-- Site supervision visits: number of trades × 1–2 visits per trade phase × $120/hr supervisor rate
-- Project administration (emails, scheduling, quoting variations, progress claims, defect rectification): 3–10% of total labour cost
-- For a minor job: $500–$1,500 supervision & admin
-- For a medium job: $2,000–$5,000 supervision & admin
-- For a major/large job: $6,000–$18,000 supervision & admin
-- Include supervision labour under "Labour" and admin under "Other / Preliminaries"
+MATERIAL COLLECTION & DELIVERIES (include for every job, scaled to job size):
+Builders collect materials from Bunnings, Mitre 10, and trade suppliers. Include collection time proportional to materials needed:
+- Collection trips: number of supplier trips × time per trip (1–3hrs) @ $95/hr + fuel
+- A small job might need 1–2 trips ($100–$400). A large multi-trade job might need 8–12 trips ($800–$2,500+).
+- Scale to the actual volume of materials required.
+- Include as a line item under "Other / Preliminaries"
 
-**STEP 3 — CALCULATE MANDATORY OVERHEAD COSTS FIRST (before summing anything else):**
+SUPERVISION & PROJECT ADMINISTRATION (include for every job, scaled to job size):
+Every job has some coordination overhead. Include proportional supervision and admin:
+- Supervision: builder site visits to check sub-trade work × 1–2hrs @ $120/hr
+- Admin: emails, scheduling, progress claims — roughly 3–5% of direct labour, scaled to complexity
+- A very simple 1-trade job might need only $100–$300 admin. A complex multi-trade job needs more.
+- Include supervision under "Labour" and admin under "Other / Preliminaries"
 
-You MUST compute all three of these as separate dollar figures before touching the total. These are not optional.
+**STEP 3 — PRICE each scope item** using 2025 Tasmanian rates. Include travel, material collection, and supervision/admin naturally in the relevant categories, scaled to the actual job size — not inflated, not ignored.
 
-TRAVEL COST CALCULATION:
-- Estimate number of site days based on scope size
-- Crew size attending site (typically 2 for minor, 2-3 for medium, 3-4 for major/large)
-- Travel = (site days × crew size × 1hr @ $95) + (km driven × $0.85)
-- MINIMUM BY SIZE: minor=$600, medium=$2,500, major=$6,000, large=$9,000
-- If your calculated travel is below minimum, use the minimum
+**STEP 4 — SUM all line items** to get your total. The travel, collection, and supervision costs are part of "Other / Preliminaries" and "Labour" — not added on top.
 
-MATERIAL COLLECTION COST CALCULATION:
-- Estimate number of supplier trips (each trade phase needs materials collected)
-- Each trip = 2-4 hours driving + collection time @ $95/hr + fuel
-- MINIMUM BY SIZE: minor=$600, medium=$2,000, major=$4,500, large=$6,500
-- If your calculated collection is below minimum, use the minimum
-
-SUPERVISION & ADMIN COST CALCULATION:
-- Supervision = number of trades × 2 site visits × 2hrs @ $120/hr
-- Admin = 5% of total direct labour cost (emails, scheduling, progress claims, coordination)
-- MINIMUM BY SIZE: minor=$800, medium=$3,000, major=$7,500, large=$12,000
-- If your calculated supervision is below minimum, use the minimum
-
-**STEP 4 — SUM all line items including the mandatory overhead costs** to get your raw total. The three mandatory costs (travel + material collection + supervision/admin) are part of your "Other / Preliminaries" and "Labour" categories.
-
-**STEP 5 — CALIBRATE against history**: Compare your raw total to similar-scale historical jobs. If your total is within 20% of comparable jobs, it's likely correct. If it's wildly different, explain why in confidenceReason.
-
-**STEP 6 — VALIDATE scale.** If the scope has 10+ trades and room-by-room repairs across a whole house, the total builder cost will be $100k–$180k+. Verify your three mandatory overhead fields meet their size-band minimums before outputting.
+**STEP 5 — CALIBRATE against history**: Compare your total to similar-scale historical jobs. If your total is within 20% of comparable jobs, it's likely correct. If it's wildly different, explain why in confidenceReason.
 
 ## IMPORTANT RULES:
 - Do NOT deflate estimates to match small jobs if the scope is clearly large
@@ -8463,27 +8436,6 @@ Instead: read the scope items only, then price every single scope item from scra
         estimate.similarJobDetails = estimate.similarJobs
           .filter((i: number) => historicalJobs[i])
           .map((i: number) => ({ address: historicalJobs[i].jobAddress, total: historicalJobs[i].totalCostExGst }));
-      }
-
-      // Server-side safety net: enforce minimum "Other / Preliminaries" by job size
-      // This ensures travel, material collection, and supervision/admin are always adequately costed
-      const otherPrelimMins: Record<string, number> = {
-        minor:  2000,   // travel $600 + collection $600 + supervision $800
-        medium: 7500,   // travel $2500 + collection $2000 + supervision $3000
-        major:  18000,  // travel $6000 + collection $4500 + supervision $7500
-        large:  27500,  // travel $9000 + collection $6500 + supervision $12000
-      };
-      const minOtherPrelim = otherPrelimMins[estimate.jobSizeClassification] || otherPrelimMins.medium;
-      const otherCat = estimate.breakdown?.find((b: any) => b.category === 'Other / Preliminaries');
-      if (otherCat) {
-        const currentOther = Number(otherCat.amount) || 0;
-        if (currentOther < minOtherPrelim) {
-          const shortfall = minOtherPrelim - currentOther;
-          otherCat.amount = minOtherPrelim;
-          otherCat.notes = (otherCat.notes || '') + ` (adjusted to include full travel, material collection & supervision costs)`;
-          estimate.totalEstimateExGst = (Number(estimate.totalEstimateExGst) || 0) + shortfall;
-          estimate.totalEstimateIncGst = estimate.totalEstimateExGst * 1.1;
-        }
       }
 
       res.json(estimate);
