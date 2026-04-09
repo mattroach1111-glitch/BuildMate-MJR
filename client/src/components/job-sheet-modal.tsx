@@ -3275,7 +3275,7 @@ export default function JobSheetModal({ jobId, isOpen, onClose }: JobSheetModalP
                 </div>
               </CardHeader>
               <CardContent>
-                <CostEstimator />
+                <CostEstimator jobId={jobId} />
               </CardContent>
             </Card>
 

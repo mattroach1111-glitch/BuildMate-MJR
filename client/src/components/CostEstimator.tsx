@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -51,8 +51,13 @@ const CONFIDENCE_COLORS = {
 const fmtCurrency = (n: number) =>
   new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 }).format(n);
 
-export function CostEstimator() {
+interface CostEstimatorProps {
+  jobId: string;
+}
+
+export function CostEstimator({ jobId }: CostEstimatorProps) {
   const { toast } = useToast();
+  const storageKey = `cost_estimate_${jobId}`;
   const [isOpen, setIsOpen] = useState(false);
   const [scopeText, setScopeText] = useState("");
   const [pdfBase64, setPdfBase64] = useState<string | null>(null);
@@ -62,11 +67,29 @@ export function CostEstimator() {
   const [estimate, setEstimate] = useState<CostEstimate | null>(null);
   const [showLineItems, setShowLineItems] = useState(false);
 
+  // Load persisted estimate when the component mounts / jobId changes
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) setEstimate(JSON.parse(saved));
+    } catch { /* ignore parse errors */ }
+  }, [storageKey]);
+
+  const saveEstimate = (data: CostEstimate) => {
+    setEstimate(data);
+    try { localStorage.setItem(storageKey, JSON.stringify(data)); } catch { /* storage full */ }
+  };
+
+  const clearEstimate = () => {
+    setEstimate(null);
+    try { localStorage.removeItem(storageKey); } catch { /* ignore */ }
+  };
+
   const estimateMutation = useMutation({
     mutationFn: (body: any) =>
       apiRequest("POST", "/api/cost-estimate", body).then(r => r.json()),
     onSuccess: (data: CostEstimate) => {
-      setEstimate(data);
+      saveEstimate(data);
       toast({ title: "Cost estimate ready" });
     },
     onError: (e: any) => toast({ title: "Estimation failed", description: e.message, variant: "destructive" }),
@@ -330,7 +353,7 @@ export function CostEstimator() {
             variant="outline"
             size="sm"
             className="gap-2 self-start"
-            onClick={() => { setEstimate(null); setIsOpen(true); }}
+            onClick={() => { clearEstimate(); setIsOpen(true); }}
           >
             <Sparkles className="h-3.5 w-3.5" /> New Estimate
           </Button>
