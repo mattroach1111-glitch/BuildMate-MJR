@@ -947,6 +947,7 @@ export const quotes = pgTable("quotes", {
   lumpSumTotal: decimal("lump_sum_total", { precision: 10, scale: 2 }), // Base amount before margin (ex GST)
   scopeDocumentKey: varchar("scope_document_key"), // Object storage key for scope PDF (optional)
   scopeDocumentName: varchar("scope_document_name"), // Original filename
+  costEstimateData: text("cost_estimate_data"), // JSON blob of AI cost estimate (breakdown + line items)
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

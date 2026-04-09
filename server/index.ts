@@ -157,6 +157,7 @@ app.use((req, res, next) => {
       ALTER TABLE quotes ADD COLUMN IF NOT EXISTS scope_text text;
       ALTER TABLE quotes ADD COLUMN IF NOT EXISTS lump_sum_total decimal(10,2);
       ALTER TABLE quotes ADD COLUMN IF NOT EXISTS quote_type varchar DEFAULT 'itemized';
+      ALTER TABLE quotes ADD COLUMN IF NOT EXISTS cost_estimate_data text;
     `);
     console.log('✅ Startup migrations applied');
   } catch (err: any) {

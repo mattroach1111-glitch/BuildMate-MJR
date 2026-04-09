@@ -149,6 +149,7 @@ function NewQuoteWizard({ onClose, onCreated }: NewQuoteWizardProps) {
       gstAmount: gst.toFixed(2),
       totalAmount: total.toFixed(2),
       projectDescription: details.projectDescription || (fileName ? `Works at ${details.projectAddress}` : scopeText.slice(0, 80)),
+      costEstimateData: estimate ? JSON.stringify(estimate) : undefined,
     });
   };
 
@@ -480,6 +481,7 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
   const [lumpSumScope, setLumpSumScope] = useState(quote.scopeText || "");
   const [lumpSumAmount, setLumpSumAmount] = useState(quote.lumpSumTotal || "");
   const [showScopeEdit, setShowScopeEdit] = useState(false);
+  const [hideFigures, setHideFigures] = useState(false);
 
   const updateDetailsMutation = useMutation({
     mutationFn: (data: typeof editDetails) => apiRequest("PATCH", `/api/quotes/${quote.id}`, data).then(r => r.json()),
@@ -699,6 +701,14 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
 
         {/* Actions */}
         <div className="flex flex-wrap gap-2 pt-3 border-t">
+          <Button
+            variant={hideFigures ? "default" : "outline"}
+            size="sm"
+            onClick={() => setHideFigures(h => !h)}
+            title={hideFigures ? "Showing total only — click for detailed PDF" : "Click to hide line item figures (show total only)"}
+          >
+            {hideFigures ? "Total Only" : "Detailed PDF"}
+          </Button>
           <Button variant="outline" onClick={async () => {
             await generateQuotePDF({
               ...quote,
@@ -706,7 +716,7 @@ function QuoteEditor({ quote, onClose, onUpdate }: { quote: QuoteWithItems; onCl
               acceptedAt: quote.acceptedAt?.toString() || null,
               validUntil: quote.validUntil?.toString() || null,
               signature: quote.signatures?.[0] ? { signerName: quote.signatures[0].signerName, signatureData: quote.signatures[0].signatureData, signedAt: quote.signatures[0].signedAt?.toString() || new Date().toISOString() } : null,
-            });
+            }, true, hideFigures);
           }}>
             <Download className="h-4 w-4 mr-1.5" /> PDF
           </Button>

@@ -1239,6 +1239,7 @@ type QuoteForPDF = {
   acceptedAt: string | null;
   quoteType?: string | null;
   scopeText?: string | null;
+  costEstimateData?: string | null;
   items: Array<{
     id: string;
     itemType: string;
@@ -1254,7 +1255,7 @@ type QuoteForPDF = {
   } | null;
 };
 
-export async function generateQuotePDF(quote: QuoteForPDF, download: boolean = true): Promise<jsPDF> {
+export async function generateQuotePDF(quote: QuoteForPDF, download: boolean = true, hideFigures: boolean = false): Promise<jsPDF> {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
   const pageHeight = doc.internal.pageSize.height;
@@ -1348,64 +1349,120 @@ export async function generateQuotePDF(quote: QuoteForPDF, download: boolean = t
   // === SCOPE OF WORKS ===
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
+
+  // Parse AI estimate data if available
+  let estimateData: any = null;
+  if (quote.costEstimateData) {
+    try { estimateData = JSON.parse(quote.costEstimateData); } catch {}
+  }
+
+  // Helper: check page break inline
+  const checkBreak = (space: number = 15) => {
+    if (yPos > pageHeight - space) { doc.addPage(); yPos = 30; }
+  };
   
-  // Check if this is a lump sum quote with scope text
-  if (quote.quoteType === 'lump_sum' && quote.scopeText) {
-    // Render scope text for lump sum quotes
+  if (estimateData?.lineItems?.length > 0) {
+    // ── AI Estimate: show line items ──
+    doc.setFont('helvetica', 'bold');
+    doc.text('Scope of Works:', marginLeft, yPos);
+    yPos += 10;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+
+    // Group line items by trade
+    const byTrade: Record<string, Array<{description: string; estimatedCost: number}>> = {};
+    estimateData.lineItems.forEach((item: any) => {
+      const trade = item.trade || 'General';
+      if (!byTrade[trade]) byTrade[trade] = [];
+      byTrade[trade].push(item);
+    });
+
+    const rightCol = pageWidth - marginRight;
+
+    Object.entries(byTrade).forEach(([trade, items]) => {
+      checkBreak(25);
+      // Trade heading
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.text(trade.toUpperCase(), marginLeft, yPos);
+      if (!hideFigures) {
+        const tradeTotalVal = items.reduce((s: number, i: any) => s + (Number(i.estimatedCost) || 0), 0);
+        doc.text(`$${tradeTotalVal.toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`, rightCol, yPos, { align: 'right' });
+      }
+      yPos += 2;
+      doc.setLineWidth(0.2);
+      doc.setDrawColor(180, 180, 180);
+      doc.line(marginLeft, yPos, rightCol, yPos);
+      yPos += 5;
+
+      // Line items under trade
+      doc.setFont('helvetica', 'normal');
+      items.forEach((item: any) => {
+        checkBreak(12);
+        const maxDescWidth = hideFigures ? contentWidth - 4 : contentWidth - 28;
+        const descLines = doc.splitTextToSize(`  • ${item.description}`, maxDescWidth);
+        descLines.forEach((line: string, li: number) => {
+          checkBreak(8);
+          doc.text(line, marginLeft, yPos + li * 5);
+        });
+        if (!hideFigures && item.estimatedCost) {
+          const costStr = `$${Number(item.estimatedCost).toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+          doc.text(costStr, rightCol, yPos, { align: 'right' });
+        }
+        yPos += Math.max(descLines.length * 5, 6) + 2;
+      });
+      yPos += 4;
+    });
+
+    // Breakdown summary
+    if (estimateData.breakdown?.length > 0) {
+      yPos += 4;
+      checkBreak(40);
+      doc.setDrawColor(120, 120, 120);
+      doc.setLineWidth(0.3);
+      doc.line(marginLeft, yPos, rightCol, yPos);
+      yPos += 8;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.text('Cost Summary (ex. GST)', marginLeft, yPos);
+      yPos += 7;
+      doc.setFont('helvetica', 'normal');
+      estimateData.breakdown.forEach((cat: any) => {
+        checkBreak(10);
+        doc.text(cat.category, marginLeft + 4, yPos);
+        if (!hideFigures) {
+          doc.text(`$${Number(cat.amount).toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`, rightCol, yPos, { align: 'right' });
+        }
+        yPos += 6;
+      });
+    }
+  } else if (quote.quoteType === 'lump_sum' && quote.scopeText) {
+    // Fallback: plain scope text
     doc.setFont('helvetica', 'bold');
     doc.text('Scope of Works:', marginLeft, yPos);
     yPos += 8;
     doc.setFont('helvetica', 'normal');
-    
-    // Split scope text into paragraphs and lines
     const paragraphs = quote.scopeText.split('\n');
     paragraphs.forEach((paragraph) => {
       if (paragraph.trim()) {
-        if (yPos > pageHeight - 50) {
-          doc.addPage();
-          yPos = 30;
-        }
+        checkBreak(50);
         const lines = doc.splitTextToSize(paragraph, contentWidth);
         lines.forEach((line: string) => {
-          if (yPos > pageHeight - 50) {
-            doc.addPage();
-            yPos = 30;
-          }
+          checkBreak(50);
           doc.text(line, marginLeft, yPos);
           yPos += 5;
         });
-        yPos += 3; // Extra space between paragraphs
+        yPos += 3;
       }
     });
   } else {
-    // Group items by type
-    const itemsByType: Record<string, typeof quote.items> = {};
-    quote.items.forEach(item => {
-      if (!itemsByType[item.itemType]) {
-        itemsByType[item.itemType] = [];
-      }
-      itemsByType[item.itemType].push(item);
-    });
-    
-    // Render items as bullet list (matching the template style)
-    const allItems = quote.items;
-    allItems.forEach((item) => {
-      // Check for page break
-      if (yPos > pageHeight - 80) {
-        doc.addPage();
-        yPos = 30;
-      }
-      
-      // Bullet point
+    // Itemised quote: bullet list
+    quote.items.forEach((item) => {
+      checkBreak(80);
       doc.text('-', marginLeft, yPos);
-      
-      // Description with word wrap
       const lines = doc.splitTextToSize(item.description, contentWidth - 10);
       lines.forEach((line: string, lineIndex: number) => {
-        if (lineIndex > 0 && yPos > pageHeight - 50) {
-          doc.addPage();
-          yPos = 30;
-        }
+        if (lineIndex > 0) checkBreak(50);
         doc.text(line, marginLeft + 8, yPos + (lineIndex * 5));
       });
       yPos += Math.max(lines.length * 5, 8) + 4;
@@ -1415,20 +1472,43 @@ export async function generateQuotePDF(quote: QuoteForPDF, download: boolean = t
   yPos += 15;
   
   // === ESTIMATE QUOTATION ===
-  if (yPos > pageHeight - 100) {
-    doc.addPage();
-    yPos = 30;
-  }
+  checkBreak(100);
   
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   
   const subtotal = parseFloat(quote.subtotal);
   const total = parseFloat(quote.totalAmount);
-  
-  // Format as range or single value based on typical quote presentation
+  const gstAmt = parseFloat(quote.gstAmount);
+  const rightColFinal = pageWidth - marginRight;
+
+  // Totals table
+  doc.setDrawColor(150, 150, 150);
+  doc.setLineWidth(0.3);
+  doc.line(marginLeft, yPos, rightColFinal, yPos);
+  yPos += 8;
+
+  if (!hideFigures) {
+    const subtotalExGst = subtotal / 1; // subtotal already includes margin
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('Subtotal (ex. GST):', marginLeft + 4, yPos);
+    doc.text(`$${subtotalExGst.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, rightColFinal, yPos, { align: 'right' });
+    yPos += 7;
+    doc.text('GST (10%):', marginLeft + 4, yPos);
+    doc.text(`$${gstAmt.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, rightColFinal, yPos, { align: 'right' });
+    yPos += 5;
+    doc.line(marginLeft, yPos, rightColFinal, yPos);
+    yPos += 8;
+  }
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(30, 80, 160);
+  doc.text('TOTAL ESTIMATE (inc. GST):', marginLeft, yPos);
   const formattedTotal = `$${total.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  doc.text(`Estimate Quotation of: ${formattedTotal} (inc. GST)`, marginLeft, yPos);
+  doc.text(formattedTotal, rightColFinal, yPos, { align: 'right' });
+  doc.setTextColor(0, 0, 0);
   
   yPos += 20;
   
@@ -1558,7 +1638,7 @@ export async function generateQuotePDF(quote: QuoteForPDF, download: boolean = t
 }
 
 // Generate quote PDF as base64 for email attachment
-export async function generateQuotePDFBase64(quote: QuoteForPDF): Promise<string> {
-  const doc = await generateQuotePDF(quote, false);
+export async function generateQuotePDFBase64(quote: QuoteForPDF, hideFigures: boolean = false): Promise<string> {
+  const doc = await generateQuotePDF(quote, false, hideFigures);
   return doc.output('datauristring').split(',')[1]; // Return just the base64 part
 }
