@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import sharp from 'sharp';
 
-const DEFAULT_MODEL_STR = "claude-sonnet-4-20250514";
+const DEFAULT_MODEL_STR = "claude-sonnet-4-5";
 const MAX_IMAGE_DIMENSION = 7000;
 
 async function resizeImageIfNeeded(base64Data: string, mediaType: string): Promise<{ data: string; mediaType: string }> {
