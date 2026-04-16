@@ -639,7 +639,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rows = await db.execute(sql`
         SELECT
           j.id AS job_id,
-          j.address AS job_address,
+          j.job_address,
           j.client_name,
           j.status,
           (j.deleted_at IS NOT NULL) AS is_archived,
@@ -657,7 +657,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         SELECT
           j.id,
-          j.address,
+          j.job_address,
           j.client_name,
           j.status,
           (j.deleted_at IS NOT NULL),
@@ -675,7 +675,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         SELECT
           j.id,
-          j.address,
+          j.job_address,
           j.client_name,
           j.status,
           (j.deleted_at IS NOT NULL),
@@ -693,7 +693,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         SELECT
           j.id,
-          j.address,
+          j.job_address,
           j.client_name,
           j.status,
           (j.deleted_at IS NOT NULL),
@@ -711,7 +711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         SELECT
           j.id,
-          j.address,
+          j.job_address,
           j.client_name,
           j.status,
           (j.deleted_at IS NOT NULL),
