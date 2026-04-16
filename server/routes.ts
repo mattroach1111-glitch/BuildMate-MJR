@@ -642,6 +642,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           j.address AS job_address,
           j.client_name,
           j.status,
+          (j.deleted_at IS NOT NULL) AS is_archived,
           'material' AS match_type,
           m.description AS match_text,
           m.supplier AS extra,
@@ -650,8 +651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           m.id AS item_id
         FROM materials m
         JOIN jobs j ON j.id = m.job_id
-        WHERE j.deleted_at IS NULL
-          AND (m.description ILIKE ${term} OR m.supplier ILIKE ${term})
+        WHERE m.description ILIKE ${term} OR m.supplier ILIKE ${term}
 
         UNION ALL
 
@@ -660,6 +660,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           j.address,
           j.client_name,
           j.status,
+          (j.deleted_at IS NOT NULL),
           'sub-trade',
           st.trade,
           st.contractor,
@@ -668,8 +669,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           st.id
         FROM sub_trades st
         JOIN jobs j ON j.id = st.job_id
-        WHERE j.deleted_at IS NULL
-          AND (st.trade ILIKE ${term} OR st.contractor ILIKE ${term})
+        WHERE st.trade ILIKE ${term} OR st.contractor ILIKE ${term}
 
         UNION ALL
 
@@ -678,6 +678,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           j.address,
           j.client_name,
           j.status,
+          (j.deleted_at IS NOT NULL),
           'other-cost',
           oc.description,
           NULL,
@@ -686,8 +687,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           oc.id
         FROM other_costs oc
         JOIN jobs j ON j.id = oc.job_id
-        WHERE j.deleted_at IS NULL
-          AND oc.description ILIKE ${term}
+        WHERE oc.description ILIKE ${term}
 
         UNION ALL
 
@@ -696,6 +696,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           j.address,
           j.client_name,
           j.status,
+          (j.deleted_at IS NOT NULL),
           'tip-fee',
           tf.description,
           NULL,
@@ -704,8 +705,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           tf.id
         FROM tip_fees tf
         JOIN jobs j ON j.id = tf.job_id
-        WHERE j.deleted_at IS NULL
-          AND tf.description ILIKE ${term}
+        WHERE tf.description ILIKE ${term}
 
         UNION ALL
 
@@ -714,6 +714,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           j.address,
           j.client_name,
           j.status,
+          (j.deleted_at IS NOT NULL),
           'timesheet-note',
           te.description,
           e.name,
@@ -723,8 +724,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         FROM timesheet_entries te
         JOIN jobs j ON j.id = te.job_id
         JOIN employees e ON e.id = te.staff_id
-        WHERE j.deleted_at IS NULL
-          AND (te.description ILIKE ${term} OR te.materials ILIKE ${term})
+        WHERE te.description ILIKE ${term} OR te.materials ILIKE ${term}
 
         ORDER BY job_address, match_type
         LIMIT 200
@@ -740,6 +740,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             jobAddress: row.job_address,
             clientName: row.client_name,
             status: row.status,
+            isArchived: row.is_archived === true || row.is_archived === 't',
             matches: []
           };
         }

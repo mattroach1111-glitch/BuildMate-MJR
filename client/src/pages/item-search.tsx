@@ -21,6 +21,7 @@ interface JobResult {
   jobAddress: string;
   clientName: string;
   status: string;
+  isArchived: boolean;
   matches: SearchMatch[];
 }
 
@@ -198,9 +199,16 @@ export default function ItemSearchPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <Badge variant="outline" className="text-xs capitalize whitespace-nowrap">
-                    {job.status}
-                  </Badge>
+                  {job.isArchived && (
+                    <Badge className="text-xs bg-gray-200 text-gray-700 border-gray-300 whitespace-nowrap">
+                      Archived
+                    </Badge>
+                  )}
+                  {!job.isArchived && (
+                    <Badge variant="outline" className="text-xs capitalize whitespace-nowrap">
+                      {job.status}
+                    </Badge>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"
