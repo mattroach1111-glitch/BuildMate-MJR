@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { db } from '../db';
 import { costLibraryItems, costCategories } from '@shared/schema';
 
-const DEFAULT_MODEL = "claude-sonnet-4-5";
+const DEFAULT_MODEL = "claude-opus-4-5";
 
 interface RoomMeasurements {
   length?: number;
