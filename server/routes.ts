@@ -621,6 +621,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Global item search across all job sheets
+  app.get("/api/search/items", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const q = (req.query.q as string || "").trim();
+      if (!q || q.length < 2) {
+        return res.json({ results: [], total: 0 });
+      }
+
+      const term = `%${q}%`;
+
+      const rows = await db.execute(sql`
+        SELECT
+          j.id AS job_id,
+          j.address AS job_address,
+          j.client_name,
+          j.status,
+          'material' AS match_type,
+          m.description AS match_text,
+          m.supplier AS extra,
+          m.amount::text AS amount,
+          m.invoice_date AS match_date,
+          m.id AS item_id
+        FROM materials m
+        JOIN jobs j ON j.id = m.job_id
+        WHERE j.deleted_at IS NULL
+          AND (m.description ILIKE ${term} OR m.supplier ILIKE ${term})
+
+        UNION ALL
+
+        SELECT
+          j.id,
+          j.address,
+          j.client_name,
+          j.status,
+          'sub-trade',
+          st.trade,
+          st.contractor,
+          st.amount::text,
+          st.invoice_date,
+          st.id
+        FROM sub_trades st
+        JOIN jobs j ON j.id = st.job_id
+        WHERE j.deleted_at IS NULL
+          AND (st.trade ILIKE ${term} OR st.contractor ILIKE ${term})
+
+        UNION ALL
+
+        SELECT
+          j.id,
+          j.address,
+          j.client_name,
+          j.status,
+          'other-cost',
+          oc.description,
+          NULL,
+          oc.amount::text,
+          NULL,
+          oc.id
+        FROM other_costs oc
+        JOIN jobs j ON j.id = oc.job_id
+        WHERE j.deleted_at IS NULL
+          AND oc.description ILIKE ${term}
+
+        UNION ALL
+
+        SELECT
+          j.id,
+          j.address,
+          j.client_name,
+          j.status,
+          'tip-fee',
+          tf.description,
+          NULL,
+          tf.total_amount::text,
+          NULL,
+          tf.id
+        FROM tip_fees tf
+        JOIN jobs j ON j.id = tf.job_id
+        WHERE j.deleted_at IS NULL
+          AND tf.description ILIKE ${term}
+
+        UNION ALL
+
+        SELECT
+          j.id,
+          j.address,
+          j.client_name,
+          j.status,
+          'timesheet-note',
+          te.description,
+          e.name,
+          te.hours::text,
+          te.date::text,
+          te.id
+        FROM timesheet_entries te
+        JOIN jobs j ON j.id = te.job_id
+        JOIN employees e ON e.id = te.staff_id
+        WHERE j.deleted_at IS NULL
+          AND (te.description ILIKE ${term} OR te.materials ILIKE ${term})
+
+        ORDER BY job_address, match_type
+        LIMIT 200
+      `);
+
+      // Group by job
+      const byJob: Record<string, any> = {};
+      for (const row of rows.rows as any[]) {
+        const jid = row.job_id;
+        if (!byJob[jid]) {
+          byJob[jid] = {
+            jobId: jid,
+            jobAddress: row.job_address,
+            clientName: row.client_name,
+            status: row.status,
+            matches: []
+          };
+        }
+        byJob[jid].matches.push({
+          type: row.match_type,
+          text: row.match_text,
+          extra: row.extra,
+          amount: row.amount,
+          date: row.match_date,
+          itemId: row.item_id
+        });
+      }
+
+      const results = Object.values(byJob);
+      res.json({ results, total: results.length });
+    } catch (error) {
+      console.error("Error searching items:", error);
+      res.status(500).json({ message: "Search failed" });
+    }
+  });
+
   app.get("/api/jobs", isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);

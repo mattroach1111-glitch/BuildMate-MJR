@@ -2943,6 +2943,21 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
 
+              {/* Item Search App */}
+              <Card
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-cyan-50 to-cyan-100 border-cyan-200"
+                onClick={() => window.location.href = '/item-search'}
+                data-testid="app-item-search"
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-cyan-500 rounded-full flex items-center justify-center">
+                    <Search className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-medium text-sm">Item Search</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Find items across jobs</p>
+                </CardContent>
+              </Card>
+
               {/* Project Planner App */}
               <Card
                 className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 bg-gradient-to-br from-indigo-50 to-indigo-100 border-indigo-200"

@@ -26,6 +26,7 @@ import QuotesPage from "@/pages/quotes";
 import PublicQuoteView from "@/pages/public-quote-view";
 import CostLibraryPage from "@/pages/cost-library";
 import ProjectPlanner from "@/pages/project-planner";
+import ItemSearchPage from "@/pages/item-search";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -64,6 +65,7 @@ function Router() {
           <Route path="/quotes" component={QuotesPage} />
           <Route path="/cost-library" component={CostLibraryPage} />
           <Route path="/project-planner" component={ProjectPlanner} />
+          <Route path="/item-search" component={ItemSearchPage} />
           <Route component={NotFound} />
         </>
       ) : (
