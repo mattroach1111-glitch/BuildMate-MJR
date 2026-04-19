@@ -1897,9 +1897,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Get combined list of users and employees for timesheet assignment
-  async getStaffForTimesheets(): Promise<Array<{ id: string; name: string; type: 'user' | 'employee' }>> {
-    // CRITICAL FIX: Get users with their linked employee data using a proper join
-    // This ensures we show employee names (from staff management) but use user IDs for timesheet queries
+  async getStaffForTimesheets(): Promise<Array<{ id: string; name: string; type: 'user' | 'employee'; isFormer?: boolean }>> {
+    // Get ALL users (assigned and unassigned) with their linked employee data
     const usersWithEmployees = await db
       .select({
         userId: users.id,
@@ -1911,10 +1910,15 @@ export class DatabaseStorage implements IStorage {
         isActive: employees.isActive,
       })
       .from(users)
-      .leftJoin(employees, eq(users.employeeId, employees.id))
-      .where(eq(users.isAssigned, true));
+      .leftJoin(employees, eq(users.employeeId, employees.id));
 
-    // Also get unlinked employees (employees without user accounts)
+    // Get IDs of users who have any timesheet entries (to include former staff with history)
+    const usersWithTimesheets = await db
+      .selectDistinct({ staffId: timesheetEntries.staffId })
+      .from(timesheetEntries);
+    const userIdsWithTimesheets = new Set(usersWithTimesheets.map(r => r.staffId));
+
+    // Also get unlinked active employees (employees without user accounts)
     const unlinkedEmployees = await db
       .select({
         employeeId: employees.id,
@@ -1927,27 +1931,37 @@ export class DatabaseStorage implements IStorage {
         eq(employees.isActive, true) // Only active employees
       ));
 
-    const staffList: Array<{ id: string; name: string; type: 'user' | 'employee' }> = [];
+    const staffList: Array<{ id: string; name: string; type: 'user' | 'employee'; isFormer?: boolean }> = [];
+    const addedUserIds = new Set<string>();
 
-    // Add linked users (using employee names when available, but user IDs for queries)
-    // Filter to only show users linked to active employees (or users without employees)
     usersWithEmployees.forEach(userWithEmployee => {
-      // Only include if: no linked employee OR linked employee is active
-      if (!userWithEmployee.employeeId || userWithEmployee.isActive) {
+      const isCurrentlyActive = userWithEmployee.isAssigned &&
+        (!userWithEmployee.employeeId || userWithEmployee.isActive);
+      const hasTimesheetHistory = userIdsWithTimesheets.has(userWithEmployee.userId);
+
+      // Include if currently active OR if they have historical timesheet records
+      if (isCurrentlyActive || hasTimesheetHistory) {
+        const isFormer = !isCurrentlyActive && hasTimesheetHistory;
+        const displayName = userWithEmployee.employeeName ||
+          userWithEmployee.userFirstName ||
+          (userWithEmployee.userEmail ? userWithEmployee.userEmail.split('@')[0] : null) ||
+          'Unknown';
         staffList.push({
-          id: userWithEmployee.userId, // CRITICAL: Always use user ID for timesheet queries
-          name: userWithEmployee.employeeName || userWithEmployee.userFirstName || userWithEmployee.userEmail || 'Unknown',
-          type: userWithEmployee.employeeId ? 'employee' : 'user' // Show as 'employee' if linked
+          id: userWithEmployee.userId,
+          name: isFormer ? `${displayName} (Former)` : displayName,
+          type: userWithEmployee.employeeId ? 'employee' : 'user',
+          isFormer,
         });
+        addedUserIds.add(userWithEmployee.userId);
       }
     });
 
-    // Add unlinked employees (these can't submit timesheets but may be used for admin entry creation)
+    // Add unlinked active employees
     unlinkedEmployees.forEach(unlinked => {
       staffList.push({
         id: unlinked.employeeId,
         name: unlinked.employeeName,
-        type: 'employee' as const
+        type: 'employee' as const,
       });
     });
 
