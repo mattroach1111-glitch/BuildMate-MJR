@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -3198,32 +3198,56 @@ export default function AdminDashboard() {
                       <SelectItem value="all" className="font-medium text-primary">
                         📊 All Staff Members
                       </SelectItem>
-                      {validStaff.length > 0 ? validStaff.map((staff) => {
-                        const staffId = staff.id || `staff-${Math.random().toString(36).substr(2, 9)}`;
-                        const staffEntries = allTimesheets?.filter(entry => entry.staffId === staff.id) || [];
-                        const totalHours = staffEntries.reduce((total, entry) => total + parseFloat(entry.hours || 0), 0);
-                        const approvedEntries = staffEntries.filter(entry => entry.approved).length;
-                        
+                      {(() => {
+                        const activeStaff = validStaff.filter(s => !s.isFormer);
+                        const formerStaff = validStaff.filter(s => s.isFormer);
+                        const renderStaffItem = (staff: any) => {
+                          const staffId = staff.id || `staff-${Math.random().toString(36).substr(2, 9)}`;
+                          const staffEntries = allTimesheets?.filter((entry: any) => entry.staffId === staff.id) || [];
+                          const totalHours = staffEntries.reduce((total: number, entry: any) => total + parseFloat(entry.hours || 0), 0);
+                          const approvedEntries = staffEntries.filter((entry: any) => entry.approved).length;
+                          const displayName = staff.isFormer
+                            ? (staff.name || 'Unknown').replace(' (Former)', '')
+                            : (staff.name || 'Unknown Staff');
+                          return (
+                            <SelectItem key={`filter-${staffId}`} value={staffId}>
+                              <div className="flex items-center justify-between w-full min-w-0">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="font-medium truncate">{displayName}</span>
+                                  <span className="text-xs text-muted-foreground flex-shrink-0">
+                                    ({staff.type === 'employee' ? 'Employee' : 'User'})
+                                  </span>
+                                </div>
+                                <div className="text-xs text-muted-foreground flex-shrink-0 ml-3">
+                                  {totalHours.toFixed(1)}h • {approvedEntries}/{staffEntries.length} ✓
+                                </div>
+                              </div>
+                            </SelectItem>
+                          );
+                        };
                         return (
-                          <SelectItem key={`filter-${staffId}`} value={staffId}>
-                            <div className="flex items-center justify-between w-full min-w-0">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <span className="font-medium truncate">{staff.name || 'Unknown Staff'}</span>
-                                <span className="text-xs text-muted-foreground flex-shrink-0">
-                                  ({staff.type === 'employee' ? 'Employee' : 'User'})
-                                </span>
-                              </div>
-                              <div className="text-xs text-muted-foreground flex-shrink-0 ml-3">
-                                {totalHours.toFixed(1)}h • {approvedEntries}/{staffEntries.length} ✓
-                              </div>
-                            </div>
-                          </SelectItem>
+                          <>
+                            {activeStaff.length > 0 ? (
+                              <SelectGroup>
+                                {activeStaff.map(renderStaffItem)}
+                              </SelectGroup>
+                            ) : (
+                              <SelectItem value="no-staff" disabled>No staff members found</SelectItem>
+                            )}
+                            {formerStaff.length > 0 && (
+                              <>
+                                <SelectSeparator />
+                                <SelectGroup>
+                                  <SelectLabel className="text-xs text-muted-foreground px-2 py-1.5 font-semibold uppercase tracking-wide">
+                                    No Longer Employed
+                                  </SelectLabel>
+                                  {formerStaff.map(renderStaffItem)}
+                                </SelectGroup>
+                              </>
+                            )}
+                          </>
                         );
-                      }) : (
-                        <SelectItem value="no-staff" disabled>
-                          No staff members found
-                        </SelectItem>
-                      )}
+                      })()}
                     </SelectContent>
                   </Select>
                 </div>
