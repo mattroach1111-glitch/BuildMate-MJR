@@ -252,7 +252,7 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/login", (req, res, next) => {
     passport.authenticate(`replitauth:${req.hostname}`, {
-      prompt: "login consent",
+      prompt: "login",
       scope: ["openid", "email", "profile", "offline_access"],
     })(req, res, next);
   });
@@ -369,54 +369,37 @@ export async function setupAuth(app: Express) {
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   try {
-    console.log("🔐 Auth check for:", req.method, req.path);
-    console.log("🔐 isAuthenticated():", req.isAuthenticated ? req.isAuthenticated() : "method missing");
-    console.log("🔐 req.user exists:", !!req.user);
-    console.log("🔐 session ID:", req.sessionID ? req.sessionID.substring(0, 8) + "..." : "no session");
-    console.log("🔐 session data keys:", req.session ? Object.keys(req.session).join(", ") : "no session");
-    console.log("🔐 passport in session:", !!(req.session as any)?.passport);
-    console.log("🔐 cookies count:", Object.keys(req.cookies || {}).length);
-    
     const user = req.user as any;
 
-    if (!req.isAuthenticated || !req.isAuthenticated()) {
-      console.log("🔐 Auth failed - not authenticated - redirecting to login");
+    // Primary check: is there a valid session with a passport user?
+    if (!req.isAuthenticated || !req.isAuthenticated() || !user) {
+      console.log("🔐 Auth failed - no valid session for:", req.method, req.path);
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    if (!user || !user.expires_at) {
-      console.log("🔐 Auth failed - no user or expires_at - user:", !!user, "expires_at:", user?.expires_at);
-      return res.status(401).json({ message: "Unauthorized" });
+    // Session is valid - let the request through.
+    // Attempt a background token refresh if the access token has expired,
+    // but NEVER block or log the user out just because the OAuth token is stale.
+    // The session itself has a 90-day TTL managed by connect-pg-simple.
+    if (user.expires_at) {
+      const now = Math.floor(Date.now() / 1000);
+      if (now > user.expires_at && user.refresh_token) {
+        // Fire-and-forget refresh - don't await, don't block the request
+        getOidcConfig().then(config =>
+          client.refreshTokenGrant(config, user.refresh_token)
+            .then(tokenResponse => {
+              updateUserSession(user, tokenResponse);
+              console.log("🔐 Background token refresh succeeded");
+            })
+            .catch(err => {
+              // Refresh failed - this is OK, session is still valid
+              console.log("🔐 Background token refresh failed (session still active):", err.message);
+            })
+        ).catch(() => {});
+      }
     }
 
-    const now = Math.floor(Date.now() / 1000);
-    const timeUntilExpiry = user.expires_at - now;
-    console.log("🔐 Auth check - time until expiry:", timeUntilExpiry, "seconds");
-    
-    if (now <= user.expires_at) {
-      console.log("🔐 Auth success - token valid");
-      return next();
-    }
-
-    console.log("🔐 Auth - token expired, attempting refresh");
-    const refreshToken = user.refresh_token;
-    if (!refreshToken) {
-      console.log("🔐 Auth failed - no refresh token");
-      res.status(401).json({ message: "Unauthorized" });
-      return;
-    }
-
-    try {
-      const config = await getOidcConfig();
-      const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-      updateUserSession(user, tokenResponse);
-      console.log("🔐 Auth success - token refreshed");
-      return next();
-    } catch (error) {
-      console.log("🔐 Auth failed - refresh error:", error);
-      res.status(401).json({ message: "Unauthorized" });
-      return;
-    }
+    return next();
   } catch (error) {
     console.error("🔐 Auth middleware error:", error);
     res.status(401).json({ message: "Unauthorized" });

@@ -19,16 +19,18 @@ export function useSessionKeepalive() {
             console.log('💓 Session keepalive successful');
           }
         } else {
+          // Keepalive returned non-200 — but the session (90-day DB cookie) may
+          // still be valid.  Only redirect if the server says it has NO session at
+          // all (401 with reason 'not_authenticated'), meaning the cookie itself
+          // is gone (e.g. user cleared cookies, or 90-day TTL actually expired).
+          // A failed token refresh is NOT a reason to boot the user out.
           const data = await response.json().catch(() => ({}));
-          
-          if (data.requiresLogin) {
-            console.log('💓 Session expired - redirecting to login');
-            // Clear any session backup
+          if (response.status === 401 && data.reason === 'not_authenticated') {
+            console.log('💓 No active session found - redirecting to login');
             localStorage.removeItem('session_backup');
-            // Redirect to login
             window.location.href = '/api/login';
           } else {
-            console.log('💓 Session keepalive failed:', data.reason || 'unknown');
+            console.log('💓 Session keepalive non-critical issue:', data.reason || response.status);
           }
         }
       } catch (error) {

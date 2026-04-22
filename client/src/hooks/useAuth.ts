@@ -10,8 +10,7 @@ export function useAuth() {
   const { data: user, isLoading, refetch, error } = useQuery({
     queryKey: ["/api/auth/user"],
     retry: false,
-    // Reduce stale time to refresh user role changes more quickly
-    staleTime: 30000, // 30 seconds instead of Infinity
+    staleTime: 5 * 60 * 1000, // 5 minutes - role changes are rare, no need to hammer server
     // Handle errors gracefully
     throwOnError: false,
     // Always try server authentication first
