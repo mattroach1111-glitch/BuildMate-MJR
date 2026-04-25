@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Send, Bell, Users, CheckCircle2, XCircle } from 'lucide-react';
+import { Send, Bell, BellOff, BellRing, Users, CheckCircle2, XCircle, Smartphone, AlertCircle } from 'lucide-react';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,7 +11,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import { usePushNotifications } from '@/hooks/use-push-notifications';
 
 interface Subscriber {
   id: string;
@@ -24,6 +26,15 @@ interface Subscriber {
 
 export function AdminPushPanel() {
   const { toast } = useToast();
+  const {
+    permission,
+    isSubscribed,
+    isWorking,
+    subscribe,
+    unsubscribe,
+    iosNeedsInstall,
+    isIOS,
+  } = usePushNotifications();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [url, setUrl] = useState('/');
@@ -81,6 +92,87 @@ export function AdminPushPanel() {
 
   return (
     <div className="space-y-6">
+      {/* Self-subscription card - lets admin enable notifications on this device */}
+      <Card data-testid="card-admin-self-subscribe">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Smartphone className="h-5 w-5 text-blue-600" />
+            <CardTitle>Notifications on This Device</CardTitle>
+          </div>
+          <CardDescription>
+            Enable push notifications on this phone or computer so you receive timesheet
+            reminders and admin broadcasts. Repeat on every device you use.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {iosNeedsInstall ? (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Install required on iPhone/iPad.</strong> Tap the Share button in
+                Safari, then "Add to Home Screen". Open BuildFlow Pro from your home
+                screen and come back here to enable notifications.
+              </AlertDescription>
+            </Alert>
+          ) : permission === 'unsupported' ? (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                This browser doesn't support push notifications. Try Chrome, Edge, Safari
+                (16.4+), or Firefox.
+              </AlertDescription>
+            </Alert>
+          ) : permission === 'denied' ? (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Notifications are blocked for BuildFlow Pro. {isIOS
+                  ? 'Open Settings → Notifications → BuildFlow Pro and turn on Allow Notifications, then reload this page.'
+                  : 'Click the lock icon in the address bar, set Notifications to "Allow", then reload this page.'}
+              </AlertDescription>
+            </Alert>
+          ) : isSubscribed ? (
+            <div className="flex items-center justify-between gap-3 p-4 bg-green-50 border border-green-200 rounded-md">
+              <div className="flex items-center gap-3">
+                <BellRing className="h-6 w-6 text-green-600" />
+                <div>
+                  <p className="font-semibold text-green-900">Notifications enabled on this device</p>
+                  <p className="text-sm text-green-700">You'll receive timesheet reminders and admin broadcasts here.</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={unsubscribe}
+                disabled={isWorking}
+                data-testid="button-admin-unsubscribe"
+              >
+                <BellOff className="h-4 w-4 mr-2" />
+                {isWorking ? 'Working...' : 'Disable'}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3 p-4 bg-blue-50 border border-blue-200 rounded-md">
+              <div className="flex items-center gap-3">
+                <Bell className="h-6 w-6 text-blue-600" />
+                <div>
+                  <p className="font-semibold text-blue-900">Notifications are off on this device</p>
+                  <p className="text-sm text-blue-700">Enable them to receive reminders and test broadcasts.</p>
+                </div>
+              </div>
+              <Button
+                onClick={subscribe}
+                disabled={isWorking}
+                data-testid="button-admin-subscribe"
+              >
+                <Bell className="h-4 w-4 mr-2" />
+                {isWorking ? 'Working...' : 'Enable'}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
