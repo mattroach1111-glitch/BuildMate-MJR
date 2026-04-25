@@ -60,6 +60,15 @@ Data backup strategy: Comprehensive multi-location backup approach with automate
 - **Admin Custom Address Job Assignment**: Admins can manually assign jobs to custom address timesheet entries.
 - **Quoting System**: Full quoting workflow with quote creation, line items (labor, materials, sub-trades, other, tip fees), Australian GST calculation, email delivery with access tokens, client-facing quote view, digital signature acceptance, status tracking (draft, sent, viewed, accepted, declined, converted), and quote-to-job conversion for accepted quotes.
 - **Project Planner / Gantt Scheduler**: AI-powered project timeline generation from scope of works text. Upload or paste scope, set project duration (weeks) and start date, and Claude generates a trade-sequenced Gantt chart. Timeline is accessible via a "Project Timeline" section inside each job sheet and globally via the "Project Planner" card in the More apps grid at `/project-planner`. Features include: colour-coded trade bars, milestone diamonds, zoom in/out, SVG export, manual task add/edit/delete, and persistent storage per job.
+- **Web Push Notifications**: Full web push system using the standard Web Push API (`web-push` npm package).
+  - **VAPID Keys**: Auto-generated on first server startup and stored in `system_settings` (`vapid_public_key`, `vapid_private_key`, `vapid_subject`).
+  - **Subscriptions**: `pushSubscriptions` table stores per-device subscriptions (one user can have many devices). Endpoints are unique; dead subscriptions (404/410 responses) are auto-removed when the push service tries to send to them.
+  - **Friday 4pm Auto-Reminder**: `NotificationScheduler` checks every 5 minutes; on Fridays between 4pm-5pm it sends a single push to every staff member with a subscription, reminding them to submit their timesheet. De-duplicated using `friday_timesheet_push_last_run` system setting.
+  - **Admin Send UI**: Admin Dashboard → Notifications tab includes the `AdminPushPanel` component for sending custom push notifications to all staff or selected employees, with subscriber status visibility (who's enabled vs not).
+  - **Hard Block on Staff Timesheet**: `PushNotificationGate` wraps the staff-only `/timesheet` route. Staff cannot access the page until they have an active push subscription. Handles iOS PWA install requirement (notifications only work when added to home screen on Safari), denied permission state, and unsupported browsers with appropriate guidance.
+  - **iOS Support**: Detects when running on iOS Safari outside of standalone PWA mode and shows install instructions (Share → Add to Home Screen) before allowing subscription.
+  - **Service Worker**: `client/public/sw.js` handles push events with JSON payloads (`title`, `body`, `url`, `tag`, `requireInteraction`) and notification clicks (focuses existing window or opens new one to the payload URL).
+  - **API Routes**: `/api/push/vapid-public-key` (public), `/subscribe`, `/unsubscribe`, `/status` (authenticated), `/admin/subscribers`, `/admin/send` (admin only).
 
 # External Dependencies
 

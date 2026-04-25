@@ -12,6 +12,7 @@ import {
   jobFiles,
   jobNotes,
   notifications,
+  pushSubscriptions,
   emailProcessingLogs,
   emailProcessedDocuments,
   staffMembers,
@@ -45,6 +46,8 @@ import {
   type InsertJobNote,
   type Notification,
   type InsertNotification,
+  type PushSubscription,
+  type InsertPushSubscription,
   type EmailProcessingLog,
   type InsertEmailProcessingLog,
   type EmailProcessedDocument,
@@ -220,6 +223,12 @@ export interface IStorage {
   createNotification(notification: InsertNotification): Promise<Notification>;
   markNotificationAsRead(id: string): Promise<void>;
   dismissNotification(id: string): Promise<void>;
+
+  // Push subscription operations
+  getPushSubscriptionsForUser(userId: string): Promise<PushSubscription[]>;
+  upsertPushSubscription(sub: InsertPushSubscription): Promise<PushSubscription>;
+  deletePushSubscriptionByEndpoint(endpoint: string): Promise<void>;
+  getUsersWithPushCounts(): Promise<{ userId: string; subscriptionCount: number }[]>;
 
   // Email processing operations
   getEmailProcessingLogs(): Promise<EmailProcessingLog[]>;
@@ -2261,6 +2270,45 @@ export class DatabaseStorage implements IStorage {
       .update(notifications)
       .set({ dismissedAt: new Date() })
       .where(eq(notifications.id, id));
+  }
+
+  // Push subscription operations
+  async getPushSubscriptionsForUser(userId: string): Promise<PushSubscription[]> {
+    return await db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
+  }
+
+  async upsertPushSubscription(sub: InsertPushSubscription): Promise<PushSubscription> {
+    // Endpoint is unique - if it exists, update userId/keys/userAgent and bump lastUsedAt
+    const [row] = await db
+      .insert(pushSubscriptions)
+      .values(sub)
+      .onConflictDoUpdate({
+        target: pushSubscriptions.endpoint,
+        set: {
+          userId: sub.userId,
+          p256dh: sub.p256dh,
+          auth: sub.auth,
+          userAgent: sub.userAgent,
+          lastUsedAt: new Date(),
+        },
+      })
+      .returning();
+    return row;
+  }
+
+  async deletePushSubscriptionByEndpoint(endpoint: string): Promise<void> {
+    await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint));
+  }
+
+  async getUsersWithPushCounts(): Promise<{ userId: string; subscriptionCount: number }[]> {
+    const rows = await db
+      .select({
+        userId: pushSubscriptions.userId,
+        subscriptionCount: sql<number>`COUNT(*)::int`,
+      })
+      .from(pushSubscriptions)
+      .groupBy(pushSubscriptions.userId);
+    return rows;
   }
 
   async getActiveNotifications(userId: string): Promise<Notification[]> {

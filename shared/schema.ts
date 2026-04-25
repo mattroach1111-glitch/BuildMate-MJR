@@ -194,6 +194,18 @@ export const notifications = pgTable("notifications", {
   dismissedAt: timestamp("dismissed_at"),
 });
 
+// Web Push subscriptions - one row per device/browser per user
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastUsedAt: timestamp("last_used_at").defaultNow(),
+});
+
 // Staff Notes System Tables - simplified to avoid conflicts
 export const staffMembers = pgTable("staff_members", {
   id: varchar("id").primaryKey(),
@@ -439,6 +451,12 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
+export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  lastUsedAt: true,
+});
+
 export const insertJobNoteSchema = createInsertSchema(jobNotes).omit({
   id: true,
   createdAt: true,
@@ -535,6 +553,8 @@ export type JobFile = typeof jobFiles.$inferSelect;
 export type InsertJobFile = z.infer<typeof insertJobFileSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
 export type JobNote = typeof jobNotes.$inferSelect;
 export type InsertJobNote = z.infer<typeof insertJobNoteSchema>;
 export type EmailProcessingLog = typeof emailProcessingLogs.$inferSelect;

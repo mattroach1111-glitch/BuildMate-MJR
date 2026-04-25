@@ -287,6 +287,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize reward settings and migrate labor entries on startup
   await initializeRewardSettings();
   await storage.migrateLaborEntryHours();
+
+  // Initialize web push (generates VAPID keys on first run, then loads them)
+  try {
+    const { initialisePushService } = await import('./services/pushService');
+    await initialisePushService();
+  } catch (err) {
+    console.error('⚠️ Failed to initialise push service:', err);
+  }
+
+  // Start notification scheduler (Monday reminders, weekly backup, Friday 4pm timesheet push)
+  try {
+    const { NotificationScheduler } = await import('./services/notificationScheduler');
+    await NotificationScheduler.getInstance().initialize();
+  } catch (err) {
+    console.error('⚠️ Failed to start notification scheduler:', err);
+  }
+
   // Auth middleware
   await setupAuth(app);
 
@@ -3429,6 +3446,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error marking notification as read:", error);
       res.status(500).json({ error: "Failed to mark notification as read" });
+    }
+  });
+
+  // ============== Web Push notification routes ==============
+  app.get("/api/push/vapid-public-key", async (_req, res) => {
+    try {
+      const { getVapidPublicKey } = await import('./services/pushService');
+      const publicKey = await getVapidPublicKey();
+      res.json({ publicKey });
+    } catch (error) {
+      console.error("Error fetching VAPID public key:", error);
+      res.status(500).json({ error: "Failed to fetch public key" });
+    }
+  });
+
+  app.post("/api/push/subscribe", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { endpoint, p256dh, auth, userAgent } = req.body || {};
+      if (!endpoint || !p256dh || !auth) {
+        return res.status(400).json({ error: "Missing subscription fields" });
+      }
+      const sub = await storage.upsertPushSubscription({
+        userId,
+        endpoint,
+        p256dh,
+        auth,
+        userAgent: userAgent || null,
+      });
+      res.status(201).json({ success: true, id: sub.id });
+    } catch (error) {
+      console.error("Error saving push subscription:", error);
+      res.status(500).json({ error: "Failed to save subscription" });
+    }
+  });
+
+  app.post("/api/push/unsubscribe", isAuthenticated, async (req: any, res) => {
+    try {
+      const { endpoint } = req.body || {};
+      if (!endpoint) return res.status(400).json({ error: "Missing endpoint" });
+      await storage.deletePushSubscriptionByEndpoint(endpoint);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting push subscription:", error);
+      res.status(500).json({ error: "Failed to delete subscription" });
+    }
+  });
+
+  app.get("/api/push/status", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const subs = await storage.getPushSubscriptionsForUser(userId);
+      res.json({ subscribed: subs.length > 0, count: subs.length });
+    } catch (error) {
+      console.error("Error fetching push status:", error);
+      res.status(500).json({ error: "Failed to fetch status" });
+    }
+  });
+
+  // Admin: list users with their push subscription counts
+  app.get("/api/push/admin/subscribers", isAdmin, async (_req, res) => {
+    try {
+      const counts = await storage.getUsersWithPushCounts();
+      const users = await storage.getAllUsers();
+      const enriched = users.map(u => {
+        const found = counts.find(c => c.userId === u.id);
+        return {
+          id: u.id,
+          email: u.email,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          role: u.role,
+          subscriptionCount: found?.subscriptionCount || 0,
+        };
+      });
+      res.json(enriched);
+    } catch (error) {
+      console.error("Error listing push subscribers:", error);
+      res.status(500).json({ error: "Failed to list subscribers" });
+    }
+  });
+
+  // Admin: send push to specific users or all staff
+  app.post("/api/push/admin/send", isAdmin, async (req: any, res) => {
+    try {
+      const { title, body, url, userIds, sendToAll, requireInteraction } = req.body || {};
+      if (!title || !body) {
+        return res.status(400).json({ error: "title and body are required" });
+      }
+      const { sendPushToUsers, sendPushToAllStaff } = await import('./services/pushService');
+      const payload = {
+        title,
+        body,
+        url: url || '/',
+        tag: `admin-broadcast-${Date.now()}`,
+        requireInteraction: !!requireInteraction,
+      };
+      let result;
+      if (sendToAll) {
+        result = await sendPushToAllStaff(payload);
+      } else {
+        if (!Array.isArray(userIds) || userIds.length === 0) {
+          return res.status(400).json({ error: "userIds array required when not sending to all" });
+        }
+        result = await sendPushToUsers(userIds, payload);
+      }
+      res.json({ success: true, ...result });
+    } catch (error) {
+      console.error("Error sending admin push:", error);
+      res.status(500).json({ error: "Failed to send push" });
     }
   });
 

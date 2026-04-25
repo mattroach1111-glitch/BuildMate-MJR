@@ -186,44 +186,65 @@ async function syncJobData() {
   }
 }
 
-// Handle push notifications (future feature)
+// Handle web push notifications
 self.addEventListener('push', (event) => {
   console.log('📱 Push notification received');
-  
-  const options = {
-    body: event.data ? event.data.text() : 'New update available',
-    icon: '/icon-192x192.png',
-    badge: '/badge-72x72.png',
-    vibrate: [200, 100, 200],
-    data: {
-      url: '/'
-    },
-    actions: [
-      {
-        action: 'open',
-        title: 'Open BuildFlow Pro'
-      },
-      {
-        action: 'close',
-        title: 'Dismiss'
-      }
-    ]
+
+  let payload = {
+    title: 'BuildFlow Pro',
+    body: 'You have a new notification',
+    url: '/',
+    tag: undefined,
+    requireInteraction: false,
   };
-  
+
+  if (event.data) {
+    try {
+      payload = { ...payload, ...event.data.json() };
+    } catch (e) {
+      payload.body = event.data.text();
+    }
+  }
+
+  const options = {
+    body: payload.body,
+    icon: payload.icon || '/icon.svg',
+    badge: payload.badge || '/icon.svg',
+    vibrate: [200, 100, 200],
+    tag: payload.tag,
+    requireInteraction: !!payload.requireInteraction,
+    data: { url: payload.url || '/' },
+    actions: [
+      { action: 'open', title: 'Open' },
+      { action: 'close', title: 'Dismiss' },
+    ],
+  };
+
   event.waitUntil(
-    self.registration.showNotification('BuildFlow Pro', options)
+    self.registration.showNotification(payload.title, options)
   );
 });
 
-// Handle notification clicks
+// Handle notification clicks - focus existing window or open new one
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  
-  if (event.action === 'open') {
-    event.waitUntil(
-      clients.openWindow(event.notification.data.url)
-    );
-  }
+  if (event.action === 'close') return;
+
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) {
+          client.navigate(targetUrl).catch(() => {});
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
 });
 
 console.log('📱 BuildFlow Pro Service Worker loaded successfully');

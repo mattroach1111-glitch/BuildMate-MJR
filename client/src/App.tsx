@@ -27,6 +27,7 @@ import PublicQuoteView from "@/pages/public-quote-view";
 import CostLibraryPage from "@/pages/cost-library";
 import ProjectPlanner from "@/pages/project-planner";
 import ItemSearchPage from "@/pages/item-search";
+import { PushNotificationGate } from "@/components/PushNotificationGate";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -72,7 +73,11 @@ function Router() {
         <>
           <Route path="/" component={() => <StaffDashboard isAdminView={false} />} />
           <Route path="/staff" component={() => <StaffDashboard isAdminView={false} />} />
-          <Route path="/timesheet" component={FortnightTimesheetView} />
+          <Route path="/timesheet">
+            <PushNotificationGate>
+              <FortnightTimesheetView />
+            </PushNotificationGate>
+          </Route>
           <Route path="/organiser" component={StaffOrganiser} />
           <Route path="/rewards" component={RewardsDashboard} />
           <Route path="/rewards/rules" component={RewardsRules} />

@@ -2,6 +2,7 @@ import { storage } from '../storage';
 import { insertNotificationSchema } from '@shared/schema';
 import { db } from '../db';
 import { jobs, employees, users, timesheetEntries, laborEntries, materials, subTrades, otherCosts, tipFees, jobFiles } from '@shared/schema';
+import { sendPushToAllStaff } from './pushService';
 
 export class NotificationScheduler {
   private static instance: NotificationScheduler;
@@ -34,11 +35,53 @@ export class NotificationScheduler {
     }, 1000 * 60 * 60); // Check every hour
     this.intervals.set('weekly-backup', backupInterval);
 
+    // Check for Friday 4pm timesheet push reminder every 5 minutes
+    const fridayPushInterval = setInterval(() => {
+      this.checkAndSendFridayTimesheetPush();
+    }, 1000 * 60 * 5);
+    this.intervals.set('friday-timesheet-push', fridayPushInterval);
+
     // Also check immediately on startup
     await this.checkAndCreateMondayReminders();
     await this.checkAndRunWeeklyBackup();
-    
+    await this.checkAndSendFridayTimesheetPush();
+
     console.log('✅ Notification scheduler initialized successfully');
+  }
+
+  /**
+   * Check if it's Friday at 4pm and send push notification to all staff to fill in timesheets
+   */
+  private async checkAndSendFridayTimesheetPush() {
+    try {
+      const now = new Date();
+      const isFriday = now.getDay() === 5;
+      const currentHour = now.getHours();
+
+      // Only send Friday between 4pm and 5pm
+      if (!isFriday || currentHour !== 16) return;
+
+      // Make sure we only send once per Friday
+      const today = now.toISOString().split('T')[0];
+      const lastRunKey = 'friday_timesheet_push_last_run';
+      const lastRun = await storage.getSystemSetting(lastRunKey);
+      if (lastRun?.settingValue === today) return;
+
+      console.log('🔔 Sending Friday 4pm timesheet push reminder to all staff...');
+
+      const result = await sendPushToAllStaff({
+        title: 'Timesheet Reminder',
+        body: "It's Friday — please complete and submit your timesheet for this week.",
+        url: '/timesheet',
+        tag: 'friday-timesheet-reminder',
+        requireInteraction: true,
+      });
+
+      await storage.setSystemSetting(lastRunKey, today);
+      console.log(`✅ Friday timesheet push sent: ${result.sent} delivered, ${result.failed} failed`);
+    } catch (error) {
+      console.error('❌ Error sending Friday timesheet push:', error);
+    }
   }
 
   /**
