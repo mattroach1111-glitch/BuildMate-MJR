@@ -11,8 +11,7 @@ import {
   LogOut,
   Menu,
   Building2,
-  List,
-  Trophy
+  List
 } from "lucide-react";
 import { useState } from "react";
 import {

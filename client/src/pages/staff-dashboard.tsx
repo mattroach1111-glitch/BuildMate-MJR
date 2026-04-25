@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Calendar, Settings, ArrowRight, Trophy, BookOpen, FileText, Shield } from "lucide-react";
+import { Clock, Calendar, Settings, ArrowRight, FileText, Shield } from "lucide-react";
 import { useLocation } from "wouter";
 import PageLayout from "@/components/page-layout";
 

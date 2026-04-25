@@ -18,7 +18,6 @@ Data backup strategy: Comprehensive multi-location backup approach with automate
 - **Key Features**: Comprehensive job management (creation, editing, soft delete), integrated Australian GST, automated staff assignment, independent job sheet rates, folder grouping, real-time search, status-based job ordering, admin staff view, interactive job progress visualization, file attachment system, and database-backed staff notes.
 - **Timesheet System**: Mobile-first design supporting multiple job entries, fortnight periods, quick stats, admin creation/approval, RDO/leave support, custom address entry, weekend work protection, and fuzzy job matching.
 - **Admin Features**: Compressed navigation, advanced timesheet search, employee folder organization for approved timesheets, and admin editing for custom addresses.
-- **Rewards System**: Simplified 4-tier system (Daily, Weekly, Fortnightly, Monthly) with dynamic rules and streak reset logic.
 
 ## Backend Architecture
 - **Runtime**: Node.js with Express.js
@@ -31,7 +30,7 @@ Data backup strategy: Comprehensive multi-location backup approach with automate
 ## Database Design
 - **ORM**: Drizzle with PostgreSQL dialect
 - **Schema**: Centralized in `/shared/schema.ts`.
-- **Tables**: Users, jobs, labor entries, materials, sub-trades, timesheet entries, sessions, staff members, staff notes, and system settings.
+- **Tables**: Users, jobs, labor entries, materials, sub-trades, timesheet entries, sessions, staff members, staff notes, and system settings. (Legacy reward tables remain in the schema but are no longer used by the app.)
 - **Relationships**: Comprehensive foreign key relationships for multi-tenant job management and cost tracking.
 
 ## Authentication & Authorization
