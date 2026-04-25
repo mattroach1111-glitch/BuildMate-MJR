@@ -3420,9 +3420,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             subscriptionCount: found?.subscriptionCount || 0,
           };
         })
-        // Hide users whose linked employee is no longer active.
-        // Admin users without an employee link are kept (they can subscribe too).
-        .filter(u => u.employeeActive !== false)
+        // Only show currently employed staff. Admins are always kept (so they
+        // can also receive notifications), but anyone with a staff role must
+        // have an active employee link — this hides ex-staff whose accounts
+        // still exist but who no longer work for the company.
+        .filter(u => {
+          if (u.role === 'admin') return true;
+          return u.employeeActive === true;
+        })
         // Sort by display name for a clean alphabetical list
         .sort((a, b) => a.displayName.localeCompare(b.displayName));
 

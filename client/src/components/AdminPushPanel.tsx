@@ -252,7 +252,7 @@ export function AdminPushPanel() {
                 )}
               </div>
 
-              <ScrollArea className="max-h-72">
+              <ScrollArea className="h-72">
                 {isLoading ? (
                   <div className="py-8 text-center text-sm text-gray-500">Loading staff...</div>
                 ) : filtered.length === 0 ? (
