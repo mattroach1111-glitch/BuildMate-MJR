@@ -3505,6 +3505,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send a test push to the currently authenticated user (any user, for self-test)
+  app.post("/api/push/test", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { sendPushToUser } = await import('./services/pushService');
+      const result = await sendPushToUser(userId, {
+        title: 'BuildFlow Pro Test',
+        body: 'Notifications are working on this device. You\'ll get a real reminder on Friday at 4pm.',
+        url: '/',
+        tag: `test-${Date.now()}`,
+      });
+      res.json({ success: true, ...result });
+    } catch (error) {
+      console.error("Error sending test push:", error);
+      res.status(500).json({ error: "Failed to send test push" });
+    }
+  });
+
   // Admin: list users with their push subscription counts
   app.get("/api/push/admin/subscribers", isAdmin, async (_req, res) => {
     try {

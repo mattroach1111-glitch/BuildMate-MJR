@@ -22,6 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NotificationsBell } from "@/components/NotificationsBell";
 
 interface NavigationProps {
   title?: string;
@@ -106,11 +107,14 @@ export default function Navigation({ title, subtitle }: NavigationProps) {
           )}
 
           {/* Right side - User Menu */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 md:space-x-3">
             {/* User Role Badge */}
             <Badge variant={isAdmin ? "default" : "secondary"} className="hidden md:inline-flex">
               {isAdmin ? "Admin" : "Staff"}
             </Badge>
+
+            {/* Notifications bell - opens push notification controls */}
+            <NotificationsBell />
 
             {/* User Menu */}
             <DropdownMenu>
