@@ -66,7 +66,6 @@ export default function Navigation({ title, subtitle }: NavigationProps) {
     { icon: FileText, label: "Timesheet", path: "/timesheet", active: location === "/timesheet" },
   ] : [
     { icon: FileText, label: "Daily Timesheet", path: "/", active: location === "/" || location === "/timesheet" },
-    { icon: Trophy, label: "Rewards", path: "/rewards", active: location === "/rewards" },
   ];
 
   const handleLogout = () => {

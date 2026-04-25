@@ -16,9 +16,6 @@ import NotFound from "@/pages/not-found";
 import FortnightTimesheetView from "@/pages/fortnight-timesheet-view";
 import StaffTimesheet from "@/pages/staff-timesheet";
 import StaffNotes from "@/pages/staff-notes-clean";
-import RewardsDashboard from "@/pages/rewards-dashboard";
-import RewardsRules from "@/pages/rewards-rules";
-import AdminRewards from "@/pages/admin-rewards";
 import StaffOrganiser from "@/pages/staff-organiser";
 import SwmsDocuments from "@/pages/swms-documents";
 import AdminSwms from "@/pages/admin-swms";
@@ -58,9 +55,6 @@ function Router() {
           <Route path="/timesheet" component={FortnightTimesheetView} />
           <Route path="/staff" component={AdminDashboard} />
           <Route path="/staff-notes" component={StaffNotes} />
-          <Route path="/rewards" component={RewardsDashboard} />
-          <Route path="/rewards/rules" component={RewardsRules} />
-          <Route path="/admin/rewards" component={AdminRewards} />
           <Route path="/swms" component={SwmsDocuments} />
           <Route path="/admin/swms" component={AdminSwms} />
           <Route path="/quotes" component={QuotesPage} />
@@ -79,8 +73,6 @@ function Router() {
             </PushNotificationGate>
           </Route>
           <Route path="/organiser" component={StaffOrganiser} />
-          <Route path="/rewards" component={RewardsDashboard} />
-          <Route path="/rewards/rules" component={RewardsRules} />
           <Route path="/swms" component={SwmsDocuments} />
           <Route component={NotFound} />
         </>

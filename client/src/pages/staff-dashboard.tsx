@@ -66,7 +66,7 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
           </div>
 
           {/* Main Action Cards */}
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             {/* Timesheets Card */}
             <Card 
               className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 border-2 border-blue-200 hover:border-blue-400"
@@ -117,31 +117,6 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
               </CardContent>
             </Card>
 
-            {/* Rewards Card */}
-            <Card 
-              className="cursor-not-allowed opacity-75 border-2 border-gray-200 relative"
-              data-testid="button-rewards"
-            >
-              <CardHeader className="text-center pb-4">
-                <div className="mx-auto mb-4 p-4 bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center">
-                  <Trophy className="h-8 w-8 text-gray-500" />
-                </div>
-                <CardTitle className="text-xl font-semibold text-gray-700">
-                  Rewards
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-center">
-                <p className="text-gray-500 mb-4">
-                  Earn points and achievements for timely submissions
-                </p>
-                <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-200">
-                  Coming Soon
-                </Badge>
-              </CardContent>
-              
-              {/* Coming Soon Overlay */}
-              <div className="absolute inset-0 bg-white bg-opacity-50 rounded-lg pointer-events-none"></div>
-            </Card>
           </div>
 
           {/* More Apps Section */}
@@ -155,7 +130,7 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+            <div className="max-w-md mx-auto">
               {/* SWMS Documents */}
               <Card 
                 className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 border-2 border-green-200 hover:border-green-400"
@@ -176,31 +151,6 @@ export default function StaffDashboard({ isAdminView = false }: StaffDashboardPr
                   </p>
                   <div className="flex items-center justify-center text-green-600 font-medium text-sm">
                     <span>View Documents</span>
-                    <ArrowRight className="ml-2 h-3 w-3" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Rewards Rules */}
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 border-2 border-blue-200 hover:border-blue-400"
-                onClick={() => navigate("/rewards/rules")}
-                data-testid="button-rewards-rules"
-              >
-                <CardHeader className="text-center pb-3">
-                  <div className="mx-auto mb-3 p-3 bg-blue-100 rounded-full w-12 h-12 flex items-center justify-center">
-                    <BookOpen className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <CardTitle className="text-lg font-semibold text-gray-900">
-                    Rewards Rules
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <p className="text-gray-600 mb-3 text-sm">
-                    Learn how to earn points and maintain streaks
-                  </p>
-                  <div className="flex items-center justify-center text-blue-600 font-medium text-sm">
-                    <span>View Rules</span>
                     <ArrowRight className="ml-2 h-3 w-3" />
                   </div>
                 </CardContent>

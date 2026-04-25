@@ -5,7 +5,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { db, checkDbHealth } from "./db";
 import { 
   timesheetEntries, laborEntries, users, staffNotes, employees, staffMembers, 
-  staffNotesEntries, rewardCatalog, rewardSettings, jobs, materials, subTrades, otherCosts, 
+  staffNotesEntries, jobs, materials, subTrades, otherCosts, 
   tipFees, jobFiles, jobNotes, jobUpdateNotes, quotes, costCategories, costLibraryItems, 
   costSourceDocuments, costHistory, swmsSignatures
 } from "@shared/schema";
@@ -17,99 +17,9 @@ import { GoogleDriveAuth } from "./googleAuth";
 import { DocumentProcessor } from "./services/documentProcessor";
 import { BackupService } from "./services/backupService";
 import { quoteEstimator } from "./services/quoteEstimator";
-import { rewardsService } from "./services/rewardsService";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import * as XLSX from "xlsx";
 
-// Database-backed reward settings helper functions
-async function initializeRewardSettings() {
-  console.log("📊 Checking reward settings in database...");
-  
-  try {
-    // First check if any settings exist
-    const existingSettings = await db.select().from(rewardSettings).limit(1);
-    
-    if (existingSettings.length > 0) {
-      console.log("📊 Reward settings already exist in database - skipping initialization");
-      const allSettings = await getRewardSettingsFromDB();
-      console.log("📊 Current settings:", allSettings);
-      return;
-    }
-    
-    console.log("📊 No existing settings found - initializing defaults...");
-    
-    const defaultSettings = [
-      { settingKey: 'dailySubmissionPoints', settingValue: 10, description: 'Points awarded for daily timesheet submission' },
-      { settingKey: 'weeklyBonusPoints', settingValue: 50, description: 'Bonus points for completing a full work week' },
-      { settingKey: 'fortnightlyBonusPoints', settingValue: 100, description: 'Bonus points for completing a fortnight' },
-      { settingKey: 'monthlyBonusPoints', settingValue: 200, description: 'Bonus points for completing a full month' },
-      { settingKey: 'streakBonusMultiplier', settingValue: 15, description: 'Streak bonus multiplier (stored as 15 for 1.5x)' },
-      { settingKey: 'perfectWeekBonus', settingValue: 25, description: 'Bonus for perfect week attendance' },
-      { settingKey: 'perfectMonthBonus', settingValue: 100, description: 'Bonus for perfect month attendance' }
-    ];
-
-    for (const setting of defaultSettings) {
-      try {
-        await db.insert(rewardSettings).values(setting);
-        console.log(`📊 Initialized setting: ${setting.settingKey} = ${setting.settingValue}`);
-      } catch (error) {
-        console.error(`❌ Failed to initialize setting ${setting.settingKey}:`, error);
-      }
-    }
-  } catch (error) {
-    console.error("❌ Failed to check/initialize reward settings:", error);
-  }
-}
-
-async function getRewardSettingsFromDB() {
-  try {
-    const settings = await db.select().from(rewardSettings);
-    const settingsObj: any = {};
-    
-    settings.forEach(setting => {
-      if (setting.settingKey === 'streakBonusMultiplier') {
-        // Convert back to decimal (15 -> 1.5)
-        settingsObj[setting.settingKey] = setting.settingValue / 10;
-      } else {
-        settingsObj[setting.settingKey] = setting.settingValue;
-      }
-    });
-    
-    console.log("📊 Retrieved settings from database:", settingsObj);
-    return settingsObj;
-  } catch (error) {
-    console.error("❌ Failed to get reward settings from database:", error);
-    // Return default settings as fallback
-    return {
-      dailySubmissionPoints: 10,
-      weeklyBonusPoints: 50,
-      fortnightlyBonusPoints: 100,
-      monthlyBonusPoints: 200,
-      streakBonusMultiplier: 1.5,
-      perfectWeekBonus: 25,
-      perfectMonthBonus: 100
-    };
-  }
-}
-
-async function updateRewardSettingInDB(key: string, value: number) {
-  try {
-    let dbValue = value;
-    if (key === 'streakBonusMultiplier') {
-      // Convert decimal to integer for storage (1.5 -> 15)
-      dbValue = Math.round(value * 10);
-    }
-    
-    await db.update(rewardSettings)
-      .set({ settingValue: dbValue, updatedAt: new Date() })
-      .where(eq(rewardSettings.settingKey, key));
-    
-    console.log(`📊 Updated setting in database: ${key} = ${value} (stored as ${dbValue})`);
-  } catch (error) {
-    console.error(`❌ Failed to update setting ${key}:`, error);
-    throw error;
-  }
-}
 import {
   insertJobSchema,
   insertEmployeeSchema,
@@ -124,9 +34,6 @@ import {
   insertNotificationSchema,
   insertStaffMemberSchema,
   insertStaffNoteEntrySchema,
-  insertRewardTransactionSchema,
-  insertRewardRedemptionSchema,
-  insertRewardCatalogSchema,
   insertWeeklyOrganiserSchema,
   insertOrganiserStaffSchema,
   insertOrganiserAssignmentSchema,
@@ -284,8 +191,7 @@ const findBestJobMatch = async (timesheetJobDescription: string, threshold: numb
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Initialize reward settings and migrate labor entries on startup
-  await initializeRewardSettings();
+  // Migrate labor entries on startup
   await storage.migrateLaborEntryHours();
 
   // Initialize web push (generates VAPID keys on first run, then loads them)
@@ -2604,42 +2510,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.markTimesheetEntriesConfirmed(userId, fortnightStart, fortnightEnd);
       console.log(`Marked timesheet entries as confirmed for user ${userId} from ${fortnightStart} to ${fortnightEnd}`);
       
-      // Process rewards for timesheet submission (if not admin confirming for someone else)
-      let rewardsResult = null;
-      if (!isAdmin) {
-        try {
-          // Process rewards for each day in the submission period
-          const startDate = new Date(fortnightStart);
-          const endDate = new Date(fortnightEnd);
-          const submittedDates = entries.map(entry => entry.date).filter(Boolean);
-          
-          // Award points for each unique submission date
-          const uniqueDates = Array.from(new Set(submittedDates));
-          let totalPointsEarned = 0;
-          let newAchievements: any[] = [];
-          let currentStreak = 0;
-          
-          for (const submissionDate of uniqueDates) {
-            const result = await rewardsService.processTimesheetSubmission(userId, submissionDate);
-            totalPointsEarned += result.pointsEarned;
-            newAchievements.push(...result.achievements);
-            currentStreak = result.newStreak; // Use the latest streak
-          }
-          
-          rewardsResult = {
-            totalPointsEarned,
-            newAchievements,
-            currentStreak,
-            daysProcessed: uniqueDates.length
-          };
-          
-          console.log(`Rewards processed for ${uniqueDates.length} days: +${totalPointsEarned} points, streak: ${currentStreak}`);
-        } catch (rewardsError) {
-          console.error("Error processing rewards:", rewardsError);
-          // Don't fail the whole timesheet submission if rewards fail
-        }
-      }
-      
       res.json({ 
         message: isAdmin 
           ? (googleDriveConnected && driveLink 
@@ -2653,7 +2523,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         confirmedAt: new Date().toISOString(),
         driveLink: driveLink || null,
         googleDriveConnected,
-        rewards: rewardsResult
       });
     } catch (error) {
       console.error("Error confirming timesheet:", error);
