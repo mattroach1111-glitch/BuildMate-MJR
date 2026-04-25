@@ -92,7 +92,38 @@ async function sendToSubscription(
   }
 }
 
-export async function sendPushToUser(userId: string, payload: PushPayload): Promise<{ sent: number; failed: number }> {
+/**
+ * Persist a notification record per user so it appears in the bell feed
+ * even after the OS toast disappears.
+ */
+async function persistNotificationsForUsers(userIds: string[], payload: PushPayload): Promise<void> {
+  if (userIds.length === 0) return;
+  const now = new Date();
+  for (const userId of userIds) {
+    try {
+      await storage.createNotification({
+        userId,
+        type: payload.tag?.startsWith('friday-timesheet') ? 'reminder' : 'info',
+        title: payload.title,
+        message: payload.body,
+        scheduledFor: now,
+      } as any);
+    } catch (err) {
+      console.error(`Failed to persist notification for user ${userId}:`, err);
+    }
+  }
+}
+
+interface SendOptions {
+  /** Persist the notification in the bell feed (default true). Tests should pass false. */
+  persist?: boolean;
+}
+
+export async function sendPushToUser(
+  userId: string,
+  payload: PushPayload,
+  options: SendOptions = {},
+): Promise<{ sent: number; failed: number }> {
   if (!vapidInitialised) await initialisePushService();
   const subs = await db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
   let sent = 0;
@@ -101,10 +132,17 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
     const ok = await sendToSubscription(sub, payload);
     if (ok) sent++; else failed++;
   }
+  if (options.persist !== false) {
+    await persistNotificationsForUsers([userId], payload);
+  }
   return { sent, failed };
 }
 
-export async function sendPushToUsers(userIds: string[], payload: PushPayload): Promise<{ sent: number; failed: number }> {
+export async function sendPushToUsers(
+  userIds: string[],
+  payload: PushPayload,
+  options: SendOptions = {},
+): Promise<{ sent: number; failed: number }> {
   if (!vapidInitialised) await initialisePushService();
   if (userIds.length === 0) return { sent: 0, failed: 0 };
   const subs = await db.select().from(pushSubscriptions).where(inArray(pushSubscriptions.userId, userIds));
@@ -114,13 +152,19 @@ export async function sendPushToUsers(userIds: string[], payload: PushPayload): 
     const ok = await sendToSubscription(sub, payload);
     if (ok) sent++; else failed++;
   }
+  if (options.persist !== false) {
+    await persistNotificationsForUsers(userIds, payload);
+  }
   return { sent, failed };
 }
 
-export async function sendPushToAllStaff(payload: PushPayload): Promise<{ sent: number; failed: number; users: number }> {
+export async function sendPushToAllStaff(
+  payload: PushPayload,
+  options: SendOptions = {},
+): Promise<{ sent: number; failed: number; users: number }> {
   if (!vapidInitialised) await initialisePushService();
   const allUsers = await db.select({ id: users.id }).from(users);
   const userIds = allUsers.map(u => u.id);
-  const result = await sendPushToUsers(userIds, payload);
+  const result = await sendPushToUsers(userIds, payload, options);
   return { ...result, users: userIds.length };
 }

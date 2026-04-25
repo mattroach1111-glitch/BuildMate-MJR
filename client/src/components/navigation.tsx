@@ -35,13 +35,29 @@ export default function Navigation({ title, subtitle }: NavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (!isAuthenticated) return null;
-  
-  // For staff users, don't show navigation at all
-  if ((user as any)?.role !== "admin") {
-    return null;
-  }
 
   const isAdmin = (user as any)?.role === "admin";
+
+  // Staff users get a minimal header (just brand + notifications bell)
+  if (!isAdmin) {
+    return (
+      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-14">
+            <div
+              className="flex items-center cursor-pointer"
+              onClick={() => setLocation("/")}
+              data-testid="staff-header-brand"
+            >
+              <Building2 className="h-6 w-6 text-primary mr-2" />
+              <span className="text-base font-bold text-gray-900">BuildFlow Pro</span>
+            </div>
+            <NotificationsBell />
+          </div>
+        </div>
+      </nav>
+    );
+  }
   const userDisplayName = (user as any)?.firstName || (user as any)?.email?.split("@")[0] || "User";
 
   const navigationItems = isAdmin ? [

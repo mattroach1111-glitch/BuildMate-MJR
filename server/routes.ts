@@ -3515,7 +3515,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         body: 'Notifications are working on this device. You\'ll get a real reminder on Friday at 4pm.',
         url: '/',
         tag: `test-${Date.now()}`,
-      });
+      }, { persist: false });
       res.json({ success: true, ...result });
     } catch (error) {
       console.error("Error sending test push:", error);
