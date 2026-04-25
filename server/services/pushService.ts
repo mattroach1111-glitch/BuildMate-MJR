@@ -1,8 +1,8 @@
 import webpush from 'web-push';
 import { storage } from '../storage';
 import { db } from '../db';
-import { pushSubscriptions, users } from '@shared/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { pushSubscriptions, users, employees } from '@shared/schema';
+import { eq, and, inArray, or, isNull } from 'drizzle-orm';
 
 const VAPID_PUBLIC_KEY_SETTING = 'vapid_public_key';
 const VAPID_PRIVATE_KEY_SETTING = 'vapid_private_key';
@@ -163,8 +163,19 @@ export async function sendPushToAllStaff(
   options: SendOptions = {},
 ): Promise<{ sent: number; failed: number; users: number }> {
   if (!vapidInitialised) await initialisePushService();
-  const allUsers = await db.select({ id: users.id }).from(users);
-  const userIds = allUsers.map(u => u.id);
+  // Only send to users who are either unlinked (admins) or linked to an active employee.
+  // Inactive/terminated employees should never receive broadcasts.
+  const rows = await db
+    .select({ id: users.id })
+    .from(users)
+    .leftJoin(employees, eq(users.employeeId, employees.id))
+    .where(
+      or(
+        isNull(users.employeeId),
+        eq(employees.isActive, true),
+      ),
+    );
+  const userIds = rows.map(u => u.id);
   const result = await sendPushToUsers(userIds, payload, options);
   return { ...result, users: userIds.length };
 }

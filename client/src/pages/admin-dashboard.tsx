@@ -39,7 +39,6 @@ import { generateJobListPDF } from "@/lib/pdfGenerator";
 import JobUpdateDialog from "@/components/job-update-form";
 import { DocumentExpenseProcessor } from "@/components/DocumentExpenseProcessor";
 import EmailProcessingReview from "@/components/EmailProcessingReview";
-import { NotificationSettings } from "@/components/NotificationSettings";
 import { AdminPushPanel } from "@/components/AdminPushPanel";
 import WeeklyOrganiser from "@/components/weekly-organiser";
 
@@ -4592,20 +4591,14 @@ export default function AdminDashboard() {
           </TabsContent>
           
           <TabsContent value="notifications" className="space-y-6">
-            <h2 className="text-xl font-semibold">Notification Settings</h2>
-            <p className="text-muted-foreground">
-              Control your email notification preferences and choose alternative notification methods.
-            </p>
-            <NotificationSettings />
-
-            <div className="pt-6 border-t">
-              <h2 className="text-xl font-semibold mb-2">Push Notifications</h2>
-              <p className="text-muted-foreground mb-4">
-                Send instant push notifications to staff phones and computers. Friday timesheet
+            <div>
+              <h2 className="text-xl font-semibold">Notifications</h2>
+              <p className="text-muted-foreground mt-1">
+                Send push notifications to staff phones and computers. Friday timesheet
                 reminders are sent automatically at 4pm to everyone with notifications enabled.
               </p>
-              <AdminPushPanel />
             </div>
+            <AdminPushPanel />
           </TabsContent>
         </Tabs>
 

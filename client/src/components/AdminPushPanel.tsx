@@ -1,6 +1,14 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Send, Bell, BellOff, BellRing, Users, CheckCircle2, XCircle, Smartphone, AlertCircle } from 'lucide-react';
+import {
+  Send,
+  Bell,
+  Users,
+  CheckCircle2,
+  Search,
+  Smartphone,
+  AlertCircle,
+} from 'lucide-react';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -8,68 +16,85 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { usePushNotifications } from '@/hooks/use-push-notifications';
 
 interface Subscriber {
   id: string;
   email: string | null;
+  displayName: string;
+  employeeName: string | null;
+  employeeActive: boolean | null;
   firstName: string | null;
   lastName: string | null;
   role: string | null;
   subscriptionCount: number;
 }
 
+type Audience = 'all' | 'selected';
+
 export function AdminPushPanel() {
   const { toast } = useToast();
-  const {
-    permission,
-    isSubscribed,
-    isWorking,
-    subscribe,
-    unsubscribe,
-    iosNeedsInstall,
-    isIOS,
-  } = usePushNotifications();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [url, setUrl] = useState('/');
-  const [requireInteraction, setRequireInteraction] = useState(false);
-  const [sendToAll, setSendToAll] = useState(true);
+  const [audience, setAudience] = useState<Audience>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState('');
 
-  const { data: subscribers, isLoading } = useQuery<Subscriber[]>({
+  const { data: subscribers = [], isLoading } = useQuery<Subscriber[]>({
     queryKey: ['/api/push/admin/subscribers'],
   });
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return subscribers;
+    return subscribers.filter(s =>
+      s.displayName.toLowerCase().includes(term) ||
+      (s.email || '').toLowerCase().includes(term)
+    );
+  }, [subscribers, search]);
+
+  const enabledCount = subscribers.filter(s => s.subscriptionCount > 0).length;
+  const totalCount = subscribers.length;
 
   const sendMutation = useMutation({
     mutationFn: async () => {
       return apiRequest('POST', '/api/push/admin/send', {
-        title,
-        body,
-        url: url || '/',
-        requireInteraction,
-        sendToAll,
-        userIds: sendToAll ? undefined : Array.from(selectedIds),
+        title: title.trim(),
+        body: body.trim(),
+        url: '/',
+        sendToAll: audience === 'all',
+        userIds: audience === 'selected' ? Array.from(selectedIds) : undefined,
       });
     },
     onSuccess: async (res: any) => {
       const json = await res.json();
-      toast({
-        title: 'Push sent',
-        description: `Delivered: ${json.sent}, Failed: ${json.failed}`,
-      });
+      const recipientLabel = audience === 'all'
+        ? 'all active staff'
+        : `${selectedIds.size} ${selectedIds.size === 1 ? 'person' : 'people'}`;
+      if (json.sent > 0) {
+        toast({
+          title: 'Notification sent',
+          description: `Delivered to ${json.sent} ${json.sent === 1 ? 'device' : 'devices'} (${recipientLabel}).`,
+        });
+      } else {
+        toast({
+          title: 'Sent, but no devices reached',
+          description: 'Recipients haven\'t enabled notifications yet.',
+          variant: 'destructive',
+        });
+      }
       setTitle('');
       setBody('');
+      setSelectedIds(new Set());
       queryClient.invalidateQueries({ queryKey: ['/api/push/admin/subscribers'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
     },
     onError: (err: any) => {
       toast({
-        title: 'Failed to send push',
+        title: 'Failed to send',
         description: err?.message || 'Unknown error',
         variant: 'destructive',
       });
@@ -85,111 +110,47 @@ export function AdminPushPanel() {
     });
   };
 
-  const subscribed = (subscribers || []).filter(s => s.subscriptionCount > 0);
-  const unsubscribed = (subscribers || []).filter(s => s.subscriptionCount === 0);
+  const selectAllVisible = () => {
+    setSelectedIds(new Set(filtered.map(s => s.id)));
+  };
 
-  const canSend = title.trim() && body.trim() && (sendToAll || selectedIds.size > 0) && !sendMutation.isPending;
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const canSend =
+    title.trim().length > 0 &&
+    body.trim().length > 0 &&
+    (audience === 'all' || selectedIds.size > 0) &&
+    !sendMutation.isPending;
 
   return (
-    <div className="space-y-6">
-      {/* Self-subscription card - lets admin enable notifications on this device */}
-      <Card data-testid="card-admin-self-subscribe">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Smartphone className="h-5 w-5 text-blue-600" />
-            <CardTitle>Notifications on This Device</CardTitle>
+    <Card data-testid="card-push-composer">
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5 text-blue-600" />
+              Send a notification
+            </CardTitle>
+            <CardDescription className="mt-1">
+              Push a message to staff phones and computers. Friday timesheet reminders go out
+              automatically at 4pm — this panel is for everything else.
+            </CardDescription>
           </div>
-          <CardDescription>
-            Enable push notifications on this phone or computer so you receive timesheet
-            reminders and admin broadcasts. Repeat on every device you use.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {iosNeedsInstall ? (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Install required on iPhone/iPad.</strong> Tap the Share button in
-                Safari, then "Add to Home Screen". Open BuildFlow Pro from your home
-                screen and come back here to enable notifications.
-              </AlertDescription>
-            </Alert>
-          ) : permission === 'unsupported' ? (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                This browser doesn't support push notifications. Try Chrome, Edge, Safari
-                (16.4+), or Firefox.
-              </AlertDescription>
-            </Alert>
-          ) : permission === 'denied' ? (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Notifications are blocked for BuildFlow Pro. {isIOS
-                  ? 'Open Settings → Notifications → BuildFlow Pro and turn on Allow Notifications, then reload this page.'
-                  : 'Click the lock icon in the address bar, set Notifications to "Allow", then reload this page.'}
-              </AlertDescription>
-            </Alert>
-          ) : isSubscribed ? (
-            <div className="flex items-center justify-between gap-3 p-4 bg-green-50 border border-green-200 rounded-md">
-              <div className="flex items-center gap-3">
-                <BellRing className="h-6 w-6 text-green-600" />
-                <div>
-                  <p className="font-semibold text-green-900">Notifications enabled on this device</p>
-                  <p className="text-sm text-green-700">You'll receive timesheet reminders and admin broadcasts here.</p>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={unsubscribe}
-                disabled={isWorking}
-                data-testid="button-admin-unsubscribe"
-              >
-                <BellOff className="h-4 w-4 mr-2" />
-                {isWorking ? 'Working...' : 'Disable'}
-              </Button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between gap-3 p-4 bg-blue-50 border border-blue-200 rounded-md">
-              <div className="flex items-center gap-3">
-                <Bell className="h-6 w-6 text-blue-600" />
-                <div>
-                  <p className="font-semibold text-blue-900">Notifications are off on this device</p>
-                  <p className="text-sm text-blue-700">Enable them to receive reminders and test broadcasts.</p>
-                </div>
-              </div>
-              <Button
-                onClick={subscribe}
-                disabled={isWorking}
-                data-testid="button-admin-subscribe"
-              >
-                <Bell className="h-4 w-4 mr-2" />
-                {isWorking ? 'Working...' : 'Enable'}
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          <Badge variant="secondary" className="flex-shrink-0 gap-1">
+            <Smartphone className="h-3 w-3" />
+            {enabledCount}/{totalCount} reachable
+          </Badge>
+        </div>
+      </CardHeader>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-blue-600" />
-            <CardTitle>Send Push Notification</CardTitle>
-          </div>
-          <CardDescription>
-            Send a notification to all staff or selected employees. Notifications appear
-            on phones and computers that have signed in and enabled notifications.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="push-title">Title</Label>
+      <CardContent className="space-y-5">
+        {/* Composer */}
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="push-title" className="text-sm">Title</Label>
             <Input
               id="push-title"
-              placeholder="e.g., Timesheet reminder"
+              placeholder="e.g. Site meeting moved to 9am"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               maxLength={80}
@@ -197,160 +158,190 @@ export function AdminPushPanel() {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="push-body">Message</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="push-body" className="text-sm">Message</Label>
             <Textarea
               id="push-body"
-              placeholder="e.g., Please submit your timesheet by 5pm today."
+              placeholder="Keep it short — this shows on a phone lock screen."
               value={body}
               onChange={(e) => setBody(e.target.value)}
               maxLength={300}
               rows={3}
               data-testid="input-push-body"
             />
+            <p className="text-[11px] text-gray-500 text-right">{body.length}/300</p>
           </div>
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="push-url">Open page when tapped</Label>
-            <Input
-              id="push-url"
-              placeholder="/timesheet"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              data-testid="input-push-url"
-            />
-          </div>
+        <Separator />
 
-          <div className="flex items-center gap-3">
-            <Switch
-              id="push-require-interaction"
-              checked={requireInteraction}
-              onCheckedChange={setRequireInteraction}
-              data-testid="switch-push-require-interaction"
-            />
-            <Label htmlFor="push-require-interaction">
-              Keep notification visible until tapped (desktop only)
-            </Label>
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center gap-3">
-            <Switch
-              id="push-send-all"
-              checked={sendToAll}
-              onCheckedChange={setSendToAll}
-              data-testid="switch-push-send-all"
-            />
-            <Label htmlFor="push-send-all" className="font-semibold">
-              Send to all staff with notifications enabled
-            </Label>
-          </div>
-
-          {!sendToAll && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Select recipients</Label>
-                <span className="text-sm text-gray-500">{selectedIds.size} selected</span>
+        {/* Audience picker */}
+        <div className="space-y-3">
+          <Label className="text-sm">Who should receive this?</Label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setAudience('all')}
+              className={`p-3 rounded-md border-2 text-left transition-all ${
+                audience === 'all'
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+              data-testid="button-audience-all"
+            >
+              <div className="flex items-center gap-2">
+                <Users className={`h-4 w-4 ${audience === 'all' ? 'text-blue-600' : 'text-gray-500'}`} />
+                <span className="font-semibold text-sm">Everyone</span>
               </div>
-              {isLoading ? (
-                <div className="py-4 text-center text-sm text-gray-500">Loading...</div>
-              ) : (
-                <div className="border rounded-md max-h-64 overflow-y-auto divide-y">
-                  {subscribed.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-gray-500">
-                      No staff have enabled notifications yet
-                    </div>
-                  ) : (
-                    subscribed.map(user => (
-                      <label
-                        key={user.id}
-                        className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer"
-                        data-testid={`row-push-user-${user.id}`}
-                      >
-                        <Checkbox
-                          checked={selectedIds.has(user.id)}
-                          onCheckedChange={() => toggleId(user.id)}
-                        />
-                        <div className="flex-1">
-                          <div className="font-medium text-sm">
-                            {user.firstName || ''} {user.lastName || ''}
-                            {!user.firstName && !user.lastName && (user.email || user.id)}
+              <p className="text-xs text-gray-600 mt-1">All active staff</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setAudience('selected')}
+              className={`p-3 rounded-md border-2 text-left transition-all ${
+                audience === 'selected'
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+              data-testid="button-audience-selected"
+            >
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className={`h-4 w-4 ${audience === 'selected' ? 'text-blue-600' : 'text-gray-500'}`} />
+                <span className="font-semibold text-sm">Pick people</span>
+              </div>
+              <p className="text-xs text-gray-600 mt-1">
+                {selectedIds.size > 0 ? `${selectedIds.size} selected` : 'Choose recipients'}
+              </p>
+            </button>
+          </div>
+
+          {audience === 'selected' && (
+            <div className="border rounded-md overflow-hidden bg-white">
+              <div className="p-2 border-b bg-gray-50 flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="h-3.5 w-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  <Input
+                    placeholder="Search staff..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-8 h-8 text-sm"
+                    data-testid="input-recipient-search"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={selectAllVisible}
+                  data-testid="button-select-all-visible"
+                >
+                  Select all
+                </Button>
+                {selectedIds.size > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={clearSelection}
+                    data-testid="button-clear-selection"
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+
+              <ScrollArea className="max-h-72">
+                {isLoading ? (
+                  <div className="py-8 text-center text-sm text-gray-500">Loading staff...</div>
+                ) : filtered.length === 0 ? (
+                  <div className="py-8 text-center text-sm text-gray-500">
+                    {search ? 'No matches' : 'No active staff'}
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {filtered.map(user => {
+                      const enabled = user.subscriptionCount > 0;
+                      const checked = selectedIds.has(user.id);
+                      return (
+                        <label
+                          key={user.id}
+                          className={`flex items-center gap-3 p-2.5 cursor-pointer hover:bg-gray-50 ${
+                            checked ? 'bg-blue-50/50' : ''
+                          }`}
+                          data-testid={`row-recipient-${user.id}`}
+                        >
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={() => toggleId(user.id)}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm text-gray-900 truncate">
+                                {user.displayName}
+                              </span>
+                              {user.role === 'admin' && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+                                  admin
+                                </Badge>
+                              )}
+                            </div>
+                            {user.email && user.email !== user.displayName && (
+                              <p className="text-[11px] text-gray-500 truncate">{user.email}</p>
+                            )}
                           </div>
-                          <div className="text-xs text-gray-500">{user.email}</div>
-                        </div>
-                        <Badge variant="secondary" className="text-xs">
-                          {user.subscriptionCount} {user.subscriptionCount === 1 ? 'device' : 'devices'}
-                        </Badge>
-                      </label>
-                    ))
-                  )}
-                </div>
-              )}
+                          {enabled ? (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] gap-1 border-green-300 bg-green-50 text-green-700"
+                            >
+                              <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                              {user.subscriptionCount} {user.subscriptionCount === 1 ? 'device' : 'devices'}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px] text-gray-500">
+                              Off
+                            </Badge>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </ScrollArea>
             </div>
           )}
 
-          <Button
-            className="w-full"
-            size="lg"
-            onClick={() => sendMutation.mutate()}
-            disabled={!canSend}
-            data-testid="button-send-push"
-          >
-            <Send className="h-4 w-4 mr-2" />
-            {sendMutation.isPending ? 'Sending...' : 'Send Notification'}
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-gray-600" />
-            <CardTitle>Subscriber Status</CardTitle>
-          </div>
-          <CardDescription>
-            Who currently has notifications enabled.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="py-4 text-center text-sm text-gray-500">Loading...</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  Enabled ({subscribed.length})
-                </h4>
-                <div className="space-y-1 text-sm">
-                  {subscribed.length === 0 && <p className="text-gray-500">None yet</p>}
-                  {subscribed.map(u => (
-                    <div key={u.id} className="flex items-center justify-between py-1" data-testid={`subscriber-${u.id}`}>
-                      <span>{u.firstName} {u.lastName} {!u.firstName && (u.email || u.id)}</span>
-                      <Badge variant="outline" className="text-xs">{u.subscriptionCount}</Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                  <XCircle className="h-4 w-4 text-gray-400" />
-                  Not enabled ({unsubscribed.length})
-                </h4>
-                <div className="space-y-1 text-sm">
-                  {unsubscribed.length === 0 && <p className="text-gray-500">Everyone is subscribed</p>}
-                  {unsubscribed.map(u => (
-                    <div key={u.id} className="py-1 text-gray-600" data-testid={`unsubscriber-${u.id}`}>
-                      {u.firstName} {u.lastName} {!u.firstName && (u.email || u.id)}
-                    </div>
-                  ))}
-                </div>
-              </div>
+          {audience === 'all' && enabledCount === 0 && !isLoading && (
+            <div className="flex items-start gap-2 p-3 rounded-md bg-amber-50 border border-amber-200">
+              <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-800">
+                No staff have enabled notifications yet. They need to allow notifications on their device first.
+              </p>
             </div>
           )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+
+        <Separator />
+
+        <Button
+          className="w-full"
+          size="lg"
+          onClick={() => sendMutation.mutate()}
+          disabled={!canSend}
+          data-testid="button-send-push"
+        >
+          <Send className="h-4 w-4 mr-2" />
+          {sendMutation.isPending
+            ? 'Sending...'
+            : audience === 'all'
+              ? `Send to all active staff`
+              : selectedIds.size > 0
+                ? `Send to ${selectedIds.size} ${selectedIds.size === 1 ? 'person' : 'people'}`
+                : 'Send notification'}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

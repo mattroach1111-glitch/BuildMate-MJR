@@ -3528,17 +3528,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const counts = await storage.getUsersWithPushCounts();
       const users = await storage.getAllUsers();
-      const enriched = users.map(u => {
-        const found = counts.find(c => c.userId === u.id);
-        return {
-          id: u.id,
-          email: u.email,
-          firstName: u.firstName,
-          lastName: u.lastName,
-          role: u.role,
-          subscriptionCount: found?.subscriptionCount || 0,
-        };
-      });
+      const employees = await storage.getEmployees();
+      const employeesById = new Map(employees.map(e => [e.id, e]));
+
+      const enriched = users
+        .map(u => {
+          const employee = u.employeeId ? employeesById.get(u.employeeId) : null;
+          const found = counts.find(c => c.userId === u.id);
+          const displayName = employee?.name
+            || [u.firstName, u.lastName].filter(Boolean).join(' ').trim()
+            || u.email
+            || 'Unnamed user';
+          return {
+            id: u.id,
+            email: u.email,
+            displayName,
+            employeeName: employee?.name || null,
+            employeeActive: employee ? employee.isActive : null,
+            firstName: u.firstName,
+            lastName: u.lastName,
+            role: u.role,
+            subscriptionCount: found?.subscriptionCount || 0,
+          };
+        })
+        // Hide users whose linked employee is no longer active.
+        // Admin users without an employee link are kept (they can subscribe too).
+        .filter(u => u.employeeActive !== false)
+        // Sort by display name for a clean alphabetical list
+        .sort((a, b) => a.displayName.localeCompare(b.displayName));
+
       res.json(enriched);
     } catch (error) {
       console.error("Error listing push subscribers:", error);
