@@ -38,7 +38,10 @@ export function usePushNotifications() {
     enabled: permission !== 'unsupported',
   });
 
-  // Check current subscription status with the SW
+  // Check current subscription status with the SW. If the browser has a
+  // subscription, also re-upsert it on the server so the two stay in sync
+  // (handles cases where the server lost the record but the browser still
+  // holds an active SW subscription).
   useEffect(() => {
     if (permission === 'unsupported') return;
     let cancelled = false;
@@ -47,7 +50,24 @@ export function usePushNotifications() {
         if (!('serviceWorker' in navigator)) return;
         const registration = await navigator.serviceWorker.ready;
         const sub = await registration.pushManager.getSubscription();
-        if (!cancelled) setIsSubscribed(!!sub);
+        if (cancelled) return;
+        if (sub) {
+          // Re-sync the subscription with the server (idempotent upsert)
+          try {
+            const json = sub.toJSON();
+            await apiRequest('POST', '/api/push/subscribe', {
+              endpoint: json.endpoint,
+              p256dh: json.keys?.p256dh,
+              auth: json.keys?.auth,
+              userAgent: navigator.userAgent,
+            });
+          } catch (err) {
+            console.warn('Push subscription resync failed:', err);
+          }
+          if (!cancelled) setIsSubscribed(true);
+        } else {
+          if (!cancelled) setIsSubscribed(false);
+        }
       } catch {
         if (!cancelled) setIsSubscribed(false);
       }
